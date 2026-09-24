@@ -4,7 +4,7 @@ import { Easing, interpolate, spring, staticFile } from "remotion";
 export const FPS = 30;
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
-export const DURATION = 3000;
+export const DURATION = 4500;
 
 // 120 BPM at 30 fps: one beat every 15 frames. Every scene cut sits on this grid.
 export const BEAT = 15;

@@ -32,6 +32,13 @@ export const Title: React.FC = () => {
   const linkPath = `M${LEFT.cx},${LEFT.cy + LEFT.size / 2 + 20} V600 H${GPU.cx} V${GPU.cy + GPU.h / 2 + 18}`;
   const linkLen = 60 + (GPU.cx - LEFT.cx) + (600 - (GPU.cy + GPU.h / 2 + 18));
 
+  const sweep = ease(f, [120, 200], [-40, 140], (t) => t);
+  const shine = (color: string): React.CSSProperties => ({
+    backgroundImage: `linear-gradient(100deg, ${color} ${sweep - 10}%, #FFFFFF ${sweep}%, ${color} ${sweep + 10}%)`,
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    color: "transparent",
+  });
   const word: React.CSSProperties = {
     position: "absolute",
     fontFamily: FONTS.headline,
@@ -58,14 +65,14 @@ export const Title: React.FC = () => {
       {ryzenLogo ? (
         <Img src={ryzenLogo} style={{ position: "absolute", left: 480, top: LEFT.cy - 55, height: 110, opacity: ryzenIn, transform: `translateX(${(1 - ryzenIn) * -80}px)` }} />
       ) : (
-        <div style={{ ...word, left: 480, top: LEFT.cy - 52, color: COLORS.ryzen, opacity: ryzenIn, transform: `translateX(${(1 - ryzenIn) * -80}px)` }}>
+        <div style={{ ...word, left: 480, top: LEFT.cy - 52, ...shine(COLORS.ryzen), opacity: ryzenIn, transform: `translateX(${(1 - ryzenIn) * -80}px)` }}>
           {content.title.ryzen}
         </div>
       )}
       {radeonLogo ? (
         <Img src={radeonLogo} style={{ position: "absolute", left: 1375, top: GPU.cy - 55, height: 110, opacity: radeonIn, transform: `translateX(${(1 - radeonIn) * 80}px)` }} />
       ) : (
-        <div style={{ ...word, left: 1375, top: GPU.cy - 52, color: COLORS.radeon, opacity: radeonIn, transform: `translateX(${(1 - radeonIn) * 80}px)` }}>
+        <div style={{ ...word, left: 1375, top: GPU.cy - 52, ...shine(COLORS.radeon), opacity: radeonIn, transform: `translateX(${(1 - radeonIn) * 80}px)` }}>
           {content.title.radeon}
         </div>
       )}

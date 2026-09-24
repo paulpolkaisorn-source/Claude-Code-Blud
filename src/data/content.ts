@@ -29,6 +29,34 @@ export const content = {
     archKicker: "Architecture",
     arch: "RDNA 4",
   },
+  ryzenAi: {
+    kicker: "Ryzen AI",
+    blocks: { cpu: "CPU", gpu: "GPU", npu: "NPU" },
+    npu: {
+      title: "Neural Processing Unit",
+      sub: "A dedicated AI engine, powered by AMD XDNA",
+    },
+    tagline: "AI PCs powered by AMD Ryzen AI.",
+  },
+  platform: {
+    kicker: "The AM5 platform",
+    socket: { title: "Socket AM5" },
+    memory: { title: "DDR5 with AMD EXPO", sub: "Extended Profiles for Overclocking" },
+    pcie: { title: "PCIe 5.0" },
+  },
+  radeonAi: {
+    accel: { title: "AI accelerators", sub: "Built into the RDNA 4 architecture" },
+    software: {
+      title: "AMD Software: Adrenalin Edition",
+      toggles: ["HYPR-RX", "AMD Fluid Motion Frames", "Radeon Anti-Lag", "Radeon Chill"],
+    },
+  },
+  finale: {
+    ryzen: "RYZEN",
+    plus: " + ",
+    radeon: "RADEON",
+    line2: "One team. Every frame.",
+  },
   betterTogether: {
     cpu: "Ryzen",
     gpu: "Radeon",

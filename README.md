@@ -1,6 +1,6 @@
-# AMD Ryzen + Radeon: 100-second motion piece (Remotion)
+# AMD Ryzen + Radeon: 150-second motion piece (Remotion)
 
-1920x1080, 30 fps, 3000 frames, H.264. Every animation is driven by `useCurrentFrame()`, `interpolate()` and `spring()`.
+1920x1080, 30 fps, 4500 frames, H.264, with an original 120 BPM soundtrack. Every animation is driven by `useCurrentFrame()`, `interpolate()` and `spring()`.
 
 ## Render
 
@@ -17,12 +17,33 @@ npm run dev
 - **Look:** colors, fonts, easing presets and `BEAT = 15` are in `src/theme.ts`.
 - **Timeline:** scene boundaries are in `src/Video.tsx` (`SCENES`). Every cut sits on the 120 BPM grid (multiples of 15 frames).
 
+## Timeline
+
+| Time | Scene |
+| --- | --- |
+| 0:00 | Cold open: a light line traces the circuit into a CPU die |
+| 0:08 | Title: RYZEN / RADEON |
+| 0:18 | Ryzen deep dive: exploded CPU, 3D V-Cache, AM5, DDR5/PCIe 5.0 |
+| 0:38 | Ryzen in use: Play / Create / Build |
+| 0:48 | Ryzen AI: laptop opens, zoom into the CPU / GPU / NPU |
+| 1:00 | The AM5 platform: socket, DDR5 with EXPO, PCIe 5.0 |
+| 1:10 | Radeon deep dive: card, compute units, ray tracing, FSR Upscaling, RDNA 4 |
+| 1:32 | Radeon AI accelerators + AMD Software: Adrenalin Edition |
+| 1:45 | Better together: Smart Access Memory |
+| 2:00 | Montage: 30 cuts, one every beat |
+| 2:15 | Finale: RYZEN + RADEON |
+| 2:23 | End card |
+
+## Soundtrack
+
+`public/audio/track.mp3` is an original track synthesized by `scripts/make-soundtrack.mjs`: no samples, and the same output every run. Its hits and risers line up with the scene cuts. Regenerate it with `npm run soundtrack`, or drop your own 120 BPM track over it.
+
 ## Optional assets
 
 | Path | Effect |
 | --- | --- |
 | `public/brand/amd.svg`, `ryzen.svg`, `radeon.svg` | Used on the title card and end card. If a file is missing, the text version is used instead. |
-| `public/audio/track.mp3` | Plays under the whole video with a 1 s fade-in and 2 s fade-out. If it's missing, the video renders silent. |
+| `public/audio/track.mp3` | Plays under the whole video with a 1 s fade-in and 2 s fade-out. If it's missing, the video renders silent. The included track can be replaced. |
 
 Logos are never drawn in code. Add official files only if you have the rights to use them.
 
@@ -37,4 +58,7 @@ Space Grotesk (headlines) and Inter (labels) come from Google Fonts (OFL). The f
 - "FSR 4 upscaling" became **"FSR Upscaling"**: AMD's FSR page says FSR 4 has been renamed FSR Upscaling.
 - "RDNA 4" and "Ray tracing": confirmed on the Radeon desktop graphics page.
 - Smart Access Memory: amd.com only describes it (in footnotes) as AMD Smart Access Memory / PCIe Resizable BAR. The line "the CPU can reach all of the GPU's memory at once" couldn't be confirmed there, so it now reads: "Built on PCIe Resizable BAR, for Ryzen and Radeon working together."
+- Ryzen AI: "Dedicated AI engine, powered by AMD XDNA" and "Neural Processing Unit (NPU)" appear on AMD's Ryzen AI page. The "50+ TOPS" figure is left out on purpose (no performance numbers).
+- AMD EXPO: "AMD Extended Profiles for Overclocking" for Ryzen on Socket AM5 is confirmed on AMD's EXPO page.
+- Radeon "AI accelerators" (RDNA 4) and AMD Software: Adrenalin Edition with HYPR-RX, AMD Fluid Motion Frames, Radeon Anti-Lag and Radeon Chill: confirmed on the Radeon and Adrenalin pages. The settings panel is a generic mock-up, not a copy of AMD's UI.
 - There are no performance numbers anywhere in the video.

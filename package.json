@@ -26,7 +26,8 @@
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
-    "render": "remotion render AmdRyzenRadeon out/amd-ryzen-radeon.mp4 --codec=h264"
+    "render": "remotion render AmdRyzenRadeon out/amd-ryzen-radeon.mp4 --codec=h264",
+    "soundtrack": "mkdir -p out && node scripts/make-soundtrack.mjs out/track.wav && remotion ffmpeg -y -loglevel error -i out/track.wav -c:a libmp3lame -b:a 192k public/audio/track.mp3"
   },
   "sideEffects": []
 }

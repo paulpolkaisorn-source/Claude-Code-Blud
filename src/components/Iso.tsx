@@ -27,6 +27,7 @@ export type BoxSpec = {
   strokeOpacity?: number;
   opacity?: number;
   topOverlay?: React.ReactNode;
+  grid?: { cols: number; rows: number; color: string; opacity: number; inset?: number };
 };
 
 /** Extruded box drawn as polygons: visible side faces first, then the top. */
@@ -56,6 +57,25 @@ export const Box3D: React.FC<{ cam: Cam; box: BoxSpec }> = ({ cam, box }) => {
         <polygon key={i} points={poly(f.pts)} fill={box.side} stroke={box.stroke} strokeOpacity={so} strokeWidth={1.5} strokeLinejoin="round" />
       ))}
       <polygon points={poly(top)} fill={box.top} stroke={box.stroke} strokeOpacity={so} strokeWidth={1.5} strokeLinejoin="round" />
+      {box.grid
+        ? (() => {
+            const g = box.grid;
+            const ins = g.inset ?? 0.08;
+            const gx0 = x0 + w * ins;
+            const gy0 = y0 + d * ins;
+            const gw = (w * (1 - ins * 2)) / g.cols;
+            const gd = (d * (1 - ins * 2)) / g.rows;
+            const zt = z + h + 0.01;
+            return Array.from({ length: g.cols * g.rows }).map((_, i) => {
+              const c = i % g.cols;
+              const r = Math.floor(i / g.cols);
+              const ax = gx0 + c * gw + gw * 0.1;
+              const ay = gy0 + r * gd + gd * 0.1;
+              const pts = [P(ax, ay, zt), P(ax + gw * 0.8, ay, zt), P(ax + gw * 0.8, ay + gd * 0.8, zt), P(ax, ay + gd * 0.8, zt)];
+              return <polygon key={i} points={poly(pts)} fill={g.color} fillOpacity={g.opacity * 0.35} stroke={g.color} strokeOpacity={g.opacity} strokeWidth={1} />;
+            });
+          })()
+        : null}
       {box.topOverlay}
     </g>
   );

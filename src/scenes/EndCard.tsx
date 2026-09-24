@@ -1,15 +1,16 @@
 import React from "react";
-import { AbsoluteFill, Img, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, useCurrentFrame, useVideoConfig } from "remotion";
 import { brandLogo } from "../brand";
 import { content } from "../data/content";
 import { COLORS, FONTS, ease, enter } from "../theme";
 
 export const EndCard: React.FC = () => {
   const f = useCurrentFrame();
+  const { durationInFrames: d } = useVideoConfig();
   const a = 0.3 + 0.7 * enter(f, 0);
   const b = enter(f, 8);
   const logoIn = ease(f, [10, 30]);
-  const fadeOut = 1 - ease(f, [140, 149], [0, 1], (t) => t);
+  const fadeOut = 1 - ease(f, [d - 10, d - 1], [0, 1], (t) => t);
   const amd = brandLogo("amd");
   const ryzen = brandLogo("ryzen");
   const radeon = brandLogo("radeon");
