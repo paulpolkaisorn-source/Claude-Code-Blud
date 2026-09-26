@@ -8,13 +8,13 @@ This theme plays when one survivor is left and the killer is hunting them. It's 
 | **Key** | E minor (Phrygian F for dread, harmonic-minor B for tension) |
 | **Length** | 84 bars = **exactly 2:00** |
 | **Sections** | Intro · Verse · Pre-Chorus · Chorus · Post-Chorus · Bridge · Solo · Outro |
-| **Suno** | Copy-paste prompt and lyrics are in **[SUNO_PROMPT.md](SUNO_PROMPT.md)** |
+| **Suno** | Copy-paste instrumental prompt is in **[SUNO_PROMPT.md](SUNO_PROMPT.md)** |
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `SUNO_PROMPT.md` | Title, style prompt (short and detailed), exclude list, tagged lyrics, how to use it |
+| `SUNO_PROMPT.md` | Instrumental Suno prompt: title, style (short and detailed), exclude list, optional structure tags |
 | `last_heartbeat.mid` | 7 tracks: vocal melody with embedded lyrics, lead guitar, chase hook, rhythm guitar, strings, bass, drums |
 | `preview.mp3` | Rough synth demo with a synth voice singing the melody (upload to Suno for a Cover) |
 | `instrumental.mp3` | The same demo without the guide vocal |
