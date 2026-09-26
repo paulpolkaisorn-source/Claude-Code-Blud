@@ -41,6 +41,7 @@ This replaces *Last Heartbeat*. It's melodic metal with its own sound and has no
 | `last_stand.mid` | All parts as MIDI (leads, harmony, rhythm guitars, bass, strings, drums) for a DAW |
 | `song.py` | Composition: chords, melodies, solo, riffs, drum patterns |
 | `render.py` | Production: FluidSynth render → amp sims → mix → master → mp3 |
+| `SUNO_PROMPT.md` | Instrumental Suno prompt: title, style (short and detailed), exclude list, structure tags |
 
 ## Rebuild
 
