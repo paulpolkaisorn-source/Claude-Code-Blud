@@ -19,7 +19,8 @@
   "scripts": {
     "generate": "node tools/generate.mjs",
     "bundle": "node tools/build.mjs",
-    "build": "node tools/generate.mjs && node tools/build.mjs && node tools/package.mjs",
+    "build": "node tools/generate.mjs && node tools/build.mjs && npm run completeness && node tools/package.mjs",
+    "completeness": "vitest run tests/data.test.ts tests/packs.test.ts tests/bots.test.ts -t \"roster data|kits|generated packs|bot profiles\"",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run",
     "validate": "node tools/validate.mjs",

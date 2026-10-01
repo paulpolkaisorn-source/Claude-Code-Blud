@@ -1,5 +1,6 @@
-// Data completeness (brief §8.4): every character has data, a kit, a handler per ability,
-// an item + icon + lang name (checked in tests/packs.test.ts) and a bot profile (tests/bots.test.ts).
+// Data completeness (brief §8.4, also run by `npm run build` via `npm run completeness`): every character
+// has data, a kit and a handler per ability; items, icons and lang names are in tests/packs.test.ts and
+// bot profiles in tests/bots.test.ts.
 import { describe, expect, it } from "vitest";
 import { CHARACTERS, KILLERS, SURVIVORS, validateRoster, resolvePath } from "../src/characters/roster";
 import { KITS } from "../src/abilities/kits";

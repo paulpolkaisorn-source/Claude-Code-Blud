@@ -144,7 +144,6 @@
       "name": "Chance",
       "team": "survivor",
       "role": "sentinel",
-      "altRole": "survivalist",
       "playstyle": "Gamble",
       "summary": "Gambler: coin flips build charges for a revolver that might stun the killer — or explode.",
       "difficulty": 4,
@@ -164,6 +163,7 @@
       "assumed": ["abilities.one_shot.successChance", "abilities.one_shot.explodeChance", "abilities.coin_flip.headsChance", "abilities.one_shot.aimHalfAngle"],
       "undocumented": ["abilities.one_shot.knockbackStuds"],
       "changes": [
+        "Role: Sentinel only (wiki character page: 'a Sentinel Survivor'); the brief listed a Sentinel vs Survivalist conflict.",
         "There are no dice: the kit is Coin Flip / One Shot / Reroll / Hat Fix with shared charges (brief: d4 roll).",
         "Max HP random 70-90 at round start; Reroll 55-120 (+bonus), cap 130; stamina is fixed at 100.",
         "Tails gives Vulnerable (+20% damage taken per tier), not Weakness.",

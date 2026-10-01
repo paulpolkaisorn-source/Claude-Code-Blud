@@ -75,7 +75,10 @@ export class KillerBrain extends Brain {
       chaseSeconds: (now - this.chaseStart) / 20,
     };
     botHooks(me.character.id).killer?.(view);
-    if (me.channel || me.forced) return;
+    if (me.channel || me.forced) {
+      this.state = "ABILITY"; // committed to a windup / dash
+      return;
+    }
 
     if (view.target && view.targetSeen) {
       this.chase(view);
@@ -113,7 +116,8 @@ export class KillerBrain extends Brain {
     for (const s of known) {
       const t = g.get(s.id);
       if (!t || !t.alive) continue;
-      const allies = g.aliveSurvivors().filter((o) => o !== t && dist2D(o.pos, s.pos) < 10).length;
+      // Survivors it knows about near this one (from its own memory: no peeking at true positions).
+      const allies = known.filter((o) => o.id !== s.id && dist2D(o.pos, s.pos) < 10).length;
       let score = dist2D(this.me.pos, s.pos) + allies * 6;
       if (t.hp < t.maxHp * 0.5) score -= 6;
       if (t.exhausted) score -= 4;

@@ -56,12 +56,12 @@ Rule enforced by `npm run validate`: only `src/main.ts` and files named `*.mc.ts
 | M4 | Menus, hotbar items, HUD, results, spectator on death | |
 | M5 | 8 killers + 12 survivors with passives/abilities/statuses | per-character tests + manual steps |
 | M6 | Bot entities, perception, movement, survivor/killer AI, hooks, difficulty, stuck recovery | |
-| M7 | Skins/icons, sounds, particles, lang, perf, docs, README | |
+| M7 | Skins/icons, sounds, particles, lang, perf, docs, README, BDS smoke suite | README.md, CHARACTERS.md, TESTING.md |
 | M8 | Final audit | AUDIT.md |
 
 ## Key risks (details and fallbacks in RISKS.md)
 
-1. Nothing can be run inside Minecraft here; all in-game behaviour is unverified.
+1. No rendering game client is available here. Bedrock Dedicated Server (Linux) runs the packs, and a headless protocol client plays as a human for server-side checks; visuals are only file-validated (see TESTING.md).
 2. Player movement-speed attribute writes and hunger-based sprint lock are community-known techniques, not documented guarantees.
 3. Script-steered bots (velocity impulses) instead of native AI goals.
 4. `TextPrimitive` aura markers are new stable API; HUD callouts are the fallback channel.

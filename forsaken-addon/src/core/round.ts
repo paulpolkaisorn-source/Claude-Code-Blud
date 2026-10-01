@@ -27,9 +27,10 @@ export function newRound(): RoundState {
   };
 }
 
-/** Each finished generator layer (puzzle) removes secondsPerLayer from the clock. */
+/** Each finished generator layer (puzzle) removes its share of secondsRemovedPerGenerator (wiki: 3 s per puzzle, 5 puzzles). */
 export function onLayerCompleted(r: RoundState): void {
-  r.timeLeft = Math.max(0, r.timeLeft - config().match.secondsPerLayer);
+  const m = config().match;
+  r.timeLeft = Math.max(0, r.timeLeft - m.secondsRemovedPerGenerator / Math.max(1, m.generatorLayers));
 }
 
 export function onGeneratorCompleted(r: RoundState): void {

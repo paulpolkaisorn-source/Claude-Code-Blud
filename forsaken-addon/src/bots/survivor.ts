@@ -106,7 +106,10 @@ export class SurvivorBrain extends Brain {
     if (danger && me.channel && !me.forced && me.channel.endTick - now > 10 && LONG_CASTS.has(me.channel.abilityId ?? "")) g.interrupt(me, "manual");
     // Character hooks first (stuns, heals, escapes).
     botHooks(me.character.id).survivor?.(view);
-    if (me.channel || me.forced) return; // committed to an action
+    if (me.channel || me.forced) {
+      this.state = "USE_ABILITY"; // committed to a windup / dash
+      return;
+    }
 
     // Map items.
     const item = heldItem(me);

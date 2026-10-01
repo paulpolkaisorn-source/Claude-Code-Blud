@@ -30,7 +30,6 @@
     "survivorCount": 8,
     "headStartSeconds": 10,
     "baseRoundSeconds": 240,
-    "secondsPerLayer": 3,
     "secondsRemovedPerGenerator": 15,
     "secondsAddedPerElimination": 40,
     "generatorCount": 5,

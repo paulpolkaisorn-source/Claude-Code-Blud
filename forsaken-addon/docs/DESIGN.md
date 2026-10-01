@@ -66,6 +66,7 @@ export const xKit: Kit = {
       hud(ctx) { return "x2"; },   // HUD suffix
       ignoresHelpless: false,
       usableWhileRepairing: false,
+      usableWhileChanneling: false, // presses during a windup are refused ("busy") unless this or a release
     },
   },
 };
@@ -80,6 +81,17 @@ Projectiles: `spawnProjectile(game, { owner, kind, pos, vel (blocks/tick), gravi
 Units: data keeps FORSAKEN units (studs, studs/s, seconds, HP). Kits convert with `studs()` (distances), `projSpeed()` / `game.dash({studsPerSecond})` (speeds), seconds stay seconds.
 
 Bots press abilities through exactly the same `useAbility(game, actor, abilityId)`; aimed abilities read `actor.facing`, which bots set before pressing.
+
+Press rules (`blockReason` in `abilities/engine.ts`, checked in this order): dead, not in a round, killer during the head start, stunned, repairing, Helpless (unless `ignoresHelpless` or releasing), `locked` flag, a running windup (unless releasing or `usableWhileChanneling`), cooldown, then the handler's own `can()`.
+
+## 5b. Bots (`src/bots`)
+
+- `BotDirector` owns one brain per bot. Brains *think* every `bots.thinkIntervalTicks` (5, staggered so bots don't all think on the same tick) and *steer* every tick.
+- Perception (`perception.ts`): vision cone (100°, 40 blocks, less with Blindness/Invisibility) plus line of sight, footsteps (rough position; silent, crouching and invisible actors make none), aura reveals given to the bot, and for survivors the terror radius (jittered direction). Memory keeps the last sighting per enemy.
+- `KillerBrain`: PATROL (generators weighted by progress) → SEARCH (fresh noises) → CHASE / FINISH (lead the target, sprint management, basic attack when in reach with a per-difficulty swing chance) → RESET after a kill; gives up a chase with no hit for `chaseGiveUpSeconds`.
+- `SurvivorBrain`: repair (picks generators by distance, crowding, progress and killer position), evade (samples cells scored by the killer's path distance from a shared distance field minus own distance, openness, dead ends, and a bonus for breaking line of sight), flee hysteresis, heal, pick up map items, hide when everything is repaired; long self-casts are cancelled when the killer shows up.
+- Per-character hooks (`hooks.ts`) decide when to press each ability; a hook can redirect the bot with `brain.hookGoal`.
+- Movement goes through `Game.navDirection` (A* on the arena grid, re-planned only when stale; doors opened ahead) and stuck recovery (re-path → hop to the next waypoint → teleport to a safe cell).
 
 ## 6. Roblox → Minecraft adaptations
 

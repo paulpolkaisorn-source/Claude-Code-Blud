@@ -5,6 +5,7 @@ import { config } from "../core/config";
 import { Brain } from "./brain";
 import { SurvivorBrain } from "./survivor";
 import { KillerBrain } from "./killer";
+import { dist2D } from "../util/vec";
 
 export class BotDirector {
   private readonly brains = new Map<string, Brain>();
@@ -38,6 +39,28 @@ export class BotDirector {
       }
       b.update();
     }
+    this.shareSightings();
     this.lastUpdateMs = Date.now() - t0;
+  }
+
+  /**
+   * Teammates' shouts: a survivor bot that saw the killer this tick tells survivor bots within hearing range
+   * where it was (they remember it as a "shout", a rough position, and react after their own reaction time).
+   */
+  private shareSightings(): void {
+    const g = this.game;
+    const k = g.killer;
+    if (!k) return;
+    const range = config().bots.hearingBlocks;
+    for (const a of g.actors) {
+      if (!a.isBot || !a.alive || !a.isSurvivor || a.isMinion) continue;
+      const s = this.brains.get(a.id)?.mem.get(k.id);
+      if (!s || s.how !== "sight" || s.tick !== g.now) continue;
+      for (const o of g.actors) {
+        if (o === a || !o.isBot || !o.alive || !o.isSurvivor || o.isMinion || dist2D(o.pos, a.pos) > range) continue;
+        const ob = this.brains.get(o.id);
+        if (ob && !ob.mem.recent(k.id, g.now, 5)) ob.mem.note({ id: k.id, pos: { ...s.pos }, tick: g.now, how: "shout" });
+      }
+    }
   }
 }

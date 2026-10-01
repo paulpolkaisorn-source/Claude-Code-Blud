@@ -27,6 +27,11 @@ const HUMAN_ID = "human";
 const ARENA_STAMP_KEY = "forsaken:arenaStamp";
 const SAVED_RULES = ["doDayLightCycle", "doWeatherCycle", "doMobSpawning", "mobGriefing", "keepInventory", "naturalRegeneration", "pvp", "showDeathMessages", "doImmediateRespawn", "fallDamage", "doFireTick", "tntExplodes"] as const;
 
+/** `/scriptevent forsaken:debug` toggles extra logging (world dynamic property). */
+export function debugOn(): boolean {
+  return world.getDynamicProperty("forsaken:debug") === true;
+}
+
 export function log(msg: string): void {
   console.warn(`[forsaken] ${msg}`);
 }
@@ -257,6 +262,7 @@ export class MatchController {
     }
     game.log(`Match: ${pick.killer.name} vs ${pick.survivors.map((c) => c.name).join(", ")} (${s.difficulty})`);
     if (this.selfTest) log(`SELFTEST start: killer=${pick.killer.id} survivors=${pick.survivors.map((c) => c.id).join(",")}`);
+    else log(`match start: you=${me ? `${me.team}:${me.character.id}` : "none"} killer=${pick.killer.id} survivors=${pick.survivors.map((c) => c.id).join(",")} difficulty=${s.difficulty}`);
   }
 
   private pickCharacters(s: MatchSettings, rng: Rng): { killer: CharacterDef; survivors: CharacterDef[] } {
@@ -327,8 +333,12 @@ export class MatchController {
       flash: (id, text, ticks) => this.hud.flash(id, text, ticks, game.now),
       allPlayers: () => (this.host?.isValid ? [this.host] : []),
     });
-    if (me && this.host) this.hud.update(game, me, this.host, this.dim, (a) => this.entityOf(a));
+    if (me && this.host) {
+      this.hud.debugLine = debugOn() ? this.debugLine(game) : null;
+      this.hud.update(game, me, this.host, this.dim, (a) => this.entityOf(a));
+    }
     const ms = Date.now() - t0;
+    this.lastTickMs = ms;
     this.selfTestStats.ticks++;
     this.selfTestStats.ms += ms;
     this.selfTestStats.maxMs = Math.max(this.selfTestStats.maxMs, ms);
@@ -341,6 +351,16 @@ export class MatchController {
 
   /** Jump presses already turned into flaps (bat form). */
   private lastFlapPresses = 0;
+  private lastTickMs = 0;
+
+  /** Debug overlay line: script time, bot time, phase and what the opposing bots are doing. */
+  private debugLine(game: Game): string {
+    const s = this.selfTestStats;
+    const k = game.killer;
+    const kb = k && k.isBot ? this.director?.brainOf(k) : undefined;
+    const states = kb ? `killer ${kb.state}` : game.aliveSurvivors().filter((a) => a.isBot).map((a) => this.director?.brainOf(a)?.state ?? "?").slice(0, 4).join(",");
+    return `§8[debug] tick ${this.lastTickMs}ms avg ${(s.ms / Math.max(1, s.ticks)).toFixed(1)} max ${s.maxMs} | bots ${this.director?.lastUpdateMs ?? 0}ms | objects ${game.objects.length} | ${states}`;
+  }
 
   private entityOf(a: Actor | undefined): Entity | undefined {
     if (!a) return undefined;
@@ -429,6 +449,7 @@ export class MatchController {
     const ab = me.character.abilities.find((a) => abilityItemId(me.character.id, a.id) === id);
     if (!ab) return;
     const out = useAbility(game, me, ab.id);
+    if (debugOn()) log(`input: use ${ab.id} -> ${out.ok ? "ok" : out.reason}`);
     if (!out.ok && out.reason && out.reason !== "failed") this.hud.flash(HUMAN_ID, `§c${ab.name}: ${out.reason}`, 25, game.now);
   }
 
@@ -441,12 +462,16 @@ export class MatchController {
     const main = me.character.abilities.find((a) => a.slot === 1);
     if (!main || abilityItemId(me.character.id, main.id) !== item.typeId) return;
     const out = useAbility(game, me, main.id);
+    if (debugOn()) log(`input: swing ${main.id} -> ${out.ok ? "ok" : out.reason}`);
     if (!out.ok && out.reason && !out.reason.startsWith("cooldown")) this.hud.flash(HUMAN_ID, `§c${main.name}: ${out.reason}`, 20, game.now);
   }
 
   onJump(player: Player): void {
     const me = this.game?.get(HUMAN_ID);
-    if (me && this.isHost(player)) me.input.jumpPresses++;
+    if (me && this.isHost(player)) {
+      me.input.jumpPresses++;
+      if (debugOn()) log(`input: jump (${me.input.jumpPresses})`);
+    }
   }
 
   onPlayerLeave(playerId: string): void {
@@ -515,7 +540,7 @@ export class MatchController {
       resetPlayerMovement(player);
       for (const tag of ["forsaken_arena_fog", "forsaken_blood_hunt_fog", "forsaken_lms_fog"]) player.fogSettings.remove(tag);
       for (const eff of ["blindness", "invisibility", "nausea", "darkness", "speed", "slowness", "slow_falling"]) player.removeEffect(eff);
-      this.restorePlayer(player);
+      await this.restorePlayer(player);
     }
     if (game) game.phase = "ENDED";
     removeTickingArea();
@@ -527,36 +552,47 @@ export class MatchController {
     if (this.machine.phase !== "LOBBY") this.machine.go("LOBBY", reason);
     this.host = null;
     this.hostId = null;
+    log(`cleanup done (${reason})`);
   }
 
   /** Puts a player back the way they were before the match (also used on rejoin after a crash). */
-  restorePlayer(player: Player): void {
+  async restorePlayer(player: Player): Promise<void> {
     const snap = loadSnapshot(player);
     if (!snap) return;
     const layout = this.layout ?? buildHollowHamlet(this.origin).layout;
     const o = { x: config().arena.originX, y: config().arena.originY, z: config().arena.originZ };
     const vault = layout.vault.map(([x, y, z]) => ({ x: o.x + x, y: o.y + y, z: o.z + z }));
-    const doRestore = (): boolean => {
-      if (!this.dim.isChunkLoaded(vault[0])) return false;
-      unstashInventory(player, this.dim, vault);
-      return true;
-    };
-    if (!doRestore()) {
-      // The vault chunk must be loaded: briefly visit the arena (player is invisible in spectator).
-      player.setGameMode(GameMode.Spectator);
-      player.teleport({ x: vault[0].x, y: vault[0].y + 8, z: vault[0].z }, { dimension: this.dim });
-      system.runTimeout(() => {
-        if (player.isValid) {
-          doRestore();
-          this.finishRestore(player, snap);
+    const loaded = () => vault.every((v) => this.dim.isChunkLoaded(v));
+    // Items come back from the vault barrels, which must be loaded. Returns null while they are not.
+    const tryUnstash = (): boolean | null => (loaded() ? unstashInventory(player, this.dim, vault) : null);
+    let got = tryUnstash();
+    if (got === null) {
+      // Load the vault with the arena's ticking area (it resolves once the chunks are loaded)...
+      const tempArea = !this.inMatch && (await ensureTickingArea(this.dim, this.origin, layout).catch(() => false));
+      got = player.isValid ? tryUnstash() : null;
+      // ...or, without ticking-area capacity, by briefly visiting it (invisible in spectator mode).
+      for (let i = 0; got === null && i < 30 && player.isValid; i++) {
+        if (i === 0) {
+          player.setGameMode(GameMode.Spectator);
+          player.teleport({ x: vault[0].x, y: vault[0].y + 8, z: vault[0].z }, { dimension: this.dim });
         }
-      }, 20);
+        await system.waitTicks(10);
+        if (player.isValid) got = tryUnstash();
+      }
+      if (tempArea && !this.inMatch) removeTickingArea();
+    }
+    if (!player.isValid) return;
+    if (got === null) {
+      // Keep the snapshot so the next join tries again; give the player their game mode and position back.
+      player.sendMessage("§c[Forsaken] Your saved inventory could not be reached yet; rejoin to try again.");
+      this.finishRestore(player, snap, false);
       return;
     }
-    this.finishRestore(player, snap);
+    if (!got) log(`restore: vault barrels missing for ${player.name}; inventory could not be returned`);
+    this.finishRestore(player, snap, true);
   }
 
-  private finishRestore(player: Player, snap: PlayerSnapshot): void {
+  private finishRestore(player: Player, snap: PlayerSnapshot, done: boolean): void {
     for (const [k, v] of Object.entries(snap.gamerules)) {
       try {
         (world.gameRules as unknown as Record<string, boolean | number>)[k] = v;
@@ -575,9 +611,12 @@ export class MatchController {
     player.setGameMode(gameModeFromString(snap.gameMode));
     player.teleport(snap.location, { dimension: world.getDimension(snap.dimension) });
     resetPlayerMovement(player);
-    clearSnapshot(player);
-    giveMenuItem(player);
+    if (done) {
+      clearSnapshot(player);
+      giveMenuItem(player);
+    }
     player.getComponent(EntityComponentTypes.Health)?.resetToMaxValue();
+    log(`restored ${player.name}: game mode ${snap.gameMode}, position${done ? ", inventory" : " (inventory still saved)"}`);
   }
 
   /** Bots-only match for automated smoke tests (no player needed). */
@@ -609,7 +648,7 @@ export class MatchController {
     if (initial && !this.inMatch && loadSnapshot(player)) {
       player.sendMessage("§e[Forsaken] Restoring your inventory from an interrupted match...");
       system.runTimeout(() => {
-        if (player.isValid) this.restorePlayer(player);
+        if (player.isValid) void this.restorePlayer(player);
       }, 40);
     }
   }

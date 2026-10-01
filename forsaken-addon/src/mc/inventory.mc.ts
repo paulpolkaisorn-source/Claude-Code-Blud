@@ -6,7 +6,6 @@ import { abilityItemId } from "../characters/roster";
 import type { Vec3 } from "../util/vec";
 
 const SNAPSHOT_KEY = "forsaken:snapshot";
-const PENDING_KEY = "forsaken:pendingRestore";
 const ARMOR = [EquipmentSlot.Head, EquipmentSlot.Chest, EquipmentSlot.Legs, EquipmentSlot.Feet, EquipmentSlot.Offhand];
 
 export interface PlayerSnapshot {
@@ -71,13 +70,21 @@ export function unstashInventory(player: Player, dim: Dimension, vault: Vec3[]):
   return true;
 }
 
+/** World-level copy keyed by player name: survives servers that do not keep player data between sessions
+ * (offline-mode players without an Xbox id get a fresh player record on every join). */
+function worldSnapshotKey(player: Player): string {
+  return `${SNAPSHOT_KEY}:${player.name}`;
+}
+
 export function saveSnapshot(player: Player, s: PlayerSnapshot): void {
-  player.setDynamicProperty(SNAPSHOT_KEY, JSON.stringify(s));
-  world.setDynamicProperty(PENDING_KEY, player.id);
+  const json = JSON.stringify(s);
+  player.setDynamicProperty(SNAPSHOT_KEY, json);
+  world.setDynamicProperty(worldSnapshotKey(player), json);
 }
 
 export function loadSnapshot(player: Player): PlayerSnapshot | null {
-  const raw = player.getDynamicProperty(SNAPSHOT_KEY);
+  const own = player.getDynamicProperty(SNAPSHOT_KEY);
+  const raw = typeof own === "string" ? own : world.getDynamicProperty(worldSnapshotKey(player));
   if (typeof raw !== "string") return null;
   try {
     return JSON.parse(raw) as PlayerSnapshot;
@@ -88,12 +95,7 @@ export function loadSnapshot(player: Player): PlayerSnapshot | null {
 
 export function clearSnapshot(player: Player): void {
   player.setDynamicProperty(SNAPSHOT_KEY, undefined);
-  if (world.getDynamicProperty(PENDING_KEY) === player.id) world.setDynamicProperty(PENDING_KEY, undefined);
-}
-
-export function pendingRestoreId(): string | undefined {
-  const v = world.getDynamicProperty(PENDING_KEY);
-  return typeof v === "string" ? v : undefined;
+  world.setDynamicProperty(worldSnapshotKey(player), undefined);
 }
 
 export function gameModeFromString(s: string): GameMode {

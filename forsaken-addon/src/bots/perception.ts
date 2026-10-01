@@ -9,7 +9,7 @@ export interface Sighting {
   pos: Vec3;
   tick: number;
   /** How it was learned. */
-  how: "sight" | "aura" | "sound" | "terror" | "touch";
+  how: "sight" | "aura" | "sound" | "terror" | "touch" | "shout";
 }
 
 export class Memory {

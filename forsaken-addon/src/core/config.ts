@@ -34,7 +34,6 @@ export interface Config {
     survivorCount: number;
     headStartSeconds: number;
     baseRoundSeconds: number;
-    secondsPerLayer: number;
     secondsRemovedPerGenerator: number;
     secondsAddedPerElimination: number;
     generatorCount: number;

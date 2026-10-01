@@ -15,6 +15,8 @@ export class HudRenderer {
   private markers = new Map<string, TextPrimitive>();
   private lastCooldown = new Map<string, number>();
   private nextBeat = 0;
+  /** Extra HUD line while `/scriptevent forsaken:debug` is on (set by the match controller). */
+  debugLine: string | null = null;
 
   flash(actorId: string, text: string, ticks: number, now: number): void {
     const list = this.flashes.get(actorId) ?? [];
@@ -29,7 +31,7 @@ export class HudRenderer {
     const fl = (this.flashes.get(viewer.id) ?? []).filter((f) => f.until > now);
     this.flashes.set(viewer.id, fl);
     if (now % config().hud.intervalTicks === 0) {
-      const hud = composeHud(game, viewer, fl.map((f) => f.text));
+      const hud = composeHud(game, viewer, [...fl.map((f) => f.text), ...(this.debugLine ? [this.debugLine] : [])]);
       player.onScreenDisplay.setActionBar(hud.lines.join("\n"));
       // Heartbeat: faster and louder closer to the killer.
       if (hud.terror > 0 && now >= this.nextBeat) {
