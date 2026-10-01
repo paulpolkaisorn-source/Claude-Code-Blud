@@ -13,7 +13,7 @@ Everything below was run on 2026-10-01 in a Linux sandbox. **No rendering Minecr
 | Game logic | `npm test`: 469 tests in 29 files (vitest, Minecraft API mocked) | all pass |
 | Bots and full matches | Headless Node simulation of complete bots-only matches (`tests/sim.ts`), 3 back-to-back in the test suite, 72 more in a balance batch | all reach a result |
 | Real server, bots only | Bedrock Dedicated Server 1.26.52.3 with the packs, `/scriptevent forsaken:selftest` | full matches, no script or content errors |
-| Real server, as a player | BDS + a headless protocol client (`bedrock-protocol`) joining as a player, scripted by `tools/bds-smoke.mjs` | see [BDS smoke scenarios](#4-bedrock-dedicated-server) |
+| Real server, as a player | BDS + a headless protocol client (`bedrock-protocol`) joining as a player, scripted by `tools/bds-smoke.mjs` | 8/8 scenarios pass ([section 4](#4-bedrock-dedicated-server)) |
 | Rendering, sound, feel | — | **not tested**: needs a person with the game (checklists below) |
 
 ## 1. Static checks
@@ -63,18 +63,20 @@ BDS_DIR=<bedrock-server> BEDROCK_CLIENT_DIR=<folder with bedrock-protocol instal
 
 ### Scenarios
 
-Results of `tools/bds-smoke.mjs` run from 17:41 to 18:00:
+Final run on the committed build (`node tools/bds-smoke.mjs`, 18:02–18:54). The `backtoback` scenario first timed out because the harness waited for its log lines in the wrong order (both matches and both cleanups had completed); with the pattern fixed it was rerun alone and passed.
 
 | Scenario | What happens | Checked in the log | Result |
 |---|---|---|---|
-| `bots` | `/scriptevent forsaken:selftest slasher normal`: a bots-only match | match runs to `SELFTEST DONE` with a winner; no script/content errors | PASS: survivors outlasted the clock, 6699 ticks, average 7.18 ms per tick, worst tick 117 ms |
-| `killer` | player as Slasher via quickstart, has 5 diamonds and is in Creative before; stays idle | movement attribute 0 during the head start, `HUNT` title, round over (survivors win on time), `SURVIVORS WIN` results form, `restored Smoke: game mode Creative, position, inventory`, `Smoke has 5 items` | PASS (196 s) |
-| `survivor` | `/scriptevent forsaken:menu`; the client answers Play as SURVIVOR → Noob → Pick → Normal; stays idle | menu forms in order, match start as Noob, HUD shows `HP …/100`, round over, restore, items back | PASS (435 s): hearts 20 → 16 → 11 → 6 → 1, eliminated, survivors then won on time |
-| `rejoin` | player leaves 40 s into a match and joins again | `cleanup done (host left)`, `Restoring your inventory…`, Creative and 4 diamonds back | PASS (62 s) |
+| `bots` | `/scriptevent forsaken:selftest slasher normal`: a bots-only match | match runs to `SELFTEST DONE` with a winner; no script/content errors | PASS (184 s): survivors outlasted the clock, 3499 ticks, average 8.90 ms per tick, worst 105 ms |
+| `backtoback` | two bots-only matches in one server session (Noli, then Guest 666 started from the first match's `cleanup done`) | both `SELFTEST start`, both `SELFTEST DONE`, two cleanups, no errors | PASS (769 s): survivors won the first, the killer the second; 10.51 / 8.37 ms average, worst 136 ms |
+| `killer` | player as Slasher via quickstart, has 5 diamonds and is in Creative before; stays idle | movement attribute 0 during the head start, `HUNT` title, round over (survivors win on time), `SURVIVORS WIN` results form, `restored Smoke: game mode Creative, position, inventory`, `Smoke has 5 items` | PASS (195 s) |
+| `survivor` | `/scriptevent forsaken:menu`; the client answers Play as SURVIVOR → Noob → Pick → Normal; stays idle | menu forms in order, match start as Noob, HUD shows `HP …/100`, round over, restore, items back | PASS (234 s): hearts 20 → 14 → 11 → 5, eliminated, killer won |
+| `rejoin` | player leaves 40 s into a match and joins again | `cleanup done (host left)`, `Restoring your inventory…`, Creative and 4 diamonds back | PASS (60 s) |
 | `leave` | in-match menu → Leave match → confirm | `Leave match?` form, `cleanup done (You left the match.)`, 7 iron ingots back | PASS (29 s) |
-| `swing` | left-click with slot 1 as Slasher | `input: swing slash -> ok` | PASS (40 s) |
+| `swing` | left-click with slot 1 as Slasher | `input: swing slash -> ok` | PASS (41 s) |
+| `jump` | three jump presses as Noob, debug mode on | `input: jump (1)` … `(3)`, debug HUD line `[debug] tick …ms avg …` | PASS (41 s) |
 
-Earlier manual runs of the same scenarios (17:11–17:35) also showed: the action bar HUD text arriving every few ticks (`⏱ 3:58 | ⚡ 0/5 | ☺ 8 alive ⏎ HP 100/100 | STA ██████████ 100 ⏎ [2] Bloxy Cola READY | …`), the terror cue (`♥ TERROR`), kill messages, the `LAST MAN STANDING` title, hearts following virtual HP on the player (20 → 14 → 10 → 9 → 8 → 4), the movement attribute changing with statuses (0.06 walking as a survivor, 0.072 with the on-hit speed boost, 0.054 when slowed), the `ELIMINATED` / `DEFEAT` titles and the spectator switch.
+An earlier full run of the first six scenarios (17:41–18:00, before the last bot changes) also passed 6/6. Manual runs of the same flows (17:11–17:35) showed in addition: the action bar HUD text arriving every few ticks (`⏱ 3:58 | ⚡ 0/5 | ☺ 8 alive ⏎ HP 100/100 | STA ██████████ 100 ⏎ [2] Bloxy Cola READY | …`), the terror cue (`♥ TERROR`), kill messages, the `LAST MAN STANDING` title, the movement attribute changing with statuses (0.06 walking as a survivor, 0.072 with the on-hit speed boost, 0.054 when slowed), the `ELIMINATED` / `DEFEAT` titles and the spectator switch.
 
 ### Performance in BDS
 
@@ -82,9 +84,10 @@ Earlier manual runs of the same scenarios (17:11–17:35) also showed: the actio
 |---|---|---|---|
 | before the bot fixes | Slasher, normal | 80 ms (during chases) | 803 ms |
 | after (DECISIONS.md D24) | Slasher, normal, 443 s | 8.87 ms | 108 ms (round start) |
-| suite run above | Slasher, normal, 335 s | 7.18 ms | 117 ms |
+| final build, `bots` | Slasher, normal, 175 s | 8.90 ms | 105 ms |
+| final build, `backtoback` | Noli then Guest 666, about 375 s each | 10.51 / 8.37 ms | 136 ms |
 
-The budget is 50 ms per tick; the worst ticks happen once, when the round starts.
+The budget is 50 ms per tick; the worst ticks happen once, when a round starts.
 
 ### Bugs found by the BDS runs (all fixed)
 

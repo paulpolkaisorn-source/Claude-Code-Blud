@@ -1,8 +1,9 @@
 # Decisions
 
 One line per decision where possible; M1 spike evidence is quoted from a real Bedrock Dedicated Server run
-(`tools/bds.mjs` + `tools/spike/`, BDS **1.26.52.3** Linux, 2026-10-01). BDS has no client, so anything visual
-(rendering, animations, HUD, forms) is still unverified — see TESTING.md.
+(`tools/bds.mjs` + `tools/spike/`, BDS **1.26.52.3** Linux, 2026-10-01). Later, a headless protocol client checked
+what a player receives (forms, HUD text, attributes; D26). Nothing was seen on a rendering client, so visuals
+(models, textures, particles, labels, fog) remain unverified — see TESTING.md.
 
 ## Versions and platform
 - **D1** Target Bedrock **1.26.50** stable (BDS download API currently serves hotfix 1.26.52.3), `min_engine_version [1,26,50]`, `@minecraft/server 2.10.0`, `@minecraft/server-ui 2.2.0` (npm `latest`). Entity format 1.26.50, item 1.26.30, block 1.26.20 (the newest folders in Mojang's official JSON schema set). No Beta API, no experiments.

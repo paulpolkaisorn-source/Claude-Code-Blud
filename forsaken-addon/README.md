@@ -19,13 +19,13 @@ An unofficial, fan-made Minecraft Bedrock addon that recreates the Roblox asymme
 
 ## Install
 
-1. Get `Forsaken.mcaddon` (build it with `npm run build`, see below; it lands in `dist/`).
+1. Get `dist/Forsaken.mcaddon` (a prebuilt copy is in this repository; `npm run build` makes a fresh one, see below).
 2. Open it (double-click on Windows, or "Open with Minecraft" on mobile). Minecraft imports both packs.
 3. Create a world (or edit one) → **Behavior Packs** → activate **FORSAKEN: Bedrock Edition (Behavior)**. The resource pack is added automatically (the two packs depend on each other).
    - World settings: **no experiments** are needed. Turn on **Cheats** only if you want the `/scriptevent` commands below; the menu item works without them. During a match the addon sets the difficulty to Easy if it was Peaceful (Peaceful refills hunger, which is the stamina bar), switches several game rules for the arena (no mob spawning, daylight or weather cycle, natural regeneration, fall damage, fire spread or TNT; keep inventory on), and restores all of it afterwards.
 4. Enter the world. On your first join you get the **Forsaken Menu** item (hotbar slot 9). Lost it? `/scriptevent forsaken:give_menu` (needs cheats).
 
-**Dedicated server**: copy `packs/Forsaken_BP` to `behavior_packs/` and `packs/Forsaken_RP` to `resource_packs/`, then list both in the world's `world_behavior_packs.json` / `world_resource_packs.json`.
+**Dedicated server**: unzip `dist/Forsaken.mcaddon` (it is a zip with `Forsaken_BP/` and `Forsaken_RP/`), copy `Forsaken_BP` to `behavior_packs/` and `Forsaken_RP` to `resource_packs/`, then list both in the world's `world_behavior_packs.json` / `world_resource_packs.json` (pack ids and versions are in each `manifest.json`). The packs in `packs/` only contain the script after `npm run build`.
 
 The arena is built about 220 blocks up at x 4000, z 4000 (change `arena` in `data/config.json`). The first build takes a few seconds (loading the area included); later matches only reset generators and props. The world's terrain is never touched.
 

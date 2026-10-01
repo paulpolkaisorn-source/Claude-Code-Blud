@@ -25,7 +25,7 @@ const SCENARIOS = {
     args: [
       ...join("scriptevent forsaken:selftest noli normal", "after:cleanup done|scriptevent forsaken:selftest guest_666 normal"),
       "--until",
-      "SELFTEST DONE[\\s\\S]*SELFTEST DONE[\\s\\S]*cleanup done[\\s\\S]*cleanup done",
+      "SELFTEST DONE[\\s\\S]*cleanup done[\\s\\S]*SELFTEST DONE[\\s\\S]*cleanup done",
       "--wait",
       "1500",
     ],
