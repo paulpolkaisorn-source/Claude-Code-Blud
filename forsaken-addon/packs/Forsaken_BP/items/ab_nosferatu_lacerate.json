@@ -1,0 +1,25 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "forsaken:ab_nosferatu_lacerate",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": "forsaken_ab_nosferatu_lacerate",
+      "minecraft:display_name": {
+        "value": "item.forsaken.ab_nosferatu_lacerate.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:can_destroy_in_creative": false,
+      "minecraft:cooldown": {
+        "category": "forsaken:ab_nosferatu_lacerate",
+        "duration": 0.05
+      },
+      "minecraft:interact_button": "Use Lacerate / Dive"
+    }
+  }
+}

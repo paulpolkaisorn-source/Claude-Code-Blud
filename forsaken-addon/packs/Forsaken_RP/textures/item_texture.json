@@ -1,0 +1,222 @@
+{
+  "resource_pack_name": "forsaken",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "forsaken_ab_slasher_slash": {
+      "textures": "textures/items/forsaken/ab_slasher_slash"
+    },
+    "forsaken_ab_slasher_behead": {
+      "textures": "textures/items/forsaken/ab_slasher_behead"
+    },
+    "forsaken_ab_slasher_gashing_wound": {
+      "textures": "textures/items/forsaken/ab_slasher_gashing_wound"
+    },
+    "forsaken_ab_slasher_raging_pace": {
+      "textures": "textures/items/forsaken/ab_slasher_raging_pace"
+    },
+    "forsaken_ab_c00lkidd_tag": {
+      "textures": "textures/items/forsaken/ab_c00lkidd_tag"
+    },
+    "forsaken_ab_c00lkidd_corrupt_nature": {
+      "textures": "textures/items/forsaken/ab_c00lkidd_corrupt_nature"
+    },
+    "forsaken_ab_c00lkidd_walkspeed_override": {
+      "textures": "textures/items/forsaken/ab_c00lkidd_walkspeed_override"
+    },
+    "forsaken_ab_c00lkidd_pizza_delivery": {
+      "textures": "textures/items/forsaken/ab_c00lkidd_pizza_delivery"
+    },
+    "forsaken_ab_john_doe_slash": {
+      "textures": "textures/items/forsaken/ab_john_doe_slash"
+    },
+    "forsaken_ab_john_doe_corrupt_energy": {
+      "textures": "textures/items/forsaken/ab_john_doe_corrupt_energy"
+    },
+    "forsaken_ab_john_doe_digital_footprint": {
+      "textures": "textures/items/forsaken/ab_john_doe_digital_footprint"
+    },
+    "forsaken_ab_john_doe_error_404": {
+      "textures": "textures/items/forsaken/ab_john_doe_error_404"
+    },
+    "forsaken_ab_1x1x1x1_slash": {
+      "textures": "textures/items/forsaken/ab_1x1x1x1_slash"
+    },
+    "forsaken_ab_1x1x1x1_mass_infection": {
+      "textures": "textures/items/forsaken/ab_1x1x1x1_mass_infection"
+    },
+    "forsaken_ab_1x1x1x1_entanglement": {
+      "textures": "textures/items/forsaken/ab_1x1x1x1_entanglement"
+    },
+    "forsaken_ab_1x1x1x1_unstable_eye": {
+      "textures": "textures/items/forsaken/ab_1x1x1x1_unstable_eye"
+    },
+    "forsaken_ab_1x1x1x1_rejuvenate_the_rotten": {
+      "textures": "textures/items/forsaken/ab_1x1x1x1_rejuvenate_the_rotten"
+    },
+    "forsaken_ab_noli_stab": {
+      "textures": "textures/items/forsaken/ab_noli_stab"
+    },
+    "forsaken_ab_noli_void_rush": {
+      "textures": "textures/items/forsaken/ab_noli_void_rush"
+    },
+    "forsaken_ab_noli_nova": {
+      "textures": "textures/items/forsaken/ab_noli_nova"
+    },
+    "forsaken_ab_noli_observant": {
+      "textures": "textures/items/forsaken/ab_noli_observant"
+    },
+    "forsaken_ab_guest_666_carving_slash": {
+      "textures": "textures/items/forsaken/ab_guest_666_carving_slash"
+    },
+    "forsaken_ab_guest_666_demonic_pursuit": {
+      "textures": "textures/items/forsaken/ab_guest_666_demonic_pursuit"
+    },
+    "forsaken_ab_guest_666_infernal_cry": {
+      "textures": "textures/items/forsaken/ab_guest_666_infernal_cry"
+    },
+    "forsaken_ab_guest_666_blood_rush": {
+      "textures": "textures/items/forsaken/ab_guest_666_blood_rush"
+    },
+    "forsaken_ab_guest_666_eviscerate": {
+      "textures": "textures/items/forsaken/ab_guest_666_eviscerate"
+    },
+    "forsaken_ab_nosferatu_lacerate": {
+      "textures": "textures/items/forsaken/ab_nosferatu_lacerate"
+    },
+    "forsaken_ab_nosferatu_bloodhook": {
+      "textures": "textures/items/forsaken/ab_nosferatu_bloodhook"
+    },
+    "forsaken_ab_nosferatu_cataclysm": {
+      "textures": "textures/items/forsaken/ab_nosferatu_cataclysm"
+    },
+    "forsaken_ab_nosferatu_hunters_feast": {
+      "textures": "textures/items/forsaken/ab_nosferatu_hunters_feast"
+    },
+    "forsaken_ab_nosferatu_ascension": {
+      "textures": "textures/items/forsaken/ab_nosferatu_ascension"
+    },
+    "forsaken_ab_daemon_ping": {
+      "textures": "textures/items/forsaken/ab_daemon_ping"
+    },
+    "forsaken_ab_daemon_fork": {
+      "textures": "textures/items/forsaken/ab_daemon_fork"
+    },
+    "forsaken_ab_daemon_segfault": {
+      "textures": "textures/items/forsaken/ab_daemon_segfault"
+    },
+    "forsaken_ab_daemon_kill_9": {
+      "textures": "textures/items/forsaken/ab_daemon_kill_9"
+    },
+    "forsaken_ab_noob_bloxy_cola": {
+      "textures": "textures/items/forsaken/ab_noob_bloxy_cola"
+    },
+    "forsaken_ab_noob_slateskin_potion": {
+      "textures": "textures/items/forsaken/ab_noob_slateskin_potion"
+    },
+    "forsaken_ab_noob_ghostburger": {
+      "textures": "textures/items/forsaken/ab_noob_ghostburger"
+    },
+    "forsaken_ab_007n7_clone": {
+      "textures": "textures/items/forsaken/ab_007n7_clone"
+    },
+    "forsaken_ab_007n7_c00lgui": {
+      "textures": "textures/items/forsaken/ab_007n7_c00lgui"
+    },
+    "forsaken_ab_007n7_inject": {
+      "textures": "textures/items/forsaken/ab_007n7_inject"
+    },
+    "forsaken_ab_veeronica_vandalism": {
+      "textures": "textures/items/forsaken/ab_veeronica_vandalism"
+    },
+    "forsaken_ab_veeronica_sk8": {
+      "textures": "textures/items/forsaken/ab_veeronica_sk8"
+    },
+    "forsaken_ab_veeronica_broadcast": {
+      "textures": "textures/items/forsaken/ab_veeronica_broadcast"
+    },
+    "forsaken_ab_veeronica_activate_battery": {
+      "textures": "textures/items/forsaken/ab_veeronica_activate_battery"
+    },
+    "forsaken_ab_guest_1337_block": {
+      "textures": "textures/items/forsaken/ab_guest_1337_block"
+    },
+    "forsaken_ab_guest_1337_charge": {
+      "textures": "textures/items/forsaken/ab_guest_1337_charge"
+    },
+    "forsaken_ab_guest_1337_punch": {
+      "textures": "textures/items/forsaken/ab_guest_1337_punch"
+    },
+    "forsaken_ab_shedletsky_slash": {
+      "textures": "textures/items/forsaken/ab_shedletsky_slash"
+    },
+    "forsaken_ab_shedletsky_fried_chicken": {
+      "textures": "textures/items/forsaken/ab_shedletsky_fried_chicken"
+    },
+    "forsaken_ab_chance_coin_flip": {
+      "textures": "textures/items/forsaken/ab_chance_coin_flip"
+    },
+    "forsaken_ab_chance_one_shot": {
+      "textures": "textures/items/forsaken/ab_chance_one_shot"
+    },
+    "forsaken_ab_chance_reroll": {
+      "textures": "textures/items/forsaken/ab_chance_reroll"
+    },
+    "forsaken_ab_chance_hat_fix": {
+      "textures": "textures/items/forsaken/ab_chance_hat_fix"
+    },
+    "forsaken_ab_two_time_sacrificial_dagger": {
+      "textures": "textures/items/forsaken/ab_two_time_sacrificial_dagger"
+    },
+    "forsaken_ab_two_time_crouch": {
+      "textures": "textures/items/forsaken/ab_two_time_crouch"
+    },
+    "forsaken_ab_two_time_pray": {
+      "textures": "textures/items/forsaken/ab_two_time_pray"
+    },
+    "forsaken_ab_two_time_ritual": {
+      "textures": "textures/items/forsaken/ab_two_time_ritual"
+    },
+    "forsaken_ab_jane_doe_crystal_pitch": {
+      "textures": "textures/items/forsaken/ab_jane_doe_crystal_pitch"
+    },
+    "forsaken_ab_jane_doe_hatchet": {
+      "textures": "textures/items/forsaken/ab_jane_doe_hatchet"
+    },
+    "forsaken_ab_elliot_pizza_throw": {
+      "textures": "textures/items/forsaken/ab_elliot_pizza_throw"
+    },
+    "forsaken_ab_elliot_rush_hour": {
+      "textures": "textures/items/forsaken/ab_elliot_rush_hour"
+    },
+    "forsaken_ab_builderman_sentry": {
+      "textures": "textures/items/forsaken/ab_builderman_sentry"
+    },
+    "forsaken_ab_builderman_dispenser": {
+      "textures": "textures/items/forsaken/ab_builderman_dispenser"
+    },
+    "forsaken_ab_builderman_carry": {
+      "textures": "textures/items/forsaken/ab_builderman_carry"
+    },
+    "forsaken_ab_dusekkar_spawn_protection": {
+      "textures": "textures/items/forsaken/ab_dusekkar_spawn_protection"
+    },
+    "forsaken_ab_dusekkar_plasma_beam": {
+      "textures": "textures/items/forsaken/ab_dusekkar_plasma_beam"
+    },
+    "forsaken_ab_taph_tripwire": {
+      "textures": "textures/items/forsaken/ab_taph_tripwire"
+    },
+    "forsaken_ab_taph_subspace_tripmine": {
+      "textures": "textures/items/forsaken/ab_taph_subspace_tripmine"
+    },
+    "forsaken_menu": {
+      "textures": "textures/items/forsaken/menu"
+    },
+    "forsaken_item_medkit": {
+      "textures": "textures/items/forsaken/item_medkit"
+    },
+    "forsaken_item_cola": {
+      "textures": "textures/items/forsaken/item_cola"
+    }
+  }
+}

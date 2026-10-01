@@ -1,0 +1,101 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.forsaken.bot": {
+      "arrays": {
+        "textures": {
+          "Array.skins": [
+            "Texture.skin_0",
+            "Texture.skin_1",
+            "Texture.skin_2",
+            "Texture.skin_3",
+            "Texture.skin_4",
+            "Texture.skin_5",
+            "Texture.skin_6",
+            "Texture.skin_7",
+            "Texture.skin_8",
+            "Texture.skin_9",
+            "Texture.skin_10",
+            "Texture.skin_11",
+            "Texture.skin_12",
+            "Texture.skin_13",
+            "Texture.skin_14",
+            "Texture.skin_15",
+            "Texture.skin_16",
+            "Texture.skin_17",
+            "Texture.skin_18",
+            "Texture.skin_19",
+            "Texture.skin_20",
+            "Texture.skin_21"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "(query.property('forsaken:character') == 7 && math.mod(math.floor(query.life_time * 2.0), 2.0) == 1.0) ? Texture.daemon_blink : Array.skins[query.property('forsaken:character')]"
+      ]
+    },
+    "controller.render.forsaken.prop": {
+      "arrays": {
+        "textures": {
+          "Array.props": [
+            "Texture.p0",
+            "Texture.p1",
+            "Texture.p2",
+            "Texture.p3",
+            "Texture.p4",
+            "Texture.p5",
+            "Texture.p6",
+            "Texture.p7",
+            "Texture.p8",
+            "Texture.p9",
+            "Texture.p10",
+            "Texture.p11",
+            "Texture.p12",
+            "Texture.p13",
+            "Texture.p14",
+            "Texture.p15",
+            "Texture.p16"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.props[query.property('forsaken:variant')]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "cube": "math.mod(math.floor(v.mask / 1), 2) == 1"
+        },
+        {
+          "flat": "math.mod(math.floor(v.mask / 2), 2) == 1"
+        },
+        {
+          "pole": "math.mod(math.floor(v.mask / 4), 2) == 1"
+        },
+        {
+          "small": "math.mod(math.floor(v.mask / 8), 2) == 1"
+        },
+        {
+          "tall": "math.mod(math.floor(v.mask / 16), 2) == 1"
+        },
+        {
+          "panel": "math.mod(math.floor(v.mask / 32), 2) == 1"
+        }
+      ]
+    }
+  }
+}

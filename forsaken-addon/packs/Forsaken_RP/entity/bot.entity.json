@@ -1,0 +1,69 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "forsaken:bot",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "skin_0": "textures/entity/forsaken/skin_slasher",
+        "skin_1": "textures/entity/forsaken/skin_c00lkidd",
+        "skin_2": "textures/entity/forsaken/skin_john_doe",
+        "skin_3": "textures/entity/forsaken/skin_1x1x1x1",
+        "skin_4": "textures/entity/forsaken/skin_noli",
+        "skin_5": "textures/entity/forsaken/skin_guest_666",
+        "skin_6": "textures/entity/forsaken/skin_nosferatu",
+        "skin_7": "textures/entity/forsaken/skin_daemon",
+        "skin_8": "textures/entity/forsaken/skin_noob",
+        "skin_9": "textures/entity/forsaken/skin_007n7",
+        "skin_10": "textures/entity/forsaken/skin_veeronica",
+        "skin_11": "textures/entity/forsaken/skin_guest_1337",
+        "skin_12": "textures/entity/forsaken/skin_shedletsky",
+        "skin_13": "textures/entity/forsaken/skin_chance",
+        "skin_14": "textures/entity/forsaken/skin_two_time",
+        "skin_15": "textures/entity/forsaken/skin_jane_doe",
+        "skin_16": "textures/entity/forsaken/skin_elliot",
+        "skin_17": "textures/entity/forsaken/skin_builderman",
+        "skin_18": "textures/entity/forsaken/skin_dusekkar",
+        "skin_19": "textures/entity/forsaken/skin_taph",
+        "skin_20": "textures/entity/forsaken/skin_minion_pizza_bot",
+        "skin_21": "textures/entity/forsaken/skin_minion_zombie",
+        "daemon_blink": "textures/entity/forsaken/skin_daemon_blink"
+      },
+      "geometry": {
+        "default": "geometry.forsaken.humanoid"
+      },
+      "animations": {
+        "walk": "animation.forsaken.walk",
+        "look": "animation.forsaken.look",
+        "swing": "animation.forsaken.swing",
+        "stunned": "animation.forsaken.stunned",
+        "repair": "animation.forsaken.repair",
+        "cast": "animation.forsaken.cast"
+      },
+      "scripts": {
+        "scale": "query.property('forsaken:character') == 7 ? 1.15 : 1.0",
+        "animate": [
+          "walk",
+          "look",
+          {
+            "swing": "query.property('forsaken:action') == 1"
+          },
+          {
+            "stunned": "query.property('forsaken:action') == 2"
+          },
+          {
+            "repair": "query.property('forsaken:action') == 3"
+          },
+          {
+            "cast": "query.property('forsaken:action') == 4"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.forsaken.bot"
+      ]
+    }
+  }
+}

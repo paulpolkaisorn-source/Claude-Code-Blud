@@ -1,0 +1,25 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "forsaken:ab_builderman_carry",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": "forsaken_ab_builderman_carry",
+      "minecraft:display_name": {
+        "value": "item.forsaken.ab_builderman_carry.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": false,
+      "minecraft:can_destroy_in_creative": false,
+      "minecraft:cooldown": {
+        "category": "forsaken:ab_builderman_carry",
+        "duration": 0.05
+      },
+      "minecraft:interact_button": "Use Carry / Place"
+    }
+  }
+}

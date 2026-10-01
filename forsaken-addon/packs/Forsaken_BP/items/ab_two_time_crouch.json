@@ -1,0 +1,25 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": {
+      "identifier": "forsaken:ab_two_time_crouch",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:icon": "forsaken_ab_two_time_crouch",
+      "minecraft:display_name": {
+        "value": "item.forsaken.ab_two_time_crouch.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": false,
+      "minecraft:can_destroy_in_creative": false,
+      "minecraft:cooldown": {
+        "category": "forsaken:ab_two_time_crouch",
+        "duration": 0.05
+      },
+      "minecraft:interact_button": "Use Crouch"
+    }
+  }
+}

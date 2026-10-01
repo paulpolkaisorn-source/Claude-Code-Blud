@@ -1,0 +1,171 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.forsaken.walk": {
+      "loop": true,
+      "bones": {
+        "rightarm": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 70.0 * math.min(1.0, query.modified_move_speed * 1.5)",
+            0,
+            0
+          ]
+        },
+        "leftarm": {
+          "rotation": [
+            "-(math.cos(query.modified_distance_moved * 38.17) * 70.0 * math.min(1.0, query.modified_move_speed * 1.5))",
+            0,
+            0
+          ]
+        },
+        "rightleg": {
+          "rotation": [
+            "-(math.cos(query.modified_distance_moved * 38.17) * 70.0 * math.min(1.0, query.modified_move_speed * 1.5))",
+            0,
+            0
+          ]
+        },
+        "leftleg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 70.0 * math.min(1.0, query.modified_move_speed * 1.5)",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.forsaken.look": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "query.target_x_rotation",
+            "query.target_y_rotation",
+            0
+          ]
+        }
+      }
+    },
+    "animation.forsaken.swing": {
+      "loop": true,
+      "bones": {
+        "rightarm": {
+          "rotation": [
+            "-100.0 + math.sin(query.anim_time * 1080.0) * 40.0",
+            0,
+            15
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            "math.sin(query.anim_time * 1080.0) * 12.0",
+            0
+          ]
+        }
+      }
+    },
+    "animation.forsaken.stunned": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            20,
+            "math.sin(query.anim_time * 400.0) * 25.0",
+            10
+          ]
+        },
+        "rightarm": {
+          "rotation": [
+            0,
+            0,
+            20
+          ]
+        },
+        "leftarm": {
+          "rotation": [
+            0,
+            0,
+            -20
+          ]
+        }
+      }
+    },
+    "animation.forsaken.repair": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "position": [
+            0,
+            -3,
+            0
+          ]
+        },
+        "rightleg": {
+          "rotation": [
+            -70,
+            0,
+            0
+          ]
+        },
+        "leftleg": {
+          "rotation": [
+            -70,
+            0,
+            0
+          ]
+        },
+        "rightarm": {
+          "rotation": [
+            "-60.0 + math.sin(query.anim_time * 900.0) * 10.0",
+            0,
+            0
+          ]
+        },
+        "leftarm": {
+          "rotation": [
+            "-60.0 - math.sin(query.anim_time * 900.0) * 10.0",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.forsaken.cast": {
+      "loop": true,
+      "bones": {
+        "rightarm": {
+          "rotation": [
+            -160,
+            0,
+            10
+          ]
+        },
+        "leftarm": {
+          "rotation": [
+            -160,
+            0,
+            -10
+          ]
+        }
+      }
+    },
+    "animation.forsaken.prop_spin": {
+      "loop": true,
+      "bones": {
+        "small": {
+          "rotation": [
+            0,
+            "query.anim_time * 120.0",
+            0
+          ],
+          "position": [
+            0,
+            "math.sin(query.anim_time * 180.0) * 1.5",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

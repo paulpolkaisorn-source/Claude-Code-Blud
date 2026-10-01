@@ -1,5 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "types": ["node"] },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "data/*.json"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "data/*.json"],
+  "exclude": ["src/types/console.d.ts"]
 }

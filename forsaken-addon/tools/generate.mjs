@@ -2,4 +2,5 @@
 import { generateManifests } from "./gen-manifests.mjs";
 
 generateManifests();
+await import("./gen-content.mjs");
 console.log("[generate] done");

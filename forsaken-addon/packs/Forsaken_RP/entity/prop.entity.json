@@ -1,0 +1,50 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "forsaken:prop",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "p0": "textures/entity/forsaken/prop_pizza",
+        "p1": "textures/entity/forsaken/prop_sentry",
+        "p2": "textures/entity/forsaken/prop_dispenser",
+        "p3": "textures/entity/forsaken/prop_tripwire_stake",
+        "p4": "textures/entity/forsaken/prop_tripmine",
+        "p5": "textures/entity/forsaken/prop_blood_orb",
+        "p6": "textures/entity/forsaken/prop_medkit",
+        "p7": "textures/entity/forsaken/prop_cola",
+        "p8": "textures/entity/forsaken/prop_ritual",
+        "p9": "textures/entity/forsaken/prop_graffiti",
+        "p10": "textures/entity/forsaken/prop_shadow_trap",
+        "p11": "textures/entity/forsaken/prop_spike",
+        "p12": "textures/entity/forsaken/prop_nova",
+        "p13": "textures/entity/forsaken/prop_crystal",
+        "p14": "textures/entity/forsaken/prop_bat_orb",
+        "p15": "textures/entity/forsaken/prop_corrupt_cube",
+        "p16": "textures/entity/forsaken/prop_marker"
+      },
+      "geometry": {
+        "default": "geometry.forsaken.prop"
+      },
+      "animations": {
+        "spin": "animation.forsaken.prop_spin"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.k = query.property('forsaken:variant');",
+          "v.mask = (v.k == 0) ? 2 : ((v.k == 1) ? 5 : ((v.k == 2) ? 1 : ((v.k == 3) ? 4 : ((v.k == 4) ? 2 : ((v.k == 5) ? 8 : ((v.k == 6) ? 8 : ((v.k == 7) ? 8 : ((v.k == 8) ? 2 : ((v.k == 9) ? 32 : ((v.k == 10) ? 2 : ((v.k == 11) ? 16 : ((v.k == 12) ? 8 : ((v.k == 13) ? 8 : ((v.k == 14) ? 8 : ((v.k == 15) ? 1 : ((v.k == 16) ? 8 : (8)))))))))))))))));"
+        ],
+        "animate": [
+          {
+            "spin": "math.mod(math.floor(v.mask / 8), 2) == 1"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.forsaken.prop"
+      ]
+    }
+  }
+}

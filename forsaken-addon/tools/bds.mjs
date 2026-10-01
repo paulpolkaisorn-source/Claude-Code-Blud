@@ -3,6 +3,7 @@
 //   BDS_DIR=/path/to/bedrock-server node tools/bds.mjs [--bp dir] [--rp dir] [--cmd "scriptevent forsaken:selftest"]...
 //                                                       [--wait 120] [--until "regex"] [--fresh]
 // Defaults: the packs in packs/, a fresh world, 60 s timeout. The full log is written to .cache/bds-last.log.
+// --quiet: do not echo the server output (use when piping into head/grep, otherwise a closed pipe can stall BDS).
 // Exit code 1 when the log contains script errors, content-log errors or pack-loading failures.
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -10,7 +11,7 @@ import path from "node:path";
 import { ROOT, BP, RP, readJson } from "./lib/fsutil.mjs";
 
 const args = process.argv.slice(2);
-const opt = { bp: BP, rp: RP, cmds: [], wait: 60, until: null, fresh: true, level: "forsaken_smoke" };
+const opt = { bp: BP, rp: RP, cmds: [], wait: 60, until: null, fresh: true, level: "forsaken_smoke", quiet: false };
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === "--bp") opt.bp = path.resolve(args[++i]);
@@ -20,6 +21,7 @@ for (let i = 0; i < args.length; i++) {
   else if (a === "--until") opt.until = new RegExp(args[++i]);
   else if (a === "--keep-world") opt.fresh = false;
   else if (a === "--level") opt.level = args[++i];
+  else if (a === "--quiet") opt.quiet = true;
   else throw new Error(`unknown argument ${a}`);
 }
 const bds = process.env.BDS_DIR;
@@ -77,7 +79,7 @@ const onData = (buf) => {
   const s = buf.toString();
   out += s;
   log.write(s);
-  process.stdout.write(s);
+  if (!opt.quiet) process.stdout.write(s);
   if (!started && /Server started\./.test(out)) {
     started = true;
     let delay = 3000;

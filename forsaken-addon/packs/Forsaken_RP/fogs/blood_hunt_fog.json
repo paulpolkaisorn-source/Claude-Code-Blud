@@ -1,0 +1,22 @@
+{
+  "format_version": "1.16.100",
+  "minecraft:fog_settings": {
+    "description": {
+      "identifier": "forsaken:blood_hunt_fog"
+    },
+    "distance": {
+      "air": {
+        "fog_start": 2,
+        "fog_end": 26,
+        "fog_color": "#2A0204",
+        "render_distance_type": "fixed"
+      },
+      "weather": {
+        "fog_start": 2,
+        "fog_end": 26,
+        "fog_color": "#2A0204",
+        "render_distance_type": "fixed"
+      }
+    }
+  }
+}

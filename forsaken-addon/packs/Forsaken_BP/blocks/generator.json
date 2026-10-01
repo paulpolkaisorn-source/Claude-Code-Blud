@@ -1,0 +1,28 @@
+{
+  "format_version": "1.26.20",
+  "minecraft:block": {
+    "description": {
+      "identifier": "forsaken:generator",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:display_name": "tile.forsaken:generator.name",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "forsaken_generator",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "forsaken_generator_top",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:light_emission": 2,
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": false
+    }
+  }
+}
