@@ -42,6 +42,52 @@ describe("arena layout", () => {
     for (const i of layout.itemSpots) expect(field[grid.idx(i.x, i.z)]).toBeLessThan(Infinity);
     expect(field[grid.idx(layout.killerSpawn.x, layout.killerSpawn.z)]).toBeLessThan(Infinity);
   });
+  it("computes exact shortest distances (matches a brute-force relaxation) and respects maxDist", () => {
+    const src = layout.killerSpawn;
+    const fast = grid.distanceField([src]);
+    // Reference: Bellman-Ford style relaxation in float64 until nothing changes.
+    const N = grid.size * grid.size;
+    const ref = new Float64Array(N).fill(Infinity);
+    ref[grid.idx(src.x, src.z)] = 0;
+    const DX = [1, -1, 0, 0, 1, 1, -1, -1];
+    const DZ = [0, 0, 1, -1, 1, -1, 1, -1];
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (let z = 0; z < grid.size; z++)
+        for (let x = 0; x < grid.size; x++) {
+          const i = grid.idx(x, z);
+          if (ref[i] === Infinity) continue;
+          for (let k = 0; k < 8; k++) {
+            const nx = x + DX[k];
+            const nz = z + DZ[k];
+            if (!grid.walkable(nx, nz)) continue;
+            if (k >= 4 && (!grid.walkable(x + DX[k], z) || !grid.walkable(x, z + DZ[k]))) continue;
+            const nd = ref[i] + (k >= 4 ? Math.SQRT2 : 1);
+            if (nd < ref[grid.idx(nx, nz)] - 1e-9) {
+              ref[grid.idx(nx, nz)] = nd;
+              changed = true;
+            }
+          }
+        }
+    }
+    let reached = 0;
+    for (let i = 0; i < N; i++) {
+      if (ref[i] === Infinity) expect(fast[i]).toBe(Infinity);
+      else {
+        reached++;
+        expect(Math.abs(fast[i] - ref[i])).toBeLessThan(0.01);
+      }
+    }
+    expect(reached).toBeGreaterThan(4000);
+    // Limited range: cells beyond maxDist stay unreached, nearer ones are exact; the output buffer is reused.
+    const out = new Float32Array(N);
+    const near = grid.distanceField([src], 20, out);
+    expect(near).toBe(out);
+    for (let i = 0; i < N; i++) {
+      if (ref[i] <= 20) expect(Math.abs(near[i] - ref[i])).toBeLessThan(0.01);
+      if (ref[i] > 21.5) expect(near[i]).toBe(Infinity);
+    }
+  });
   it("puts the killer spawn far from every survivor spawn", () => {
     for (const s of layout.survivorSpawns) expect(Math.hypot(s.x - layout.killerSpawn.x, s.z - layout.killerSpawn.z)).toBeGreaterThan(60);
   });

@@ -25,6 +25,13 @@ export class NavGrid {
   readonly originZ: number;
   /** Extra per-cell blockers placed at runtime (spikes, buildings) — counted, so overlapping blockers stack. */
   private readonly dynamicBlock: Uint16Array;
+  private gScore: Float32Array | null = null;
+  private came: Int32Array | null = null;
+  private stamp: Uint32Array | null = null;
+  private closedStamp: Uint32Array | null = null;
+  private searchGen = 0;
+  private readonly heap = new MinHeap();
+  private readonly fieldHeap = new MinHeap();
 
   constructor(size: number, origin: Vec3, cells?: Uint8Array) {
     this.size = size;
@@ -169,35 +176,49 @@ export class NavGrid {
     const g = this.nearestWalkable(goal, 6);
     if (!s || !g) return null;
     const N = this.size * this.size;
-    const gScore = new Float32Array(N).fill(Infinity);
-    const came = new Int32Array(N).fill(-1);
-    const closed = new Uint8Array(N);
-    const heap = new MinHeap();
+    // Reused buffers with generation stamps: no per-call allocation (matters in the Bedrock JS runtime).
+    if (!this.gScore || this.gScore.length !== N) {
+      this.gScore = new Float32Array(N);
+      this.came = new Int32Array(N);
+      this.stamp = new Uint32Array(N);
+      this.closedStamp = new Uint32Array(N);
+    }
+    const gen = ++this.searchGen;
+    const gScore = this.gScore;
+    const came = this.came as Int32Array;
+    const stamp = this.stamp as Uint32Array;
+    const closed = this.closedStamp as Uint32Array;
+    const heap = this.heap;
+    heap.clear();
     const si = this.idx(s.x, s.z);
     const gi = this.idx(g.x, g.z);
     gScore[si] = 0;
+    came[si] = -1;
+    stamp[si] = gen;
     heap.push(si, octile(s, g));
     let expanded = 0;
     while (heap.size > 0) {
       const cur = heap.pop();
       if (cur === gi) return this.reconstruct(came, gi);
-      if (closed[cur]) continue;
-      closed[cur] = 1;
+      if (closed[cur] === gen) continue;
+      closed[cur] = gen;
       if (++expanded > maxNodes) return null;
       const cx = cur % this.size;
       const cz = (cur - cx) / this.size;
+      const cg = gScore[cur];
       for (let k = 0; k < 8; k++) {
         const nx = cx + DX[k];
         const nz = cz + DZ[k];
         if (!this.walkable(nx, nz)) continue;
         if (k >= 4 && (!this.walkable(cx + DX[k], cz) || !this.walkable(cx, cz + DZ[k]))) continue;
         const ni = this.idx(nx, nz);
-        if (closed[ni]) continue;
-        const ng = gScore[cur] + (k >= 4 ? Math.SQRT2 : 1);
-        if (ng < gScore[ni]) {
+        if (closed[ni] === gen) continue;
+        const ng = cg + (k >= 4 ? Math.SQRT2 : 1);
+        if (stamp[ni] !== gen || ng < gScore[ni]) {
+          stamp[ni] = gen;
           gScore[ni] = ng;
           came[ni] = cur;
-          heap.push(ni, ng + octile({ x: nx, z: nz }, g));
+          heap.push(ni, ng + octileXZ(nx, nz, g.x, g.z));
         }
       }
     }
@@ -256,10 +277,12 @@ export class NavGrid {
   }
 
   /** Breadth-first distance field (in cells, 8-connected) from a set of sources. Unreachable = Infinity. */
-  distanceField(sources: GridPos[], maxDist = Infinity): Float32Array {
+  distanceField(sources: GridPos[], maxDist = Infinity, out?: Float32Array): Float32Array {
     const N = this.size * this.size;
-    const d = new Float32Array(N).fill(Infinity);
-    const heap = new MinHeap();
+    const d = out && out.length === N ? out : new Float32Array(N);
+    d.fill(Infinity);
+    const heap = this.fieldHeap;
+    heap.clear();
     for (const s of sources) {
       const w = this.nearestWalkable(s, 3);
       if (!w) continue;
@@ -267,23 +290,63 @@ export class NavGrid {
       d[i] = 0;
       heap.push(i, 0);
     }
+    // Hot loop: walkability is read straight from the cell / blocker arrays (no per-neighbour method calls).
+    const size = this.size;
+    const cells = this.cells;
+    const dyn = this.dynamicBlock;
+    const open = (x: number, z: number): boolean => {
+      if (x < 0 || z < 0 || x >= size || z >= size) return false;
+      const i = z * size + x;
+      const c = cells[i];
+      return (c === Cell.Floor || c === Cell.Door) && dyn[i] === 0;
+    };
     while (heap.size > 0) {
       const cur = heap.pop();
-      const cd = d[cur];
+      const cd = heap.lastPriority;
+      if (cd > d[cur]) continue; // stale entry: this cell was already settled with a shorter distance
       if (cd > maxDist) break;
-      const cx = cur % this.size;
-      const cz = (cur - cx) / this.size;
-      for (let k = 0; k < 8; k++) {
-        const nx = cx + DX[k];
-        const nz = cz + DZ[k];
-        if (!this.walkable(nx, nz)) continue;
-        if (k >= 4 && (!this.walkable(cx + DX[k], cz) || !this.walkable(cx, cz + DZ[k]))) continue;
-        const ni = this.idx(nx, nz);
-        const nd = cd + (k >= 4 ? Math.SQRT2 : 1);
-        if (nd < d[ni]) {
-          d[ni] = nd;
-          heap.push(ni, nd);
-        }
+      const cx = cur % size;
+      const cz = (cur - cx) / size;
+      const e = open(cx + 1, cz);
+      const w = open(cx - 1, cz);
+      const s2 = open(cx, cz + 1);
+      const n = open(cx, cz - 1);
+      // Rounded to float32 so the stored distance and the heap priority compare exactly (otherwise a value
+      // that rounds up when stored keeps looking improvable and the cell is re-expanded over and over).
+      const d1 = Math.fround(cd + 1);
+      const d2 = Math.fround(cd + Math.SQRT2);
+      if (e && d1 < d[cur + 1]) {
+        d[cur + 1] = d1;
+        heap.push(cur + 1, d1);
+      }
+      if (w && d1 < d[cur - 1]) {
+        d[cur - 1] = d1;
+        heap.push(cur - 1, d1);
+      }
+      if (s2 && d1 < d[cur + size]) {
+        d[cur + size] = d1;
+        heap.push(cur + size, d1);
+      }
+      if (n && d1 < d[cur - size]) {
+        d[cur - size] = d1;
+        heap.push(cur - size, d1);
+      }
+      // Diagonals only when both adjacent orthogonal cells are open (no corner cutting).
+      if (e && s2 && open(cx + 1, cz + 1) && d2 < d[cur + size + 1]) {
+        d[cur + size + 1] = d2;
+        heap.push(cur + size + 1, d2);
+      }
+      if (e && n && open(cx + 1, cz - 1) && d2 < d[cur - size + 1]) {
+        d[cur - size + 1] = d2;
+        heap.push(cur - size + 1, d2);
+      }
+      if (w && s2 && open(cx - 1, cz + 1) && d2 < d[cur + size - 1]) {
+        d[cur + size - 1] = d2;
+        heap.push(cur + size - 1, d2);
+      }
+      if (w && n && open(cx - 1, cz - 1) && d2 < d[cur - size - 1]) {
+        d[cur - size - 1] = d2;
+        heap.push(cur - size - 1, d2);
       }
     }
     return d;
@@ -301,57 +364,77 @@ const DX = [1, -1, 0, 0, 1, 1, -1, -1];
 const DZ = [0, 0, 1, -1, 1, -1, 1, -1];
 
 function octile(a: GridPos, b: GridPos): number {
-  const dx = Math.abs(a.x - b.x);
-  const dz = Math.abs(a.z - b.z);
+  return octileXZ(a.x, a.z, b.x, b.z);
+}
+
+function octileXZ(ax: number, az: number, bx: number, bz: number): number {
+  const dx = Math.abs(ax - bx);
+  const dz = Math.abs(az - bz);
   return dx + dz + (Math.SQRT2 - 2) * Math.min(dx, dz);
 }
 
-/** Binary min-heap of (index, priority). */
+/** Binary min-heap of (index, priority) on growable typed arrays; sifts by moving a hole (no swaps, no garbage). */
 class MinHeap {
-  private ids: number[] = [];
-  private pr: number[] = [];
+  private ids = new Int32Array(1024);
+  private pr = new Float64Array(1024);
+  private n = 0;
+  /** Priority of the element returned by the last pop(). */
+  lastPriority = 0;
 
   get size(): number {
-    return this.ids.length;
+    return this.n;
+  }
+
+  clear(): void {
+    this.n = 0;
   }
 
   push(id: number, p: number): void {
-    this.ids.push(id);
-    this.pr.push(p);
-    let i = this.ids.length - 1;
+    if (this.n === this.ids.length) {
+      const ids = new Int32Array(this.n * 2);
+      ids.set(this.ids);
+      const pr = new Float64Array(this.n * 2);
+      pr.set(this.pr);
+      this.ids = ids;
+      this.pr = pr;
+    }
+    const ids = this.ids;
+    const pr = this.pr;
+    let i = this.n++;
     while (i > 0) {
       const parent = (i - 1) >> 1;
-      if (this.pr[parent] <= this.pr[i]) break;
-      this.swap(i, parent);
+      if (pr[parent] <= p) break;
+      ids[i] = ids[parent];
+      pr[i] = pr[parent];
       i = parent;
     }
+    ids[i] = id;
+    pr[i] = p;
   }
 
   pop(): number {
-    const top = this.ids[0];
-    const lastId = this.ids.pop() as number;
-    const lastP = this.pr.pop() as number;
-    if (this.ids.length > 0) {
-      this.ids[0] = lastId;
-      this.pr[0] = lastP;
+    const ids = this.ids;
+    const pr = this.pr;
+    const top = ids[0];
+    this.lastPriority = pr[0];
+    const n = --this.n;
+    if (n > 0) {
+      const id = ids[n];
+      const p = pr[n];
       let i = 0;
-      const n = this.ids.length;
       for (;;) {
         const l = 2 * i + 1;
+        if (l >= n) break;
         const r = l + 1;
-        let m = i;
-        if (l < n && this.pr[l] < this.pr[m]) m = l;
-        if (r < n && this.pr[r] < this.pr[m]) m = r;
-        if (m === i) break;
-        this.swap(i, m);
+        const m = r < n && pr[r] < pr[l] ? r : l;
+        if (pr[m] >= p) break;
+        ids[i] = ids[m];
+        pr[i] = pr[m];
         i = m;
       }
+      ids[i] = id;
+      pr[i] = p;
     }
     return top;
-  }
-
-  private swap(a: number, b: number): void {
-    [this.ids[a], this.ids[b]] = [this.ids[b], this.ids[a]];
-    [this.pr[a], this.pr[b]] = [this.pr[b], this.pr[a]];
   }
 }
