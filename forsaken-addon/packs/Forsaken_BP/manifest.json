@@ -1,0 +1,67 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "FORSAKEN: Bedrock Edition (Behavior)",
+    "description": "Asymmetric horror match: 1 killer vs 8 survivors. Unofficial fan project. Not affiliated with or endorsed by the FORSAKEN developers or Roblox.",
+    "uuid": "99bcf8ae-5902-438b-b95f-a7f2d5b48fa5",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "description": "Forsaken data",
+      "type": "data",
+      "uuid": "5f283142-ba41-4243-9fcf-076f963df0b3",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "description": "Forsaken game logic",
+      "type": "script",
+      "language": "javascript",
+      "uuid": "91f3c676-670c-456c-8e73-4900bb3aaa79",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "f8264a84-e9d8-4cb2-bb22-cc0eebef0213",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.2.0"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "FORSAKEN Bedrock fan project"
+    ],
+    "license": "MIT",
+    "product_type": "addon"
+  }
+}

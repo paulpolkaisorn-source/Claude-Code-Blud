@@ -1,0 +1,30 @@
+{
+  "name": "forsaken-bedrock-addon",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FORSAKEN: Bedrock Edition - unofficial fan-made Minecraft Bedrock addon. Not affiliated with or endorsed by the FORSAKEN developers or Roblox.",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@minecraft/server": "2.10.0",
+    "@minecraft/server-ui": "2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "ajv": "8.20.0",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  },
+  "scripts": {
+    "generate": "node tools/generate.mjs",
+    "bundle": "node tools/build.mjs",
+    "build": "node tools/generate.mjs && node tools/build.mjs && node tools/package.mjs",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "validate": "node tools/validate.mjs",
+    "deploy": "node tools/deploy.mjs",
+    "fetch-schemas": "node tools/fetch-schemas.mjs",
+    "check": "npm run typecheck && npm test && npm run build && npm run validate"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.cache/
+packs/Forsaken_BP/scripts/
+*.log

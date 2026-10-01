@@ -1,0 +1,47 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "FORSAKEN: Bedrock Edition (Resources)",
+    "description": "Skins, icons and visuals for FORSAKEN: Bedrock Edition. Unofficial fan project. Not affiliated with or endorsed by the FORSAKEN developers or Roblox.",
+    "uuid": "f8264a84-e9d8-4cb2-bb22-cc0eebef0213",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "description": "Forsaken resources",
+      "type": "resources",
+      "uuid": "304efa2f-4dde-473a-b519-1c007744de7a",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "99bcf8ae-5902-438b-b95f-a7f2d5b48fa5",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "FORSAKEN Bedrock fan project"
+    ],
+    "license": "MIT",
+    "product_type": "addon"
+  }
+}
