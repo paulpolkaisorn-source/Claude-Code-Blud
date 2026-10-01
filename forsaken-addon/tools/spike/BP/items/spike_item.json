@@ -1,0 +1,15 @@
+{
+  "format_version": "1.26.30",
+  "minecraft:item": {
+    "description": { "identifier": "spike:ability", "menu_category": { "category": "items" } },
+    "components": {
+      "minecraft:icon": "spike_ability",
+      "minecraft:display_name": { "value": "item.spike.ability.name" },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:cooldown": { "category": "spike:ability", "duration": 0.05 },
+      "minecraft:use_modifiers": { "use_duration": 30, "movement_modifier": 1.0 },
+      "minecraft:interact_button": "Use"
+    }
+  }
+}

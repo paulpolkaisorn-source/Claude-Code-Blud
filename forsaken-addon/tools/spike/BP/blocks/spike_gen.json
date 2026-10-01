@@ -1,0 +1,14 @@
+{
+  "format_version": "1.26.20",
+  "minecraft:block": {
+    "description": { "identifier": "spike:generator", "menu_category": { "category": "construction" } },
+    "components": {
+      "minecraft:display_name": "tile.spike.generator.name",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": { "*": { "texture": "spike_gen", "render_method": "opaque" } },
+      "minecraft:light_emission": 4,
+      "minecraft:destructible_by_mining": false,
+      "minecraft:destructible_by_explosion": false
+    }
+  }
+}
