@@ -1,0 +1,255 @@
+{
+  "_about": "Killer roster. Values from the FORSAKEN wiki (forsaken2024.fandom.com, character pages read 2026-10-01 via the MediaWiki API) unless listed in 'assumed' (no source: chosen by us) or 'undocumented' (wiki marks it as player-observed). Daemon is an original design for this addon. Studs and studs/s are converted in src/core/scale.ts. See docs/CHARACTERS.md.",
+  "characters": [
+    {
+      "id": "slasher",
+      "name": "Slasher",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Stealth / Ambusher",
+      "summary": "Machete melee killer whose Raging Pace turns every swing into a lunge.",
+      "difficulty": 2,
+      "skinIndex": 0,
+      "origin": "wiki",
+      "stats": { "hp": 2000, "walk": 9, "sprint": 28, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 62.5, "limps": false },
+      "passives": [
+        { "id": "final_chapter", "name": "Final Chapter", "description": "Gains Resistance IV for 10 s after being stunned.", "params": { "resistanceLevel": 4, "seconds": 10 } }
+      ],
+      "abilities": [
+        { "id": "slash", "name": "Slash", "slot": 1, "input": "tap", "cooldown": 1.9, "description": "20 damage + Bleeding I (5 s). Hits several survivors. ENRAGED: lunges 19 studs, 25 damage, 0.8 s cooldown.", "params": { "damage": 20, "bleedLevel": 1, "bleedSeconds": 5, "windup": 0.2, "rangeStuds": 7.5, "halfAngle": 40, "enragedCooldown": 0.8, "enragedDamage": 25, "enragedLungeStuds": 19 } },
+        { "id": "behead", "name": "Behead", "slot": 2, "input": "tap", "cooldown": 18, "description": "Heavy swing: 25 damage + Helpless 8 s (35 while ENRAGED). Lunges if moving. Slowness I 2 s on Slasher, hit or miss.", "params": { "damage": 25, "enragedDamage": 35, "helplessSeconds": 8, "windup": 0.45, "rangeStuds": 8, "halfAngle": 55, "movingLungeStuds": 8, "enragedLungeStuds": 19, "selfSlowLevel": 1, "selfSlowSeconds": 2, "immobileSeconds": 0.3, "enragedCooldown": 12 } },
+        { "id": "gashing_wound", "name": "Gashing Wound", "slot": 3, "input": "tap", "cooldown": 32, "description": "Grab combo: 2 machete strikes, chainsaw slash, 2 stabs, kick. 50 total (70 ENRAGED). Locks one survivor; stun-immune during and 1.5 s after. Immobile 4.5 s.", "params": { "totalDamage": 50, "enragedTotalDamage": 70, "windup": 0.33, "rangeStuds": 7.5, "halfAngle": 35, "hitFractions": [0.2, 0.2, 0.2, 0.1, 0.1, 0.2], "hitInterval": 0.5, "endlagSeconds": 4.5, "stunImmuneAfter": 1.5, "enragedCooldown": 24 } },
+        { "id": "raging_pace", "name": "Raging Pace", "slot": 4, "input": "tap", "cooldown": 30, "description": "ENRAGED for 14 s: speed 19, no sprint, nearest survivor revealed 14 s, unstunnable, ignores attacks (except Subspace Tripmine and Sentry). Stamina caps at 70 over 6.5 s. Ends when another ability is used.", "params": { "durationSeconds": 14, "walkSpeed": 19, "revealSeconds": 14, "staminaCap": 70, "staminaCapSeconds": 6.5, "stunImmuneDelay": 0.3, "lingerInvulnerable": 1.5 } }
+      ],
+      "bot": { "aggression": 0.8, "notes": "Raging Pace when the chased survivor is low on stamina; Behead against Sentinels; Gashing Wound on cornered or exhausted targets." },
+      "assumed": ["abilities.slash.halfAngle", "abilities.behead.rangeStuds", "abilities.behead.halfAngle", "abilities.behead.movingLungeStuds", "abilities.behead.immobileSeconds", "abilities.gashing_wound.halfAngle", "abilities.gashing_wound.hitInterval"],
+      "undocumented": ["abilities.behead.windup", "abilities.gashing_wound.windup", "abilities.gashing_wound.endlagSeconds", "abilities.raging_pace.stunImmuneDelay"],
+      "changes": [
+        "HP 1250 -> 2000 (wiki: raised in update 5.0.0 'Azure's Wrath').",
+        "Terror radius 60 [assumed] -> 62.5 studs (wiki).",
+        "Walk speed 9 and stamina 110 / drain 9.5 / regen 21 now from the wiki (brief assumed 110).",
+        "New passive Final Chapter (Resistance IV 10 s after a stun, update 5.0.0); the brief said 'no passive'.",
+        "Slash ENRAGED cooldown 1 s -> 0.8 s.",
+        "Behead cooldown 18.5 s -> 18 s; damage 20 -> 25.",
+        "Gashing Wound damage split: 20/20/20/10/10/20 % (wiki) instead of 20/20/10 %; 4.5 s immobile after use.",
+        "Raging Pace invulnerability lingers 1.5 s after ENRAGED ends; Builderman's Sentry also still hits."
+      ]
+    },
+    {
+      "id": "c00lkidd",
+      "name": "c00lkidd",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Versatile / Area denial",
+      "summary": "Hacker kid with a wall-piercing projectile, a flaming dash and pizza-bot minions.",
+      "difficulty": 3,
+      "skinIndex": 1,
+      "origin": "wiki",
+      "stats": { "hp": 1000, "walk": 7.75, "sprint": 28, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 75, "limps": false },
+      "passives": [],
+      "abilities": [
+        { "id": "tag", "name": "Tag", "slot": 1, "input": "tap", "cooldown": 2, "description": "Punch: 26.5 damage.", "params": { "damage": 26.5, "windup": 0.1, "rangeStuds": 5, "halfAngle": 40 } },
+        { "id": "corrupt_nature", "name": "Corrupt Nature", "slot": 2, "input": "tap", "cooldown": 12, "description": "Slow spinning projectile through walls and survivors: 15 damage, Slowness I 4 s, aura revealed 10 s.", "params": { "damage": 15, "slowLevel": 1, "slowSeconds": 4, "revealSeconds": 10, "projectileStudsPerSecond": 40, "lifeSeconds": 4, "radiusStuds": 4 } },
+        { "id": "walkspeed_override", "name": "Walkspeed Override", "slot": 3, "input": "tap", "cooldown": 20, "description": "Stand still 0.5 s, then dash at speed 90 for 1.34 s. Hitting a survivor: 32 damage, Burning I 8 s, knockback, aura 10 s, 3 s i-frames.", "params": { "standStillSeconds": 0.5, "dashStudsPerSecond": 90, "dashSeconds": 1.34, "damage": 32, "burnLevel": 1, "burnSeconds": 8, "knockbackStuds": 20, "revealSeconds": 10, "iframesSeconds": 3, "crashSlowSeconds": 1.5, "turnRateDegPerTick": 4, "hitRadiusStuds": 5 } },
+        { "id": "pizza_delivery", "name": "Pizza Delivery", "slot": 4, "input": "tap", "cooldown": 50, "description": "Summons 2 pizza bots that hunt the nearest survivors: 15 damage + Burning I, Slowness II 3 s, aura 15 s. Bots have 20 HP and last 35 s.", "params": { "windup": 2.5, "minions": 2, "damage": 15, "burnLevel": 1, "burnSeconds": 3, "slowLevel": 2, "slowSeconds": 3, "revealSeconds": 15, "lifeSeconds": 35, "speedStuds": 14, "farSpeedStuds": 19.5, "farRangeStuds": 70, "minionHp": 20 } }
+      ],
+      "bot": { "aggression": 0.7, "notes": "Corrupt Nature through walls at revealed or heard survivors; Walkspeed Override to close gaps in straight lines; Pizza Delivery early to cover distance." },
+      "assumed": ["abilities.tag.halfAngle", "abilities.corrupt_nature.projectileStudsPerSecond", "abilities.corrupt_nature.lifeSeconds", "abilities.corrupt_nature.radiusStuds", "abilities.walkspeed_override.crashSlowSeconds", "abilities.walkspeed_override.turnRateDegPerTick", "abilities.walkspeed_override.hitRadiusStuds", "abilities.pizza_delivery.burnSeconds"],
+      "undocumented": ["abilities.walkspeed_override.iframesSeconds", "abilities.pizza_delivery.windup", "abilities.pizza_delivery.minionHp"],
+      "changes": [
+        "Basic attack is named Tag on the wiki (brief: Punch).",
+        "Terror radius 60 [assumed] -> 75 studs; walk speed 7.75 (wiki).",
+        "Walkspeed Override: Burning I 8 s (brief: 10 s); also knockback, 3 s i-frames and a 0.5 s stand-still windup.",
+        "Pizza Delivery: bots have 20 HP, last 35 s, apply Slowness II 3 s."
+      ]
+    },
+    {
+      "id": "john_doe",
+      "name": "John Doe",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Trapper / Set-play",
+      "summary": "Corrupted account that leaves damaging trails, spike walls and shadow traps.",
+      "difficulty": 5,
+      "skinIndex": 2,
+      "origin": "wiki",
+      "stats": { "hp": 2300, "walk": 9, "sprint": 27.25, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 60, "limps": false },
+      "passives": [
+        { "id": "natural_malevolence", "name": "Natural Malevolence", "description": "A 48-stud corruption trail follows him; stepping on it gives Corrupted II for 3 s. Touching him hurts.", "params": { "trailStuds": 48, "corruptLevel": 2, "corruptSeconds": 3, "trailLifeSeconds": 6, "contactDamage": 5, "contactCooldown": 1 } },
+        { "id": "unstoppable", "name": "Unstoppable", "description": "If stunned while casting Corrupt Energy or 404 Error: stun capped at 2 s, then Speed I for 3 s (+1 s per living Sentinel), that ability's cooldown halved, negative statuses halved while boosted.", "params": { "stunCap": 2, "speedLevel": 1, "speedSeconds": 3, "perSentinelSeconds": 1, "cooldownCut": 0.5 } }
+      ],
+      "abilities": [
+        { "id": "slash", "name": "Slash", "slot": 1, "input": "tap", "cooldown": 1.7, "description": "28 damage — the highest basic attack.", "params": { "damage": 28, "windup": 0.4, "rangeStuds": 7.5, "halfAngle": 40 } },
+        { "id": "corrupt_energy", "name": "Corrupt Energy", "slot": 2, "input": "toggle", "cooldown": 12, "description": "A wall of 31 spikes erupts ahead for 14 s: 11 damage (max 2 hits per survivor), Corrupted II 5 s when standing on them, Speed I 7 s for John on hit. Press again to retract.", "params": { "spikes": 31, "spikeLifeSeconds": 14, "damage": 11, "maxHitsPerSurvivor": 2, "selfSpeedLevel": 1, "selfSpeedSeconds": 7, "standCorruptLevel": 2, "standCorruptSeconds": 5, "wallLengthStuds": 36, "windup": 0.3, "retractCooldown": 4.5 } },
+        { "id": "digital_footprint", "name": "Digital Footprint", "slot": 3, "input": "tap", "cooldown": 3, "description": "Three stomps create a shadow trap (max 3). Trigger: John Speed I 10 s; survivor Slowness II + Corrupted I 10 s; both see each other.", "params": { "maxTraps": 3, "stompSeconds": 1.2, "selfSpeedLevel": 1, "selfSpeedSeconds": 10, "slowLevel": 2, "corruptLevel": 1, "debuffSeconds": 10, "mutualRevealSeconds": 6, "radiusStuds": 6, "hearRangeStuds": 90 } },
+        { "id": "error_404", "name": "404 Error", "slot": 4, "input": "tap", "cooldown": 20, "description": "Arm pulses twice, then every living survivor's aura is revealed for 6 s. Heavily slowed and cannot sprint while casting.", "params": { "windup": 1, "revealSeconds": 6, "selfMoveMul": 0.3 } }
+      ],
+      "bot": { "aggression": 0.6, "notes": "Places shadow traps on chokepoints near active generators before engaging; Corrupt Energy walls across loops; 404 Error when it has no target." },
+      "assumed": ["passives.natural_malevolence.trailLifeSeconds", "passives.natural_malevolence.contactDamage", "passives.natural_malevolence.contactCooldown", "abilities.slash.halfAngle", "abilities.corrupt_energy.wallLengthStuds", "abilities.corrupt_energy.windup", "abilities.digital_footprint.stompSeconds", "abilities.digital_footprint.mutualRevealSeconds", "abilities.digital_footprint.radiusStuds", "abilities.error_404.windup", "abilities.error_404.selfMoveMul"],
+      "undocumented": ["abilities.error_404.selfMoveMul"],
+      "changes": [
+        "Slash 28 damage, cooldown 1.8 s -> 1.7 s.",
+        "Corrupt Energy cooldown 18 s -> 12 s; 11 damage, 2 hits max, can be retracted.",
+        "Digital Footprint: survivor gets Slowness II (brief: 20% slow) and Corrupted I for 10 s.",
+        "404 Error: 6 s reveal (unchanged), but John is slowed and cannot sprint while casting."
+      ]
+    },
+    {
+      "id": "1x1x1x1",
+      "name": "1x1x1x1",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Ranged / Attrition",
+      "summary": "Exploiter legend that poisons and glitches survivors, then raises them as zombies.",
+      "difficulty": 4,
+      "skinIndex": 3,
+      "origin": "wiki",
+      "stats": { "hp": 102550, "walk": 8, "sprint": 27, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 75, "limps": false },
+      "passives": [],
+      "abilities": [
+        { "id": "slash", "name": "Slash", "slot": 1, "input": "tap", "cooldown": 1.75, "description": "20 damage + Glitched I and Poisoned I for 5 s.", "params": { "damage": 20, "glitchLevel": 1, "glitchSeconds": 5, "poisonLevel": 1, "poisonSeconds": 5, "windup": 0.4, "rangeStuds": 7.5, "halfAngle": 40 } },
+        { "id": "mass_infection", "name": "Mass Infection", "slot": 2, "input": "tap", "cooldown": 15, "description": "1.7 s windup, then a shockwave (104 studs/s for 6 s): 30 damage (+10 vs Glitched). Up close: +25, Glitched II, Poisoned V; far: Glitched I + Poisoned I. Hit survivors revealed 12 s.", "params": { "windup": 1.7, "windupMoveMul": 0.2, "waveStudsPerSecond": 104, "waveSeconds": 6, "waveHalfWidthStuds": 20, "universalDamage": 30, "glitchedBonus": 10, "closeRangeStuds": 15, "closeExtraDamage": 25, "closeGlitchLevel": 2, "closeGlitchSeconds": 5, "closePoisonLevel": 5, "closePoisonSeconds": 3, "farGlitchLevel": 1, "farGlitchSeconds": 5, "farPoisonLevel": 1, "farPoisonSeconds": 5, "revealSeconds": 12, "closeSpeedLevel": 1, "closeSpeedSeconds": 3 } },
+        { "id": "entanglement", "name": "Entanglement", "slot": 3, "input": "tap", "cooldown": 15, "description": "Thrown sword (125 studs/s, 1 s): 10 damage, aura 12 s, Helpless + Glitched II 6 s, Slowness X 1 s, pulls the survivor toward him (50% harder if Glitched).", "params": { "windup": 0.75, "projectileStudsPerSecond": 125, "lifeSeconds": 1, "damage": 10, "revealSeconds": 12, "helplessSeconds": 6, "glitchLevel": 2, "glitchSeconds": 6, "slowLevel": 10, "slowSeconds": 1, "pullBlocks": 4, "glitchedPullBonus": 0.5, "zombieDamage": 100 } },
+        { "id": "unstable_eye", "name": "Unstable Eye", "slot": 4, "input": "tap", "cooldown": 25, "startCooldown": 12.5, "description": "1.5 s startup, then all survivors revealed 8 s; Speed II 1.5 s and Blindness III 7 s on himself.", "params": { "windup": 1.5, "revealSeconds": 8, "speedLevel": 2, "speedSeconds": 1.5, "blindLevel": 3, "blindSeconds": 7 } },
+        { "id": "rejuvenate_the_rotten", "name": "Rejuvenate the Rotten", "slot": 5, "input": "tap", "cooldown": 30, "description": "Needs a charge (1 per kill, max 1). Raises killed survivors as zombies (25 HP): Poisoned I + Glitched I 8 s and aura 8 s on contact; 5 damage to Glitched survivors.", "params": { "windup": 3.5, "maxCharges": 1, "zombieHp": 25, "poisonLevel": 1, "glitchLevel": 1, "debuffSeconds": 8, "revealSeconds": 8, "glitchedDamage": 5, "aggroStuds": 20, "loseStuds": 30, "zombieSpeedStuds": 14, "hitCooldown": 1.5, "killSpeedLevel": 1, "killSpeedSeconds": 8 } }
+      ],
+      "bot": { "aggression": 0.65, "notes": "Keeps Poison/Glitch pressure with Slash and Mass Infection; Entanglement to pull runners; raises zombies as soon as it has a charge; Unstable Eye when it lost everyone." },
+      "assumed": ["abilities.slash.halfAngle", "abilities.mass_infection.waveHalfWidthStuds", "abilities.mass_infection.closeRangeStuds", "abilities.entanglement.pullBlocks", "abilities.rejuvenate_the_rotten.zombieSpeedStuds", "abilities.rejuvenate_the_rotten.hitCooldown", "abilities.rejuvenate_the_rotten.windup"],
+      "undocumented": ["abilities.mass_infection.revealSeconds", "abilities.mass_infection.closeSpeedLevel"],
+      "changes": [
+        "HP: the brief assumed 2500 because '102,550' looked like a typo; the wiki confirms 102,550 (infobox, Statistics table and trivia; unchanged through 60+ edits after update 5.0.0). Data uses 102,550; set config.oneXOneHpOverride = 2500 for the brief's fallback.",
+        "Terror radius 75 studs; walk 8 (Statistics table says 8.5).",
+        "No passive any more: Slash itself applies Poison + Glitched.",
+        "Mass Infection: 30 universal damage (+10 vs Glitched), close hits +25 with Glitched II / Poisoned V, far hits Glitched I / Poisoned I.",
+        "Entanglement: Helpless + Glitched II 6 s, Slowness X 1 s, pull (+50% if Glitched).",
+        "Unstable Eye: Speed II 1.5 s and Blindness III 7 s on himself; starts the round on a 12.5 s cooldown.",
+        "Rejuvenate the Rotten: needs a kill charge; zombies have 25 HP and can only kill Glitched survivors."
+      ]
+    },
+    {
+      "id": "noli",
+      "name": "Noli",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Rushdown / Deception",
+      "summary": "Void entity that dashes, implodes and fills survivors' heads with hallucinations.",
+      "difficulty": 5,
+      "skinIndex": 4,
+      "origin": "wiki",
+      "stats": { "hp": 2222, "walk": 8, "sprint": 27.5, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 100, "limps": false },
+      "passives": [
+        { "id": "hallucinations", "name": "Hallucinations", "description": "Abilities apply Hallucination (max III, 20 s). Noli sees hallucinating survivors. Level n gives n fakes; III spawns a Noli mirage whose hits are fake.", "params": { "maxStacks": 3, "seconds": 20, "mirageDamage": 15, "mirageSpeedStuds": 22, "mirageHitCooldown": 1.5 } },
+        { "id": "prankster", "name": "Prankster", "description": "Fake generators spawn at unused spots. Finishing a puzzle on one adds a Hallucination stack; finishing it gives Hallucination III.", "params": { "fakeGenerators": 2 } }
+      ],
+      "abilities": [
+        { "id": "stab", "name": "Stab", "slot": 1, "input": "tap", "cooldown": 1.8, "description": "Shadow stab: 25 damage. Removes all Hallucination stacks from the target.", "params": { "damage": 25, "windup": 0.35, "rangeStuds": 8.5, "halfAngle": 35 } },
+        { "id": "void_rush", "name": "Void Rush", "slot": 2, "input": "charge", "cooldown": 20, "startCooldown": 10, "description": "Prepare 1 s, then rush for 3.5 s (press again to stop). Hit: 10 damage + Hallucination II, re-rush window. Hit on Hallucination II+: slam for 10 + 30 + 3.5 per re-rush. Survivors at 10 HP or less die. No stamina regen while rushing.", "params": { "prepareSeconds": 1, "rushSeconds": 3.5, "rushStudsPerSecond": 40, "cancelCooldown": 1.2, "hitDamage": 10, "hallucinationLevel": 2, "reRushWindow": 2, "reRushDelay": 0.85, "slamBase": 10, "slamDamage": 30, "slamPerReRush": 3.5, "executeHp": 10, "crashSlowLevel": 5, "crashSlowSeconds": 1.5, "turnRateDegPerTick": 3, "earlyTurnMul": 6, "earlyTurnSeconds": 1.12, "hitRadiusStuds": 5 } },
+        { "id": "nova", "name": "Nova", "slot": 3, "input": "toggle", "cooldown": 12, "description": "Throws the Voidstar (0.7 s windup). On a survivor or wall it implodes: pulls nearby survivors in, 15 damage, decaying slow. Press again to detonate early (smaller).", "params": { "windup": 0.7, "projectileStudsPerSecond": 50, "lifeSeconds": 3, "damage": 15, "radiusStuds": 26, "smallRadiusStuds": 13, "pullBlocks": 3, "slowLevel": 3, "slowSeconds": 2, "usageCooldown": 0.9 } },
+        { "id": "observant", "name": "Observant", "slot": 4, "input": "tap", "cooldown": 30, "startCooldown": 25, "description": "Teleports to the generator closest to where he looks (not within 50 studs) after 1.45 s. Survivors further than 20/50/100 studs get Hallucination I/II/III; within 19 studs none.", "params": { "windup": 1.45, "minDistanceStuds": 50, "cancelCooldown": 15, "level1Studs": 20, "level2Studs": 50, "level3Studs": 100, "safeStuds": 19, "stunImmuneSeconds": 2 } }
+      ],
+      "bot": { "aggression": 0.75, "notes": "Void Rush to open chases and slam hallucinating survivors; Nova at groups or walls near survivors; Observant to the busiest generator far away." },
+      "assumed": ["passives.hallucinations.mirageSpeedStuds", "passives.hallucinations.mirageHitCooldown", "abilities.stab.halfAngle", "abilities.void_rush.rushStudsPerSecond", "abilities.void_rush.crashSlowLevel", "abilities.void_rush.turnRateDegPerTick", "abilities.void_rush.hitRadiusStuds", "abilities.nova.projectileStudsPerSecond", "abilities.nova.lifeSeconds", "abilities.nova.smallRadiusStuds", "abilities.nova.pullBlocks", "abilities.nova.slowLevel", "abilities.nova.slowSeconds", "abilities.observant.stunImmuneSeconds"],
+      "undocumented": ["abilities.void_rush.earlyTurnSeconds"],
+      "changes": [
+        "HP 2222 confirmed (raised from 1111 in 5.0.0). Terror radius 100 studs.",
+        "Void Rush cooldown 20 s (brief assumed 18 s); starts the round at 10 s.",
+        "Nova cooldown 12 s after detonation (brief assumed 20 s).",
+        "Observant cooldown 30 s, starts the round at 25 s (brief assumed 25 s).",
+        "Prankster: 2 fake generators (Objectives page); each finished puzzle on a fake adds a Hallucination stack, a full fake gives III."
+      ]
+    },
+    {
+      "id": "guest_666",
+      "name": "Guest 666",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Burst / Snowball",
+      "summary": "Demonic guest that farms Blood from bleeding survivors until Blood Hunt.",
+      "difficulty": 3,
+      "skinIndex": 5,
+      "origin": "wiki",
+      "stats": { "hp": 2750, "walk": 9, "sprint": 27, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 112.5, "limps": false },
+      "passives": [
+        { "id": "manic_fixation", "name": "Manic Fixation", "description": "Up to +10% speed while running at (or within 30 studs of) a highlighted survivor; +15% if that survivor is not being chased.", "params": { "maxBonus": 0.1, "outOfChaseBonus": 0.15, "rangeStuds": 30, "rampSeconds": 3 } },
+        { "id": "hellforged_will", "name": "Hellforged Will", "description": "Negative statuses and stuns on Guest 666 last 25% less (50% during Blood Hunt).", "params": { "reduction": 0.25, "bloodHuntReduction": 0.5 } },
+        { "id": "bloodhound", "name": "Bloodhound", "description": "Attacks apply Hemorrhage. Hemorrhaged survivors drop Blood Orbs (15 Blood, -3 s to all his cooldowns). Blood 0-200; kills +30 (+50 with Demonic Pursuit).", "params": { "orbBlood": 15, "orbCooldownCut": 3, "dropSprintSeconds": 10, "dropChaseSeconds": 35, "dropSprintChaseSeconds": 25, "hemorrhageSeconds": 120, "maxBlood": 200, "maxBloodGrowth": 50, "killBlood": 30, "demonicKillBlood": 50, "orbLifeSeconds": 30, "chaseRangeStuds": 60 } },
+        { "id": "sense_of_fear", "name": "Sense of Fear", "description": "His reveals apply Marked (red), which bypasses Undetectable.", "params": {} }
+      ],
+      "abilities": [
+        { "id": "carving_slash", "name": "Carving Slash", "slot": 1, "input": "tap", "cooldown": 2, "description": "20 damage to every survivor in reach, +10 Blood per hit.", "params": { "damage": 20, "blood": 10, "windup": 0.3, "rangeStuds": 7.25, "halfAngle": 45 } },
+        { "id": "demonic_pursuit", "name": "Demonic Pursuit", "slot": 2, "input": "charge", "cooldown": 30, "description": "Charge (press again to leap). Pins a survivor for 5 slashes and a throw: 26/33/40 by charge, Hemorrhage, +20 Blood. Blood Hunt: +0.4 per unhealable HP.", "params": { "maxChargeSeconds": 2, "leapStudsPerSecond": [60, 75, 90], "leapSeconds": 0.8, "pinDamage": [26, 33, 40], "slashes": 5, "slashInterval": 0.4, "blood": 20, "bloodHuntBonusPerHp": 0.4, "throwStuds": 20, "missCooldown": 15, "hitRadiusStuds": 5 } },
+        { "id": "infernal_cry", "name": "Infernal Cry", "slot": 3, "input": "tap", "cooldown": 20, "description": "Aimed roar: forces survivors to face him, Blindness II 4 s, Marked 12 s; Hemorrhaged ones drop 2 orbs. Blood Hunt: 10 damage, Speed I 3 s + Strength I 8 s for him.", "params": { "windup": 0.7, "rangeStuds": 60, "halfAngle": 35, "blindLevel": 2, "blindSeconds": 4, "markSeconds": 12, "orbs": 2, "bhDamage": 10, "bhSpeedLevel": 1, "bhSpeedSeconds": 3, "bhStrengthLevel": 1, "bhStrengthSeconds": 8, "bhBlindSeconds": 6 } },
+        { "id": "blood_rush", "name": "Blood Rush / Blood Hunt", "slot": 4, "input": "tap", "cooldown": 30, "description": "Blood Rush (4 s windup): marks every survivor for 5-20 s by distance. At full Blood it becomes Blood Hunt: 25 s, cooldowns reset, +4% speed, terror radius halved, survivors flash every 5 s, kills extend it 15 s; the clock cannot run out.", "params": { "windup": 4, "minSeconds": 5, "maxSeconds": 20, "maxDistanceStuds": 200, "huntWindup": 3, "huntSeconds": 25, "huntSpeedBonus": 0.04, "huntTerrorMul": 0.5, "huntFlashSeconds": 5, "killExtendSeconds": 15, "killExtendDecay": 2 } },
+        { "id": "eviscerate", "name": "Eviscerate", "slot": 5, "input": "tap", "cooldown": 8, "description": "Costs 10 Blood: lunging bite, 10 damage + Hemorrhage, +15 Blood and half cooldown on hit; Slowness I 2 s on a miss.", "params": { "damage": 10, "bloodCost": 10, "bloodGain": 15, "hitCooldownFactor": 0.5, "missSlowLevel": 1, "missSlowSeconds": 2, "windup": 0.4, "rangeStuds": 7, "halfAngle": 35, "lungeStuds": 8, "hemorrhageLevel": 1 } }
+      ],
+      "bot": { "aggression": 0.85, "notes": "Builds Blood with Carving Slash/Eviscerate, collects orbs, Infernal Cry at groups, Blood Rush to find survivors, Blood Hunt as soon as Blood is full." },
+      "assumed": ["passives.manic_fixation.rampSeconds", "passives.bloodhound.orbLifeSeconds", "passives.bloodhound.chaseRangeStuds", "abilities.carving_slash.halfAngle", "abilities.demonic_pursuit.maxChargeSeconds", "abilities.demonic_pursuit.leapStudsPerSecond", "abilities.demonic_pursuit.leapSeconds", "abilities.demonic_pursuit.slashInterval", "abilities.demonic_pursuit.hitRadiusStuds", "abilities.infernal_cry.rangeStuds", "abilities.infernal_cry.halfAngle", "abilities.blood_rush.killExtendDecay", "abilities.eviscerate.halfAngle", "abilities.eviscerate.lungeStuds"],
+      "undocumented": ["abilities.demonic_pursuit.throwStuds"],
+      "changes": [
+        "HP 2750 (wiki table; the brief used 2500).",
+        "Terror radius 112.5 studs (brief: 80); walk 9, sprint 27.",
+        "Blood max 200 (grows +50 after each Blood Hunt); Blood Hunt triggers at full Blood (brief assumed max 100).",
+        "Blood Hunt is no longer stun-immune; Hellforged Will goes to 50% instead.",
+        "Eviscerate moved to hotbar slot 5 (it is a held extension of the basic attack in FORSAKEN).",
+        "Infernal Cry and reveals apply Marked (red) which bypasses Undetectable."
+      ]
+    },
+    {
+      "id": "nosferatu",
+      "name": "Nosferatu",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Ambush / Stealth / Zoner",
+      "summary": "Silent vampire with a chain hook, blood trails and a bat form.",
+      "difficulty": 4,
+      "skinIndex": 6,
+      "origin": "wiki",
+      "stats": { "hp": 1750, "walk": 7.5, "sprint": 27.5, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 75, "limps": false },
+      "passives": [
+        { "id": "levitation", "name": "Levitation", "description": "Levitates: no footstep sounds.", "params": {} }
+      ],
+      "abilities": [
+        { "id": "lacerate", "name": "Lacerate / Dive", "slot": 1, "input": "tap", "cooldown": 1.85, "description": "Claw slash, 24 damage. In bat form: Dive — bite 5 + toss 5-30 by dive time (max at 0.55 s); a miss costs 20 HP, Slowness III + Helpless 3 s.", "params": { "damage": 24, "windup": 0.3, "rangeStuds": 8, "halfAngle": 40, "diveWindup": 0.6, "diveStudsPerSecond": 60, "diveMaxSeconds": 1.5, "biteDamage": 5, "tossBase": 5, "tossMax": 30, "tossMaxAt": 0.55, "missSelfDamage": 20, "missSlowLevel": 3, "missHelplessSeconds": 3, "hitRadiusStuds": 5 } },
+        { "id": "bloodhook", "name": "Bloodhook", "slot": 2, "input": "tap", "cooldown": 24, "description": "Chain hook (0.9 s windup, ~115 studs): 15 damage and grab. Close (<=24 studs): drag + kick for 3. Far: tug-of-war (spam jump); win = +25 damage.", "params": { "windup": 0.9, "rangeStuds": 115, "projectileStudsPerSecond": 150, "damage": 15, "closeStuds": 24, "closeKickDamage": 3, "reelDamage": 25, "pullStudsPerSecond": 16, "tugSeconds": 3, "selfHelplessSeconds": 2, "selfSlowLevel": 2, "selfSlowSeconds": 1, "escapeHelplessSeconds": 0.75, "missCooldown": 20 } },
+        { "id": "cataclysm", "name": "Cataclysm", "slot": 3, "input": "tap", "cooldown": 22, "description": "Invisible dash drawing a blood line, then snaps back and explodes (10 damage). Puddles (12 s) apply Bleeding II 5 s + Slowness I 6 s and highlight 6 s.", "params": { "dashSeconds": 1.25, "dashStudsPerSecond": 45, "invisLevel": 4, "returnDelay": 2, "damage": 10, "explosionRadiusStuds": 14, "puddleSeconds": 12, "puddleRadiusStuds": 3, "bleedLevel": 2, "bleedSeconds": 5, "slowLevel": 1, "slowSeconds": 6, "highlightSeconds": 6 } },
+        { "id": "hunters_feast", "name": "Hunter's Feast", "slot": 4, "input": "toggle", "cooldown": 16, "description": "Bat orb (press again to redirect once, 3x faster). Hit: 5 damage, Oblivious + Creatures 10 s, highlight 10 s. Nosferatu gains Invisibility V + Undetectable 10 s (lost when he uses an ability).", "params": { "windup": 0.23, "projectileStudsPerSecond": 35, "redirectSpeedMul": 3, "lifeSeconds": 10, "damage": 5, "debuffSeconds": 10, "revealSeconds": 10, "selfInvisLevel": 5, "selfSeconds": 10 } },
+        { "id": "ascension", "name": "Ascension", "slot": 5, "input": "toggle", "cooldown": 32, "description": "Bat form up to 10 s: flight (jump to flap), ~2x speed, invincible, all survivors highlighted, smaller terror radius. Press again to dismount; any exit without a dive: Slowness III + Helpless 4 s.", "params": { "maxSeconds": 10, "speedMul": 2.1, "terrorMul": 0.5, "flapStrength": 0.55, "timeoutSlowLevel": 3, "timeoutHelplessSeconds": 4, "hoverHeight": 3 } }
+      ],
+      "bot": { "aggression": 0.7, "notes": "Hunter's Feast to approach unseen, Bloodhook at mid range, Cataclysm through loops, Ascension to close long gaps and dive." },
+      "assumed": ["abilities.lacerate.halfAngle", "abilities.lacerate.diveStudsPerSecond", "abilities.lacerate.diveMaxSeconds", "abilities.lacerate.hitRadiusStuds", "abilities.bloodhook.projectileStudsPerSecond", "abilities.bloodhook.tugSeconds", "abilities.cataclysm.dashStudsPerSecond", "abilities.cataclysm.explosionRadiusStuds", "abilities.cataclysm.puddleRadiusStuds", "abilities.hunters_feast.projectileStudsPerSecond", "abilities.ascension.flapStrength", "abilities.ascension.hoverHeight", "abilities.ascension.terrorMul"],
+      "undocumented": ["abilities.ascension.speedMul"],
+      "changes": [
+        "HP 1750 (brief used 1700). Terror radius 75 studs (brief assumed 60).",
+        "Bloodhook cooldown 24 s (brief: 30 s, 20 s on miss); far pulls use a tug-of-war (jump spam) instead of Roblox's timed prompt.",
+        "Cataclysm puddles: Bleeding II 5 s + Slowness I 6 s (brief: Slowness II).",
+        "Hunter's Feast can be redirected once; self Invisibility V (brief: IV) + Undetectable 10 s.",
+        "Ascension: invincible, highlights all survivors; Dive is its basic attack; exiting without a dive gives Slowness III + Helpless 4 s."
+      ]
+    },
+    {
+      "id": "daemon",
+      "name": "Daemon",
+      "team": "killer",
+      "role": "killer",
+      "playstyle": "Tracker / Area controller",
+      "summary": "ORIGINAL KILLER (not from FORSAKEN): a runaway background process with a blinking cursor for a face.",
+      "difficulty": 3,
+      "skinIndex": 7,
+      "origin": "original",
+      "stats": { "hp": 2000, "walk": 9, "sprint": 27.5, "stamina": 110, "staminaDrain": 9.5, "staminaRegen": 21, "terrorRadius": 70, "limps": false },
+      "passives": [
+        { "id": "uptime", "name": "Uptime", "description": "Survivors Daemon damages are Flagged for 20 s: shown on his HUD within 40 blocks, and he moves 5% faster toward the nearest Flagged survivor.", "params": { "flagSeconds": 20, "hudRangeBlocks": 40, "speedBonus": 0.05 } }
+      ],
+      "abilities": [
+        { "id": "ping", "name": "Ping", "slot": 1, "input": "tap", "cooldown": 1.8, "description": "22 damage and Flagged.", "params": { "damage": 22, "windup": 0.25, "rangeStuds": 7.5, "halfAngle": 40 } },
+        { "id": "fork", "name": "Fork", "slot": 2, "input": "tap", "cooldown": 28, "description": "Spawns 2 decoy child processes that sprint in straight lines for 6 s. Touching a survivor: 10 damage + Flagged, then the decoy vanishes. Decoys carry Daemon's name tag.", "params": { "decoys": 2, "lifeSeconds": 6, "damage": 10, "spreadDegrees": 25, "speedStuds": 27.5 } },
+        { "id": "segfault", "name": "Segfault", "slot": 3, "input": "tap", "cooldown": 22, "description": "Ground slam, 8-block radius: 18 damage, Slowness II 3 s, Helpless I 2 s.", "params": { "windup": 0.4, "radiusBlocks": 8, "damage": 18, "slowLevel": 2, "slowSeconds": 3, "helplessSeconds": 2 } },
+        { "id": "kill_9", "name": "Kill -9", "slot": 4, "input": "tap", "cooldown": 60, "description": "Targets a Flagged survivor within 6 blocks at <= 35% HP: 1.2 s channel, then instant elimination. A stun cancels it (cooldown 20 s).", "params": { "rangeBlocks": 6, "hpThreshold": 0.35, "channelSeconds": 1.2, "stunnedCooldown": 20 } }
+      ],
+      "bot": { "aggression": 0.7, "notes": "Flags everyone it can (Ping, Fork, Segfault) and saves Kill -9 for weak Flagged survivors." },
+      "assumed": [],
+      "undocumented": [],
+      "changes": ["Original design for this addon (brief §4.3); every number is [original design], balanced against the 2026 roster."]
+    }
+  ]
+}

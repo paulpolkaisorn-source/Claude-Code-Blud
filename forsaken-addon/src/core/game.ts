@@ -17,7 +17,7 @@ import { evaluate, maybeStartLms, newRound, onElimination, onGeneratorCompleted,
 import type { WorldPorts } from "./ports";
 import { Rng } from "../util/rng";
 import { add, dist, dist2D, flat, len2D, norm, rotateY, scale, sub, type Vec3, angleBetween2D } from "../util/vec";
-import type { NavGrid } from "../world/nav";
+import { Cell, type NavGrid } from "../world/nav";
 import type { ArenaLayout } from "../world/layout";
 import { advanceGenerator, createGenerators, generatorsDone, resetFake, type Generator } from "../world/generators";
 import { ACTOR_RADIUS } from "../abilities/hit";
@@ -898,6 +898,50 @@ export class Game {
         stuns: a.stats.stunsLanded,
         healing: Math.round(a.stats.healingDone),
       }));
+  }
+
+  private readonly navCache = new Map<string, { goal: Vec3; path: Vec3[]; idx: number; tick: number }>();
+
+  /**
+   * Horizontal unit direction an actor should move in to reach `goal`, following smoothed A* waypoints
+   * over the arena grid (cached per actor). Returns null when already there. Opens doors on the way.
+   * Shared by bots and minions.
+   */
+  navDirection(a: Actor, goal: Vec3, arriveDist = 0.6): Vec3 | null {
+    if (dist2D(a.pos, goal) < arriveDist) return null;
+    if (this.grid.walkLine(a.pos, goal)) {
+      this.navCache.delete(a.id);
+      return this.openDoorsAhead(a, flat(sub(goal, a.pos)));
+    }
+    let c = this.navCache.get(a.id);
+    const stale = !c || dist2D(c.goal, goal) > 1.5 || this.now - c.tick > 60 || c.idx >= c.path.length;
+    if (stale) {
+      const path = this.grid.findPath(this.grid.toGrid(a.pos), this.grid.toGrid(goal));
+      if (!path || path.length < 2) {
+        this.navCache.delete(a.id);
+        return this.openDoorsAhead(a, flat(sub(goal, a.pos)));
+      }
+      c = { goal: { ...goal }, path: this.grid.smooth(path), idx: 1, tick: this.now };
+      this.navCache.set(a.id, c);
+    }
+    const cc = c as { goal: Vec3; path: Vec3[]; idx: number; tick: number };
+    while (cc.idx < cc.path.length - 1 && dist2D(a.pos, cc.path[cc.idx]) < 0.8) cc.idx++;
+    if (cc.idx < cc.path.length - 1 && this.grid.walkLine(a.pos, cc.path[cc.idx + 1])) cc.idx++;
+    const wp = cc.path[Math.min(cc.idx, cc.path.length - 1)];
+    return this.openDoorsAhead(a, flat(sub(wp, a.pos)));
+  }
+
+  /** Forget a cached path (after teleports). */
+  clearNav(a: Actor): void {
+    this.navCache.delete(a.id);
+  }
+
+  private openDoorsAhead(a: Actor, dir: Vec3): Vec3 {
+    const ahead = add(a.pos, scale(dir, 1.2));
+    const cx = Math.floor(ahead.x - this.grid.originX);
+    const cz = Math.floor(ahead.z - this.grid.originZ);
+    if (this.grid.get(cx, cz) === Cell.Door) this.ports.openDoor(cx, cz);
+    return dir;
   }
 
   /** Point at distance `d` (blocks) in front of `a`, clamped to walkable space. */

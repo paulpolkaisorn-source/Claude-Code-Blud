@@ -158,3 +158,38 @@ export function startRound(game: Game): void {
   game.headStartEndTick = game.now; // skip the head start in unit tests
   game.tick();
 }
+
+// ------------------------------------------------------------------ real-roster helpers
+import { character } from "../src/characters/roster";
+import { KITS } from "../src/abilities/kits";
+import type { Actor } from "../src/entities/actor";
+
+/** Open floor used for duels: x=40, z=50..57 has no walls. */
+export const DUEL = { killer: cellPos(40, 50), survivor: cellPos(40, 53) };
+
+/** A match with real characters and kits. Survivors stand in a row east of the duel spot. */
+export function realMatch(killerId: string, survivorIds: string[], opts: { seed?: number; humanSurvivor?: number } = {}) {
+  const { layout, grid } = buildHollowHamlet(ORIGIN);
+  const ports = new FakePorts();
+  const game = new Game({ grid, layout, ports, kits: KITS, rng: new Rng(opts.seed ?? 7), difficulty: "normal" });
+  const k = game.addParticipant("killer", character(killerId).name, character(killerId), new FakeBody(DUEL.killer, 0), true);
+  const ss: Actor[] = survivorIds.map((id, i) =>
+    game.addParticipant(`s${i}`, character(id).name, character(id), new FakeBody(i === 0 ? DUEL.survivor : cellPos(14 + i * 2, 72), 180), i !== (opts.humanSurvivor ?? -1)),
+  );
+  game.setupGenerators([0, 1, 2, 3, 4]);
+  startRound(game);
+  return { game, ports, killer: k, survivors: ss };
+}
+
+/** Face `a` toward `b`. */
+export function faceTo(a: Actor, b: { pos: Vec3 } | Vec3): void {
+  const p = "pos" in b ? b.pos : b;
+  (a.body as FakeBody).face({ x: p.x - a.pos.x, y: 0, z: p.z - a.pos.z });
+  a.state = a.body.read();
+}
+
+/** Place an actor at a world position. */
+export function place(a: Actor, p: Vec3): void {
+  (a.body as FakeBody).moveTo(p);
+  a.state = a.body.read();
+}

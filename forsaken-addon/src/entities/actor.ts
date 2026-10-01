@@ -120,6 +120,8 @@ export interface ActorInput {
   wantSprint: boolean;
   /** Bots: point to look at. */
   lookAt: Vec3 | null;
+  /** Monotonic count of jump presses (players: playerButtonInput Jump; bots: AI). Used by tug-of-war, tricks, flaps. */
+  jumpPresses: number;
 }
 
 export interface ActorInit {
@@ -201,7 +203,7 @@ export class Actor {
     abilitiesUsed: 0,
   };
 
-  readonly input: ActorInput = { repairTarget: null, moveDir: null, wantSprint: false, lookAt: null };
+  readonly input: ActorInput = { repairTarget: null, moveDir: null, wantSprint: false, lookAt: null, jumpPresses: 0 };
   state: BodyState;
 
   /** Cached speeds computed each tick (blocks/s). */

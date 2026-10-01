@@ -1,0 +1,337 @@
+{
+  "_about": "Survivor roster. Values from the FORSAKEN wiki (character pages read 2026-10-01 via the MediaWiki API) unless listed in 'assumed' (no source) or 'undocumented' (wiki marks it as player-observed). Shared base stats from the wiki: walk 12, sprint 26, stamina 100, -10/s, +20/s. See docs/CHARACTERS.md.",
+  "characters": [
+    {
+      "id": "noob",
+      "name": "Noob",
+      "team": "survivor",
+      "role": "survivalist",
+      "playstyle": "Evasion / self-buffs",
+      "summary": "Classic noob with a cola, a stone-skin potion and a burger that makes him vanish.",
+      "difficulty": 3,
+      "skinIndex": 8,
+      "origin": "wiki",
+      "stats": { "hp": 100, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [],
+      "abilities": [
+        { "id": "bloxy_cola", "name": "Bloxy Cola", "slot": 2, "input": "tap", "cooldown": 50, "description": "Drink 2.5 s (-10% speed, no sprint): Speed I 10 s and removes Slowness.", "params": { "drinkSeconds": 2.5, "drinkMoveMul": 0.9, "speedLevel": 1, "speedSeconds": 10 } },
+        { "id": "slateskin_potion", "name": "Slateskin Potion", "slot": 3, "input": "toggle", "cooldown": 46, "description": "Drink 1.5 s: Slateskin III for 6 s (120 overheal, -45% speed, many status immunities). Recast after 2.5 s to end early. Ends with Speed II 2 s (Speed I if cancelled). Cooldown starts after the effect.", "params": { "drinkSeconds": 1.5, "drinkMoveMul": 0.8, "level": 3, "seconds": 6, "overhealPerLevel": 40, "recastAfter": 2.5, "naturalSpeedLevel": 2, "manualSpeedLevel": 1, "endSpeedSeconds": 2 } },
+        { "id": "ghostburger", "name": "Ghostburger", "slot": 4, "input": "tap", "cooldown": 40, "description": "Eat 2 s (-20% speed, no sprint): Undetectable and Invisibility IV for 10 s.", "params": { "eatSeconds": 2, "eatMoveMul": 0.8, "seconds": 10, "invisLevel": 4 } }
+      ],
+      "bot": { "aggression": 0.2, "notes": "Cola when chased with low stamina; Slateskin when below 50% HP and the killer is close; Ghostburger when cornered." },
+      "assumed": ["abilities.slateskin_potion.endSpeedSeconds"],
+      "undocumented": [],
+      "changes": [
+        "Bloxy Cola cooldown 50 s (brief assumed 45 s); Speed I 10 s.",
+        "Slateskin Potion: Slateskin III (120 overheal) for 6 s, cooldown 46 s starting after the effect; the brief's '2 uses per round' and Slateskin II +80 are outdated.",
+        "Ghostburger: Undetectable + Invisibility IV for 10 s, cooldown 40 s (brief: 55 s)."
+      ]
+    },
+    {
+      "id": "007n7",
+      "name": "007n7",
+      "team": "survivor",
+      "role": "survivalist",
+      "playstyle": "Decoys / escape",
+      "summary": "Exploiter turned survivor: clones, a teleport GUI and remote control of his decoys.",
+      "difficulty": 4,
+      "skinIndex": 9,
+      "origin": "wiki",
+      "stats": { "hp": 100, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "dex", "name": "DEX", "description": "Always sees the furthest survivor spawn point.", "params": {} }
+      ],
+      "abilities": [
+        { "id": "clone", "name": "Clone", "slot": 2, "input": "tap", "cooldown": 27, "description": "Spawns a clone (10 s, his current HP) that follows the Inject mode; 007n7 gets Invisibility IV + Undetectable for 5 s (and a hidden 3 s Helpless).", "params": { "cloneSeconds": 10, "invisLevel": 4, "selfSeconds": 5, "helplessSeconds": 3, "initialRunSeconds": 0.5, "cloneSpeedStuds": 26 } },
+        { "id": "c00lgui", "name": "c00lgui", "slot": 3, "input": "tap", "cooldown": 50, "description": "Channel 5.5 s at -85% speed, then teleport to the DEX spawn. Damage or starting a generator cancels it.", "params": { "channelSeconds": 5.5, "moveMul": 0.15, "lateWindowSeconds": 0.5 } },
+        { "id": "inject", "name": "Inject", "slot": 4, "input": "tap", "cooldown": null, "cooldownNote": "0 s — cycles the clone mode", "description": "Cycles the mode future clones use: Aimless (wander), Pathfind (walk to the DEX spawn), Cursor (run where he looks).", "params": { "wanderMin": 2, "wanderMax": 4 } }
+      ],
+      "bot": { "aggression": 0.2, "notes": "Clone when the killer is within ~10 blocks (Pathfind mode leads it away); c00lgui when idle and out of sight." },
+      "assumed": ["abilities.c00lgui.lateWindowSeconds", "abilities.clone.cloneSpeedStuds"],
+      "undocumented": ["abilities.clone.helplessSeconds"],
+      "changes": [
+        "Clone cooldown 27 s (brief: 40 s); 007n7 gets Invisibility IV + Undetectable 5 s (brief: ~4 s) and no self-Slowness.",
+        "c00lgui: 5.5 s channel at -85% speed, cooldown 50 s (brief: 6 s standing still, 60 s).",
+        "Inject has no cooldown (brief: 0.75 s)."
+      ]
+    },
+    {
+      "id": "veeronica",
+      "name": "Veeronica",
+      "team": "survivor",
+      "role": "survivalist",
+      "playstyle": "Mobility / self-sufficient",
+      "summary": "TV-headed robot skater: sprays graffiti zones and skates through them; heals only from her battery.",
+      "difficulty": 3,
+      "skinIndex": 10,
+      "origin": "wiki",
+      "stats": { "hp": 100, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "metal_frame", "name": "Metal Frame", "description": "Cannot be healed by anything except her battery. Battery starts at 30%, +8% per generator puzzle; 100% = 50 HP (2% per HP).", "params": { "startBattery": 30, "perLayer": 8, "fullHeal": 50, "costPerHp": 2 } }
+      ],
+      "abilities": [
+        { "id": "vandalism", "name": "Vandalism", "slot": 2, "input": "toggle", "cooldown": 0.7, "description": "Spray graffiti on a wall you face (5 s, stand still). Max 3; each makes a 12x30x12-stud zone only she sees. The killer can destroy graffiti (5 HP).", "params": { "spraySeconds": 5, "maxGraffiti": 3, "graffitiHp": 5, "zoneWidthStuds": 12, "zoneHeightStuds": 30, "erasedLockout": 10, "sprayRangeStuds": 7, "killerChainStuds": 4.5 } },
+        { "id": "sk8", "name": "Sk8", "slot": 3, "input": "toggle", "cooldown": 0.5, "description": "Start inside a graffiti zone: skate at 1.15x sprint speed, 1.35x stamina drain, limited steering. Jump near a wall to Trick (+4 stamina, crash immunity). Crashing: 5 damage + Slowness IV 2.5 s.", "params": { "speedMul": 1.15, "drainMul": 1.35, "crashDamage": 5, "crashSlowLevel": 4, "crashSlowSeconds": 2.5, "turnRateDegPerTick": 3, "trickRangeStuds": 13, "trickCooldown": 1, "trickStamina": 4, "trickBattery": 5, "trickAirMul": 1.42, "trickImmunity": 0.75, "cancelCooldown": 5, "highlightStuds": 25 } },
+        { "id": "broadcast", "name": "Broadcast", "slot": 4, "input": "tap", "cooldown": 0.5, "description": "Cycles the Sk8 collision mode: Phase (pass through the killer: Resistance II 3 s + Speed II 1.5 s, +15% battery), Bumper (knock the killer back, 5 damage, +15% battery, 20 s lockout), Mobile (better steering after tricks).", "params": { "phaseResistLevel": 2, "phaseResistSeconds": 3, "phaseSpeedLevel": 2, "phaseSpeedSeconds": 1.5, "phaseBattery": 15, "bumperDamage": 5, "bumperKnockbackBlocks": 4, "bumperBattery": 15, "bumperLockout": 20, "mobileSeconds": 2 } },
+        { "id": "activate_battery", "name": "Activate Battery", "slot": 5, "input": "toggle", "cooldown": 75, "description": "Heals 1 HP/s from the battery (2% per HP) until full, empty, or damaged. 1 s cooldown if used at full HP or 0%.", "params": { "healPerSecond": 1, "quickCooldown": 1 } }
+      ],
+      "bot": { "aggression": 0.3, "notes": "Sprays graffiti near generators and loops; skates on graffiti when chased; uses the battery when safe and hurt." },
+      "assumed": ["abilities.sk8.turnRateDegPerTick", "abilities.broadcast.bumperKnockbackBlocks"],
+      "undocumented": ["passives.metal_frame.costPerHp", "abilities.broadcast.bumperDamage", "abilities.activate_battery.healPerSecond"],
+      "changes": [
+        "HP 100 confirmed (brief: [assumed] 100).",
+        "Battery: starts at 30%, +8% per generator puzzle, 50 HP at 100%; heals 1 HP/s.",
+        "Activate Battery cooldown 75 s; Vandalism max 3 graffiti, 5 s spray.",
+        "Broadcast modes per the wiki; Phase gives Resistance II 3 s + Speed II 1.5 s (brief: Resistance I + Speed IV)."
+      ]
+    },
+    {
+      "id": "guest_1337",
+      "name": "Guest 1337",
+      "team": "survivor",
+      "role": "sentinel",
+      "playstyle": "Parry / counter",
+      "summary": "Ex-soldier guest: blocks basic attacks, then parry-punches the killer into a stun.",
+      "difficulty": 4,
+      "skinIndex": 11,
+      "origin": "wiki",
+      "stats": { "hp": 110, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "made_to_last", "name": "Made to Last", "description": "+10 max HP (included).", "params": { "bonusHp": 10 } },
+        { "id": "self_sacrifice", "name": "Self Sacrifice", "description": "When survivors are stacked, Guest takes the hit (higher still while blocking).", "params": { "priority": 2, "blockingPriority": 3 } }
+      ],
+      "abilities": [
+        { "id": "block", "name": "Block", "slot": 2, "input": "tap", "cooldown": 27, "description": "Resistance V 1 s, -50% speed 1.75 s. Blocking a basic attack: +10 overheal (max 30), Speed I 2 s, Strength I 5 s, killer slowed 30% 1 s, Punch reset and Parry Punch ready. Blocking another ability breaks the block (-40% damage, Resistance II 3 s).", "params": { "resistSeconds": 1, "moveMul": 0.5, "slowSeconds": 1.75, "overheal": 10, "overhealMax": 30, "speedLevel": 1, "speedSeconds": 2, "strengthLevel": 1, "strengthSeconds": 5, "killerSlowMul": 0.7, "killerSlowSeconds": 1, "failMul": 0.6, "failResistLevel": 2, "failResistSeconds": 3, "failLockSeconds": 2, "parryWindowSeconds": 3 } },
+        { "id": "charge", "name": "Charge", "slot": 3, "input": "tap", "cooldown": 40, "description": "Shoulder dash 1.5 s (no stamina regen). Hit the killer: 5 damage, 6-11 stud knockback, Resistance III 0.5 s; 20 s per-killer lockout. Miss: Slowness II for 3-15 s by distance.", "params": { "seconds": 1.5, "studsPerSecond": 32, "damage": 5, "knockbackMinStuds": 6, "knockbackMaxStuds": 11, "buildSeconds": 0.5, "resistLevel": 3, "resistSeconds": 0.5, "lockoutSeconds": 20, "missSlowLevel": 2, "missMin": 3, "missMax": 15, "hitRadiusStuds": 4 } },
+        { "id": "punch", "name": "Punch", "slot": 4, "input": "tap", "cooldown": 55, "description": "0.6 s windup: 25 damage, Helpless + Slowness I 2 s, knockback. After a successful Block it becomes Parry Punch: 35 damage (42 with Strength), 2 s stun.", "params": { "windup": 0.6, "damage": 25, "helplessSeconds": 2, "slowLevel": 1, "slowSeconds": 2, "knockbackStuds": 7, "rangeStuds": 7, "halfAngle": 45, "parryWindup": 0.4, "parryDamage": 35, "parryStunSeconds": 2, "parryKnockbackStuds": 13 } }
+      ],
+      "bot": { "aggression": 0.7, "notes": "Blocks when the killer winds up a basic attack nearby (with reaction delay), Parry Punch right after, Charge to peel the killer off allies." },
+      "assumed": ["abilities.block.parryWindowSeconds", "abilities.charge.studsPerSecond", "abilities.charge.hitRadiusStuds", "abilities.punch.rangeStuds", "abilities.punch.halfAngle"],
+      "undocumented": ["abilities.block.strengthLevel", "abilities.block.failLockSeconds", "abilities.charge.lockoutSeconds", "abilities.charge.missMax"],
+      "changes": [
+        "Revamped in update 4.1.6 (May 2026) and tuned again by 5.0.0: HP 110 (Made to Last +10, brief: +15 / 115).",
+        "Block only fully blocks basic attacks; success grants overheal, Strength I and a Parry Punch (brief: Resistance V + Slowness IV 2 s, Punch charges).",
+        "Charge: 5 damage + knockback, 20 s per-killer lockout (brief: 15 HP on chained charges).",
+        "Regular Punch no longer stuns; Parry Punch stuns 2 s. Punch has a 55 s cooldown (brief: charge-based)."
+      ]
+    },
+    {
+      "id": "shedletsky",
+      "name": "Shedletsky",
+      "team": "survivor",
+      "role": "sentinel",
+      "playstyle": "Burst stun",
+      "summary": "Former Roblox admin with a sword stun and fried chicken heals.",
+      "difficulty": 2,
+      "skinIndex": 12,
+      "origin": "wiki",
+      "stats": { "hp": 100, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [],
+      "abilities": [
+        { "id": "slash", "name": "Slash", "slot": 2, "input": "tap", "cooldown": 40, "description": "0.55 s windup with Resistance II, then a sword arc: 30 damage and a 3 s stun. Slowed 75% for 1.4 s.", "params": { "windup": 0.55, "resistLevel": 2, "selfSlowMul": 0.25, "selfSlowSeconds": 1.4, "damage": 30, "stunSeconds": 3, "rangeStuds": 6, "halfAngle": 50 } },
+        { "id": "fried_chicken", "name": "Fried Chicken", "slot": 3, "input": "tap", "cooldown": 70, "description": "2 per round: heal 5 now + 25 over 10 s; slowed 75% for 3 s. Not at full HP; 5+ damage cancels the healing.", "params": { "charges": 2, "instantHeal": 5, "hotHeal": 25, "hotSeconds": 10, "slowMul": 0.25, "slowSeconds": 3, "cancelDamage": 5 } }
+      ],
+      "bot": { "aggression": 0.75, "notes": "Slashes the killer when close and facing him; eats chicken when safe below 65% HP." },
+      "assumed": ["abilities.slash.halfAngle"],
+      "undocumented": ["abilities.slash.rangeStuds", "abilities.fried_chicken.cancelDamage"],
+      "changes": [
+        "Slash cooldown 40 s (brief: 4 s), 30 damage + 3 s stun with Resistance II during the windup.",
+        "Fried Chicken heals 5 + 25 over 10 s (brief: +35)."
+      ]
+    },
+    {
+      "id": "chance",
+      "name": "Chance",
+      "team": "survivor",
+      "role": "sentinel",
+      "altRole": "survivalist",
+      "playstyle": "Gamble",
+      "summary": "Gambler: coin flips build charges for a revolver that might stun the killer — or explode.",
+      "difficulty": 4,
+      "skinIndex": 13,
+      "origin": "wiki",
+      "stats": { "hp": 80, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "unpredictable_fate", "name": "Unpredictable Fate", "description": "Max HP is random between 70 and 90 each round.", "params": { "minHp": 70, "maxHp": 90 } }
+      ],
+      "abilities": [
+        { "id": "coin_flip", "name": "Coin Flip", "slot": 2, "input": "tap", "cooldown": 1.75, "description": "Heads: +1 charge to every other ability (max 3). Tails: +1 Vulnerable tier for 15 s. Each tails in a row adds +2.5% heads chance.", "params": { "vulnerableSeconds": 15, "pityPerTails": 0.025, "maxCharges": 3 } },
+        { "id": "one_shot", "name": "One Shot", "slot": 3, "input": "tap", "cooldown": 45, "description": "1 s windup. Success (50/70/90% at 1/2/3 charges): 50 damage, stun 1-4 s by distance (90 studs). Misfire: nothing. Explosion: 25 self-damage, gun breaks until Hat Fix, nearby killer stunned 5 s. Uses all charges.", "params": { "windup": 1, "successChance": [0.3, 0.5, 0.7, 0.9], "explodeChance": [0.35, 0.25, 0.15, 0.05], "damage": 50, "stunMax": 4, "stunMin": 1, "rangeStuds": 90, "knockbackStuds": 5, "explodeSelfDamage": 25, "explodeStun": 5, "explodeRadiusStuds": 6 } },
+        { "id": "reroll", "name": "Reroll", "slot": 4, "input": "tap", "cooldown": 20, "description": "New max HP = random 55-120 x (1 + 0/5/10% at 1/2/3 charges), cap 130; keeps the HP percentage. Uses all charges.", "params": { "minHp": 55, "maxHp": 120, "bonus": [0, 0, 0.05, 0.1], "cap": 130 } },
+        { "id": "hat_fix", "name": "Hat Fix", "slot": 5, "input": "tap", "cooldown": 60, "description": "Needs 3 charges: resets Vulnerable, repairs a broken One Shot. Uses all charges.", "params": { "requiredCharges": 3 } }
+      ],
+      "bot": { "aggression": 0.55, "notes": "Flips coins while abilities are on cooldown, fires One Shot when the killer is in range with 2+ charges, Hat Fix when Vulnerable is high or the gun broke." },
+      "assumed": ["abilities.one_shot.successChance", "abilities.one_shot.explodeChance"],
+      "undocumented": ["abilities.one_shot.knockbackStuds"],
+      "changes": [
+        "There are no dice: the kit is Coin Flip / One Shot / Reroll / Hat Fix with shared charges (brief: d4 roll).",
+        "Max HP random 70-90 at round start; Reroll 55-120 (+bonus), cap 130; stamina is fixed at 100.",
+        "Tails gives Vulnerable (+20% damage taken per tier), not Weakness.",
+        "One Shot at 0 charges is not described by the wiki: 30% success / 35% misfire / 35% explosion [assumed] (extrapolated from the +20%/-10% per charge rule)."
+      ]
+    },
+    {
+      "id": "two_time",
+      "name": "Two Time",
+      "team": "survivor",
+      "role": "sentinel",
+      "altRole": "survivalist",
+      "playstyle": "Backstabs / second life",
+      "summary": "Cultist with a sacrificial dagger who can come back once from a ritual circle.",
+      "difficulty": 4,
+      "skinIndex": 14,
+      "origin": "wiki",
+      "stats": { "hp": 80, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "oblation", "name": "Oblation", "description": "Damaging the killer fills Oblation (front stab +20%, backstab +40%). With a full meter and a Ritual placed, a lethal hit starts a second life at the Ritual: 50 HP, +40% stamina, cleared statuses, 2 s invincible, Speed II 6 s, Vulnerable V 12 s.", "params": { "frontFill": 20, "backFill": 40, "crouchBackFill": 60, "secondLifeHp": 50, "staminaBonus": 40, "invulnSeconds": 2, "speedLevel": 2, "speedSeconds": 6, "vulnLevel": 5, "vulnSeconds": 12, "timerBonusFraction": 0.5, "lmsMaxHp": 110, "lmsHeal": 50, "devotionHp": 40, "devotionInvuln": 1.5 } }
+      ],
+      "abilities": [
+        { "id": "sacrificial_dagger", "name": "Sacrificial Dagger", "slot": 2, "input": "tap", "cooldown": 30, "description": "0.25 s windup, Resistance I 0.7 s. Front: 10 damage + Slowness II + Helpless 1 s. Backstab: 20 damage + 2 s stun. While crouched: 22-stud lunge, backstab stun 3.5 s.", "params": { "windup": 0.25, "resistLevel": 1, "resistSeconds": 0.7, "rangeStuds": 6, "halfAngle": 45, "frontDamage": 10, "frontSlowLevel": 2, "frontHelplessSeconds": 1, "backDamage": 20, "backStun": 2, "crouchLungeStuds": 22, "crouchBackStun": 3.5 } },
+        { "id": "crouch", "name": "Crouch", "slot": 3, "input": "toggle", "cooldown": 35, "description": "Up to 15 s: Undetectable + Invisibility III, walk 10 / run 20, building up to +40% running at the killer over 4 s. Leaving within 30 studs of the killer gives Speed II 1 s.", "params": { "maxSeconds": 15, "invisLevel": 3, "walk": 10, "sprint": 20, "rampBonus": 0.4, "rampSeconds": 4, "allyRevealStuds": 100, "exitSpeedLevel": 2, "exitSpeedSeconds": 1, "exitRangeStuds": 30 } },
+        { "id": "pray", "name": "Pray", "slot": 4, "input": "toggle", "cooldown": null, "cooldownNote": "none — needs a Ritual", "description": "Kneel at your Ritual and turn Oblation into HP (1 HP per 2%).", "params": { "hpPerPercent": 0.5, "percentPerSecond": 20, "rangeStuds": 10, "showRitualSeconds": 4 } },
+        { "id": "ritual", "name": "Ritual", "slot": 5, "input": "tap", "cooldown": null, "cooldownNote": "once per round", "description": "4 s windup: carves your respawn point. Required for the second life. In LMS the second life triggers in place even without a full meter.", "params": { "windup": 4 } }
+      ],
+      "bot": { "aggression": 0.65, "notes": "Places the Ritual early near the spawn side, crouches to approach, backstabs when the killer is turned away, prays when safe." },
+      "assumed": ["passives.oblation.crouchBackFill", "abilities.sacrificial_dagger.halfAngle", "abilities.pray.percentPerSecond", "abilities.pray.rangeStuds"],
+      "undocumented": ["abilities.sacrificial_dagger.rangeStuds", "abilities.crouch.walk", "abilities.crouch.sprint", "abilities.ritual.windup"],
+      "changes": [
+        "Current kit (wiki, July 2026 rework): Oblation, Sacrificial Dagger, Crouch, Pray, Ritual. The brief's default 'Oblation' version is kept and updated: second life 50 HP (brief: 40), backstab stuns, Pray added.",
+        "'Undying Devotion' is the oldest (2025) kit; still available via config.twoTimeVariant = \"undying_devotion\" (40 HP revive, Speed II 6 s, 1.5 s invincible, Vulnerable V 12 s).",
+        "Dagger damage 10 front / 20 back (brief: 25)."
+      ]
+    },
+    {
+      "id": "jane_doe",
+      "name": "Jane Doe",
+      "team": "survivor",
+      "role": "sentinel",
+      "altRole": "support",
+      "playstyle": "Resonance stuns",
+      "summary": "Crystal-throwing sentinel who marks the killer with Resonance, then stuns with her hatchet.",
+      "difficulty": 3,
+      "skinIndex": 15,
+      "origin": "wiki",
+      "stats": { "hp": 60, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "digital_footprint", "name": "Digital Footprint", "description": "Sees the killer's footprints: red, then yellow, then gone.", "params": { "lifeSeconds": 6, "everySeconds": 0.5 } },
+        { "id": "shatterpoint", "name": "Shatterpoint", "description": "Extra 20-30 HP pool that takes 40% less damage. Only her landed abilities restore it. At 0 it is locked for 40 s, then returns with 5.", "params": { "start": 20, "max": 30, "reduction": 0.4, "lockoutSeconds": 40, "recoverAmount": 5 } }
+      ],
+      "abilities": [
+        { "id": "crystal_pitch", "name": "Crystal Pitch", "slot": 2, "input": "charge", "cooldown": 16, "description": "Charge up to 2 s (-30% speed), throw an arcing crystal that explodes. Survivor: Purified I 3 s, +2 SHP. Killer: +1 Resonance (II from 110+ studs), +3 SHP, but Jane is revealed 3 s.", "params": { "maxChargeSeconds": 2, "chargeMoveMul": 0.7, "lifeSeconds": 6.5, "minStudsPerSecond": 40, "maxStudsPerSecond": 90, "minRadiusStuds": 5, "maxRadiusStuds": 10, "purifiedSeconds": 3, "survivorShp": 2, "killerShp": 3, "resonanceSeconds": 30, "longShotStuds": 110, "revealSelfSeconds": 3, "resonanceLockSeconds": 10, "gravity": 0.02 } },
+        { "id": "hatchet", "name": "Hatchet", "slot": 3, "input": "tap", "cooldown": 35, "description": "0.75 s windup, lunge, 25 damage (10 vs John Doe). No Resonance: Helpless I + Slowness II 2 s, +5 SHP. Resonance I/II/III: stun 2.5/3.5/4.5 s, +10/20/30 SHP; consumes Resonance.", "params": { "windup": 0.75, "lungeStuds": 12, "damage": 25, "johnDoeDamage": 10, "resistLevel": 1, "noResHelplessSeconds": 2, "noResSlowLevel": 2, "noResSlowSeconds": 2, "stun": [2.5, 3.5, 4.5], "shp": [5, 10, 20, 30], "rangeStuds": 7, "halfAngle": 45 } }
+      ],
+      "bot": { "aggression": 0.6, "notes": "Pitches crystals at the killer from range to build Resonance, Hatchet when Resonance >= 1, pitches at hurt allies for Purified." },
+      "assumed": ["passives.digital_footprint.lifeSeconds", "passives.digital_footprint.everySeconds", "abilities.crystal_pitch.minStudsPerSecond", "abilities.crystal_pitch.maxStudsPerSecond", "abilities.crystal_pitch.minRadiusStuds", "abilities.crystal_pitch.maxRadiusStuds", "abilities.crystal_pitch.gravity", "abilities.hatchet.lungeStuds", "abilities.hatchet.halfAngle"],
+      "undocumented": ["passives.shatterpoint.recoverAmount"],
+      "changes": [
+        "Shatterpoint returns with 5 SHP after the 40 s lockout (wiki undocumented).",
+        "Resonance lasts 30 s (not stated in the brief).",
+        "Hatchet: 10 damage against John Doe."
+      ]
+    },
+    {
+      "id": "elliot",
+      "name": "Elliot",
+      "team": "survivor",
+      "role": "support",
+      "playstyle": "Healer",
+      "summary": "Pizza delivery boy: throws healing pizzas and rushes allies out of danger.",
+      "difficulty": 2,
+      "skinIndex": 16,
+      "origin": "wiki",
+      "stats": { "hp": 80, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "order_up", "name": "Order Up!", "description": "Each repaired generator adds +2 pizza healing (max +10).", "params": { "perGenerator": 2, "maxBonus": 10 } },
+        { "id": "delivers_resolve", "name": "Deliverer's Resolve", "description": "Sees the aura of any survivor who takes damage for 12 s.", "params": { "revealSeconds": 12 } }
+      ],
+      "abilities": [
+        { "id": "pizza_throw", "name": "Pizza Throw", "slot": 2, "input": "tap", "cooldown": 30, "description": "Throws a pizza: whoever picks it up heals 5 + 15 over time (+2 per generator). Lasts 15 s; Elliot cannot eat his own. Not for Veeronica.", "params": { "instantHeal": 5, "hotHeal": 15, "hotSeconds": 5, "lifeSeconds": 15, "highlightStuds": 200, "throwStuds": 30, "cancelDamage": 5, "multiElliotPenalty": 0.25, "minEffectiveness": 0.8 } },
+        { "id": "rush_hour", "name": "Rush Hour", "slot": 3, "input": "tap", "cooldown": 30, "description": "Charges from healing others (start 1, max 3). Near the killer (85 studs): spends all for Speed (level = charges) 4 s; 2+ charges also give Exhausted II 4 s after.", "params": { "startCharges": 1, "maxCharges": 3, "seconds": 4, "rangeStuds": 85, "exhaustedLevel": 2, "exhaustedSeconds": 4, "exhaustedMinCharges": 2 } }
+      ],
+      "bot": { "aggression": 0.25, "notes": "Throws pizza at any ally below 60% HP in range; Rush Hour when chased with charges." },
+      "assumed": ["abilities.pizza_throw.hotSeconds", "abilities.pizza_throw.throwStuds"],
+      "undocumented": ["abilities.pizza_throw.cancelDamage"],
+      "changes": [
+        "HP 80 (brief: [assumed] 100).",
+        "Pizza heals 5 + 15 over time, +2 per generator up to +10 (brief: 35 HP, +5% per task); cooldown 30 s (brief: 45 s); lasts 15 s.",
+        "Rush Hour is a charge-based speed burst near the killer (brief: speed charge from eating pizza)."
+      ]
+    },
+    {
+      "id": "builderman",
+      "name": "Builderman",
+      "team": "survivor",
+      "role": "support",
+      "playstyle": "Constructs",
+      "summary": "Roblox's builder: a slowing sentry and a healing dispenser he can carry around.",
+      "difficulty": 3,
+      "skinIndex": 17,
+      "origin": "wiki",
+      "stats": { "hp": 90, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [],
+      "abilities": [
+        { "id": "sentry", "name": "Sentry", "slot": 2, "input": "tap", "cooldown": 45, "description": "Build for 6 s (damage cancels). 30 HP turret shooting the killer within 65 studs: Slowness II 1 s, Bleeding II 2 s and ~0.65 damage per shot. One per Builderman.", "params": { "buildSeconds": 6, "hp": 30, "rangeStuds": 65, "rangeDecayPerSentry": 0.16, "minRangeStuds": 8, "fireInterval": 1, "damage": 0.65, "slowLevel": 2, "slowSeconds": 1, "bleedLevel": 2, "bleedSeconds": 2, "spacingStuds": 125 } },
+        { "id": "dispenser", "name": "Dispenser", "slot": 3, "input": "tap", "cooldown": 45, "description": "Build for 6 s. 15 HP; heals survivors within 16 studs by 1 HP/s. One per Builderman.", "params": { "buildSeconds": 6, "hp": 15, "radiusStuds": 16, "healPerSecond": 1, "decayPerDispenser": 0.08, "minHealPerSecond": 0.3, "spacingStuds": 60 } },
+        { "id": "carry", "name": "Carry / Place", "slot": 4, "input": "toggle", "cooldown": null, "cooldownNote": "0 s", "description": "Pick up a nearby building (inactive while carried, -10% speed, no sprint; 10+ damage destroys it). Press again to place it.", "params": { "pickupStuds": 10, "moveMul": 0.9, "breakDamage": 10, "reactivateSeconds": 1 } }
+      ],
+      "bot": { "aggression": 0.3, "notes": "Builds the Sentry at a chokepoint near the generator he works on, the Dispenser near hurt allies." },
+      "assumed": ["abilities.carry.pickupStuds", "abilities.carry.reactivateSeconds"],
+      "undocumented": ["abilities.sentry.bleedLevel", "abilities.sentry.damage"],
+      "changes": [
+        "One Sentry and one Dispenser per Builderman (brief: up to 9 sentries / 14 dispensers).",
+        "Sentry: Slowness II 1 s per shot (brief: Slowness 2 s), 30 HP, 65-stud range; Dispenser heals 1 HP/s in 16 studs (brief: 0.9 HP/s).",
+        "New third ability Carry / Place."
+      ]
+    },
+    {
+      "id": "dusekkar",
+      "name": "Dusekkar",
+      "team": "survivor",
+      "role": "support",
+      "playstyle": "Protection",
+      "summary": "Staff-wielding mage who shields allies through walls and zaps the killer.",
+      "difficulty": 5,
+      "skinIndex": 18,
+      "origin": "wiki",
+      "stats": { "hp": 90, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [
+        { "id": "levitation", "name": "Levitation", "description": "No footstep sounds; unaffected by John Doe's trail.", "params": {} }
+      ],
+      "abilities": [
+        { "id": "spawn_protection", "name": "Spawn Protection", "slot": 2, "input": "charge", "cooldown": 35, "description": "Channel a shield on the ally you look at (95 studs, through walls) for up to 3.5 s: Resistance IV and one lethal hit nullified. Dusekkar is slowed 30%. Same ally only every 30 s.", "params": { "channelSeconds": 3.5, "rangeStuds": 95, "resistLevel": 4, "selfSlowMul": 0.7, "losBreakSeconds": 2, "sameAllyLockout": 30, "aimHalfAngle": 20 } },
+        { "id": "plasma_beam", "name": "Plasma Beam", "slot": 3, "input": "tap", "cooldown": 28, "description": "2 s windup (-25% speed), then a 75-stud beam through walls. Killer: Slowness I 4 s. One survivor: Speed I 3 s + 25 overheal (decays).", "params": { "windup": 2, "windupMoveMul": 0.75, "rangeStuds": 75, "killerSlowLevel": 1, "killerSlowSeconds": 4, "survivorSpeedLevel": 1, "survivorSpeedSeconds": 3, "overheal": 25, "overhealDecayPerSecond": 2, "beamRadius": 1 } }
+      ],
+      "bot": { "aggression": 0.35, "notes": "Spawn Protection on a chased ally in view; Plasma Beam on the killer during chases." },
+      "assumed": ["abilities.spawn_protection.aimHalfAngle", "abilities.plasma_beam.beamRadius"],
+      "undocumented": [],
+      "changes": [
+        "Spawn Protection: Resistance IV for up to 3.5 s (brief: 8 s) and it nullifies one lethal hit.",
+        "Plasma Beam: Slowness I 4 s on the killer (brief: Slowness II 3 s); survivors get Speed I 3 s + 25 overheal (wiki page; Statistics says 30). Cooldown 28 s (brief: 20 s)."
+      ]
+    },
+    {
+      "id": "taph",
+      "name": "Taph",
+      "team": "survivor",
+      "role": "support",
+      "playstyle": "Traps",
+      "summary": "Trap-maker with alarm tripwires and a reality-bending Subspace Tripmine.",
+      "difficulty": 2,
+      "skinIndex": 19,
+      "origin": "wiki",
+      "stats": { "hp": 100, "walk": 12, "sprint": 26, "stamina": 100, "staminaDrain": 10, "staminaRegen": 20, "limps": true },
+      "passives": [],
+      "abilities": [
+        { "id": "tripwire", "name": "Tripwire", "slot": 2, "input": "tap", "cooldown": 25, "description": "Place a wire (max 3, arms in 1.5 s, 10 HP). The killer crossing it is revealed to all survivors for 8 s and gets Slowness II 4 s.", "params": { "maxTraps": 3, "armSeconds": 1.5, "hp": 10, "wireLengthStuds": 8, "revealSeconds": 8, "slowLevel": 2, "slowSeconds": 4, "fadeSeconds": 150 } },
+        { "id": "subspace_tripmine", "name": "Subspace Tripmine", "slot": 3, "input": "tap", "cooldown": 40, "description": "Throw a near-invisible mine. A killer within 19 studs sets it off 0.5 s later: Helpless I 3 s, Subspaced III 6 s, Weakness V 6 s. Attacked first: only Subspaced I. Self-destructs after 50 s; -10 s cooldown when it hits.", "params": { "triggerStuds": 19, "delay": 0.5, "helplessSeconds": 3, "subspacedLevel": 3, "subspacedSeconds": 6, "weaknessLevel": 5, "weaknessSeconds": 6, "selfDetonateSeconds": 50, "triggeredCooldownCut": 10, "pulseSeconds": 13, "throwStuds": 12, "blastStuds": 19, "attackedSubspacedLevel": 1 } }
+      ],
+      "bot": { "aggression": 0.4, "notes": "Tripwires on approach routes to the generator he works on, mines near occupied generators." },
+      "assumed": ["abilities.subspace_tripmine.throwStuds", "abilities.subspace_tripmine.blastStuds"],
+      "undocumented": [],
+      "changes": [
+        "Tripwire gives Slowness II 4 s and reveals the killer to all survivors 8 s; it never expires (fades over 150 s) — brief said ~80 s.",
+        "Subspace Tripmine: trigger range 19 studs (brief 16), Helpless I 3 s (brief 5 s) + Subspaced III + Weakness V 6 s; self-detonates after 50 s (brief 35 s)."
+      ]
+    }
+  ]
+}
