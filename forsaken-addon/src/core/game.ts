@@ -12,7 +12,7 @@ import type { ObjectSpec, WorldObject } from "../abilities/objects";
 import { Fx, type Rgb } from "./fx";
 import { Scheduler } from "./scheduler";
 import { config, type Difficulty } from "./config";
-import { studs, ticks } from "./scale";
+import { blocksPerSecond, perTick, studs, ticks } from "./scale";
 import { evaluate, maybeStartLms, newRound, onElimination, onGeneratorCompleted, onLayerCompleted, tickClock, type RoundState, type Winner } from "./round";
 import type { WorldPorts } from "./ports";
 import { Rng } from "../util/rng";
@@ -23,6 +23,7 @@ import { advanceGenerator, createGenerators, generatorsDone, resetFake, type Gen
 import { ACTOR_RADIUS } from "../abilities/hit";
 
 export type GamePhase = "SETUP" | "HEAD_START" | "ROUND" | "ENDED";
+export type { Winner } from "./round";
 
 export type RevealViewers = "killer" | "survivors" | "all" | string[];
 
@@ -311,6 +312,13 @@ export class Game {
   windup(a: Actor, seconds: number, fn: () => void, opts: { abilityId?: string; label?: string; moveMul?: number; noSprint?: boolean; frozen?: boolean; stunCancels?: boolean; damageCancels?: boolean; moveCancels?: boolean; onCancel?: (reason: string) => void } = {}): void {
     const id = `${opts.abilityId ?? "windup"}:${this.now}`;
     const end = this.now + Math.max(1, ticks(seconds));
+    // A new windup replaces a running one: let the old one clean up (move mods, partial effects).
+    const prev = a.channel;
+    if (prev) {
+      a.channel = null;
+      a.removeMoveMod(`channel:${prev.id}`);
+      prev.onCancel?.("replaced");
+    }
     if (opts.moveMul !== undefined || opts.noSprint || opts.frozen) a.addMoveMod({ id: `channel:${id}`, endTick: end, mul: opts.moveMul, noSprint: opts.noSprint, frozen: opts.frozen });
     a.channel = {
       id,
@@ -335,10 +343,11 @@ export class Game {
     );
   }
 
-  /** Starts a dash/lunge. Speed in studs/s (converted), or blocksPerTick directly. */
+  /** Starts a dash/lunge. Speed in studs/s (speed scale), or blocksPerTick directly. */
   dash(a: Actor, opts: { id: string; dir?: Vec3; studsPerSecond?: number; blocksPerTick?: number; seconds: number; turnRate?: number; onTick?: () => boolean | void; onWall?: () => void; onEnd?: ForcedMove["onEnd"]; noStaminaRegen?: boolean; stopOnStun?: boolean }): ForcedMove {
     const dir = flat(opts.dir ?? a.facing);
-    const speed = opts.blocksPerTick ?? (studs(opts.studsPerSecond ?? 0) / 20);
+    // Speeds use the speed scale (relative to sprint), like walking and projectiles (DECISIONS.md D22).
+    const speed = opts.blocksPerTick ?? perTick(blocksPerSecond(opts.studsPerSecond ?? 0));
     if (a.forced) this.endForced(a, "cancel");
     const fm: ForcedMove = {
       id: opts.id,
@@ -909,25 +918,32 @@ export class Game {
    */
   navDirection(a: Actor, goal: Vec3, arriveDist = 0.6): Vec3 | null {
     if (dist2D(a.pos, goal) < arriveDist) return null;
-    if (this.grid.walkLine(a.pos, goal)) {
-      this.navCache.delete(a.id);
-      return this.openDoorsAhead(a, flat(sub(goal, a.pos)));
-    }
     let c = this.navCache.get(a.id);
-    const stale = !c || dist2D(c.goal, goal) > 1.5 || this.now - c.tick > 60 || c.idx >= c.path.length;
+    const stale = !c || dist2D(c.goal, goal) > 1.5 || this.now - c.tick > 40 || c.idx >= c.path.length;
     if (stale) {
-      const path = this.grid.findPath(this.grid.toGrid(a.pos), this.grid.toGrid(goal));
-      if (!path || path.length < 2) {
-        this.navCache.delete(a.id);
-        return this.openDoorsAhead(a, flat(sub(goal, a.pos)));
+      // Re-plan: straight line if clear, else smoothed A*.
+      if (this.grid.walkLine(a.pos, goal)) c = { goal: { ...goal }, path: [{ ...goal }], idx: 0, tick: this.now };
+      else {
+        const path = this.grid.findPath(this.grid.toGrid(a.pos), this.grid.toGrid(goal));
+        if (!path || path.length < 2) {
+          this.navCache.delete(a.id);
+          return this.openDoorsAhead(a, flat(sub(goal, a.pos)));
+        }
+        const pts = this.grid.smooth(path);
+        pts[pts.length - 1] = { ...goal };
+        c = { goal: { ...goal }, path: pts, idx: 1, tick: this.now };
       }
-      c = { goal: { ...goal }, path: this.grid.smooth(path), idx: 1, tick: this.now };
       this.navCache.set(a.id, c);
     }
     const cc = c as { goal: Vec3; path: Vec3[]; idx: number; tick: number };
-    while (cc.idx < cc.path.length - 1 && dist2D(a.pos, cc.path[cc.idx]) < 0.8) cc.idx++;
-    if (cc.idx < cc.path.length - 1 && this.grid.walkLine(a.pos, cc.path[cc.idx + 1])) cc.idx++;
-    const wp = cc.path[Math.min(cc.idx, cc.path.length - 1)];
+    let advanced = false;
+    while (cc.idx < cc.path.length - 1 && dist2D(a.pos, cc.path[cc.idx]) < 0.8) {
+      cc.idx++;
+      advanced = true;
+    }
+    // Occasionally try to skip a waypoint we can already walk past (cheap: at most every 10 ticks).
+    if ((advanced || (this.now + a.id.length) % 10 === 0) && cc.idx < cc.path.length - 1 && this.grid.walkLine(a.pos, cc.path[cc.idx + 1])) cc.idx++;
+    const wp = cc.idx < cc.path.length - 1 ? cc.path[cc.idx] : goal;
     return this.openDoorsAhead(a, flat(sub(wp, a.pos)));
   }
 

@@ -140,6 +140,8 @@ export function dealDamage(game: Game, target: Actor, amount: number, source: Ac
     else if (floor > 0) rest = Math.min(rest, target.hp - floor);
     if (!ev.canKill) rest = Math.min(rest, Math.max(0, target.hp - 1));
   }
+  // Overkill is not counted: HP never drops below 0 and stats / hooks see the HP actually removed.
+  rest = Math.min(rest, Math.max(0, target.hp));
   ev.dealt = rest;
   target.hp -= rest;
   const totalLoss = ev.dealt + ev.absorbed;

@@ -104,9 +104,9 @@
     "stuckWaypointSeconds": 3,
     "stuckSafeSeconds": 6,
     "difficulty": {
-      "easy": { "reactionSeconds": 0.6, "accuracy": 0.55, "repairMultiplier": 0.75, "escapeQuality": 0.45, "chaseGiveUpSeconds": 30, "abilityUseChance": 0.5 },
-      "normal": { "reactionSeconds": 0.35, "accuracy": 0.75, "repairMultiplier": 0.9, "escapeQuality": 0.7, "chaseGiveUpSeconds": 22, "abilityUseChance": 0.75 },
-      "hard": { "reactionSeconds": 0.15, "accuracy": 0.92, "repairMultiplier": 1.0, "escapeQuality": 0.92, "chaseGiveUpSeconds": 17, "abilityUseChance": 0.95 }
+      "easy": { "reactionSeconds": 0.6, "accuracy": 0.55, "repairMultiplier": 0.75, "escapeQuality": 0.45, "chaseGiveUpSeconds": 30, "abilityUseChance": 0.5, "killerMemorySeconds": 3, "swingChance": 0.35 },
+      "normal": { "reactionSeconds": 0.35, "accuracy": 0.75, "repairMultiplier": 0.9, "escapeQuality": 0.7, "chaseGiveUpSeconds": 22, "abilityUseChance": 0.75, "killerMemorySeconds": 4, "swingChance": 0.55 },
+      "hard": { "reactionSeconds": 0.15, "accuracy": 0.92, "repairMultiplier": 1.0, "escapeQuality": 0.92, "chaseGiveUpSeconds": 17, "abilityUseChance": 0.95, "killerMemorySeconds": 6, "swingChance": 0.9 }
     }
   },
   "arena": {

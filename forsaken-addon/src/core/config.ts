@@ -9,6 +9,10 @@ export interface DifficultyTuning {
   escapeQuality: number;
   chaseGiveUpSeconds: number;
   abilityUseChance: number;
+  /** Killer bots: how long a lost survivor's last position stays useful. */
+  killerMemorySeconds: number;
+  /** Killer bots: chance per think (every thinkIntervalTicks) to swing the basic attack when in reach. */
+  swingChance: number;
 }
 
 export interface SoundDef {

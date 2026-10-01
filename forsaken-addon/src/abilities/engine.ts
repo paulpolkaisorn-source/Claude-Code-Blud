@@ -35,8 +35,10 @@ export interface AbilityHandler {
   hud?(ctx: AbilityCtx): string | null;
   /** Usable while Helpless (e.g. cancelling Sk8). */
   ignoresHelpless?: boolean | ((ctx: AbilityCtx) => boolean);
-  /** Usable during the killer's head-start freeze (survivors only, usually). */
+  /** Usable while repairing a generator. */
   usableWhileRepairing?: boolean;
+  /** Can be pressed while a windup / channel is running (default: no). */
+  usableWhileChanneling?: boolean;
 }
 
 export interface Kit {
@@ -90,6 +92,8 @@ export function blockReason(game: Game, actor: Actor, def: AbilityDef, handler: 
   const ignoresHelpless = typeof handler.ignoresHelpless === "function" ? handler.ignoresHelpless(ctx) : handler.ignoresHelpless === true;
   if (actor.statuses.has("helpless") && !ignoresHelpless && !releasing) return "helpless";
   if (actor.flags.has("locked")) return "busy";
+  // A windup / channel in progress blocks other presses (releasing a charge ability is still allowed).
+  if (actor.channel && !releasing && !handler.usableWhileChanneling) return "busy";
   if (!releasing) {
     const rem = actor.cooldowns.remaining(def.id, game.now);
     if (rem > 0) return rem === Infinity ? "active" : `cooldown ${(rem / 20).toFixed(1)}s`;
