@@ -1,0 +1,17 @@
+{
+  "name": "hush-asmr",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hush — an ASMR playground of 2D and 3D mini games. Fully procedural audio, zero asset files.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "start": "node build.mjs --serve"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "three": "^0.186.1"
+  }
+}
