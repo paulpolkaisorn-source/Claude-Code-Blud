@@ -3,13 +3,13 @@
 import { AudioEngine, Pad } from './audio.js';
 import { GAMES } from './games/index.js';
 import { safeStorage, clamp } from './util.js';
-import { makeProfile, detectAuto, LABELS, DESCRIPTIONS } from './gfx.js';
+import { makeProfile, detectAuto, getGpuInfo, LABELS, DESCRIPTIONS, SCALE_MODES } from './gfx.js';
 
 const $ = (sel) => document.querySelector(sel);
 const store = safeStorage();
 
 // ---------- settings ----------
-const defaults = { volume: 0.8, muted: false, haptics: true, ambience: true, quality: 'auto' };
+const defaults = { volume: 0.8, muted: false, haptics: true, ambience: true, quality: 'auto', renderScale: 'adaptive' };
 let saved = {};
 try { saved = JSON.parse(store.getItem('hush:settings') || '{}'); } catch (_) { /* ignore */ }
 const settings = { ...defaults, ...saved };
@@ -20,7 +20,7 @@ const resolveLevel = () => {
   if (settings.quality === 'auto') return (autoLevel ??= detectAuto());
   return LABELS[settings.quality] ? settings.quality : 'high';
 };
-const resolveGfx = () => makeProfile(resolveLevel());
+const resolveGfx = () => makeProfile(resolveLevel(), settings.renderScale);
 
 const audio = new AudioEngine(settings);
 window.__hush = { audio, settings }; // handy for debugging / tests
@@ -298,18 +298,32 @@ const ambience = $('#set-ambience');
 const haptics = $('#set-haptics');
 const quality = $('#set-quality');
 const qualityDesc = $('#quality-desc');
+const scaleSel = $('#set-scale');
+for (const [k, label] of Object.entries(SCALE_MODES)) scaleSel.add(new Option(label, k));
+const gpuInfoEl = $('#gpu-info');
+const describeGpu = () => {
+  const g = getGpuInfo();
+  const note = g.kind === 'integrated'
+    ? ' This looks like integrated graphics. On a laptop with an NVIDIA/AMD GPU, set Windows Settings > System > Display > Graphics > your browser > High performance, then restart the browser.'
+    : g.kind === 'software' ? ' Software rendering detected: enable hardware acceleration in your browser settings.' : '';
+  return `Rendering on: ${g.name}.${note}`;
+};
 const refreshQualityUI = () => {
   const key = quality.value;
   qualityDesc.textContent = key === 'auto' ? `${DESCRIPTIONS.auto} Currently: ${LABELS[resolveLevel()]}.` : DESCRIPTIONS[key];
+  gpuInfoEl.textContent = describeGpu();
   $('#gfx-label').textContent = settings.quality === 'auto' ? `Auto · ${LABELS[resolveLevel()]}` : LABELS[settings.quality];
 };
 let qualityAtOpen = '';
+let scaleAtOpen = '';
 function openSettings() {
   qualityAtOpen = settings.quality;
+  scaleAtOpen = settings.renderScale;
   volume.value = settings.volume;
   ambience.checked = settings.ambience;
   haptics.checked = settings.haptics;
   quality.value = LABELS[settings.quality] || settings.quality === 'auto' ? settings.quality : 'high';
+  scaleSel.value = SCALE_MODES[settings.renderScale] ? settings.renderScale : 'adaptive';
   refreshQualityUI();
   modal.hidden = false;
   volume.focus();
@@ -318,7 +332,7 @@ function closeSettings() {
   modal.hidden = true;
   if (currentScreen === 'stage') {
     // graphics changes need a fresh renderer: restart the current game
-    if (settings.quality !== qualityAtOpen && current) openGame(current.meta.id);
+    if ((settings.quality !== qualityAtOpen || settings.renderScale !== scaleAtOpen) && current) openGame(current.meta.id);
     else $('#btn-gfx').focus();
   } else {
     $('#btn-settings').focus();
@@ -345,23 +359,31 @@ ambience.addEventListener('change', () => {
 });
 haptics.addEventListener('change', () => { settings.haptics = haptics.checked; persist(); });
 quality.addEventListener('change', () => { settings.quality = quality.value; persist(); refreshQualityUI(); });
+scaleSel.addEventListener('change', () => { settings.renderScale = scaleSel.value; persist(); });
 
 // ---------- performance watchdog ----------
-// If a game runs far below 30 fps for a while, suggest a lower graphics level (once per game).
+// Shows live fps next to the graphics level, and if a game stays under ~30 fps explains why / what to do.
 let fpsFrames = 0;
 let fpsStart = 0;
 let fpsWarned = false;
+let slowSeconds = 0;
 function fpsTick(now) {
   requestAnimationFrame(fpsTick);
-  if (currentScreen !== 'stage' || document.hidden || !current) { fpsFrames = 0; fpsStart = 0; return; }
+  if (currentScreen !== 'stage' || document.hidden || !current) { fpsFrames = 0; fpsStart = 0; slowSeconds = 0; return; }
   if (!fpsStart) { fpsStart = now; fpsFrames = 0; return; }
   fpsFrames++;
   const el = now - fpsStart;
-  if (el > 5000) {
-    const fps = (fpsFrames * 1000) / el;
-    if (fps < 24 && !fpsWarned && resolveLevel() !== 'low') {
+  if (el >= 1000) {
+    const fps = Math.round((fpsFrames * 1000) / el);
+    const base = settings.quality === 'auto' ? `Auto · ${LABELS[resolveLevel()]}` : LABELS[settings.quality];
+    $('#gfx-label').textContent = `${base} · ${fps} fps`;
+    slowSeconds = fps < 30 ? slowSeconds + 1 : Math.max(0, slowSeconds - 1);
+    if (slowSeconds >= 8 && !fpsWarned) {
       fpsWarned = true;
-      hud.setHint(`Running at ~${Math.round(fps)} fps. Try a lower graphics level (top-right button).`, 9000);
+      const g = getGpuInfo();
+      hud.setHint(g.kind === 'discrete'
+        ? `Running at ~${fps} fps. Lower the graphics level or resolution scaling (top-right button).`
+        : `Running at ~${fps} fps on ${g.name}. If this machine has a faster GPU, set your browser to use it (Windows Settings > Display > Graphics > High performance). Otherwise lower the graphics level.`, 12000);
       wakeHud();
     }
     fpsStart = now;

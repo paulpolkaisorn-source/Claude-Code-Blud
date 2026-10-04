@@ -432,6 +432,7 @@ export function create(env) {
     exposure: 1.0,
     environment: false,
     shadows: true,
+    shadowFps: 10, // the logs and stones never move; the cube shadow map is the costliest pass
     bloom: { strength: 0.14, radius: 0.3, threshold: 1.3 },
     ao: true,
     aoRadius: 0.7,
@@ -525,7 +526,7 @@ export function create(env) {
   const fireLight = new THREE.PointLight(0xff8a3c, 44, 0, 2);
   fireLight.position.set(0, 1.9, 0);
   if (SH) {
-    const S = Math.min(gfx.shadows, 2048);
+    const S = Math.min(gfx.shadows, 1024);
     fireLight.castShadow = true;
     fireLight.shadow.mapSize.set(S, S);
     fireLight.shadow.camera.near = 0.2;

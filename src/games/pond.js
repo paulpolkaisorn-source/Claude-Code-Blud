@@ -148,7 +148,7 @@ function padTexture() {
 export function create(env) {
   const { audio, bus, hud, root, settings, gfx } = env;
   const high = gfx.level >= 2;
-  const N = [96, 128, 176, 208, 256, 320][gfx.level];
+  const N = [96, 128, 160, 192, 224, 256][gfx.level];
   const NS = N / 176; // grid scale relative to the reference 176 grid
 
   const stage = createStage(root, { fov: 38, gfx, exposure: 1.0, envIntensity: 0.35 });
@@ -174,8 +174,13 @@ export function create(env) {
       damp[y * N + x] = Math.pow(0.9915, 1 / NS) * (d < 14 * NS ? 0.86 + 0.14 * (d / (14 * NS)) : 1);
     }
   }
-  const half = new Uint16Array(N * N);
-  const heightTex = new THREE.DataTexture(half, N, N, THREE.RedFormat, THREE.HalfFloatType);
+  // Prefer a 32-bit float texture (uploaded straight from the simulation array, no conversion);
+  // fall back to half floats where linear filtering of float textures is unavailable.
+  const floatTex = stage.renderer.extensions.has('OES_texture_float_linear');
+  const half = floatTex ? null : new Uint16Array(N * N);
+  const heightTex = floatTex
+    ? new THREE.DataTexture(h0, N, N, THREE.RedFormat, THREE.FloatType)
+    : new THREE.DataTexture(half, N, N, THREE.RedFormat, THREE.HalfFloatType);
   heightTex.minFilter = THREE.LinearFilter;
   heightTex.magFilter = THREE.LinearFilter;
   heightTex.wrapS = heightTex.wrapT = THREE.ClampToEdgeWrapping;
@@ -204,6 +209,16 @@ export function create(env) {
         h0[y * N + xx] -= amp * f * f;
       }
     }
+    sleeping = false;
+  }
+
+  // When the water is still, skip the simulation and the texture upload entirely.
+  let sleeping = false;
+  let sleepCheck = 0;
+  function checkSleep() {
+    let m = 0;
+    for (let i = 0; i < h0.length; i += 3) { const v = Math.abs(h0[i]); if (v > m) m = v; }
+    if (m < 4e-5) { sleeping = true; h0.fill(0); h1.fill(0); uploadHeights(); }
   }
 
   function stepWave() {
@@ -217,7 +232,8 @@ export function create(env) {
   }
 
   function uploadHeights() {
-    for (let i = 0; i < h0.length; i++) half[i] = THREE.DataUtils.toHalfFloat(clamp(h0[i], -2, 2));
+    if (floatTex) heightTex.image.data = h0;
+    else for (let i = 0; i < h0.length; i++) half[i] = THREE.DataUtils.toHalfFloat(clamp(h0[i], -2, 2));
     heightTex.needsUpdate = true;
   }
 
@@ -494,8 +510,11 @@ export function create(env) {
     waveClock += dt;
     let steps = 0;
     const stepDt = 1 / (60 * NS);
-    while (waveClock >= stepDt && steps < 6) { stepWave(); waveClock -= stepDt; steps++; }
-    if (waveClock > 0.1) waveClock = 0;
+    if (!sleeping) {
+      while (waveClock >= stepDt && steps < 6) { stepWave(); waveClock -= stepDt; steps++; }
+      if (++sleepCheck % 20 === 0) checkSleep();
+    }
+    if (waveClock > 0.1 || sleeping) waveClock = 0;
 
     // ambient rain
     if (rainMode !== 'off') {
@@ -521,7 +540,7 @@ export function create(env) {
       cricketClock -= dt;
       if (cricketClock <= 0) { cricket(); cricketClock = rand(1.4, 4.5); }
     }
-    uploadHeights();
+    if (!sleeping) uploadHeights();
 
     // lily pads ride the ripples
     for (const p of pads) {

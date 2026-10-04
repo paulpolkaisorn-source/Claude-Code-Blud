@@ -59,7 +59,7 @@ export function create(env) {
   const { audio, bus, hud, root, settings, gfx } = env;
   const low = gfx.level < 2;
   // background + fog resolution (they are out of focus, so lower tiers render them at reduced scale)
-  const BG_SCALE = [0.35, 0.45, 0.5, 0.65, 0.8, 1][gfx.level];
+  const BG_SCALE = [0.35, 0.4, 0.45, 0.5, 0.6, 0.7][gfx.level];
 
   let moodKey = 'night';
   let levelKey = 'rain';
@@ -67,6 +67,12 @@ export function create(env) {
   let discs = [];
   let bg, bgCtx, fog, fogCtx, fogSrc;
   let statics = [];
+  // Resting beads don't move, so they're cached on their own layer and only redrawn when one is removed.
+  let layer = null, layerCtx = null, layerDirty = true, layerClock = 0, layerAge = 0;
+  const pushStatic = (d) => {
+    statics.push(d);
+    if (layerCtx && !layerDirty) drawDrop(layerCtx, d.x, d.y, d.r, 1, 1.1);
+  };
   let runners = [];
   let tick = 0;
   let regrow = 0;
@@ -175,6 +181,12 @@ export function create(env) {
     bgCtx = bg.getContext('2d');
     fog = makeCanvas(w * BG_SCALE, h * BG_SCALE);
     fogCtx = fog.getContext('2d');
+    layer = document.createElement('canvas');
+    layer.width = cv.canvas.width;
+    layer.height = cv.canvas.height;
+    layerCtx = layer.getContext('2d');
+    layerCtx.setTransform(cv.dpr, 0, 0, cv.dpr, 0, 0);
+    layerDirty = true;
     buildDiscs();
     buildFogSource();
     fogCtx.globalCompositeOperation = 'source-over';
@@ -182,7 +194,7 @@ export function create(env) {
     // scatter an initial set of beads on the glass
     statics = [];
     runners = [];
-    const count = Math.round(clamp((w * h) / 4200, 80, 300 * gfx.detail));
+    const count = Math.round(clamp((w * h) / 4200, 80, 300 * Math.min(1.3, gfx.detail)));
     for (let i = 0; i < count; i++) spawnStatic(true);
     const bigs = Math.round(w / 220);
     for (let i = 0; i < bigs; i++) spawnRunner(rand(0, w), rand(0, h * 0.7), rand(5, 8), true);
@@ -206,7 +218,7 @@ export function create(env) {
       spawnRunner(x, y, r);
       return;
     }
-    statics.push({ x, y, r, a: initial ? 1 : 0, sq: rand(0.9, 1.1) });
+    pushStatic({ x, y, r, a: initial ? 1 : 0, sq: rand(0.9, 1.1) });
     clearFog(x, y, r * 1.35 + 0.8);
   }
 
@@ -232,8 +244,8 @@ export function create(env) {
       if (Math.random() < k) spawnStatic();
       k -= 1;
     }
-    const cap = Math.round(520 * gfx.detail);
-    if (statics.length > cap) statics.splice(0, statics.length - cap);
+    const cap = Math.round(520 * Math.min(1.3, gfx.detail));
+    if (statics.length > cap) { statics.splice(0, statics.length - cap); layerDirty = true; }
 
     for (const s of statics) if (s.a < 1) s.a = Math.min(1, s.a + dt * 6);
 
@@ -261,7 +273,7 @@ export function create(env) {
         if (d.trailAcc > 14 + d.r * 2.2) {
           d.trailAcc = 0;
           const rr = rand(0.8, 1.7);
-          statics.push({ x: d.x + rand(-1, 1), y: d.py - d.r * 0.4, r: rr, a: 1, sq: 1 });
+          pushStatic({ x: d.x + rand(-1, 1), y: d.py - d.r * 0.4, r: rr, a: 1, sq: 1 });
           d.r *= 0.985;
         }
         // clear a thin trail in the fog
@@ -285,13 +297,14 @@ export function create(env) {
           const rr = d.r + s.r * 0.7;
           if (dx * dx + dy * dy < rr * rr) {
             d.r = Math.cbrt(d.r ** 3 + s.r ** 3 * 0.9);
+            layerDirty = true;
             statics.splice(j, 1);
           }
         }
       }
       if (d.moving && d.r < 3.1) {
         // too small to keep running: becomes a bead
-        statics.push({ x: d.x, y: d.y, r: d.r, a: 1, sq: 1 });
+        pushStatic({ x: d.x, y: d.y, r: d.r, a: 1, sq: 1 });
         runners.splice(i, 1);
         continue;
       }
@@ -316,73 +329,73 @@ export function create(env) {
     if (runners.length < want && Math.random() < dt * 0.9) spawnRunner(rand(0, cv.w), rand(-10, cv.h * 0.45), rand(4.6, lv.maxR + 1));
   }
 
-  function drawDrop(x, y, r, a = 1, tall = 1.12) {
+  function drawDrop(g, x, y, r, a = 1, tall = 1.12) {
     if (r < 2.1) {
       // tiny bead: cheap highlight + shade
-      ctx.globalAlpha = a;
-      ctx.fillStyle = 'rgba(0,0,0,0.28)';
-      ctx.beginPath();
-      ctx.arc(x + 0.3, y + 0.5, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.beginPath();
-      ctx.arc(x - r * 0.3, y - r * 0.35, r * 0.38, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      g.globalAlpha = a;
+      g.fillStyle = 'rgba(0,0,0,0.28)';
+      g.beginPath();
+      g.arc(x + 0.3, y + 0.5, r, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.55)';
+      g.beginPath();
+      g.arc(x - r * 0.3, y - r * 0.35, r * 0.38, 0, Math.PI * 2);
+      g.fill();
+      g.globalAlpha = 1;
       return;
     }
     const ry = r * tall;
-    ctx.save();
-    ctx.globalAlpha = a;
+    g.save();
+    g.globalAlpha = a;
     // soft contact shadow so the drop feels like it sits on glass
-    ctx.fillStyle = 'rgba(0,0,0,0.22)';
-    ctx.beginPath();
-    ctx.ellipse(x + r * 0.12, y + ry * 0.2, r * 1.04, ry * 1.04, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(x, y, r, ry, 0, 0, Math.PI * 2);
-    ctx.clip();
+    g.fillStyle = 'rgba(0,0,0,0.22)';
+    g.beginPath();
+    g.ellipse(x + r * 0.12, y + ry * 0.2, r * 1.04, ry * 1.04, 0, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    g.ellipse(x, y, r, ry, 0, 0, Math.PI * 2);
+    g.clip();
     // the drop is a tiny wide-angle lens: it shows the scene upside-down and compressed
     const M = 2.1;
     const sw = r * 2 * M;
     const shh = ry * 2 * M;
-    ctx.translate(x, y);
-    ctx.scale(-1, -1);
+    g.translate(x, y);
+    g.scale(-1, -1);
     const sx = (x - sw / 2) * BG_SCALE;
     const sy = (y - shh / 2 + ry * 0.2) * BG_SCALE;
-    ctx.drawImage(bg, sx, sy, sw * BG_SCALE, shh * BG_SCALE, -r, -ry, r * 2, ry * 2);
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = a * 0.7;
-    ctx.drawImage(bg, sx, sy, sw * BG_SCALE, shh * BG_SCALE, -r, -ry, r * 2, ry * 2);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = a;
-    ctx.setTransform(cv.dpr, 0, 0, cv.dpr, 0, 0);
+    g.drawImage(bg, sx, sy, sw * BG_SCALE, shh * BG_SCALE, -r, -ry, r * 2, ry * 2);
+    g.globalCompositeOperation = 'lighter';
+    g.globalAlpha = a * 0.7;
+    g.drawImage(bg, sx, sy, sw * BG_SCALE, shh * BG_SCALE, -r, -ry, r * 2, ry * 2);
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = a;
+    g.setTransform(cv.dpr, 0, 0, cv.dpr, 0, 0);
     // darker rim, brighter bottom caustic
-    const edge = ctx.createRadialGradient(x, y, r * 0.45, x, y, r * 1.02);
+    const edge = g.createRadialGradient(x, y, r * 0.45, x, y, r * 1.02);
     edge.addColorStop(0, 'rgba(0,0,0,0)');
     edge.addColorStop(1, 'rgba(0,0,0,0.34)');
-    ctx.fillStyle = edge;
-    ctx.fillRect(x - r - 1, y - ry - 1, r * 2 + 2, ry * 2 + 2);
-    ctx.restore();
-    ctx.save();
-    ctx.globalAlpha = a;
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-    ctx.lineCap = 'round';
-    ctx.lineWidth = Math.max(1, r * 0.16);
-    ctx.beginPath();
-    ctx.ellipse(x, y + ry * 0.06, r * 0.72, ry * 0.76, 0, Math.PI * 0.18, Math.PI * 0.62);
-    ctx.globalAlpha = a * 0.4;
-    ctx.stroke();
-    ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.beginPath();
-    ctx.ellipse(x - r * 0.34, y - ry * 0.4, r * 0.24, ry * 0.15, -0.6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.beginPath();
-    ctx.arc(x + r * 0.25, y + ry * 0.42, r * 0.1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    g.fillStyle = edge;
+    g.fillRect(x - r - 1, y - ry - 1, r * 2 + 2, ry * 2 + 2);
+    g.restore();
+    g.save();
+    g.globalAlpha = a;
+    g.strokeStyle = 'rgba(255,255,255,0.8)';
+    g.lineCap = 'round';
+    g.lineWidth = Math.max(1, r * 0.16);
+    g.beginPath();
+    g.ellipse(x, y + ry * 0.06, r * 0.72, ry * 0.76, 0, Math.PI * 0.18, Math.PI * 0.62);
+    g.globalAlpha = a * 0.4;
+    g.stroke();
+    g.globalAlpha = a;
+    g.fillStyle = 'rgba(255,255,255,0.95)';
+    g.beginPath();
+    g.ellipse(x - r * 0.34, y - ry * 0.4, r * 0.24, ry * 0.15, -0.6, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.5)';
+    g.beginPath();
+    g.arc(x + r * 0.25, y + ry * 0.42, r * 0.1, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
   }
 
   // ---------- wiping ----------
@@ -407,6 +420,7 @@ export function create(env) {
         const s = statics[j];
         if ((s.x - x) ** 2 + (s.y - y) ** 2 < (R * 0.75) ** 2) {
           wipe.mass += s.r * s.r * 0.12;
+          layerDirty = true;
           statics.splice(j, 1);
         }
       }
@@ -538,6 +552,7 @@ export function create(env) {
       for (const d of discs) d.col = pick(mood().lights);
       buildSprites();
       buildFogSource();
+      layerDirty = true;
     },
   });
   hud.button({ label: 'Fog up', title: 'Breathe on the glass', onClick: () => { regrow = 1; if (audio.ready) audio.burst(bus, { kind: 'pink', dur: 1.2, attack: 0.5, gain: 0.12, type: 'lowpass', freq: 1400, freqEnd: 500, q: 0.5, curve: 'lin', send: 0.3 }); } });
@@ -579,7 +594,16 @@ export function create(env) {
     ctx.drawImage(bg, 0, 0, cv.w, cv.h);
     ctx.drawImage(fog, 0, 0, cv.w, cv.h);
 
-    for (const s of statics) drawDrop(s.x, s.y, s.r, s.a, 1.1);
+    layerClock += dt;
+    layerAge += dt;
+    if (layerDirty ? layerClock > 0.1 : layerAge > 3) {
+      layerCtx.clearRect(0, 0, cv.w, cv.h);
+      for (const s of statics) drawDrop(layerCtx, s.x, s.y, s.r, 1, 1.1);
+      layerDirty = false;
+      layerClock = 0;
+      layerAge = 0;
+    }
+    ctx.drawImage(layer, 0, 0, cv.w, cv.h);
     for (const d of runners) {
       // little tail above a moving drop
       if (d.moving) {
@@ -591,7 +615,7 @@ export function create(env) {
         ctx.lineTo(d.x, d.y - d.r * 0.2 - Math.min(14, d.vy * 0.12));
         ctx.stroke();
       }
-      drawDrop(d.x, d.y, d.r, 1, d.moving ? 1.28 : 1.12);
+      drawDrop(ctx, d.x, d.y, d.r, 1, d.moving ? 1.28 : 1.12);
     }
 
     // soft vignette

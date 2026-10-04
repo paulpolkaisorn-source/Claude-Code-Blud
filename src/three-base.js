@@ -7,14 +7,37 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { DynamicRes } from './perf.js';
 import { observeSize } from './util.js';
 import { makeProfile } from './gfx.js';
 
 export { THREE };
 
+// Edge-adaptive sharpen, used to crisp up the image when the internal resolution is scaled down.
+const SharpenShader = {
+  uniforms: { tDiffuse: { value: null }, uTexel: { value: new THREE.Vector2(1, 1) }, uAmount: { value: 0.35 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: /* glsl */ `
+    uniform sampler2D tDiffuse; uniform vec2 uTexel; uniform float uAmount; varying vec2 vUv;
+    void main(){
+      vec3 c = texture2D(tDiffuse, vUv).rgb;
+      vec3 n = texture2D(tDiffuse, vUv + vec2(0.0, uTexel.y)).rgb;
+      vec3 s = texture2D(tDiffuse, vUv - vec2(0.0, uTexel.y)).rgb;
+      vec3 e = texture2D(tDiffuse, vUv + vec2(uTexel.x, 0.0)).rgb;
+      vec3 w = texture2D(tDiffuse, vUv - vec2(uTexel.x, 0.0)).rgb;
+      vec3 mn = min(c, min(min(n, s), min(e, w)));
+      vec3 mx = max(c, max(max(n, s), max(e, w)));
+      vec3 sharp = c + (c * 4.0 - n - s - e - w) * uAmount;
+      gl_FragColor = vec4(clamp(sharp, mn, mx), 1.0); // clamped to the local range: no halos
+    }`,
+};
+
 /**
  * Creates a renderer + scene + camera that fills `root`, scaled by the graphics profile `gfx`.
- * opts: { fov, near, far, gfx, bloom:{strength,radius,threshold}, ao:true, shadows:true, environment, exposure }
+ * opts: { fov, near, far, gfx, bloom:{strength,radius,threshold}, ao:true, shadows:true, shadowFps,
+ *         environment, exposure }
+ * The drawing buffer is capped by gfx.pixels3D and (unless disabled) dynamically rescaled to hold ~60 fps.
  */
 export function createStage(root, opts = {}) {
   const gfx = opts.gfx || makeProfile('high');
@@ -23,16 +46,22 @@ export function createStage(root, opts = {}) {
     antialias: gfx.antialias && !usesComposer,
     alpha: false,
     powerPreference: 'high-performance',
+    stencil: false,
   });
-  const pr = Math.min((window.devicePixelRatio || 1) * gfx.ss, gfx.dpr);
-  renderer.setPixelRatio(pr);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = opts.exposure ?? 1;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   if ('transmissionResolutionScale' in renderer) renderer.transmissionResolutionScale = gfx.transmissionScale;
+  let shadowInterval = 0;
+  let shadowClock = 0;
   if (opts.shadows && gfx.shadows) {
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = gfx.level >= 4 ? THREE.VSMShadowMap : THREE.PCFShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap; // hardware-filtered; VSM/soft variants cost far more
+    if (opts.shadowFps) { // static-ish casters (e.g. a campfire) don't need a re-render every frame
+      renderer.shadowMap.autoUpdate = false;
+      renderer.shadowMap.needsUpdate = true; // render the first shadow map before any frame samples it
+      shadowInterval = 1 / opts.shadowFps;
+    }
   }
   renderer.domElement.className = 'game-canvas';
   root.appendChild(renderer.domElement);
@@ -52,18 +81,21 @@ export function createStage(root, opts = {}) {
   let composer = null;
   let bloomPass = null;
   let aoPass = null;
+  let sharpenPass = null;
   const wantBloom = opts.bloom && gfx.bloom;
   const wantAO = opts.ao && gfx.ao;
   if (usesComposer) {
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: gfx.msaa });
     composer = new EffectComposer(renderer, rt);
-    composer.setPixelRatio(pr);
     composer.addPass(new RenderPass(scene, camera));
     if (wantAO) {
       aoPass = new GTAOPass(scene, camera, 256, 256);
       aoPass.output = GTAOPass.OUTPUT.Default;
       aoPass.blendIntensity = 0.85 * Math.min(1.4, gfx.aoMul);
-      try { aoPass.updateGtaoMaterial({ radius: opts.aoRadius ?? 0.5, distanceExponent: 1.5, thickness: 1.5, scale: 1.0, samples: gfx.level >= 5 ? 24 : 16 }); } catch (_) { /* older API */ }
+      try { aoPass.updateGtaoMaterial({ radius: opts.aoRadius ?? 0.5, distanceExponent: 1.5, thickness: 1.5, scale: 1.0, samples: gfx.level >= 5 ? 12 : 8 }); } catch (_) { /* older API */ }
+      // Ambient occlusion is low-frequency: compute it at half resolution (4x cheaper), upsample.
+      const baseSetSize = aoPass.setSize.bind(aoPass);
+      aoPass.setSize = (w, h) => baseSetSize(Math.max(2, Math.round(w * 0.5)), Math.max(2, Math.round(h * 0.5)));
       composer.addPass(aoPass);
     }
     if (wantBloom) {
@@ -72,6 +104,9 @@ export function createStage(root, opts = {}) {
       composer.addPass(bloomPass);
     }
     composer.addPass(new OutputPass());
+    sharpenPass = new ShaderPass(SharpenShader);
+    sharpenPass.enabled = false;
+    composer.addPass(sharpenPass);
   }
 
   const stage = {
@@ -82,11 +117,22 @@ export function createStage(root, opts = {}) {
     bloomPass,
     aoPass,
     gfx,
-    pixelRatio: pr,
+    pixelRatio: 1,
+    scale: 1,
+    fps: 60,
     width: 1,
     height: 1,
     onResize: null,
     render() {
+      const now = performance.now();
+      dyn.tick(now);
+      stage.fps = dyn.fps;
+      if (shadowInterval) {
+        shadowClock += (now - (stage._t || now)) / 1000;
+        if (shadowClock >= shadowInterval && stage.shadowActive !== false) { shadowClock = 0; renderer.shadowMap.needsUpdate = true; }
+        stage._t = now;
+      }
+      if (window.__hushNoRender) return; // CPU-only profiling hook
       if (composer) composer.render();
       else renderer.render(scene, camera);
     },
@@ -113,12 +159,36 @@ export function createStage(root, opts = {}) {
     },
   };
 
+  // Effective pixel ratio = device ratio x supersample, capped by the profile and by the pixel budget,
+  // then multiplied by the dynamic/fixed render scale.
+  const basePR = () => {
+    const w = Math.max(1, stage.width), h = Math.max(1, stage.height);
+    const want = Math.min((window.devicePixelRatio || 1) * gfx.ss, gfx.dpr);
+    return Math.min(want, Math.sqrt(gfx.pixels3D / (w * h)));
+  };
+  const applyScale = (scale) => {
+    stage.scale = scale;
+    const pr = Math.max(0.35, basePR() * scale);
+    stage.pixelRatio = pr;
+    renderer.setPixelRatio(pr);
+    composer?.setPixelRatio(pr);
+    renderer.setSize(stage.width, stage.height); // CSS size stays; the browser upscales the buffer
+    composer?.setSize(stage.width, stage.height);
+    if (sharpenPass) {
+      sharpenPass.enabled = scale < 0.98;
+      sharpenPass.uniforms.uTexel.value.set(1 / (stage.width * pr), 1 / (stage.height * pr));
+      sharpenPass.uniforms.uAmount.value = 0.2 + (1 - scale) * 0.9;
+    }
+  };
+  const dyn = new DynamicRes({ mode: gfx.renderScale, min: 0.5, apply: applyScale });
+  stage.dyn = dyn;
+  window.__hushStage = stage; // debugging / tests
+
   const stopObserve = observeSize(root, (w, h) => {
     if (!w || !h) return;
     stage.width = w;
     stage.height = h;
-    renderer.setSize(w, h);
-    composer?.setSize(w, h);
+    applyScale(dyn.scale);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     stage.onResize?.(w, h);

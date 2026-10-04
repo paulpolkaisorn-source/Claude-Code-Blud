@@ -226,6 +226,7 @@ export function create(env) {
     envIntensity: 1.0,
     environment: false,
     shadows: true,
+    shadowFps: 30,
     bloom: { strength: 0.22, radius: 0.5, threshold: 0.95 },
     ao: false,
   });

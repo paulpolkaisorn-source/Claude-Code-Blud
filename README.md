@@ -30,6 +30,8 @@ Open **`docs/hush.html`** in any modern browser. It is a single self-contained f
 
 Settings (gear on the menu, or the quality button while playing) offers **Auto, Low, Normal, High, Extra, Max, ULTRA by RTX**. They scale resolution (up to 1.5x supersampling), MSAA, bloom, ambient occlusion (GTAO), real soft shadows, mesh/simulation density and particle counts. Auto detects the GPU. ULTRA is the top tier of *rasterized* rendering — browsers cannot do hardware ray tracing — and is meant for RTX-class GPUs. If a game runs below ~24 fps it suggests a lower level.
 
+**Performance:** every 3D game keeps ~60 fps with *adaptive resolution scaling* (the internal resolution drops when frames get slow and probes back up when there is headroom; a sharpening upscaler hides it). Settings has a *Resolution scaling* option (Adaptive, Native, 75%, 50%). Drawing buffers are capped by a per-level pixel budget, ambient occlusion runs at half resolution, MSAA is capped at 4x, shadow maps are throttled to when things move, and Settings shows which GPU the browser is really using (on hybrid laptops browsers often pick the integrated GPU: set the browser to High performance in Windows Graphics settings). The quality button shows live fps.
+
 Other settings: volume, ambient music, haptics. `Esc` returns to the menu.
 
 ## Develop

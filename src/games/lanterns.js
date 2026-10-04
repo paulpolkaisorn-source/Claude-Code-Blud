@@ -601,8 +601,8 @@ export function create(env) {
   const sparkPool = Math.round(520 * gfx.particles);
   const flyPool = Math.round(44 * gfx.particles);
   const bodySegs = [14, 18, 24, 32, 40, 48][lv];
-  const reflScale = [0.42, 0.55, 0.72, 0.9, 1, 1][lv];
-  const reflSamples = [0, 0, 2, 4, 4, 4][lv];
+  const reflScale = [0.35, 0.4, 0.5, 0.55, 0.65, 0.75][lv]; // reflections are blurred/rippled: low res is invisible
+  const reflSamples = [0, 0, 0, 2, 2, 4][lv];
   const blurTaps = lv <= 0 ? 1 : lv <= 2 ? 2 : 3;
   const reedBlades = Math.round(54 * gfx.detail);
   const ridgeCols = Math.round(160 * gfx.detail);
