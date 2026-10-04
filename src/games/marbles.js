@@ -395,7 +395,7 @@ export function create(env) {
       const shell = useTransmission
         ? new THREE.MeshPhysicalMaterial({
           color: tint, transmission: 1, thickness: 0.55, ior: 1.5, roughness: 0.03, metalness: 0,
-          attenuationColor: base, attenuationDistance: 0.8, clearcoat: 1, clearcoatRoughness: 0.02,
+          attenuationColor: base, attenuationDistance: 1.2, clearcoat: 1, clearcoatRoughness: 0.02,
           specularIntensity: 1, envMapIntensity: 1.7,
         })
         : new THREE.MeshStandardMaterial({

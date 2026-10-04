@@ -19,7 +19,7 @@ const srgb = (r, g, b) => { const c = new THREE.Color().setRGB(r, g, b, THREE.SR
 
 // lantern paper tints (sRGB in, linear out)
 const PAL = [
-  [srgb(1.0, 0.76, 0.32), srgb(1.0, 0.62, 0.22), srgb(1.0, 0.84, 0.5)], // gold / amber
+  [srgb(1.0, 0.7, 0.2), srgb(1.0, 0.56, 0.14), srgb(1.0, 0.8, 0.38)], // gold / amber
   [srgb(1.0, 0.46, 0.58), srgb(1.0, 0.58, 0.64), srgb(1.0, 0.4, 0.5)], // rose
   [srgb(0.74, 0.6, 1.0), srgb(0.62, 0.68, 1.0), srgb(0.88, 0.58, 0.96)], // lavender
 ];
@@ -240,7 +240,8 @@ void main(){
     float rim = pow(1.0 - ndv, 2.2);
     float zone = mix(1.25, 0.5, smoothstep(0.12, 1.0, v)) * (0.78 + 0.35 * smoothstep(0.0, 0.18, v));
     float I = (zone + hot * 0.65) * light;
-    col = vCol * paper * I * 0.66;
+    col = vCol * paper * I * 0.56;
+    col *= mix(vec3(1.0), vec3(1.0, 0.72, 0.55), smoothstep(0.45, 1.0, v));
     col = mix(col, col * vCol * 1.9, rim * 0.55);
     col *= 1.0 + rim * 0.35;
     col += vec3(1.0, 0.84, 0.55) * hot * 0.12 * light * paper.r;
@@ -622,7 +623,7 @@ export function create(env) {
   // ---------- sky ----------
   const domeMat = new THREE.ShaderMaterial({
     uniforms: {
-      uTop: { value: new THREE.Color('#02030f') },
+      uTop: { value: new THREE.Color('#040624') },
       uMid: { value: new THREE.Color('#080c30') },
       uHor: { value: new THREE.Color('#1e1c4c') },
       uMoon: { value: MOON },
@@ -799,7 +800,7 @@ export function create(env) {
     for (let i = 0; i < mistCount; i++) {
       const z = zs[i % zs.length] + rand(-6, 6);
       const d = Math.abs(z) + 10;
-      mists.push({ x: rand(-d * 0.9, d * 0.9), y: rand(1.5, 7) + Math.abs(z) * 0.035, z, sx: rand(24, 54) * (d / 90 + 0.5), sy: rand(2.6, 6) * (d / 90 + 0.5), a: rand(0.09, 0.2), tint: i % 3, sp: rand(0.2, 0.6) });
+      mists.push({ x: rand(-d * 0.9, d * 0.9), y: rand(1.5, 7) + Math.abs(z) * 0.035, z, sx: rand(24, 54) * (d / 90 + 0.5), sy: rand(2.6, 6) * (d / 90 + 0.5), a: rand(0.07, 0.15), tint: i % 3, sp: rand(0.2, 0.6) });
     }
   }
   const glowCap = mistCount + maxL * 3 + 16;
@@ -1232,9 +1233,9 @@ export function create(env) {
       // glow: wide halo around the paper, flame in the mouth, warm pool below
       const boost = noBloom ? 1.5 : 1;
       const a = light * fade;
-      pushGlow(L.x, L.y + 0.5 * s, L.z, 1.55 * s, 1.75 * s, lerp(L.c[0], 1, 0.3), lerp(L.c[1], 0.7, 0.3), lerp(L.c[2], 0.4, 0.3), 0.24 * a * boost, 0, 0.5 * s, 0);
-      pushGlow(L.x, L.y + 0.04 * s, L.z, 0.2 * s, 0.34 * s, 1.5, 0.78, 0.3, 0.95 * clamp(L.heat * 3, 0, 1) * a, 1, 0.12 * s, L.ph);
-      pushGlow(L.x, L.y - 0.04 * s, L.z, 0.62 * s, 0.62 * s, 1.0, 0.6, 0.25, 0.4 * a * boost, 0, 0.1 * s, 0);
+      pushGlow(L.x, L.y + 0.5 * s, L.z, 1.55 * s, 1.75 * s, lerp(L.c[0], 1, 0.3), lerp(L.c[1], 0.7, 0.3), lerp(L.c[2], 0.4, 0.3), 0.24 * a * boost, 0, 0.72 * s, 0);
+      pushGlow(L.x, L.y + 0.04 * s, L.z, 0.18 * s, 0.27 * s, 1.5, 0.78, 0.3, 0.95 * clamp(L.heat * 3, 0, 1) * a, 1, 0.12 * s, L.ph);
+      pushGlow(L.x, L.y - 0.04 * s, L.z, 0.62 * s, 0.62 * s, 1.0, 0.6, 0.25, 0.4 * a * boost, 0, 0.5 * s, 0);
       // falling embers
       if (!L.held && L.heat > 0.4 && L.y < 34) {
         L.acc += dt * sparkRate * L.heat * (1 - altitude) * fade;

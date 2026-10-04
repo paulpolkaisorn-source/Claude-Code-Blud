@@ -53,9 +53,9 @@ void main(){
   float core = 1.0 - smoothstep(0.3, 1.0, d);
   float e = fbm(vec2(x*2.6 + uSeed*3.0, h*3.4 - t*2.7 + 4.0));
   float dens = core * (1.0 + 0.5*e) - h*h*0.22 - (1.0 - e)*h*0.3;
-  dens = smoothstep(0.03, 0.55, dens);
+  dens = smoothstep(0.0, 0.7, dens) * (1.0 - smoothstep(0.35, 1.0, h) * 0.85);
   dens *= smoothstep(0.0, 0.05, v);
-  float heat = clamp(core*0.72 + (1.0 - h)*0.42 - 0.2 + (uTone - 0.5)*0.5 + uKick*0.1, 0.0, 1.25);
+  float heat = clamp(core*0.72 + (1.0 - h)*0.42 - 0.25 + (uTone - 0.5)*0.5 + uKick*0.06 - smoothstep(0.5, 1.0, h)*0.35, 0.0, 1.25);
   vec3 c0 = vec3(0.75, 0.06, 0.0);
   vec3 c1 = vec3(1.0, 0.36, 0.035);
   vec3 c2 = vec3(1.0, 0.74, 0.20);
@@ -63,6 +63,7 @@ void main(){
   vec3 col = mix(c0, c1, smoothstep(0.0, 0.42, heat));
   col = mix(col, c2, smoothstep(0.36, 0.78, heat));
   col = mix(col, c3, smoothstep(0.98, 1.25, heat));
+  col = mix(col, c0, smoothstep(0.55, 1.0, h) * 0.55);
   float a = dens * uAlpha * uFade;
   gl_FragColor = vec4(col * (1.0 + heat*0.7), a);
   #include <tonemapping_fragment>
@@ -779,7 +780,7 @@ export function create(env) {
   // ---------- poking stick ----------
   const stickGeo = new THREE.CylinderGeometry(0.045, 0.02, 1.8, 8);
   stickGeo.translate(0, 0.9, 0);
-  const stickMat = new THREE.MeshStandardMaterial({ map: bark.map, roughness: 0.9, emissive: 0xff5a10, emissiveIntensity: 0 });
+  const stickMat = new THREE.MeshStandardMaterial({ color: 0x8a7868, map: bark.map, roughness: 0.9, emissive: 0xff5a10, emissiveIntensity: 0 });
   const stick = new THREE.Mesh(stickGeo, stickMat);
   stick.visible = false;
   stick.castShadow = true;
@@ -1121,7 +1122,7 @@ export function create(env) {
     mist = damp(mist, mistTarget, 0.9, dt);
     const Ic = Math.min(I, 1.5);
     const lab = Ic >= 1.1 ? 'Roaring' : Ic >= 0.7 ? 'Bright' : Ic >= 0.35 ? 'Steady' : Ic >= 0.12 ? 'Low' : 'Embers';
-    if (lab !== statLabel) { statLabel = lab; hud.setStat?.(`Fire: ${lab}`); }
+    if (lab !== statLabel) { statLabel = lab; hud.setStat?.(lab); }
 
     // wind
     const ambientWind = 0.08 * Math.sin(time * 0.31) + 0.05 * Math.sin(time * 0.77);
@@ -1215,9 +1216,9 @@ export function create(env) {
     fshared.uTime.value = time;
     fshared.uInt.value = IcL;
     fshared.uKick.value = kick + flare * 0.6;
-    fshared.uFade.value = flameOn;
+    fshared.uFade.value = flameOn / (1 + 0.45 * Math.max(0, IcL - 0.85));
     const baseFlame = (0.13 + 0.55 * Math.pow(IcL, 0.8)) * (1 + 0.08 * (n1 - 0.5) + 0.2 * flare + 0.26 * kick);
-    fshared.uFlame.value = Math.min(1.0, baseFlame);
+    fshared.uFlame.value = Math.min(0.88, baseFlame);
     const widthK = 0.45 + 0.55 * Math.pow(clamp(IcL, 0, 1.2), 0.6);
     for (const f of flames) {
       const dx = camera.position.x - f.mesh.position.x;
@@ -1306,7 +1307,7 @@ export function create(env) {
     moonDisc.material.opacity = lerp(1, 0.4, mist);
     moonLight.intensity = lerp(0.55, 0.35, mist);
     for (const m of mists) {
-      m.m.material.opacity = 0.2 * mist * m.base;
+      m.m.material.opacity = 0.34 * mist * m.base;
       m.m.position.x += Math.sin(time * m.sp + m.ph) * dt * 0.3;
     }
     stars.rotation.y = time * 0.0015;
