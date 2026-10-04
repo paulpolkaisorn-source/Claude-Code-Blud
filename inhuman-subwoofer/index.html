@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InHuman 18 — 3D Model</title>
+  <style>
+    :root { --fg: #111; --muted: #666; --chip: #f2f2f2; --chip-on: #111; --chip-on-fg: #fff; }
+    html, body { margin: 0; height: 100%; background: #fff; color: var(--fg); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; overflow: hidden; }
+    #app { position: fixed; inset: 0; }
+    #ui { position: fixed; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; pointer-events: none; }
+    #ui .title { width: 100%; font-weight: 600; letter-spacing: 0.02em; }
+    #ui .title small { display: block; font-weight: 400; color: var(--muted); }
+    #ui button { pointer-events: auto; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--chip); color: var(--fg); cursor: pointer; font: inherit; }
+    #ui button.on { background: var(--chip-on); color: var(--chip-on-fg); }
+    #ui .views { display: contents; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="ui">
+    <div class="title">Sundown Audio InHuman 18″ <small>Unofficial procedural 3D replica · drag to orbit, scroll to zoom</small></div>
+    <span class="views"></span>
+    <button id="spin">Auto-rotate</button>
+    <button id="glb">Download GLB</button>
+  </div>
+  <script type="module">
+    try {
+      await import('./src/main.js');
+    } catch (e) {
+      console.error(e);
+      window.__error = e && (e.stack || e.message || String(e));
+    }
+  </script>
+</body>
+</html>
