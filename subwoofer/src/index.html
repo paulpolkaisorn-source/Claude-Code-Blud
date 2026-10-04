@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sundown Subwoofer 3D</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #15171a;
+    --ink-2: #5d636b;
+    --panel: rgba(255, 255, 255, 0.82);
+    --line: rgba(20, 24, 30, 0.14);
+    --accent: #e0561d;
+    --shadow: 0 6px 24px rgba(20, 24, 30, 0.12);
+  }
+  :root[data-bg="dark"] {
+    --bg: #101113;
+    --ink: #eceef1;
+    --ink-2: #9ba1aa;
+    --panel: rgba(24, 26, 29, 0.82);
+    --line: rgba(255, 255, 255, 0.16);
+    --shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #wrap { position: fixed; inset: 0; }
+  canvas { width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  .card, .bar { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .card { position: fixed; top: 16px; left: 16px; padding: 10px 14px; border-radius: 14px; max-width: min(320px, calc(100vw - 32px)); }
+  .card b { font-size: 15px; letter-spacing: 0.01em; }
+  .card span { display: block; color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+  .bar { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 6px; padding: 6px; border-radius: 999px; max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none; }
+  .bar::-webkit-scrollbar { display: none; }
+  .bar .sep { width: 1px; background: var(--line); margin: 4px 2px; flex: none; }
+  button { all: unset; cursor: pointer; flex: none; padding: 7px 13px; border-radius: 999px; font-size: 13px; color: var(--ink); white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  button:hover { background: var(--line); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button[aria-pressed="true"], button.on { background: var(--ink); color: var(--bg); }
+  button.dl { color: var(--accent); font-weight: 600; }
+  button.dl:hover { background: var(--accent); color: #fff; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); color: var(--ink-2); font-size: 13px; transition: opacity .35s; z-index: 5; }
+  #loading.done { opacity: 0; pointer-events: none; }
+  #loading i { display: block; width: 28px; height: 28px; margin: 0 auto 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #hint { position: fixed; right: 16px; top: 16px; color: var(--ink-2); font-size: 12px; text-align: right; pointer-events: none; }
+  @media (max-width: 560px) { #hint { display: none; } }
+  @media (prefers-reduced-motion: reduce) { #loading { transition: none; } }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c" tabindex="0" aria-label="Interactive 3D model of a Sundown Audio subwoofer"></canvas></div>
+<div class="card"><b>Sundown Audio subwoofer</b><span>Procedural 3D model built from five product photos</span></div>
+<div id="hint">drag to orbit · scroll to zoom · right-drag to pan</div>
+<div class="bar" id="bar" role="toolbar" aria-label="Viewer controls"></div>
+<div id="loading"><div><i></i>Building model…</div></div>
+<script>
+/*__BUNDLE__*/
+</script>
+</body>
+</html>

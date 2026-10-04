@@ -1,0 +1,8 @@
+node_modules/
+subwoofer/node_modules/
+*.log
+subwoofer/*.log
+subwoofer/fit2.pid
+subwoofer/fit3.pid
+subwoofer/out_smoke.png
+subwoofer/nohup.out

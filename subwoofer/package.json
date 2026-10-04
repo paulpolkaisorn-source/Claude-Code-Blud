@@ -1,0 +1,17 @@
+{
+  "name": "sundown-subwoofer-3d",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Procedural Three.js model of a Sundown Audio competition subwoofer, built from 5 reference photos.",
+  "scripts": {
+    "build": "node build.mjs",
+    "shots": "node tools/shots.mjs",
+    "export": "node tools/export-glb.mjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.63.0",
+    "three": "^0.186.1"
+  }
+}
