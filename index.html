@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Woofer Bounce Lab</title>
+  <meta name="description" content="Interactive 3D 18-inch subwoofer with a physics-based cone: test any frequency from 1 to 1000 Hz at any power.">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main id="stage">
+    <canvas id="gl" aria-label="3D subwoofer, drag to orbit, scroll to zoom"></canvas>
+
+    <div id="hud">
+      <div id="statusChip" class="chip" data-level="idle"><span class="dot"></span><span id="statusText">Loading…</span></div>
+      <div id="speedNote" class="note"></div>
+    </div>
+
+    <div id="loader">
+      <div class="loader-title">Loading subwoofer model…</div>
+      <div class="bar"><div id="loadBar"></div></div>
+      <div id="loadPct" class="note">0%</div>
+    </div>
+
+    <div id="loadError" hidden>
+      <strong>Couldn't load the 3D model.</strong>
+      <p>Browsers block ES modules and model files on <code>file://</code>. Serve this folder instead:</p>
+      <pre>python3 -m http.server 8000</pre>
+      <p>then open <code>http://localhost:8000</code>.</p>
+      <p id="errDetail" class="note"></p>
+    </div>
+  </main>
+
+  <aside id="panel" aria-label="Woofer controls">
+    <header class="panel-head">
+      <h1>Woofer Bounce Lab</h1>
+      <p class="sub">18&Prime; competition sub &middot; live driver physics</p>
+    </header>
+
+    <section class="card">
+      <button id="driveBtn" class="drive on" type="button" aria-pressed="true">
+        <span class="drive-ico" aria-hidden="true"></span>
+        <span id="driveLabel">Signal ON</span>
+        <kbd>Space</kbd>
+      </button>
+    </section>
+
+    <section class="card">
+      <div class="row-head">
+        <label for="freqNum">Frequency</label>
+        <div class="num"><input id="freqNum" type="number" min="1" max="1000" step="0.1" value="30" inputmode="decimal"><span>Hz</span></div>
+      </div>
+      <input id="freqRange" type="range" min="0" max="1000" step="1" aria-label="Frequency slider (logarithmic)">
+      <div class="scale"><span>1</span><span>10</span><span>100</span><span>1000 Hz</span></div>
+      <div class="chips" id="freqChips"></div>
+    </section>
+
+    <section class="card">
+      <div class="row-head">
+        <label for="pwrNum">Power <small>(how hard)</small></label>
+        <div class="num"><input id="pwrNum" type="number" min="1" max="20000" step="1" value="1500" inputmode="numeric"><span>W</span></div>
+      </div>
+      <input id="pwrRange" type="range" min="0" max="1000" step="1" aria-label="Power slider (logarithmic)">
+      <div class="scale"><span>1 W</span><span>100</span><span>1 k</span><span>20 kW</span></div>
+      <div class="chips" id="pwrChips"></div>
+      <div class="hint" id="pwrHint"></div>
+    </section>
+
+    <section class="card">
+      <div class="row-head"><label>Enclosure</label></div>
+      <div class="seg" id="encSeg" role="radiogroup" aria-label="Enclosure"></div>
+      <div class="hint" id="encHint"></div>
+    </section>
+
+    <section class="card readouts" aria-live="off">
+      <div class="row-head"><label>Cone motion</label><span class="mini" id="peakWord">peak</span></div>
+      <div class="meter" aria-hidden="true">
+        <div class="meter-fill" id="meterFill"></div>
+        <div class="meter-mark" style="left:var(--xmax-pos)"><span>Xmax</span></div>
+        <div class="meter-mark stop" style="left:var(--stop-pos)"><span>stop</span></div>
+      </div>
+      <dl class="grid">
+        <div><dt>Excursion</dt><dd id="rdX">–</dd></div>
+        <div><dt>of Xmax</dt><dd id="rdPct">–</dd></div>
+        <div><dt>Velocity</dt><dd id="rdV">–</dd></div>
+        <div><dt>Accel</dt><dd id="rdA">–</dd></div>
+        <div><dt>Coil current</dt><dd id="rdI">–</dd></div>
+        <div><dt>Motor force (Bl)</dt><dd id="rdBl">–</dd></div>
+      </dl>
+      <canvas id="scope" width="640" height="170" aria-label="Cone excursion over time"></canvas>
+      <div class="scope-legend"><span class="lg x">cone position</span><span class="lg v">drive voltage</span><span id="scopeSpan" class="note"></span></div>
+    </section>
+
+    <section class="card">
+      <div class="row-head"><label for="speedSel">View</label></div>
+      <div class="field"><label for="speedSel">Playback speed</label>
+        <select id="speedSel">
+          <option value="auto" selected>Auto slow-mo (see every stroke)</option>
+          <option value="1">Real time (strobes above ~30 Hz)</option>
+          <option value="0.25">&frac14; speed</option>
+          <option value="0.0625">1/16 speed</option>
+          <option value="0.015625">1/64 speed</option>
+          <option value="0.00390625">1/256 speed</option>
+        </select>
+      </div>
+      <div class="field"><label for="exagSel">Motion size</label>
+        <select id="exagSel">
+          <option value="1" selected>True scale</option>
+          <option value="2">Exaggerate ×2</option>
+          <option value="5">Exaggerate ×5</option>
+          <option value="20">Exaggerate ×20</option>
+          <option value="100">Exaggerate ×100</option>
+        </select>
+      </div>
+      <div class="toggles">
+        <label class="tog"><input id="cutToggle" type="checkbox"><span>Cutaway</span></label>
+        <label class="tog"><input id="soundToggle" type="checkbox"><span>Sound</span></label>
+        <button id="resetView" class="ghost" type="button">Reset view</button>
+      </div>
+      <div class="hint">Sound plays the test tone at a safe, capped volume. Very low notes need real subs to be heard.</div>
+    </section>
+
+    <details class="card how">
+      <summary>How the bounce is calculated</summary>
+      <ul>
+        <li><b>Mass on a spring.</b> The cone, coil and air load (0.4&nbsp;kg) ride on the spider + surround spring, resonant at 26&nbsp;Hz. Below that the cone follows the signal; above it, excursion falls as 1/f&sup2;.</li>
+        <li><b>Voice-coil motor.</b> Voltage drives current through the coil's resistance and inductance; current in the magnet gap makes force, and the moving coil pushes back (back-EMF) which damps the cone.</li>
+        <li><b>Limits.</b> Past Xmax (30&nbsp;mm) the coil leaves the gap and force drops; the suspension stiffens; at the hard stops the cone <i>bounces off</i> (voice-coil former hits the top plate inward, suspension runs out of travel outward).</li>
+        <li><b>The box.</b> A sealed box adds an air spring; a ported box adds an air-plug resonance that holds the cone still at the tuning frequency.</li>
+        <li><b>Real-time integration.</b> Everything is solved 48,000 times per second of simulated time; the display just plays it slowed down so you can watch.</li>
+      </ul>
+    </details>
+  </aside>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
