@@ -1,6 +1,6 @@
 # hush — an ASMR playground
 
-Six tiny interactive worlds (3 in 2D, 3 in 3D) with **fully synthesized audio** — there are no sound, image or model files. Best with headphones.
+Twelve tiny interactive worlds (6 in 2D, 6 in 3D) with **fully synthesized audio** — there are no sound, image or model files. Best with headphones.
 
 ## Play it
 
@@ -19,7 +19,18 @@ Open **`docs/hush.html`** in any modern browser. It is a single self-contained f
 | 3D | **Moonlit Pond** | Wave-equation water with a custom shader (moon glitter, caustics, pebbles), lily pads, lotus, koi, fireflies. Every drop plays a pentatonic note; crickets and rain. |
 | 3D | **Crystal Chimes** | Pendulum crystals with collisions and bloom. Brush through them; each rings with inharmonic glass partials through a long reverb. Breeze and gusts. |
 
-Settings (gear on the menu): volume, ambient music, haptics, graphics quality (Auto / High / Battery saver). `Esc` returns to the menu.
+| 2D | **Pop It** | Silicone fidget board with spring-animated bubbles that toggle in and out. Pentatonic thops, board shapes and palettes. |
+| 2D | **Chalkboard** | Grainy chalk, felt eraser, falling dust, scratchy stick-slip sound. |
+| 2D | **Clicky Keys** | Mechanical keyboard you can really type on. Five switch sounds, RGB ripples. |
+| 3D | **Glass Marbles** | Tilt a glass bowl; custom marble physics with glass clacks and rolling rumble. |
+| 3D | **Campfire** | Flames, embers, crackle synthesis, poke and feed the fire. |
+| 3D | **Sky Lanterns** | Light lanterns that rise over a moonlit lake, each with a chime. |
+
+## Graphics levels
+
+Settings (gear on the menu, or the quality button while playing) offers **Auto, Low, Normal, High, Extra, Max, ULTRA by RTX**. They scale resolution (up to 1.5x supersampling), MSAA, bloom, ambient occlusion (GTAO), real soft shadows, mesh/simulation density and particle counts. Auto detects the GPU. ULTRA is the top tier of *rasterized* rendering — browsers cannot do hardware ray tracing — and is meant for RTX-class GPUs. If a game runs below ~24 fps it suggests a lower level.
+
+Other settings: volume, ambient music, haptics. `Esc` returns to the menu.
 
 ## Develop
 

@@ -146,11 +146,12 @@ function padTexture() {
 }
 
 export function create(env) {
-  const { audio, bus, hud, root, settings, quality } = env;
-  const high = quality !== 'low';
-  const N = high ? 176 : 120;
+  const { audio, bus, hud, root, settings, gfx } = env;
+  const high = gfx.level >= 2;
+  const N = [96, 128, 176, 208, 256, 320][gfx.level];
+  const NS = N / 176; // grid scale relative to the reference 176 grid
 
-  const stage = createStage(root, { fov: 38, quality, exposure: 1.0, envIntensity: 0.35 });
+  const stage = createStage(root, { fov: 38, gfx, exposure: 1.0, envIntensity: 0.35 });
   const { scene, camera } = stage;
   const fogColor = new THREE.Color('#050f16');
   scene.background = fogColor;
@@ -170,7 +171,7 @@ export function create(env) {
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
       const d = Math.min(x, y, N - 1 - x, N - 1 - y);
-      damp[y * N + x] = 0.9915 * (d < 14 ? 0.86 + 0.14 * (d / 14) : 1);
+      damp[y * N + x] = Math.pow(0.9915, 1 / NS) * (d < 14 * NS ? 0.86 + 0.14 * (d / (14 * NS)) : 1);
     }
   }
   const half = new Uint16Array(N * N);
@@ -194,7 +195,7 @@ export function create(env) {
 
   function disturb(x, z, amp, radius = 3.2) {
     const [gx, gy] = toGrid(x, z);
-    const r = radius;
+    const r = radius * NS;
     for (let y = Math.max(2, Math.floor(gy - r)); y <= Math.min(N - 3, Math.ceil(gy + r)); y++) {
       for (let xx = Math.max(2, Math.floor(gx - r)); xx <= Math.min(N - 3, Math.ceil(gx + r)); xx++) {
         const d = Math.hypot(xx - gx, y - gy) / r;
@@ -277,7 +278,7 @@ export function create(env) {
     g.add(core);
     return g;
   }
-  const padCount = high ? 9 : 6;
+  const padCount = Math.round(9 * Math.max(0.7, gfx.detail * 0.9));
   let placed = 0;
   let guardP = 0;
   while (placed < padCount && guardP++ < 200) {
@@ -305,7 +306,7 @@ export function create(env) {
   }
 
   // ---------- koi ----------
-  const koiCount = high ? 4 : 2;
+  const koiCount = Math.min(8, Math.round(2 + gfx.level * 1.2));
   const koiPalette = [
     [0xff6a1f, 0xfff4e6, 0xff3b1f],
     [0xffffff, 0xff7a2a, 0xffd0a0],
@@ -352,10 +353,10 @@ export function create(env) {
   const koiPath = (k, t) => [k.a * Math.sin(k.f1 * t * k.speed + k.p1) + Math.sin(t * 0.05 + k.p2) * 0.8, k.b * Math.cos(k.f2 * t * k.speed + k.p2) + 0.4];
 
   // ---------- particles ----------
-  const flies = new Sparkles(high ? 60 : 24, { size: 0.12, drag: 0.05 });
+  const flies = new Sparkles(Math.round(50 * gfx.particles), { size: 0.12, drag: 0.05 });
   scene.add(flies.points);
   const fireflyColor = new THREE.Color('#d7ff7a');
-  const spray = new Sparkles(120, { size: 0.085, gravity: -9, drag: 0.4 });
+  const spray = new Sparkles(Math.round(120 * gfx.particles), { size: 0.085, gravity: -9, drag: 0.4 });
   scene.add(spray.points);
   const sprayColor = new THREE.Color('#bfeaff');
   let flyClock = 0;
@@ -492,7 +493,8 @@ export function create(env) {
     // fixed-step wave equation (60 Hz)
     waveClock += dt;
     let steps = 0;
-    while (waveClock >= 1 / 60 && steps < 3) { stepWave(); waveClock -= 1 / 60; steps++; }
+    const stepDt = 1 / (60 * NS);
+    while (waveClock >= stepDt && steps < 6) { stepWave(); waveClock -= stepDt; steps++; }
     if (waveClock > 0.1) waveClock = 0;
 
     // ambient rain

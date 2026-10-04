@@ -32,7 +32,6 @@ const LEVELS = {
   storm: { spawn: 30, maxR: 9, ticks: 20, bed: 0.3, big: 0.5 },
 };
 
-const BG_SCALE = 0.5; // background + fog render at half resolution (they are out of focus anyway)
 
 function glowSprite(rgb, kind = 'bokeh') {
   const c = document.createElement('canvas');
@@ -57,8 +56,10 @@ function glowSprite(rgb, kind = 'bokeh') {
 }
 
 export function create(env) {
-  const { audio, bus, hud, root, settings, quality } = env;
-  const low = quality === 'low';
+  const { audio, bus, hud, root, settings, gfx } = env;
+  const low = gfx.level < 2;
+  // background + fog resolution (they are out of focus, so lower tiers render them at reduced scale)
+  const BG_SCALE = [0.35, 0.45, 0.5, 0.65, 0.8, 1][gfx.level];
 
   let moodKey = 'night';
   let levelKey = 'rain';
@@ -77,7 +78,7 @@ export function create(env) {
   let tapTimer = 0;
   let time = 0;
 
-  const cv = createCanvas2D(root, { maxPixels: low ? 1_300_000 : 2_400_000, onResize: setup });
+  const cv = createCanvas2D(root, { maxPixels: gfx.pixels2D, onResize: setup });
   const { ctx } = cv;
   const mood = () => MOODS[moodKey];
   const level = () => LEVELS[levelKey];
@@ -86,7 +87,7 @@ export function create(env) {
   function buildDiscs() {
     const w = cv.w;
     const h = cv.h;
-    const n = Math.round(clamp((w * h) / 4800, 60, low ? 110 : 200));
+    const n = Math.round(clamp((w * h) / 4800, 60, 110 * gfx.detail * 1.2));
     discs = [];
     for (let i = 0; i < n; i++) {
       const col = pick(mood().lights);
@@ -160,6 +161,7 @@ export function create(env) {
     g.fillRect(0, 0, W, H);
     // fine mist grain
     for (let i = 0; i < (W * H) / 40; i++) {
+      if (i > 60000) break;
       g.fillStyle = `rgba(255,255,255,${Math.random() * 0.07})`;
       g.fillRect(Math.random() * W, Math.random() * H, 1.4, 1.4);
     }
@@ -180,7 +182,7 @@ export function create(env) {
     // scatter an initial set of beads on the glass
     statics = [];
     runners = [];
-    const count = Math.round(clamp((w * h) / 4200, 80, low ? 220 : 380));
+    const count = Math.round(clamp((w * h) / 4200, 80, 300 * gfx.detail));
     for (let i = 0; i < count; i++) spawnStatic(true);
     const bigs = Math.round(w / 220);
     for (let i = 0; i < bigs; i++) spawnRunner(rand(0, w), rand(0, h * 0.7), rand(5, 8), true);
@@ -230,7 +232,8 @@ export function create(env) {
       if (Math.random() < k) spawnStatic();
       k -= 1;
     }
-    if (statics.length > 520) statics.splice(0, statics.length - 520);
+    const cap = Math.round(520 * gfx.detail);
+    if (statics.length > cap) statics.splice(0, statics.length - cap);
 
     for (const s of statics) if (s.a < 1) s.a = Math.min(1, s.a + dt * 6);
 

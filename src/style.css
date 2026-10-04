@@ -147,6 +147,9 @@ input[type='checkbox']:checked { background: #8a5cf6; }
 input[type='checkbox']:checked::after { transform: translateX(20px); }
 select { padding: 9px 12px; border-radius: 12px; border: 1px solid var(--stroke); background: rgba(255, 255, 255, 0.1); color: var(--ink); font: inherit; font-weight: 600; }
 select option { color: #111; }
+.quality-desc { margin: 4px 0 0; font-size: 13px; color: var(--ink-dim); min-height: 3.2em; }
+#gfx-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+#btn-gfx { padding: 0 14px; }
 
 @media (max-width: 640px) {
   .hud-title { display: none; }

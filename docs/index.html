@@ -66,6 +66,7 @@
         <div id="hud-title" class="hud-title"></div>
         <div class="hud-right">
           <div id="hud-stat" class="hud-stat"></div>
+          <button id="btn-gfx" class="icon-btn" type="button" aria-label="Graphics quality"><span id="gfx-label"></span></button>
           <button id="btn-mute" class="icon-btn" type="button" aria-label="Mute"></button>
           <button id="btn-full" class="icon-btn" type="button" aria-label="Fullscreen">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
@@ -99,10 +100,15 @@
         <span>Graphics</span>
         <select id="set-quality">
           <option value="auto">Auto</option>
+          <option value="low">Low</option>
+          <option value="normal">Normal</option>
           <option value="high">High</option>
-          <option value="low">Battery saver</option>
+          <option value="extra">Extra</option>
+          <option value="max">Max</option>
+          <option value="ultra">ULTRA by RTX</option>
         </select>
       </label>
+      <p id="quality-desc" class="quality-desc"></p>
       <button id="settings-close" class="primary" type="button">Done</button>
     </div>
   </aside>

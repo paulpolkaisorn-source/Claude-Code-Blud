@@ -26,12 +26,12 @@ const segDist = (ax, ay, bx, by, cx, cy, dx, dy) => {
 };
 
 export function create(env) {
-  const { audio, bus, hud, root, settings, quality } = env;
-  const high = quality !== 'low';
+  const { audio, bus, hud, root, settings, gfx } = env;
+  const high = gfx.transmission;
 
   const stage = createStage(root, {
     fov: 38,
-    quality,
+    gfx,
     exposure: 1.05,
     envIntensity: 0.55,
     bloom: { strength: 0.85, radius: 0.8, threshold: 0.62 },
@@ -48,9 +48,10 @@ export function create(env) {
   warm.position.set(3, 1, 4);
   scene.add(warm);
 
+  const STAR_N = Math.round(900 * gfx.particles);
   const starGeo = new THREE.BufferGeometry();
-  const sp = new Float32Array(900 * 3);
-  for (let i = 0; i < 900; i++) {
+  const sp = new Float32Array(STAR_N * 3);
+  for (let i = 0; i < STAR_N; i++) {
     const a = rand(0, Math.PI * 2);
     const y = rand(-0.1, 1);
     const r = Math.sqrt(1 - y * y);
@@ -73,7 +74,7 @@ export function create(env) {
 
   const mistTex = glowTexture(128, 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.15)');
   const mists = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0, nm = Math.round(4 + gfx.level * 1.5); i < nm; i++) {
     const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTex, color: pick([0x5a3a9a, 0x2f4fa8, 0x8a3a8a]), transparent: true, opacity: rand(0.1, 0.2), depthWrite: false, blending: THREE.AdditiveBlending }));
     m.position.set(rand(-10, 10), rand(-1, 5), rand(-16, -6));
     m.scale.setScalar(rand(10, 18));
@@ -81,9 +82,9 @@ export function create(env) {
     mists.push({ m, sp: rand(0.05, 0.14), ph: rand(0, 6) });
   }
 
-  const dust = new Sparkles(high ? 260 : 110, { size: 0.16, gravity: 0, drag: 0.55 });
+  const dust = new Sparkles(Math.round(200 * gfx.particles), { size: 0.16, gravity: 0, drag: 0.55 });
   scene.add(dust.points);
-  const motes = new Sparkles(high ? 70 : 30, { size: 0.1, drag: 0.05 });
+  const motes = new Sparkles(Math.round(55 * gfx.particles), { size: 0.1, drag: 0.05 });
   scene.add(motes.points);
   const moteColor = new THREE.Color('#c9b6ff');
   let moteClock = 0;
@@ -214,7 +215,7 @@ export function create(env) {
     }
     if (!audio.ready) return;
     while (recent.length && now - recent[0] > 1500) recent.shift();
-    if (recent.length > (high ? 16 : 9)) return;
+    if (recent.length > Math.round(8 + 8 * gfx.detail)) return;
     recent.push(now);
     const pan = clamp(c.x / 4, -0.9, 0.9);
     const idx = chimes.indexOf(c);

@@ -17,7 +17,7 @@ const LZ = 0.6;
 const SAND = [226, 200, 154];
 
 export function create(env) {
-  const { audio, bus, hud, root, settings } = env;
+  const { audio, bus, hud, root, settings, gfx } = env;
 
   let W = 0, H = 0, k = 1;      // sim size and sim-px per css-px
   let fx = 0, fy = 0, fw = 0, fh = 0; // sand area inside the frame (css px)
@@ -33,7 +33,7 @@ export function create(env) {
   let hoverP = null;
   let lastDir = { x: 1, y: 0 };
 
-  const cv = createCanvas2D(root, { maxPixels: 3_500_000, onResize: setup });
+  const cv = createCanvas2D(root, { maxPixels: gfx.pixels2D, onResize: setup });
   const { ctx } = cv;
 
   // ---------- setup ----------
@@ -57,7 +57,7 @@ export function create(env) {
     fy = frame;
     fw = w - frame * 2;
     fh = h - frame * 2;
-    k = Math.max(0.55, Math.min(cv.dpr, Math.sqrt(1_000_000 / (fw * fh))));
+    k = Math.max(0.5, Math.min(cv.dpr, Math.sqrt((1_000_000 * gfx.detail) / (fw * fh))));
     W = Math.round(fw * k);
     H = Math.round(fh * k);
     hf = new Float32Array(W * H);
@@ -279,7 +279,7 @@ export function create(env) {
     stones.push(s);
     pending.push({ s, t: 0 });
     // puff of sand
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0, np = Math.round(26 * gfx.particles); i < np; i++) {
       const a = rand(0, Math.PI * 2);
       const sp = rand(30, 120);
       particles.push({ x: cssX, y: cssY + rx * 0.4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.5 - rand(10, 60), life: rand(0.3, 0.7), t: 0, s: rand(0.8, 1.9) });

@@ -2,7 +2,8 @@
 
 import { AudioEngine, Pad } from './audio.js';
 import { GAMES } from './games/index.js';
-import { safeStorage, detectQuality, clamp } from './util.js';
+import { safeStorage, clamp } from './util.js';
+import { makeProfile, detectAuto, LABELS, DESCRIPTIONS } from './gfx.js';
 
 const $ = (sel) => document.querySelector(sel);
 const store = safeStorage();
@@ -13,7 +14,13 @@ let saved = {};
 try { saved = JSON.parse(store.getItem('hush:settings') || '{}'); } catch (_) { /* ignore */ }
 const settings = { ...defaults, ...saved };
 const persist = () => store.setItem('hush:settings', JSON.stringify(settings));
-const resolveQuality = () => (settings.quality === 'auto' ? detectQuality() : settings.quality);
+// older saves used 'high' / 'low' only; those names still exist in the new scale
+let autoLevel = null;
+const resolveLevel = () => {
+  if (settings.quality === 'auto') return (autoLevel ??= detectAuto());
+  return LABELS[settings.quality] ? settings.quality : 'high';
+};
+const resolveGfx = () => makeProfile(resolveLevel());
 
 const audio = new AudioEngine(settings);
 window.__hush = { audio, settings }; // handy for debugging / tests
@@ -205,6 +212,8 @@ async function openGame(id) {
   const meta = GAMES.find((g) => g.id === id);
   if (!meta) return goHub();
   const token = ++openToken;
+  fpsWarned = false;
+  fpsStart = 0;
   await closeGame();
   stopHubAmbience();
   await audio.unlock();
@@ -226,7 +235,8 @@ async function openGame(id) {
   if (token !== openToken) return;
   const root = $('#game-root');
   const bus = audio.ready ? audio.createBus({ gain: 1 }) : null;
-  const env = { audio, bus, settings, root, hud, quality: resolveQuality(), meta };
+  const gfx = resolveGfx();
+  const env = { audio, bus, settings, root, hud, gfx, quality: gfx.legacy, meta };
   try {
     const instance = await mod.create(env);
     if (token !== openToken) { instance?.destroy?.(); bus?.dispose(); return; }
@@ -287,19 +297,35 @@ const volume = $('#set-volume');
 const ambience = $('#set-ambience');
 const haptics = $('#set-haptics');
 const quality = $('#set-quality');
+const qualityDesc = $('#quality-desc');
+const refreshQualityUI = () => {
+  const key = quality.value;
+  qualityDesc.textContent = key === 'auto' ? `${DESCRIPTIONS.auto} Currently: ${LABELS[resolveLevel()]}.` : DESCRIPTIONS[key];
+  $('#gfx-label').textContent = settings.quality === 'auto' ? `Auto · ${LABELS[resolveLevel()]}` : LABELS[settings.quality];
+};
+let qualityAtOpen = '';
 function openSettings() {
+  qualityAtOpen = settings.quality;
   volume.value = settings.volume;
   ambience.checked = settings.ambience;
   haptics.checked = settings.haptics;
-  quality.value = settings.quality;
+  quality.value = LABELS[settings.quality] || settings.quality === 'auto' ? settings.quality : 'high';
+  refreshQualityUI();
   modal.hidden = false;
   volume.focus();
 }
 function closeSettings() {
   modal.hidden = true;
-  $('#btn-settings').focus();
+  if (currentScreen === 'stage') {
+    // graphics changes need a fresh renderer: restart the current game
+    if (settings.quality !== qualityAtOpen && current) openGame(current.meta.id);
+    else $('#btn-gfx').focus();
+  } else {
+    $('#btn-settings').focus();
+  }
 }
 $('#btn-settings').addEventListener('click', openSettings);
+$('#btn-gfx').addEventListener('click', openSettings);
 $('#settings-close').addEventListener('click', closeSettings);
 modal.addEventListener('pointerdown', (e) => { if (e.target === modal) closeSettings(); });
 volume.addEventListener('input', () => {
@@ -318,9 +344,34 @@ ambience.addEventListener('change', () => {
   window.dispatchEvent(new CustomEvent('hush:ambience', { detail: settings.ambience }));
 });
 haptics.addEventListener('change', () => { settings.haptics = haptics.checked; persist(); });
-quality.addEventListener('change', () => { settings.quality = quality.value; persist(); });
+quality.addEventListener('change', () => { settings.quality = quality.value; persist(); refreshQualityUI(); });
+
+// ---------- performance watchdog ----------
+// If a game runs far below 30 fps for a while, suggest a lower graphics level (once per game).
+let fpsFrames = 0;
+let fpsStart = 0;
+let fpsWarned = false;
+function fpsTick(now) {
+  requestAnimationFrame(fpsTick);
+  if (currentScreen !== 'stage' || document.hidden || !current) { fpsFrames = 0; fpsStart = 0; return; }
+  if (!fpsStart) { fpsStart = now; fpsFrames = 0; return; }
+  fpsFrames++;
+  const el = now - fpsStart;
+  if (el > 5000) {
+    const fps = (fpsFrames * 1000) / el;
+    if (fps < 24 && !fpsWarned && resolveLevel() !== 'low') {
+      fpsWarned = true;
+      hud.setHint(`Running at ~${Math.round(fps)} fps. Try a lower graphics level (top-right button).`, 9000);
+      wakeHud();
+    }
+    fpsStart = now;
+    fpsFrames = 0;
+  }
+}
+requestAnimationFrame(fpsTick);
 
 // ---------- boot ----------
+refreshQualityUI();
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) audio.suspend();
   else audio.resume();

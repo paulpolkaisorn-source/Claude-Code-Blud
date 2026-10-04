@@ -17,10 +17,10 @@ const THEMES = [
 ];
 
 export function create(env) {
-  const { audio, bus, hud, root, settings, quality } = env;
-  const high = quality !== 'low';
+  const { audio, bus, hud, root, settings, gfx } = env;
+  const high = gfx.transmission;
 
-  const stage = createStage(root, { fov: 30, quality, exposure: 0.92, envIntensity: 0.9 });
+  const stage = createStage(root, { fov: 30, gfx, exposure: 0.92, envIntensity: 0.9, shadows: true, ao: true, aoRadius: 0.6 });
   const { scene, camera, renderer } = stage;
   let themeIdx = 0;
   const theme = () => THEMES[themeIdx];
@@ -36,6 +36,17 @@ export function create(env) {
 
   const key = new THREE.DirectionalLight(0xfff0e0, 1.7);
   key.position.set(3.5, 7, 4);
+  if (gfx.shadows) {
+    key.castShadow = true;
+    key.shadow.mapSize.set(gfx.shadows, gfx.shadows);
+    key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
+    key.shadow.camera.near = 1; key.shadow.camera.far = 20;
+    key.shadow.bias = -0.0004;
+    key.shadow.normalBias = 0.02;
+    key.shadow.radius = gfx.level >= 4 ? 5 : 2;
+    key.shadow.blurSamples = 16;
+    floor.receiveShadow = true;
+  }
   scene.add(key);
   const rim = new THREE.DirectionalLight(0xc9d8ff, 1.8);
   rim.position.set(-5, 3.5, -4);
@@ -47,6 +58,7 @@ export function create(env) {
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.5, depthWrite: false, color: 0x2a1030 }));
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.004;
+  shadow.visible = !gfx.shadows;
   scene.add(shadow);
 
   function applyTheme(animate = false) {
@@ -65,7 +77,7 @@ export function create(env) {
   }
 
   // ---------- slime mesh ----------
-  const detail = high ? 34 : 20;
+  const detail = Math.round([14, 20, 30, 38, 46, 54][gfx.level]);
   let geo = new THREE.IcosahedronGeometry(1, detail);
   geo.deleteAttribute('uv');
   geo.deleteAttribute('normal');
@@ -122,6 +134,7 @@ export function create(env) {
   });
   const slime = new THREE.Mesh(geo, mat);
   slime.frustumCulled = false;
+  slime.castShadow = !!gfx.shadows;
   const BASE = new THREE.Vector3(1.2, 0.86, 1.2);
   slime.scale.copy(BASE);
   slime.position.y = BASE.y;
@@ -131,7 +144,7 @@ export function create(env) {
   const bubbleMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0, clearcoat: 1, envMapIntensity: 1.6 });
   const bubbleGeo = new THREE.SphereGeometry(1, 14, 10);
   const bubbles = [];
-  for (let i = 0; i < (high ? 34 : 16); i++) {
+  for (let i = 0, nb = Math.round(16 * gfx.detail * 1.3); i < nb; i++) {
     const dir = new THREE.Vector3(rand(-1, 1), rand(-0.6, 1), rand(-1, 1)).normalize();
     const rad = rand(0.15, 0.78);
     const m = new THREE.Mesh(bubbleGeo, bubbleMat);
@@ -150,7 +163,7 @@ export function create(env) {
   }
 
   // dust motes
-  const dust = new Sparkles(high ? 90 : 40, { size: 0.09, gravity: 0, drag: 0.1 });
+  const dust = new Sparkles(Math.round(70 * gfx.particles), { size: 0.09, gravity: 0, drag: 0.1 });
   scene.add(dust.points);
   const dustColor = new THREE.Color('#ffffff');
   const burstSparkles = (at, n, speed) => {

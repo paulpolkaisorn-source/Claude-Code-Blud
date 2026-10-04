@@ -176,7 +176,7 @@ function buildSprites(r, D, dpr, pal) {
 }
 
 export function create(env) {
-  const { audio, bus, hud, root } = env;
+  const { audio, bus, hud, root, gfx } = env;
   const store = safeStorage();
   let total = parseInt(store.getItem('hush:bubbles:total') || '0', 10) || 0;
   let paletteIdx = Math.floor(Math.random() * PALETTES.length);
@@ -193,7 +193,7 @@ export function create(env) {
   let hover = null;
   let sessionPopped = 0;
 
-  const cv = createCanvas2D(root, { onResize: layout });
+  const cv = createCanvas2D(root, { maxPixels: gfx.pixels2D, onResize: layout });
   const { ctx } = cv;
   layout();
 
@@ -272,12 +272,12 @@ export function create(env) {
     sessionPopped++;
     if (!silent) popSound(b.x, b.y, vel, soundDelay);
     rings.push({ x: b.x, y: b.y, t: 0 });
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0, np = Math.round(6 * gfx.particles); i < np; i++) {
       const a = rand(0, 6.283);
       const sp = rand(40, 140) * (0.6 + vel * 0.6);
       particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, life: rand(0.25, 0.55), t: 0, s: rand(1.2, 2.8) });
     }
-    if (particles.length > 260) particles.splice(0, particles.length - 260);
+    if (particles.length > 260 * gfx.particles) particles.splice(0, particles.length - 260 * gfx.particles);
     return true;
   }
 

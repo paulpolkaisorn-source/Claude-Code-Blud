@@ -5,27 +5,35 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { observeSize } from './util.js';
+import { makeProfile } from './gfx.js';
 
 export { THREE };
 
 /**
- * Creates a renderer + scene + camera that fills `root`.
- * opts: { fov, near, far, bloom:{strength,radius,threshold}, quality, environment }
+ * Creates a renderer + scene + camera that fills `root`, scaled by the graphics profile `gfx`.
+ * opts: { fov, near, far, gfx, bloom:{strength,radius,threshold}, ao:true, shadows:true, environment, exposure }
  */
 export function createStage(root, opts = {}) {
-  const high = opts.quality !== 'low';
+  const gfx = opts.gfx || makeProfile('high');
+  const usesComposer = !!((opts.bloom && gfx.bloom) || (opts.ao && gfx.ao));
   const renderer = new THREE.WebGLRenderer({
-    antialias: high,
+    antialias: gfx.antialias && !usesComposer,
     alpha: false,
     powerPreference: 'high-performance',
   });
-  const maxDpr = high ? 2 : 1.25;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
+  const pr = Math.min((window.devicePixelRatio || 1) * gfx.ss, gfx.dpr);
+  renderer.setPixelRatio(pr);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = opts.exposure ?? 1;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  if ('transmissionResolutionScale' in renderer) renderer.transmissionResolutionScale = gfx.transmissionScale;
+  if (opts.shadows && gfx.shadows) {
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = gfx.level >= 4 ? THREE.VSMShadowMap : THREE.PCFShadowMap;
+  }
   renderer.domElement.className = 'game-canvas';
   root.appendChild(renderer.domElement);
 
@@ -43,11 +51,26 @@ export function createStage(root, opts = {}) {
 
   let composer = null;
   let bloomPass = null;
-  if (opts.bloom && high) {
-    composer = new EffectComposer(renderer);
+  let aoPass = null;
+  const wantBloom = opts.bloom && gfx.bloom;
+  const wantAO = opts.ao && gfx.ao;
+  if (usesComposer) {
+    const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: gfx.msaa });
+    composer = new EffectComposer(renderer, rt);
+    composer.setPixelRatio(pr);
     composer.addPass(new RenderPass(scene, camera));
-    bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), opts.bloom.strength ?? 0.6, opts.bloom.radius ?? 0.6, opts.bloom.threshold ?? 0.6);
-    composer.addPass(bloomPass);
+    if (wantAO) {
+      aoPass = new GTAOPass(scene, camera, 256, 256);
+      aoPass.output = GTAOPass.OUTPUT.Default;
+      aoPass.blendIntensity = 0.85 * Math.min(1.4, gfx.aoMul);
+      try { aoPass.updateGtaoMaterial({ radius: opts.aoRadius ?? 0.5, distanceExponent: 1.5, thickness: 1.5, scale: 1.0, samples: gfx.level >= 5 ? 24 : 16 }); } catch (_) { /* older API */ }
+      composer.addPass(aoPass);
+    }
+    if (wantBloom) {
+      const b = opts.bloom;
+      bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), (b.strength ?? 0.6) * gfx.bloomMul, b.radius ?? 0.6, b.threshold ?? 0.6);
+      composer.addPass(bloomPass);
+    }
     composer.addPass(new OutputPass());
   }
 
@@ -57,6 +80,9 @@ export function createStage(root, opts = {}) {
     camera,
     composer,
     bloomPass,
+    aoPass,
+    gfx,
+    pixelRatio: pr,
     width: 1,
     height: 1,
     onResize: null,
@@ -75,6 +101,7 @@ export function createStage(root, opts = {}) {
             m.dispose();
           }
         }
+        o.shadow?.map?.dispose?.();
       });
       if (scene.background?.isTexture) scene.background.dispose();
       scene.environment?.dispose?.();
