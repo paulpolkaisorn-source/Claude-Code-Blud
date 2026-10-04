@@ -9,6 +9,7 @@ is generated in code, so the result is deterministic and editable.
 | Interactive viewer (single self-contained HTML, works offline) | `dist/index.html` |
 | Binary glTF (metres, +Z = front of the speaker, PBR textures embedded) | `out/sundown-subwoofer.glb` |
 | Source | `src/` |
+| Photo vs model comparison | `docs/photo_vs_model.jpg` (left: photo, right: model; rows = front, front ¾, rear ¾, rear ¾ II) |
 
 Open `dist/index.html` in a browser: drag to orbit, scroll to zoom, right-drag to pan. The preset buttons jump to
 the cameras that were recovered from the photos (front, front ¾, two rear ¾ views, cone close-up).

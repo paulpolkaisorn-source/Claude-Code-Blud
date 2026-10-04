@@ -17,9 +17,9 @@ export const P = {
   },
 
   // cone + dust cap
-  cone: { rTop: 5.52, zTop: 0.1, capR: 2.18, depth: 3.5, power: 1.75 },
+  cone: { rTop: 5.52, zTop: 0.1, capR: 2.46, depth: 3.5, power: 1.75 },
   cap: { height: 1.0 },
-  weave: { tile: 0.7, rotDeg: 38 },
+  weave: { tile: 0.36, rotDeg: 52 },
 
   // basket
   basketPts: [

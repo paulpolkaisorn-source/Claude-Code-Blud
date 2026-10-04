@@ -33673,9 +33673,9 @@ void main() {
       ]
     },
     // cone + dust cap
-    cone: { rTop: 5.52, zTop: 0.1, capR: 2.18, depth: 3.5, power: 1.75 },
+    cone: { rTop: 5.52, zTop: 0.1, capR: 2.46, depth: 3.5, power: 1.75 },
     cap: { height: 1 },
-    weave: { tile: 0.7, rotDeg: 38 },
+    weave: { tile: 0.36, rotDeg: 52 },
     // basket
     basketPts: [
       [6.95, -0.45],
@@ -34004,7 +34004,7 @@ void main() {
         const taper = 0.55 + 0.45 * Math.sin(Math.PI * along);
         const ht = Math.pow(prof, 0.75) * taper;
         const stri = 0.5 + 0.5 * Math.sin(across * 90 + striations[(j * tows + i) * 2]);
-        const dir = warpTop ? 1 : 0.62;
+        const dir = warpTop ? 1 : 0.8;
         const lum = 0.016 + dir * (0.2 * Math.pow(prof, 3) * taper + 0.035 * stri * prof);
         const k = (y * tile + x) * 4;
         const hv = Math.min(255, ht * 255);
@@ -34134,9 +34134,9 @@ void main() {
       const t = th * DEG;
       const x = plateR * Math.sin(t);
       const y = plateR * Math.cos(t);
-      const pw = 1.26 * k;
-      const ph = 0.56 * k;
-      for (const [ctx, fill] of [[h, "rgb(105,105,105)"], [c, "#070707"], [r, "rgb(0,150,0)"]]) {
+      const pw = 1.3 * k;
+      const ph = 0.26 * k;
+      for (const [ctx, fill] of [[h, "rgb(150,150,150)"], [c, "#0b0b0b"], [r, "rgb(0,70,0)"]]) {
         ctx.save();
         ctx.translate(X(x), Y(y));
         ctx.rotate(t);
@@ -34144,14 +34144,14 @@ void main() {
         ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
         ctx.restore();
       }
-      for (const [ctx, col] of [[h, "rgb(170,170,170)"], [c, "#3a3a3a"], [r, "rgb(0,120,0)"]]) {
+      for (const [ctx, col] of [[h, "rgb(190,190,190)"], [c, "#3c3c3c"], [r, "rgb(0,110,0)"]]) {
         ctx.save();
         ctx.translate(X(x), Y(y));
         ctx.rotate(t);
-        const nat1 = wordWidth("SUNDOWN", 0.4) * (0.24 * k / 10);
-        drawWord(ctx, "SUNDOWN", -pw * 0.44, -ph * 0.42, 0.24 * k, { thickness: 2.6, skew: 0.1, gap: 0.4, stretch: pw * 0.88 / nat1, color: col });
-        const nat2 = wordWidth("AUDIO", 0.4) * (0.2 * k / 10);
-        drawWord(ctx, "AUDIO", -pw * 0.34, ph * 0.06, 0.2 * k, { thickness: 2.8, skew: 0.28, gap: 0.4, stretch: pw * 0.78 / nat2, color: col });
+        const nat1 = wordWidth("SUNDOWN", 0.4) * (0.1 * k / 10);
+        drawWord(ctx, "SUNDOWN", -pw * 0.45, -ph * 0.42, 0.1 * k, { thickness: 2, skew: 0.1, gap: 0.4, stretch: pw * 0.9 / nat1, color: col });
+        const nat2 = wordWidth("AUDIO", 0.4) * (0.1 * k / 10);
+        drawWord(ctx, "AUDIO", -pw * 0.45, ph * 0.04, 0.1 * k, { thickness: 2, skew: 0.2, gap: 0.4, stretch: pw * 0.9 / nat2, color: col });
         ctx.restore();
       }
     }
@@ -34191,7 +34191,7 @@ void main() {
     const c = canvas(W, H);
     const ctx = c.getContext("2d");
     ctx.clearRect(0, 0, W, H);
-    drawSundownLogo(ctx, W * 0.2, H * 0.415, W * 0.6, { color: "#e9e9e7" });
+    drawSundownLogo(ctx, W * 0.24, H * 0.425, W * 0.52, { color: "#e9e9e7" });
     const t = new CanvasTexture(c);
     t.colorSpace = SRGBColorSpace;
     t.anisotropy = 16;
@@ -34326,8 +34326,8 @@ void main() {
         roughnessMap: flange.roughnessMap,
         roughness: 1,
         metalness: 0,
-        clearcoat: 0.8,
-        clearcoatRoughness: 0.08,
+        clearcoat: 0.35,
+        clearcoatRoughness: 0.2,
         side: DoubleSide
       });
       const circ = TAU * P2.band.r;
@@ -34703,20 +34703,28 @@ void main() {
   }
 
   // src/env.js
-  function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0.16, 0.08], panelGain = 1, flags = [], bars = 0, flagColor = 328965 } = {}) {
+  function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0.16, 0.08], panelGain = 1, flags = [], bars = 0, flagColor = 328965, swirl = 0 } = {}) {
     const scene = new Scene();
     const skyMat = new ShaderMaterial({
       side: BackSide,
       depthWrite: false,
-      uniforms: { k: { value: exposure } },
+      uniforms: { k: { value: exposure }, swirl: { value: swirl } },
       vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);} ",
-      fragmentShader: `varying vec3 vP; uniform float k;
+      fragmentShader: `varying vec3 vP; uniform float k; uniform float swirl;
       void main(){
         float h = vP.y; // up in env space
         vec3 top = vec3(${sky[0].toFixed(3)});
         vec3 mid = vec3(${sky[1].toFixed(3)});
         vec3 bot = vec3(${sky[2].toFixed(3)});
         vec3 c = h > 0.0 ? mix(mid, top, pow(h, 0.7)) : mix(mid, bot, pow(-h, 0.6));
+        if (swirl > 0.0) {
+          // smooth bands of light and dark, the way a polished metal part reflects a studio
+          float az = atan(vP.x, vP.z);
+          float f = 0.5 + 0.5 * sin(2.0 * az + 2.2 * sin(3.0 * h + 0.6) + 0.8) * cos(1.5 * h + 0.3);
+          float g = 0.5 + 0.5 * sin(5.0 * az - 3.0 * h + 1.7);
+          float m = smoothstep(0.18, 0.75, f) * (0.55 + 0.45 * smoothstep(0.1, 0.9, g));
+          c *= mix(1.0, mix(0.12, 1.25, m), swirl);
+        }
         gl_FragColor = vec4(c * k, 1.0);
       }`
     });
@@ -34789,7 +34797,7 @@ void main() {
       scene.environment = createStudioEnvironment(renderer);
       scene.environmentIntensity = 1;
     }
-    const brightEnv = silhouette2 ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [1.25, 0.9, 0.5], panelGain: 1, bars: 6, flagColor: 2500134 });
+    const brightEnv = silhouette2 ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [1.3, 1, 0.6], panelGain: 0.8, swirl: 1 });
     const camera = new PerspectiveCamera(24, width / height, 1, 400);
     camera.position.set(0, 0, 60);
     const state = { P: P2, textures, quality: quality2, silhouette: silhouette2, root: null, spin: 0, roll: 0, frozen: !!frozen };
@@ -34859,7 +34867,7 @@ void main() {
       if (crop) {
         const [x0, y0, x1, y1, fw, fh] = crop;
         camera.aspect = fw / fh;
-        camera.setViewOffset(fw, fh, x0, y0, x1 - x0, y1 - y0);
+        camera.setViewOffset(fw, fh, x0 - shiftX * fw, y0 - shiftY * fh, x1 - x0, y1 - y0);
       } else if (shiftX || shiftY) camera.setViewOffset(w, h, -shiftX * w, -shiftY * h, w, h);
       else camera.clearViewOffset();
       camera.updateProjectionMatrix();

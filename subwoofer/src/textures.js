@@ -87,7 +87,7 @@ export function makeCarbon({ tile = 512, tows = 8 } = {}) {
       const ht = Math.pow(prof, 0.75) * taper;
       const stri = 0.5 + 0.5 * Math.sin(across * 90 + striations[(j * tows + i) * 2]);
       // tows that run vertical pick up the (top) light a bit more than horizontal ones
-      const dir = warpTop ? 1.0 : 0.62;
+      const dir = warpTop ? 1.0 : 0.8;
       const lum = 0.016 + dir * (0.2 * Math.pow(prof, 3.0) * taper + 0.035 * stri * prof);
       const k = (y * tile + x) * 4;
       const hv = Math.min(255, ht * 255);
@@ -222,9 +222,10 @@ export function makeFlangeDecals({ R = 8, px = 3072, plateR = 7.52, plateAngles,
     const t = th * DEG; // clockwise from top
     const x = plateR * Math.sin(t);
     const y = plateR * Math.cos(t);
-    const pw = 1.26 * k;
-    const ph = 0.56 * k;
-    for (const [ctx, fill] of [[h, 'rgb(105,105,105)'], [c, '#070707'], [r, 'rgb(0,150,0)']]) {
+    const pw = 1.3 * k;
+    const ph = 0.26 * k;
+    // faint rounded strip, barely lighter than the flange, with two lines of tiny raised lettering
+    for (const [ctx, fill] of [[h, 'rgb(150,150,150)'], [c, '#0b0b0b'], [r, 'rgb(0,70,0)']]) {
       ctx.save();
       ctx.translate(X(x), Y(y));
       ctx.rotate(t);
@@ -232,15 +233,14 @@ export function makeFlangeDecals({ R = 8, px = 3072, plateR = 7.52, plateAngles,
       ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
       ctx.restore();
     }
-    // text: SUNDOWN / AUDIO, tiny and tracked, raised inside the recess
-    for (const [ctx, col] of [[h, 'rgb(170,170,170)'], [c, '#3a3a3a'], [r, 'rgb(0,120,0)']]) {
+    for (const [ctx, col] of [[h, 'rgb(190,190,190)'], [c, '#3c3c3c'], [r, 'rgb(0,110,0)']]) {
       ctx.save();
       ctx.translate(X(x), Y(y));
       ctx.rotate(t);
-      const nat1 = wordWidth('SUNDOWN', 0.4) * (0.24 * k / 10);
-      drawWord(ctx, 'SUNDOWN', -pw * 0.44, -ph * 0.42, 0.24 * k, { thickness: 2.6, skew: 0.1, gap: 0.4, stretch: (pw * 0.88) / nat1, color: col });
-      const nat2 = wordWidth('AUDIO', 0.4) * (0.2 * k / 10);
-      drawWord(ctx, 'AUDIO', -pw * 0.34, ph * 0.06, 0.2 * k, { thickness: 2.8, skew: 0.28, gap: 0.4, stretch: (pw * 0.78) / nat2, color: col });
+      const nat1 = wordWidth('SUNDOWN', 0.4) * (0.1 * k / 10);
+      drawWord(ctx, 'SUNDOWN', -pw * 0.45, -ph * 0.42, 0.1 * k, { thickness: 2.0, skew: 0.1, gap: 0.4, stretch: (pw * 0.9) / nat1, color: col });
+      const nat2 = wordWidth('AUDIO', 0.4) * (0.1 * k / 10);
+      drawWord(ctx, 'AUDIO', -pw * 0.45, ph * 0.04, 0.1 * k, { thickness: 2.0, skew: 0.2, gap: 0.4, stretch: (pw * 0.9) / nat2, color: col });
       ctx.restore();
     }
   }
@@ -288,7 +288,7 @@ export function makeDustLogo() {
   const ctx = c.getContext('2d');
   ctx.clearRect(0, 0, W, H);
   // planar front projection covering +-capR*1.1; the logo is about 1.9" wide on a 4.65" dia cap
-  drawSundownLogo(ctx, W * 0.2, H * 0.415, W * 0.6, { color: '#e9e9e7' });
+  drawSundownLogo(ctx, W * 0.24, H * 0.425, W * 0.52, { color: '#e9e9e7' });
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 16;

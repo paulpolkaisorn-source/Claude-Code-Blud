@@ -89,7 +89,7 @@ export function makeMaterials({ textures = true, silhouette = false, P = DEFAULT
     ] });
     M.flange = new THREE.MeshPhysicalMaterial({
       name: 'FlangeBlack', map: flange.map, normalMap: flange.normalMap, normalScale: new THREE.Vector2(1, 1),
-      roughnessMap: flange.roughnessMap, roughness: 1, metalness: 0.0, clearcoat: 0.8, clearcoatRoughness: 0.08, side: THREE.DoubleSide,
+      roughnessMap: flange.roughnessMap, roughness: 1, metalness: 0.0, clearcoat: 0.35, clearcoatRoughness: 0.2, side: THREE.DoubleSide,
     });
     const circ = TAU * P.band.r;
     const h = Math.abs(P.band.z0 - P.band.z1);

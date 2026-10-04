@@ -22,7 +22,7 @@ export function createViewer({
     scene.environmentIntensity = 1.0;
   }
   // polished metals reflect a bright white cyclorama, lacquered black parts a dark studio with softboxes
-  const brightEnv = silhouette ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [1.25, 0.9, 0.5], panelGain: 1.0, bars: 6, flagColor: 0x262626 });
+  const brightEnv = silhouette ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [1.3, 1.0, 0.6], panelGain: 0.8, swirl: 1.0 });
 
   const camera = new THREE.PerspectiveCamera(24, width / height, 1, 400);
   camera.position.set(0, 0, 60);
@@ -100,7 +100,7 @@ export function createViewer({
       // render only a window [x0,y0,x1,y1] of a larger full frame (used to mimic cropped/zoomed photos)
       const [x0, y0, x1, y1, fw, fh] = crop;
       camera.aspect = fw / fh;
-      camera.setViewOffset(fw, fh, x0, y0, x1 - x0, y1 - y0);
+      camera.setViewOffset(fw, fh, x0 - shiftX * fw, y0 - shiftY * fh, x1 - x0, y1 - y0);
     } else if (shiftX || shiftY) camera.setViewOffset(w, h, -shiftX * w, -shiftY * h, w, h);
     else camera.clearViewOffset();
     camera.updateProjectionMatrix();
