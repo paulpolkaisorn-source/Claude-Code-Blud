@@ -150,50 +150,62 @@ function flyTo(pos, target) {
   camGoal.t = 0;
 }
 
+function onModelLoaded(gltf) {
+  const root = gltf.scene;
+  const find = (name) => {
+    let hit = null;
+    root.traverse((o) => { if (!hit && o.name === name) hit = o; });
+    return hit;
+  };
+  const missing = [];
+  for (const n of ['cone', 'cone_back', 'dust_cap', 'dust_cap_rim', 'voice_coil_former', 'surround_glue_lip']) {
+    const o = find(n);
+    if (o) rigid.push(o); else missing.push(n);
+  }
+  const surround = find('surround');
+  const spider = find('spider');
+  if (surround) makeFlexible(surround, 160, 214); else missing.push('surround');
+  if (spider) makeFlexible(spider, 66, 160); else missing.push('spider');
+  if (missing.length) console.warn('GLB parts not found:', missing.join(', '));
+
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => allMaterials.add(m));
+  });
+  scene.add(root);
+  modelRoot = root;
+  frameModel(root);
+  resize();
+  $('loader').classList.add('done');
+  setTimeout(() => $('loader').remove(), 600);
+}
+
+function onModelError(err) {
+  $('loader').hidden = true;
+  $('loadError').hidden = false;
+  $('errDetail').textContent = String(err && err.message ? err.message : err);
+}
+
 function loadModel() {
   const loader = new GLTFLoader();
+  const embedded = document.getElementById('glbData'); // present in the standalone build
+  if (embedded) {
+    const bin = atob(embedded.textContent.trim());
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    loader.parse(bytes.buffer, '', onModelLoaded, onModelError);
+    return;
+  }
   loader.load(
     MODEL_URL,
-    (gltf) => {
-      const root = gltf.scene;
-      const find = (name) => {
-        let hit = null;
-        root.traverse((o) => { if (!hit && o.name === name) hit = o; });
-        return hit;
-      };
-      const missing = [];
-      for (const n of ['cone', 'cone_back', 'dust_cap', 'dust_cap_rim', 'voice_coil_former', 'surround_glue_lip']) {
-        const o = find(n);
-        if (o) rigid.push(o); else missing.push(n);
-      }
-      const surround = find('surround');
-      const spider = find('spider');
-      if (surround) makeFlexible(surround, 160, 214); else missing.push('surround');
-      if (spider) makeFlexible(spider, 66, 160); else missing.push('spider');
-      if (missing.length) console.warn('GLB parts not found:', missing.join(', '));
-
-      root.traverse((o) => {
-        if (!o.isMesh) return;
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => allMaterials.add(m));
-      });
-      scene.add(root);
-      modelRoot = root;
-      frameModel(root);
-      resize();
-      $('loader').classList.add('done');
-      setTimeout(() => $('loader').remove(), 600);
-    },
+    onModelLoaded,
     (e) => {
       if (!e.total) return;
       const p = Math.round((100 * e.loaded) / e.total);
       $('loadBar').style.width = p + '%';
       $('loadPct').textContent = p + '%';
     },
-    (err) => {
-      $('loader').hidden = true;
-      $('loadError').hidden = false;
-      $('errDetail').textContent = String(err && err.message ? err.message : err);
-    }
+    onModelError
   );
 }
 
