@@ -136,7 +136,7 @@ function buildShape(kind, big, portrait) {
     ox = cols % 2 ? 0 : 0.5;
     oy = rows % 2 ? 0 : 0.5;
   } else if (kind === 'circle') {
-    const R = big ? 5.1 : 4.2;
+    const R = big ? 5.3 : 4.85;
     poly = [];
     for (let i = 0; i < 96; i++) {
       const a = (i / 96) * Math.PI * 2;
@@ -144,7 +144,7 @@ function buildShape(kind, big, portrait) {
     }
     stag = true;
   } else if (kind === 'heart') {
-    const s = (big ? 11.4 : 9.6) / 32;
+    const s = (big ? 11.4 : 10.4) / 32;
     poly = [];
     for (let i = 0; i < 128; i++) {
       const t = (i / 128) * Math.PI * 2;
@@ -527,11 +527,23 @@ export function create(env) {
     };
     bevel('rgba(255,255,255,0.8)', P * 0.045, P * 0.06, 0);
     bevel(rgba(pal.shadow, 0.3), -P * 0.07, -P * 0.09, 0);
-    // soft overall sheen on the face
-    const sh = g.createLinearGradient(L.bx0, L.by0, L.bx0 + (L.bx1 - L.bx0) * 0.7, L.by0 + (L.by1 - L.by0) * 0.7);
-    sh.addColorStop(0, 'rgba(255,255,255,0.2)');
-    sh.addColorStop(0.5, 'rgba(255,255,255,0)');
-    fillShape(g, sh);
+    // soft overall sheen on the face (masked through a temp layer so alpha never doubles up)
+    {
+      const { c: sc2, g: s2 } = mk();
+      s2.save();
+      fillShape(s2, '#fff');
+      s2.globalCompositeOperation = 'source-in';
+      const sh = s2.createLinearGradient(L.bx0, L.by0, L.bx0 + (L.bx1 - L.bx0) * 0.7, L.by0 + (L.by1 - L.by0) * 0.7);
+      sh.addColorStop(0, 'rgba(255,255,255,0.2)');
+      sh.addColorStop(0.5, 'rgba(255,255,255,0)');
+      s2.fillStyle = sh;
+      s2.fillRect(ex, ey, ew, eh);
+      s2.restore();
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.drawImage(sc2, 0, 0);
+      g.restore();
+    }
     // matte micro-texture / galaxy dust
     if (gfx.detail >= 0.7) {
       g.save();
@@ -870,7 +882,6 @@ export function create(env) {
 
   // ---------- HUD ----------
   hud.segmented({
-    label: 'Shape',
     options: SHAPES.map((s) => ({ id: s.id, label: s.label })),
     value: shapeId,
     onChange: (id) => {
@@ -888,7 +899,6 @@ export function create(env) {
     },
   });
   hud.segmented({
-    label: 'Colors',
     options: Object.keys(PALETTES).map((id) => ({ id, label: PALETTES[id].label })),
     value: palId,
     onChange: (id) => {

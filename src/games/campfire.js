@@ -42,27 +42,27 @@ void main(){
   float t = uTime;
   float x = (vUv.x - 0.5) * 2.0;
   // slow lateral sway that grows toward the tip, plus wind bending
-  float sw = (fbm(vec2(uSeed*5.0, h*1.3 - t*0.55)) - 0.5) * 1.15;
+  float sw = (fbm(vec2(uSeed*5.0, h*1.3 - t*0.55)) - 0.5) * 0.8;
   x -= sw * h + uWind * h * h * 1.15;
   // turbulence scrolling upward (faster when the fire is bigger)
   float n = fbm(vec2(x*1.7 + uSeed, h*2.4 - t*(1.5 + uInt*0.9)));
-  x += (n - 0.5) * 0.95 * (0.25 + h);
+  x += (n - 0.5) * 0.8 * (0.2 + h);
   // body profile: bulb near the base tapering to a tongue
-  float prof = uWidth * pow(1.0 - h, 0.85) * (0.55 + 0.45*smoothstep(0.0, 0.2, h));
+  float prof = uWidth * pow(1.0 - h, 0.55) * (0.62 + 0.38*smoothstep(0.0, 0.2, h));
   float d = abs(x) / max(prof, 0.01);
-  float core = 1.0 - smoothstep(0.0, 1.0, d);
+  float core = 1.0 - smoothstep(0.3, 1.0, d);
   float e = fbm(vec2(x*2.6 + uSeed*3.0, h*3.4 - t*2.7 + 4.0));
-  float dens = core * (0.95 + 0.7*e) - h*h*0.5 - (1.0 - e)*h*0.55;
-  dens = smoothstep(0.06, 0.8, dens);
+  float dens = core * (1.0 + 0.5*e) - h*h*0.22 - (1.0 - e)*h*0.3;
+  dens = smoothstep(0.03, 0.55, dens);
   dens *= smoothstep(0.0, 0.05, v);
-  float heat = clamp(core*0.85 + (1.0 - h)*0.55 - 0.18 + (uTone - 0.5)*0.55 + uKick*0.1, 0.0, 1.25);
+  float heat = clamp(core*0.72 + (1.0 - h)*0.42 - 0.2 + (uTone - 0.5)*0.5 + uKick*0.1, 0.0, 1.25);
   vec3 c0 = vec3(0.62, 0.07, 0.0);
   vec3 c1 = vec3(1.0, 0.36, 0.035);
   vec3 c2 = vec3(1.0, 0.74, 0.20);
   vec3 c3 = vec3(1.0, 0.95, 0.78);
   vec3 col = mix(c0, c1, smoothstep(0.0, 0.42, heat));
   col = mix(col, c2, smoothstep(0.36, 0.78, heat));
-  col = mix(col, c3, smoothstep(0.78, 1.12, heat));
+  col = mix(col, c3, smoothstep(0.88, 1.2, heat));
   float a = dens * uAlpha * uFade;
   gl_FragColor = vec4(col * (1.0 + heat*0.7), a);
   #include <tonemapping_fragment>
@@ -253,7 +253,7 @@ function barkTextures() {
     let x = rand(0, W);
     let y = rand(-30, H * 0.8);
     const len = rand(60, 260);
-    const lw = rand(1.5, 4.2);
+    const lw = rand(2.5, 6);
     const dark = rand(0.55, 0.95);
     let px = x, py = y;
     const segs = Math.round(len / 14);
@@ -499,7 +499,7 @@ export function create(env) {
   stars.frustumCulled = false;
   scene.add(stars);
 
-  const moonDir = new THREE.Vector3(-0.42, 0.5, -0.78).normalize();
+  const moonDir = new THREE.Vector3(-0.5, 0.3, -0.8).normalize();
   const moonTex = own(moonTexture());
   const moonGlowTex = own(glowTexture(256, 'rgba(255,244,214,1)', 'rgba(255,230,190,0.3)'));
   const moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonGlowTex, color: 0xbfd0ff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
@@ -513,13 +513,13 @@ export function create(env) {
   scene.add(moonDisc);
 
   // ---------- lights ----------
-  scene.add(new THREE.HemisphereLight(0x3a4c7e, 0x120d0a, 0.55));
+  scene.add(new THREE.HemisphereLight(0x4a5c90, 0x1a120c, 0.7));
   const moonLight = new THREE.DirectionalLight(0x8aa2ec, 0.55);
   moonLight.position.copy(moonDir).multiplyScalar(30);
   scene.add(moonLight);
 
-  const fireLight = new THREE.PointLight(0xff8a3c, 60, 0, 2);
-  fireLight.position.set(0, 1.45, 0);
+  const fireLight = new THREE.PointLight(0xff8a3c, 44, 0, 2);
+  fireLight.position.set(0, 1.9, 0);
   if (SH) {
     const S = Math.min(gfx.shadows, 2048);
     fireLight.castShadow = true;
@@ -555,8 +555,17 @@ export function create(env) {
 
   // grass blades
   {
-    const bladeGeo = new THREE.ConeGeometry(0.03, 0.5, 3, 1, true);
-    bladeGeo.translate(0, 0.25, 0);
+    const tuftParts = [];
+    for (let k = 0; k < 4; k++) {
+      const b = new THREE.ConeGeometry(0.014, rand(0.2, 0.34), 3, 1, true);
+      b.translate(0, 0.12, 0);
+      b.rotateZ(rand(-0.5, 0.5));
+      b.rotateY(rand(0, TAU));
+      b.translate(rand(-0.04, 0.04), 0, rand(-0.04, 0.04));
+      tuftParts.push(b);
+    }
+    const bladeGeo = mergeGeometries(tuftParts, false);
+    for (const b of tuftParts) b.dispose();
     const n = Math.round(1100 * gfx.detail);
     const blades = new THREE.InstancedMesh(bladeGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, side: THREE.DoubleSide }), n);
     const m = new THREE.Matrix4();
@@ -569,11 +578,11 @@ export function create(env) {
       const r = 1.75 + Math.pow(Math.random(), 0.7) * 16;
       e.set(rand(-0.35, 0.35), rand(0, TAU), rand(-0.35, 0.35));
       q.setFromEuler(e);
-      const s = rand(0.5, 1.7);
-      sc2.set(s, s * rand(0.8, 1.5), s);
+      const s = rand(0.8, 1.7);
+      sc2.set(s, s * rand(0.8, 1.4), s);
       m.compose(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), q, sc2);
       blades.setMatrixAt(i, m);
-      col.setHSL(rand(0.22, 0.32), rand(0.3, 0.55), rand(0.1, 0.22));
+      col.setHSL(rand(0.22, 0.3), rand(0.25, 0.45), rand(0.05, 0.12));
       blades.setColorAt(i, col);
     }
     blades.instanceMatrix.needsUpdate = true;
@@ -624,7 +633,7 @@ export function create(env) {
   const bark = barkTextures();
   own(bark.map);
   own(bark.emissive);
-  const logMat = new THREE.MeshStandardMaterial({ map: bark.map, bumpMap: bark.map, bumpScale: 3, emissive: 0xffffff, emissiveMap: bark.emissive, emissiveIntensity: 0.4, roughness: 0.95, metalness: 0 });
+  const logMat = new THREE.MeshStandardMaterial({ map: bark.map, bumpMap: bark.map, bumpScale: 3, emissive: 0xffffff, emissiveMap: bark.emissive, emissiveIntensity: 0.6, roughness: 0.95, metalness: 0 });
   const logGeo = logGeometry(1.7, 0.1, 0.135, 12, 10);
   const mkLog = (scale = 1) => {
     const m = new THREE.Mesh(logGeo, logMat);
@@ -635,11 +644,11 @@ export function create(env) {
   // teepee of leaning logs + two base logs
   const up = new THREE.Vector3(0, 1, 0);
   const nLean = 5;
-  const baseA = rand(0, TAU);
+  const baseA = Math.PI / 2 - Math.PI / nLean + rand(-0.08, 0.08);
   for (let i = 0; i < nLean; i++) {
-    const a = baseA + (i / nLean) * TAU + rand(-0.12, 0.12);
+    const a = baseA + (i / nLean) * TAU + rand(-0.06, 0.06);
     const B = new THREE.Vector3(Math.cos(a) * 0.88, 0.14, Math.sin(a) * 0.88);
-    const T = new THREE.Vector3(Math.cos(a + 0.4) * 0.09, 1.3 + rand(-0.06, 0.06), Math.sin(a + 0.4) * 0.09);
+    const T = new THREE.Vector3(Math.cos(a + 0.4) * 0.09, 1.15 + rand(-0.05, 0.05), Math.sin(a + 0.4) * 0.09);
     const dir = T.clone().sub(B);
     const len = dir.length();
     dir.normalize();
@@ -692,7 +701,7 @@ export function create(env) {
     uTime: { value: 0 }, uInt: { value: 1 }, uKick: { value: 0 }, uWind: { value: 0 }, uFlame: { value: 0.6 }, uFade: { value: 1 },
   };
   const nLayers = clamp(Math.round(3 + level * 1.1), 3, 8);
-  const flameGeo = new THREE.PlaneGeometry(1.5, FLAME_H);
+  const flameGeo = new THREE.PlaneGeometry(2.4, FLAME_H);
   flameGeo.translate(0, FLAME_H / 2, 0);
   const flames = [];
   for (let i = 0; i < nLayers; i++) {
@@ -702,7 +711,7 @@ export function create(env) {
         ...fshared,
         uSeed: { value: rand(0, 10) },
         uTone: { value: lerp(0.12, 0.95, u) },
-        uWidth: { value: lerp(0.82, 0.38, u) * rand(0.92, 1.08) },
+        uWidth: { value: lerp(0.56, 0.3, u) * rand(0.92, 1.08) },
         uAlpha: { value: lerp(0.5, 0.78, u) * Math.min(1.1, Math.sqrt(3.4 / nLayers)) },
       },
       vertexShader: FLAME_VS,
@@ -798,10 +807,10 @@ export function create(env) {
   const cam = { dist: 6.4, h: 2.0, ty: 1.9, yaw: 0, ex: 0, ey: 0 };
   function layout() {
     const aspect = stage.width / Math.max(1, stage.height);
-    cam.dist = clamp(2.3 / (Math.tan((FOV * Math.PI) / 360) * aspect), 6.3, 11.5);
+    cam.dist = clamp(2.3 / (Math.tan((FOV * Math.PI) / 360) * aspect), 5.3, 11.5);
     const portrait = clamp((1 - aspect) * 1.6, 0, 1);
-    cam.h = 1.9 + (cam.dist - 6.3) * 0.1;
-    cam.ty = 2.0 + portrait * 0.9;
+    cam.h = 1.75 + (cam.dist - 5.3) * 0.12;
+    cam.ty = 1.75 + portrait * 0.9;
   }
   stage.onResize = layout;
   layout();
@@ -937,7 +946,7 @@ export function create(env) {
     m.scale.y = rand(0.62, 0.78);
     camera.getWorldDirection(tmp);
     camRight.crossVectors(tmp, up).normalize();
-    const from = camera.position.clone().lerp(new THREE.Vector3(0, 1, 0), 0.5).addScaledVector(camRight, -1.5);
+    const from = camera.position.clone().lerp(new THREE.Vector3(0, 1, 0), 0.72).addScaledVector(camRight, -1.3);
     from.y = 1.1;
     const to = new THREE.Vector3(rand(-0.22, 0.22), 0.5, rand(-0.22, 0.22));
     const restRot = new THREE.Euler(rand(-0.3, 0.3), rand(0, TAU), Math.PI / 2 + rand(-0.4, 0.4));
@@ -1212,10 +1221,10 @@ export function create(env) {
     }
     bedU.uTime.value = time;
     bedU.uGlow.value = (0.5 + 0.55 * Math.min(IcL, 1)) * (0.85 + 0.2 * n2);
-    logMat.emissiveIntensity = (0.22 + 0.95 * Math.min(IcL, 1.2)) * (0.8 + 0.3 * n1 + 0.4 * kick);
+    logMat.emissiveIntensity = (0.3 + 1.7 * Math.min(IcL, 1.2)) * (0.8 + 0.3 * n1 + 0.4 * kick);
     const lightK = 0.1 + 0.9 * clamp(Ic, 0, 1.3);
-    fireLight.intensity = 62 * lightK * flick;
-    fireLight.position.set((n1 - 0.5) * 0.18 + windV.x * 0.1, 1.45 + (n2 - 0.5) * 0.2 + 0.1 * kick, (n2 - 0.5) * 0.14);
+    fireLight.intensity = 46 * lightK * flick;
+    fireLight.position.set((n1 - 0.5) * 0.18 + windV.x * 0.1, 1.9 + (n2 - 0.5) * 0.2 + 0.1 * kick, (n2 - 0.5) * 0.14);
     fillLight.intensity = 6.5 * (0.35 + 0.65 * clamp(Ic, 0, 1.2)) * (0.85 + 0.3 * n2);
     fireGlow.material.opacity = (0.06 + 0.4 * flameOn * Math.min(IcL, 1.1)) * (0.8 + 0.3 * n1 + 0.3 * kick);
     fireGlow.scale.setScalar(4.5 + 3 * Math.min(IcL, 1.2) + kick);
@@ -1273,7 +1282,7 @@ export function create(env) {
       const sz = (0.9 + 4.6 * Math.pow(u, 0.7)) * p.size;
       p.s.scale.set(sz, sz, 1);
       p.s.material.rotation = p.rot + p.spin * u * p.life;
-      p.s.material.opacity = 0.2 * Math.sin(Math.PI * Math.pow(u, 0.6)) * (0.35 + 0.65 * Math.min(IcL, 1));
+      p.s.material.opacity = 0.09 * Math.sin(Math.PI * Math.pow(u, 0.6)) * (0.35 + 0.65 * Math.min(IcL, 1));
       const warm = Math.max(0, 1 - u * 2.4) * 0.5;
       p.s.material.color.setRGB(0.07 + warm * 0.9, 0.08 + warm * 0.38, 0.1 + warm * 0.1);
     }

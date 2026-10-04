@@ -560,7 +560,7 @@ export function create(env) {
     if (!w) return;
     compact = w < 600;
     const units = compact ? 10 : 15;
-    const rowK = compact ? 1.26 : 1;
+    let rowK = 1;
     const topPad = compact ? 54 : 58;
     const bottomPad = h < 480 ? 70 : compact ? 150 : 100;
     const availH = Math.max(160, h - topPad - bottomPad);
@@ -569,6 +569,7 @@ export function create(env) {
     const gap = compact ? 14 : 22;
     const Uw = (w - side * 2) / (units + 2 * mO);
     const minPanel = clamp(availH * 0.3, 60, 180);
+    if (compact) rowK = clamp((availH - 150 - gap - Uw * (2 * mO + 0.2)) / 5 / Uw, 1.2, 1.55);
     const Uh = (availH - minPanel - gap) / (5 * rowK + 2 * mO + 0.25);
     U = clamp(Math.min(Uw, Uh, 84), 12, 84);
     V = U * rowK;
@@ -579,7 +580,7 @@ export function create(env) {
     const cw = boardW + 2 * mO * U;
     const ch = boardH + 2 * mO * U + lip;
     const pw = clamp(cw, 200, 860);
-    const ph = clamp(availH - ch - gap, minPanel, compact ? 230 : 210);
+    const ph = clamp(availH - ch - gap, minPanel, compact ? 200 : 210);
     const total = ph + gap + ch;
     const y0 = topPad + Math.max(0, (availH - total) / 2);
     panelR = { x: (w - pw) / 2, y: y0, w: pw, h: ph };
@@ -749,8 +750,8 @@ export function create(env) {
         break;
       }
       case 'creamy': {
-        T({ freq: 106 * pf, freqEnd: 50 * pf, sweepTime: 0.09, dur: 0.17, gain: 0.58 * v, attack: 0.002, send: 0.14 });
-        T({ freq: 245 * pf, freqEnd: 118 * pf, sweepTime: 0.05, dur: 0.07, gain: 0.26 * v, attack: 0.001, send: 0.12 });
+        T({ freq: 106 * pf, freqEnd: 50 * pf, sweepTime: 0.09, dur: 0.17, gain: 0.72 * v, attack: 0.002, send: 0.14 });
+        T({ freq: 245 * pf, freqEnd: 118 * pf, sweepTime: 0.05, dur: 0.07, gain: 0.32 * v, attack: 0.001, send: 0.12 });
         if (!lite) T({ freq: 520 * pf, freqEnd: 250 * pf, dur: 0.035, gain: 0.07 * v, attack: 0.001, send: 0.1 });
         N({ kind: 'pink', dur: 0.06, gain: 0.36 * v, type: 'lowpass', freq: 430 * pf, q: 0.8, attack: 0.002, send: 0.12 });
         break;
@@ -866,7 +867,7 @@ export function create(env) {
     soundDown(info, vel ?? rand(0.8, 1));
     applyTyping(info, realKey);
     keystrokes++;
-    hud.setStat(`Keystrokes ${keystrokes.toLocaleString()}`);
+    hud.setStat(`Keys ${keystrokes.toLocaleString()}`);
     return true;
   }
 
@@ -1084,7 +1085,7 @@ export function create(env) {
   });
   demoBtn = hud.button({ label: 'Demo', title: 'Type a soothing sentence for you', onClick: toggleDemo });
   hud.setHint('Type on your keyboard, tap the keys, or press Demo.', 8000);
-  hud.setStat('Keystrokes 0');
+  hud.setStat('Keys 0');
 
   // ------------------------------------------------------------ ambience
   let pad = null;
@@ -1352,7 +1353,7 @@ export function create(env) {
     const start = Math.max(0, n - np.maxLines);
     ctx.save();
     ctx.beginPath();
-    ctx.rect(p.x + 6, p.y + np.hdr + 2, p.w - 12, p.h - np.hdr - 8);
+    ctx.rect(p.x + 6, np.textTop - 1, p.w - 12, np.maxLines * np.lineH + 2);
     ctx.clip();
     ctx.font = `${np.fs}px ${np.font}`;
     ctx.textAlign = 'left';
@@ -1364,7 +1365,7 @@ export function create(env) {
     for (let i = Math.max(0, start - 1); i < n; i++) {
       const row = i - start;
       const y = np.textTop + row * np.lineH + np.lineH / 2 + scrollY;
-      const a = 0.45 + 0.55 * clamp((row + 1) / Math.max(1, np.maxLines - 1), 0, 1);
+      const a = 1 - 0.55 * clamp((n - 1 - i) / Math.max(1, np.maxLines - 1), 0, 1);
       ctx.fillStyle = `rgba(232,234,250,${(0.93 * a).toFixed(3)})`;
       ctx.fillText(lines[i], np.textX, y);
     }

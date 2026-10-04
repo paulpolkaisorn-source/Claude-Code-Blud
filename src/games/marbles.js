@@ -72,16 +72,16 @@ const Y_RIM = -R * Math.cos(TH_MAX);        // rim plane height (local)
 const RHO_RIM = R * Math.sin(TH_MAX);
 const G = 22;                               // slowed-down gravity: ASMR pace
 
-const RADII = [0.12, 0.14, 0.16, 0.19, 0.22, 0.26];
+const RADII = [0.15, 0.17, 0.2, 0.23, 0.27, 0.32];
 const RADII_W = [1, 2, 3, 3, 2, 1];
 
 function pickRadius() {
   let t = Math.random() * RADII_W.reduce((a, b) => a + b, 0);
   for (let i = 0; i < RADII.length; i++) {
     t -= RADII_W[i];
-    if (t <= 0) return RADII[i] + rand(-0.008, 0.008);
+    if (t <= 0) return RADII[i] + rand(-0.01, 0.01);
   }
-  return 0.19;
+  return 0.22;
 }
 
 // ---------- procedural textures ----------
@@ -93,8 +93,8 @@ function woodTexture(aniso) {
   const rows = 4;
   const rh = S / rows;
   for (let p = 0; p < rows; p++) {
-    const l = 15 + Math.random() * 5;
-    g.fillStyle = `hsl(${22 + Math.random() * 5}, 42%, ${l}%)`;
+    const l = 10 + Math.random() * 4;
+    g.fillStyle = `hsl(${22 + Math.random() * 5}, 34%, ${l}%)`;
     g.fillRect(0, p * rh, S, rh);
     // grain lines run along x, seamless because they use whole sine cycles
     const lines = 70;
@@ -223,12 +223,43 @@ export function create(env) {
     fov: FOV,
     gfx,
     exposure: 1.0,
-    envIntensity: 1.05,
+    envIntensity: 1.0,
+    environment: false,
     shadows: true,
-    bloom: { strength: 0.32, radius: 0.55, threshold: 0.88 },
+    bloom: { strength: 0.22, radius: 0.5, threshold: 0.95 },
     ao: false,
   });
   const { scene, camera, renderer } = stage;
+
+  // ---------- studio environment: dark warm room with softboxes (so glass reflects light shapes, not a bright floor) ----------
+  {
+    const pm = new THREE.PMREMGenerator(renderer);
+    const es = new THREE.Scene();
+    const mk = (hex, k) => new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k), side: THREE.DoubleSide, toneMapped: false });
+    const room = new THREE.Mesh(new THREE.BoxGeometry(24, 14, 24), mk(0x1c130e, 1));
+    room.position.y = 6;
+    room.material.side = THREE.BackSide;
+    es.add(room);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(24, 24), mk(0x2b190d, 1));
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0.01;
+    es.add(floor);
+    const panel = (w, h, hex, k, x, y, z) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mk(hex, k));
+      m.position.set(x, y, z);
+      m.lookAt(0, 2, 0);
+      es.add(m);
+    };
+    panel(7, 5, 0xfff0dc, 9, -7, 7, 7);      // big warm softbox, front-left (matches key light)
+    panel(2.2, 9, 0xcfe0ff, 6, 9, 5, 1);     // tall cool strip, right
+    panel(8, 1.6, 0xffe8cc, 5, 0, 12, -2);   // overhead strip
+    panel(5, 3, 0xdce8ff, 3.5, 2, 6, -10);   // back panel
+    panel(3, 2, 0xffd8b0, 3, 8, 3, 8);       // small warm accent front-right
+    scene.environment = pm.fromScene(es, 0.03).texture;
+    scene.environmentIntensity = 1.0;
+    es.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); });
+    pm.dispose();
+  }
 
   // ---------- backdrop, vignette ----------
   scene.background = gradientTexture([[0, '#0d0907'], [0.5, '#1d130d'], [1, '#2a1a10']]);
@@ -248,7 +279,7 @@ export function create(env) {
   scene.add(table);
 
   // ---------- lights ----------
-  const key = new THREE.DirectionalLight(0xffe4c4, 2.7);
+  const key = new THREE.DirectionalLight(0xffe4c4, 2.3);
   key.position.set(-3.6, 9, 4.2);
   if (realShadows) {
     key.castShadow = true;
@@ -265,10 +296,10 @@ export function create(env) {
   const rim = new THREE.DirectionalLight(0xbcd2ff, 1.5);
   rim.position.set(4.5, 4, -5);
   scene.add(rim);
-  const fill = new THREE.PointLight(0xffd2a0, 16, 14, 2);
+  const fill = new THREE.PointLight(0xffd2a0, 9, 14, 2);
   fill.position.set(3.2, 2.2, 5.2);
   scene.add(fill);
-  scene.add(new THREE.HemisphereLight(0xffeedd, 0x2a1a10, 0.4));
+  scene.add(new THREE.HemisphereLight(0xffeedd, 0x2a1a10, 0.22));
   const keyDir = key.position.clone().normalize();
 
   // soft contact blob under the bowl (stronger when there are no real shadows)
@@ -308,8 +339,8 @@ export function create(env) {
   }
   const bowlGeo = new THREE.LatheGeometry(bowlPts, Math.max(72, Math.round(112 * D)));
   const bowlSpecMat = new THREE.MeshPhysicalMaterial({
-    color: 0x000000, roughness: 0.03, metalness: 0, ior: 1.5, specularIntensity: 1,
-    envMapIntensity: 2.6, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+    color: 0x000000, roughness: 0.04, metalness: 0, ior: 1.5, specularIntensity: 1,
+    envMapIntensity: 0.6, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
   });
   const bowlSpec = new THREE.Mesh(bowlGeo, bowlSpecMat);
   bowlSpec.castShadow = realShadows;
@@ -317,7 +348,7 @@ export function create(env) {
   bowl.add(bowlSpec);
   const bowlTintMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    uniforms: { uTint: { value: new THREE.Color('#a9d9d0') }, uBase: { value: 0.035 }, uEdge: { value: 0.5 } },
+    uniforms: { uTint: { value: new THREE.Color('#6fb0a4') }, uBase: { value: 0.03 }, uEdge: { value: 0.3 } },
     vertexShader: /* glsl */ `
       varying vec3 vN; varying vec3 vV;
       void main(){
@@ -347,7 +378,7 @@ export function create(env) {
   const coreGeo = new THREE.SphereGeometry(1, Math.max(14, Math.round(sphereSeg * 0.7)), Math.max(10, Math.round(sphereSeg * 0.45)));
   const specMat = new THREE.MeshPhysicalMaterial({
     color: 0x000000, roughness: 0.03, metalness: 0, ior: 1.52, specularIntensity: 1,
-    envMapIntensity: 2.4, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    envMapIntensity: 1.25, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
   });
   const palCache = new Map();
   function palMats(pi) {
@@ -360,7 +391,7 @@ export function create(env) {
         roughness: 0.3, metalness: 0, envMapIntensity: 0.6,
       });
       const base = new THREE.Color(c.c);
-      const tint = base.clone().lerp(new THREE.Color('#ffffff'), 0.25);
+      const tint = base.clone().multiplyScalar(0.85);
       const shell = useTransmission
         ? new THREE.MeshPhysicalMaterial({
           color: tint, transmission: 1, thickness: 0.6, ior: 1.5, roughness: 0.03, metalness: 0,
@@ -368,7 +399,7 @@ export function create(env) {
           specularIntensity: 1, envMapIntensity: 1.7,
         })
         : new THREE.MeshStandardMaterial({
-          color: tint, transparent: true, opacity: 0.36, roughness: 0.65, metalness: 0, depthWrite: false, envMapIntensity: 0.3,
+          color: tint, transparent: true, opacity: 0.55, roughness: 0.65, metalness: 0, depthWrite: false, envMapIntensity: 0.3,
         });
       return { tex, core, shell, base, light: new THREE.Color(c.a) };
     });
@@ -380,7 +411,7 @@ export function create(env) {
   let palIdx = 0;
   let lastColor = -1;
   const marbles = [];
-  const cap = Math.round(64 * D);
+  const cap = Math.round(54 * D);
   const spawnQueue = [];
   const dust = new Sparkles(Math.round(150 * gfx.particles), { size: 0.075, gravity: -0.4, drag: 1.1 });
   scene.add(dust.points);
@@ -409,7 +440,7 @@ export function create(env) {
     const mats = palMats(palIdx)[ci];
     const group = new THREE.Group();
     const core = new THREE.Mesh(coreGeo, mats.core);
-    core.scale.setScalar(r * 0.6);
+    core.scale.setScalar(r * 0.7);
     core.castShadow = realShadows;
     const shell = new THREE.Mesh(shellGeo, mats.shell);
     shell.scale.setScalar(r);
@@ -427,7 +458,7 @@ export function create(env) {
     bowl.add(group);
     const m = {
       x, y, z, vx, vy, vz, wx: rand(-2, 2), wy: rand(-2, 2), wz: rand(-2, 2),
-      r, inv: 1 / Math.pow(r / 0.19, 3), ci, group, core, shell, spec,
+      r, inv: 1 / Math.pow(r / 0.22, 3), ci, group, core, shell, spec,
       q: new THREE.Quaternion().random(), cd: 0, dead: false, dieT: 0, pop: pop ? 0 : 1, age: 0, calm: 0, hot: 0,
     };
     core.quaternion.copy(m.q);
@@ -500,7 +531,7 @@ export function create(env) {
 
   // ---------- tilt spring ----------
   const tilt = { x: 0, z: 0, vx: 0, vz: 0, tx: 0, tz: 0, ax: 0, az: 0 };
-  const TILT_MAX = 0.4;
+  const TILT_MAX = 0.46;
   const SPRING_W = 8.5;
   const SPRING_Z = 0.5;
   const center = new THREE.Vector3(0, RO, 0);
@@ -513,7 +544,7 @@ export function create(env) {
       axisV.set(tilt.z / a, 0, -tilt.x / a);
       bowl.quaternion.setFromAxisAngle(axisV, a);
     } else bowl.quaternion.identity();
-    center.set(tilt.x * RO * 0.55, RO, tilt.z * RO * 0.55);
+    center.set(tilt.x * RO * 0.9, RO, tilt.z * RO * 0.9);
     bowl.position.copy(center);
     bowl.updateMatrix();
     bowl.updateMatrixWorld(true);
@@ -620,7 +651,7 @@ export function create(env) {
     if (!spend(vn > 3 ? 0.8 : 1.15)) return;
     const pan = worldPan((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
     const f = (r) => clamp(540 / r, 1500, 5200) * rand(0.97, 1.03);
-    const lvl = 0.03 + 0.2 * Math.pow(s, 0.9);
+    const lvl = 0.025 + 0.15 * Math.pow(s, 0.9);
     const vel = 0.25 + 0.75 * s;
     audio.bell(bus, {
       freq: f(a.r), gain: lvl, pan, send: 0.3, vel, decay: 0.2 + 0.28 * s,
@@ -643,7 +674,7 @@ export function create(env) {
     const pan = worldPan(m.x, m.y, m.z);
     const h = clamp((m.y + R) / (R + Y_RIM + 0.5), 0, 1);
     const fb = (520 + 150 * h) * rand(0.985, 1.015);
-    const lvl = 0.035 + 0.22 * Math.pow(s, 0.85);
+    const lvl = 0.03 + 0.16 * Math.pow(s, 0.85);
     audio.bell(bus, {
       freq: fb, gain: lvl, pan, send: 0.45, vel: 0.3 + 0.7 * s, decay: 0.3 + 0.7 * s,
       partials: [[1, 1, 1], [2.32, 0.5, 0.6], [4.17, 0.28, 0.4], [6.63, 0.12, 0.25]],
@@ -957,7 +988,7 @@ export function create(env) {
     }
     updateBowlTransform();
     // gravity + pseudo force from the bowl's own motion, in bowl-local space
-    tmpV.set(-tilt.ax * RO * 0.55 * 0.5, -G, -tilt.az * RO * 0.55 * 0.5).applyQuaternion(qi);
+    tmpV.set(-tilt.ax * RO * 0.9 * 0.7, -G, -tilt.az * RO * 0.9 * 0.7).applyQuaternion(qi);
     gLx = tmpV.x; gLy = tmpV.y; gLz = tmpV.z;
 
     // queued drops
@@ -1014,7 +1045,7 @@ export function create(env) {
       const sp = Math.sqrt(m.vx * m.vx + m.vy * m.vy + m.vz * m.vz);
       const d = Math.sqrt(m.x * m.x + m.y * m.y + m.z * m.z);
       if (m.y < Y_RIM + 0.05 && d > R - m.r - 0.05) {
-        const wgt = Math.min(sp, 7) * (m.r / 0.19);
+        const wgt = Math.min(sp, 7) * (m.r / 0.22);
         rollSum += wgt;
         const e = bowl.matrixWorld.elements;
         rollXs += wgt * (e[0] * m.x + e[4] * m.y + e[8] * m.z + e[12]);

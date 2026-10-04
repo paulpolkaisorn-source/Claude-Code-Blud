@@ -79,11 +79,11 @@ export function create(env) {
   // ---------- layout / static art ----------
   function hudInset() {
     try {
-      const el = document.getElementById('hud-tools');
+      const el = document.querySelector('.hud-bottom') || document.getElementById('hud-tools');
       const r = root.getBoundingClientRect();
       if (el && el.offsetHeight) {
         const t = el.getBoundingClientRect();
-        return clamp(r.bottom - t.top + 6, 54, 200);
+        return clamp(r.bottom - t.top + 4, 54, 230);
       }
     } catch (_) { /* ignore */ }
     return 70;
@@ -270,7 +270,7 @@ export function create(env) {
       const bend = (rnd() - 0.5) * 90;
       const wd = 36 + rnd() * 70;
       for (let j = 0; j < 7; j++) {
-        g.strokeStyle = `rgba(214,232,222,${0.0085 * (1 + rnd() * 0.5)})`;
+        g.strokeStyle = `rgba(214,232,222,${0.006 * (1 + rnd() * 0.5)})`;
         g.lineWidth = wd * (1 - j / 8);
         g.beginPath();
         g.moveTo(x0, y);
@@ -413,11 +413,11 @@ export function create(env) {
 
   // ---------- tray ----------
   function buildTray() {
-    const u = Math.min(84, (bw - 28) / 8.1);
-    const L = u * 0.8;
-    const T = clamp(L * 0.26, 9.5, 15);
+    const u = Math.min(90, (bw - 28) / 8.1);
+    const L = u * 0.84;
+    const T = clamp(L * 0.29, 10.5, 18);
     const eW = u * 1.5;
-    const eH = clamp(T * 2.5, 22, 36);
+    const eH = clamp(T * 2.4, 24, 40);
     const gap = u * 0.5;
     const total = u * COLORS.length + gap + eW;
     const sx = bx + (bw - total) / 2;
@@ -537,20 +537,20 @@ export function create(env) {
       eraserSprite = { cv: c, w: eW, h: eH, pad };
     }
 
-    // blurred drop shadow, drawn under each piece
-    {
-      const sw = Math.max(L, eW) + 24;
-      const c = mk(sw * dpr, (T + 24) * dpr);
+    // blurred drop shadows, one per piece
+    for (const sl of slots) {
+      const sw = sl.L + 24;
+      const c = mk(sw * dpr, (sl.T + 24) * dpr);
       const g = c.getContext('2d');
       g.scale(dpr, dpr);
       g.shadowColor = 'rgba(0,0,0,0.9)';
-      g.shadowBlur = 5 * dpr;
+      g.shadowBlur = 4.5 * dpr;
+      g.shadowOffsetX = 100000 * dpr;
       g.fillStyle = '#000';
-      g.shadowOffsetX = 100000;
       g.beginPath();
-      g.roundRect(-100000 + 12, 12, Math.max(L, eW), T, T * 0.4);
+      g.roundRect(12 - 100000, 12, sl.L, sl.T, sl.T * 0.4);
       g.fill();
-      shadowSprite = { cv: c, w: sw, h: T + 24 };
+      sl.shadow = { cv: c, w: sw, h: sl.T + 24 };
     }
   }
 
@@ -1204,7 +1204,7 @@ export function create(env) {
       const l = lift[i] * (i === COLORS.length ? 7 : 9) + hoverLift[i] * 2.5;
       const sel = i === COLORS.length ? tool === 'eraser' : tool === 'chalk' && colorIdx === i;
       // shadow
-      const sh = shadowSprite;
+      const sh = s.shadow;
       ctx.globalAlpha = clamp(0.62 - l * 0.025, 0.25, 0.65);
       const sw = s.kind === 'eraser' ? s.L : s.L;
       ctx.drawImage(sh.cv, s.cx - sh.w / 2 + 2 + l * 0.5, s.cy - sh.h / 2 + 3 + l * 0.9, sh.w, sh.h);
@@ -1347,7 +1347,6 @@ export function create(env) {
     dirty = false;
 
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(base, 0, 0, w, h);
     ctx.globalAlpha = 0.62;
     ctx.drawImage(ghostCv, bx, by, bw, bh);
