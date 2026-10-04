@@ -433,8 +433,33 @@ export function create(env) {
       bx0 = Math.min(bx0, p[0]); bx1 = Math.max(bx1, p[0]);
       by0 = Math.min(by0, p[1]); by1 = Math.max(by1, p[1]);
     }
+    // outline grown by the plate padding (per-vertex normals) for clipping the sheen
     const path = new Path2D();
-    poly.forEach((p, i) => (i ? path.lineTo(p[0], p[1]) : path.moveTo(p[0], p[1])));
+    const padPx = P * padU;
+    const np = poly.length;
+    poly.forEach((p, i) => {
+      const a = poly[(i + np - 1) % np];
+      const b = poly[(i + 1) % np];
+      let nx = 0;
+      let ny = 0;
+      for (const [q, r] of [[a, p], [p, b]]) {
+        const ex = r[0] - q[0];
+        const ey = r[1] - q[1];
+        const l = Math.hypot(ex, ey) || 1;
+        let ux = ey / l;
+        let uy = -ex / l;
+        const mx = (q[0] + r[0]) / 2 + ux * 0.5;
+        const my = (q[1] + r[1]) / 2 + uy * 0.5;
+        if (insidePoly(poly, mx, my)) { ux = -ux; uy = -uy; }
+        nx += ux;
+        ny += uy;
+      }
+      const nl = Math.hypot(nx, ny) || 1;
+      const X = p[0] + (nx / nl) * padPx;
+      const Y = p[1] + (ny / nl) * padPx;
+      if (i) path.lineTo(X, Y);
+      else path.moveTo(X, Y);
+    });
     path.closePath();
     L = { shapeId, P, poly, path, bx0, bx1, by0, by1, pad: P * padU, cx: (bx0 + bx1) / 2, cy: (by0 + by1) / 2 };
     applyPalette(false);
@@ -689,20 +714,25 @@ export function create(env) {
     const pan = clamp((c.x / cv.w - 0.5) * 1.7, -0.85, 0.85);
     const deg = o.deg ?? c.deg;
     const f = midiToFreq(pentatonic(deg, 48)) * rand(0.994, 1.006);
-    const v = clamp(vel, 0.35, 1);
+    const light = !!o.light;
+    const v = clamp(vel, 0.35, 1) * (light ? 0.62 : 1);
     if (dirIn) {
       // hollow "thop": pitch-swept sine plus a soft pillow of air
       audio.tone(bus, { freq: f * 2.1, freqEnd: f, sweepTime: 0.055, dur: 0.17, gain: 0.34 * v, pan, send: 0.2, delay, attack: 0.002 });
-      audio.tone(bus, { freq: f * 4.3, freqEnd: f * 2.1, sweepTime: 0.04, dur: 0.07, gain: 0.07 * v, pan, send: 0.2, delay, attack: 0.002 });
-      audio.tone(bus, { freq: f * 0.5, freqEnd: f * 0.44, dur: 0.15, gain: 0.15 * v, pan, send: 0.08, delay, attack: 0.003 });
+      if (!light) {
+        audio.tone(bus, { freq: f * 4.3, freqEnd: f * 2.1, sweepTime: 0.04, dur: 0.07, gain: 0.07 * v, pan, send: 0.2, delay, attack: 0.002 });
+        audio.tone(bus, { freq: f * 0.5, freqEnd: f * 0.44, dur: 0.15, gain: 0.15 * v, pan, send: 0.08, delay, attack: 0.003 });
+      }
       audio.burst(bus, { kind: 'pink', dur: 0.06, attack: 0.002, gain: 0.2 * v, type: 'bandpass', freq: 760, freqEnd: 240, q: 0.8, pan, send: 0.12, delay });
       audio.burst(bus, { kind: 'white', dur: 0.008, attack: 0.0003, gain: 0.07 * v, type: 'bandpass', freq: 2300, q: 1, pan, send: 0.08, delay });
     } else {
       // brighter "pop": quick upward chirp, a snap of air and the dome's thud
       const fo = f * 2;
       audio.tone(bus, { freq: fo * 0.78, freqEnd: fo * 1.36, sweepTime: 0.034, dur: 0.12, gain: 0.28 * v, pan, send: 0.22, delay, attack: 0.001 });
-      audio.tone(bus, { freq: fo * 2, freqEnd: fo * 2.7, sweepTime: 0.03, dur: 0.05, gain: 0.05 * v, type: 'triangle', pan, send: 0.2, delay, attack: 0.001 });
-      audio.tone(bus, { freq: f, freqEnd: f * 0.8, dur: 0.1, gain: 0.13 * v, pan, send: 0.1, delay, attack: 0.002 });
+      if (!light) {
+        audio.tone(bus, { freq: fo * 2, freqEnd: fo * 2.7, sweepTime: 0.03, dur: 0.05, gain: 0.05 * v, type: 'triangle', pan, send: 0.2, delay, attack: 0.001 });
+        audio.tone(bus, { freq: f, freqEnd: f * 0.8, dur: 0.1, gain: 0.13 * v, pan, send: 0.1, delay, attack: 0.002 });
+      }
       audio.burst(bus, { kind: 'white', dur: 0.022, attack: 0.0004, gain: 0.2 * v, type: 'bandpass', freq: 3900, freqEnd: 1800, q: 0.9, pan, send: 0.14, delay });
       audio.burst(bus, { kind: 'white', dur: 0.03, attack: 0.0005, gain: 0.06 * v, type: 'highpass', freq: 6500, pan, send: 0.2, delay });
     }
@@ -712,8 +742,8 @@ export function create(env) {
   function chimeSound() {
     if (!audio.ready) return;
     const degs = [0, 1, 2, 3, 4, 5, 7];
-    degs.forEach((d, i) => audio.bell(bus, { freq: midiToFreq(pentatonic(d, 72)), gain: 0.085, decay: 2.4, vel: 0.6, delay: 0.05 + i * 0.085, pan: (i / 6 - 0.5) * 0.9, send: 0.45 }));
-    audio.burst(bus, { kind: 'pink', dur: 0.8, attack: 0.3, gain: 0.07, type: 'bandpass', freq: 1200, freqEnd: 6000, q: 0.8, send: 0.35, curve: 'lin' });
+    degs.forEach((d, i) => audio.bell(bus, { freq: midiToFreq(pentatonic(d, 72)), gain: 0.07, decay: 2.4, vel: 0.6, delay: 0.05 + i * 0.085, pan: (i / 6 - 0.5) * 0.9, send: 0.45 }));
+    audio.burst(bus, { kind: 'pink', dur: 0.8, attack: 0.3, gain: 0.05, type: 'bandpass', freq: 1200, freqEnd: 6000, q: 0.8, send: 0.35, curve: 'lin' });
   }
 
   function shimmerSound(delay = 0) {
@@ -827,7 +857,7 @@ export function create(env) {
     let t = 0;
     list.forEach((_, i) => {
       times.push(t);
-      t += lerp(0.085, 0.017, Math.pow(i / list.length, 0.75));
+      t += lerp(0.085, 0.024, Math.pow(i / list.length, 0.75));
     });
     cascade = { list, times, i: 0, t: 0, auto };
     celeb = null;
@@ -843,13 +873,13 @@ export function create(env) {
       const c = cs.list[cs.i];
       const prog = cs.i / n;
       const tgt = -c.target;
-      setTarget(c, tgt, 0.55 + prog * 0.4, 0, { deg: Math.round(prog * 11) + (cs.i % 2), quiet: true });
+      setTarget(c, tgt, 0.55 + prog * 0.4, 0, { deg: Math.round(prog * 11) + (cs.i % 2), quiet: true, light: true });
       cs.i++;
     }
     if (cs.i >= n) {
       cascade = null;
       shimmer = { t: 0 };
-      shimmerSound(0.05);
+      if (cs.auto || inCount() !== cells.length) shimmerSound(0.05);
       for (const c of cells) if (Math.random() < 0.35) addSparkles(c.x, c.y, 1, 0.4);
       updateStat();
       if (!cs.auto) checkWin();
@@ -1036,7 +1066,7 @@ export function create(env) {
     sg.addColorStop(0.5, `rgba(255,255,255,${0.07 + 0.02 * Math.sin(T * 0.6)})`);
     sg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = sg;
-    ctx.fillRect(L.bx0, L.by0, bw, bh);
+    ctx.fillRect(L.bx0 - L.pad, L.by0 - L.pad, bw + L.pad * 2, bh + L.pad * 2);
     if (shimmer) {
       const p = easeOut(shimmer.t);
       const cxp = L.bx0 - bw * 0.3 + p * bw * 1.6;
@@ -1045,7 +1075,7 @@ export function create(env) {
       gs.addColorStop(0.5, `rgba(255,255,255,${0.42 * Math.sin(Math.PI * shimmer.t)})`);
       gs.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = gs;
-      ctx.fillRect(L.bx0, L.by0, bw, bh);
+      ctx.fillRect(L.bx0 - L.pad, L.by0 - L.pad, bw + L.pad * 2, bh + L.pad * 2);
     }
     ctx.restore();
     ctx.restore();

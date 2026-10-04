@@ -692,8 +692,8 @@ export function create(env) {
       g.fillText(txt, 0, 0);
       g.restore();
     };
-    eq('E = mc²', portrait ? 0.08 : 0.07, portrait ? 0.1 : 0.16, -0.04, 1.35);
-    eq('a² + b² = c²', portrait ? 0.1 : 0.09, portrait ? 0.2 : 0.3, 0.015, 1);
+    eq('E = mc²', portrait ? 0.08 : 0.07, portrait ? 0.16 : 0.16, -0.04, 1.35);
+    eq('a² + b² = c²', portrait ? 0.1 : 0.09, portrait ? 0.27 : 0.3, 0.015, 1);
     eq('∫ x² dx = x³/3 + C', portrait ? 0.07 : 0.55, portrait ? 0.82 : 0.86, -0.02, 0.95);
     eq('π ≈ 3.14159…', portrait ? 0.45 : 0.68, portrait ? 0.31 : 0.4, 0.03, 0.85);
     eq('Δx → 0', portrait ? 0.14 : 0.1, portrait ? 0.7 : 0.78, -0.03, 0.9);
@@ -704,7 +704,7 @@ export function create(env) {
       for (let i = 1; i <= 16; i++) g.lineTo(x + (len * i) / 16, jit(y + Math.sin(i * 1.3) * S * 0.004));
       g.stroke();
     };
-    squig(bw * (portrait ? 0.08 : 0.07), bh * (portrait ? 0.125 : 0.195), S * 0.22);
+    squig(bw * (portrait ? 0.08 : 0.07), bh * (portrait ? 0.185 : 0.195), S * 0.22);
     // star
     {
       const cx = bw * (portrait ? 0.76 : 0.82);

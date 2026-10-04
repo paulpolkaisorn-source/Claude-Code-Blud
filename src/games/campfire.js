@@ -5,7 +5,7 @@
 
 import { THREE, createStage, glowTexture, Sparkles } from '../three-base.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { createLoop, track, rand, clamp, lerp, smoothstep, damp, pick } from '../util.js';
+import { createLoop, track, rand, clamp, lerp, smoothstep, damp, pick, mulberry32 } from '../util.js';
 import { Pad } from '../audio.js';
 
 const FOV = 46;
@@ -33,11 +33,11 @@ void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(p
 const FLAME_FS = /* glsl */ `
 precision highp float;
 varying vec2 vUv;
-uniform float uTime, uInt, uKick, uWind, uFlame, uSeed, uTone, uWidth, uAlpha, uFade;
+uniform float uTime, uInt, uKick, uWind, uFlame, uSeed, uTone, uWidth, uAlpha, uFade, uHMul;
 ${NOISE_GLSL}
 void main(){
   float v = vUv.y;
-  float h = v / max(uFlame, 0.05);
+  float h = v / max(uFlame * uHMul, 0.05);
   if (h >= 1.0) discard;
   float t = uTime;
   float x = (vUv.x - 0.5) * 2.0;
@@ -56,13 +56,13 @@ void main(){
   dens = smoothstep(0.03, 0.55, dens);
   dens *= smoothstep(0.0, 0.05, v);
   float heat = clamp(core*0.72 + (1.0 - h)*0.42 - 0.2 + (uTone - 0.5)*0.5 + uKick*0.1, 0.0, 1.25);
-  vec3 c0 = vec3(0.62, 0.07, 0.0);
+  vec3 c0 = vec3(0.75, 0.06, 0.0);
   vec3 c1 = vec3(1.0, 0.36, 0.035);
   vec3 c2 = vec3(1.0, 0.74, 0.20);
   vec3 c3 = vec3(1.0, 0.95, 0.78);
   vec3 col = mix(c0, c1, smoothstep(0.0, 0.42, heat));
   col = mix(col, c2, smoothstep(0.36, 0.78, heat));
-  col = mix(col, c3, smoothstep(0.88, 1.2, heat));
+  col = mix(col, c3, smoothstep(0.98, 1.25, heat));
   float a = dens * uAlpha * uFade;
   gl_FragColor = vec4(col * (1.0 + heat*0.7), a);
   #include <tonemapping_fragment>
@@ -431,11 +431,12 @@ export function create(env) {
     exposure: 1.0,
     environment: false,
     shadows: true,
-    bloom: { strength: 0.62, radius: 0.72, threshold: 0.78 },
+    bloom: { strength: 0.3, radius: 0.55, threshold: 1.15 },
     ao: true,
     aoRadius: 0.7,
   });
   const { scene, camera, renderer } = stage;
+  if (SH) renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoft maps to VSM, which point lights don't support
   const aniso = Math.min(gfx.anisotropy, renderer.capabilities.getMaxAnisotropy());
 
   // Exclude billboards, sprites, sky and decals from the GTAO normal/depth pass.
@@ -593,19 +594,20 @@ export function create(env) {
   {
     const geo = treeGeometry();
     const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true });
+    const R = mulberry32(11);
     const n = Math.round(40 * gfx.detail);
     const trees = new THREE.InstancedMesh(geo, mat, n);
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const col = new THREE.Color();
     for (let i = 0; i < n; i++) {
-      const a = rand(0, TAU);
-      const r = 10 + Math.pow(Math.random(), 0.8) * 26;
-      const s = rand(0.85, 1.65) * (r > 24 ? 1.25 : 1);
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand(0, TAU));
-      m.compose(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), q, new THREE.Vector3(s, s * rand(0.9, 1.25), s));
+      const a = ((i + 0.5) / n) * TAU * 3.0 + R() * 0.5; // golden-ish spread so the forest never clumps
+      const r = 13 + Math.pow(R(), 0.8) * 24;
+      const s = (0.85 + R() * 0.8) * (r > 24 ? 1.25 : 1);
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), R() * TAU);
+      m.compose(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), q, new THREE.Vector3(s, s * (0.9 + R() * 0.35), s));
       trees.setMatrixAt(i, m);
-      col.setHSL(rand(0.38, 0.5), rand(0.25, 0.45), rand(0.06, 0.13));
+      col.setHSL(0.38 + R() * 0.12, 0.25 + R() * 0.2, 0.06 + R() * 0.07);
       trees.setColorAt(i, col);
     }
     trees.instanceMatrix.needsUpdate = true;
@@ -615,7 +617,7 @@ export function create(env) {
 
   // ---------- stones, logs, benches ----------
   const stoneTex = own(stoneTexture());
-  const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, bumpMap: stoneTex, bumpScale: 2.5, roughness: 0.94, metalness: 0 });
+  const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb8b2a8, map: stoneTex, bumpMap: stoneTex, bumpScale: 2.5, roughness: 0.94, metalness: 0 });
   const stoneGeos = [0, 1, 2, 3].map((i) => stoneGeometry(i * 2.3 + 0.7));
   const nStones = 12;
   for (let i = 0; i < nStones; i++) {
@@ -624,7 +626,7 @@ export function create(env) {
     const m = new THREE.Mesh(stoneGeos[i % 4], stoneMat);
     const s = rand(0.2, 0.3);
     m.scale.set(s * rand(1.0, 1.4), s * rand(0.8, 1.05), s * rand(0.9, 1.25));
-    m.position.set(Math.cos(a) * r, s * 0.45, Math.sin(a) * r);
+    m.position.set(Math.cos(a) * r, s * 0.34, Math.sin(a) * r);
     m.rotation.set(rand(-0.2, 0.2), rand(0, TAU), rand(-0.2, 0.2));
     m.castShadow = m.receiveShadow = true;
     scene.add(m);
@@ -688,7 +690,7 @@ export function create(env) {
   const bedU = { uTime: { value: 0 }, uGlow: { value: 1 } };
   const bed = new THREE.Mesh(
     new THREE.PlaneGeometry(1.7, 1.7),
-    new THREE.ShaderMaterial({ uniforms: bedU, vertexShader: FLAME_VS, fragmentShader: BED_FS, transparent: true, depthWrite: false, defines: { OCT: level >= 4 ? 5 : 4 }, fog: false })
+    new THREE.ShaderMaterial({ uniforms: bedU, vertexShader: FLAME_VS, fragmentShader: BED_FS, transparent: true, depthWrite: false, defines: { OCT: level >= 4 ? 5 : 4 }, fog: false, toneMapped: false })
   );
   bed.geometry.rotateX(-Math.PI / 2);
   bed.position.y = 0.075;
@@ -711,8 +713,9 @@ export function create(env) {
         ...fshared,
         uSeed: { value: rand(0, 10) },
         uTone: { value: lerp(0.12, 0.95, u) },
-        uWidth: { value: lerp(0.56, 0.3, u) * rand(0.92, 1.08) },
-        uAlpha: { value: lerp(0.5, 0.78, u) * Math.min(1.1, Math.sqrt(3.4 / nLayers)) },
+        uWidth: { value: lerp(0.74, 0.4, u) * rand(0.92, 1.08) },
+        uAlpha: { value: lerp(0.38, 0.6, u) * Math.min(1.1, Math.sqrt(3.4 / nLayers)) * (stage.composer ? 0.8 : 1) },
+        uHMul: { value: lerp(0.78, 1.0, u) * rand(0.95, 1.05) },
       },
       vertexShader: FLAME_VS,
       fragmentShader: FLAME_FS,
@@ -721,6 +724,7 @@ export function create(env) {
       blending: THREE.AdditiveBlending,
       defines: { OCT: level <= 0 ? 3 : level >= 4 ? 5 : 4 },
       fog: false,
+      toneMapped: false,
     });
     const mesh = new THREE.Mesh(flameGeo, mat);
     mesh.position.set(rand(-0.1, 0.1) * (1 - u), 0.16, rand(-0.1, 0.1) * (1 - u));
@@ -807,7 +811,7 @@ export function create(env) {
   const cam = { dist: 6.4, h: 2.0, ty: 1.9, yaw: 0, ex: 0, ey: 0 };
   function layout() {
     const aspect = stage.width / Math.max(1, stage.height);
-    cam.dist = clamp(2.3 / (Math.tan((FOV * Math.PI) / 360) * aspect), 5.3, 11.5);
+    cam.dist = clamp(1.95 / (Math.tan((FOV * Math.PI) / 360) * aspect), 5.3, 11.5);
     const portrait = clamp((1 - aspect) * 1.6, 0, 1);
     cam.h = 1.75 + (cam.dist - 5.3) * 0.12;
     cam.ty = 1.75 + portrait * 0.9;

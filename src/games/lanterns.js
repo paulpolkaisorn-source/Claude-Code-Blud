@@ -59,11 +59,13 @@ void main(){
   #ifdef MILKY
   vec3 mn = normalize(vec3(0.62, 0.5, -0.6));
   float band = exp(-pow(dot(d, mn) * 3.4, 2.0));
-  float cl = fbm(d * 5.0 + 3.0);
-  float cl2 = fbm(d * 13.0 + 9.0);
-  float lane = smoothstep(0.35, 0.7, fbm(d * 7.0 + 21.0));
-  col += vec3(0.075, 0.095, 0.2) * band * (0.25 + cl * 1.0) * (1.0 - lane * 0.55) * smoothstep(0.03, 0.4, t);
-  col += vec3(0.09, 0.085, 0.14) * band * band * cl2 * 0.9 * smoothstep(0.03, 0.4, t);
+  if (band > 0.03 && t > 0.03) {
+    float cl = fbm(d * 5.0 + 3.0);
+    float cl2 = fbm(d * 13.0 + 9.0);
+    float lane = smoothstep(0.35, 0.7, fbm(d * 7.0 + 21.0));
+    col += vec3(0.075, 0.095, 0.2) * band * (0.25 + cl * 1.0) * (1.0 - lane * 0.55) * smoothstep(0.03, 0.4, t);
+    col += vec3(0.09, 0.085, 0.14) * band * band * cl2 * 0.9 * smoothstep(0.03, 0.4, t);
+  }
   #endif
   #ifdef DUST
   vec3 sc = d * 480.0;
@@ -79,24 +81,26 @@ void main(){
   // the moon
   float md = dot(d, uMoon);
   float ang = acos(clamp(md, -1.0, 1.0));
-  float R = 0.058;
+  float R = 0.052;
   vec3 mT = normalize(cross(uMoon, vec3(0.0, 1.0, 0.0)));
   vec3 mB = cross(mT, uMoon);
   vec2 mp = vec2(dot(d, mT), dot(d, mB)) / R;
   float mr = length(mp);
   float disc = 1.0 - smoothstep(0.965, 1.0, mr);
-  float limb = sqrt(max(1.0 - mr * mr, 0.0));
-  float maria = fbm(vec3(mp * 1.9, 3.7));
-  float crater = vnoise(vec3(mp * 7.0, 1.3));
-  vec3 mcol = mix(vec3(0.62, 0.64, 0.7), vec3(1.0, 0.95, 0.82), smoothstep(0.32, 0.62, maria));
-  mcol *= 0.86 + 0.28 * crater;
-  mcol *= 0.55 + 0.6 * limb;
-  col = mix(col, mcol * 2.0, disc);
+  if (mr < 1.02) {
+    float limb = sqrt(max(1.0 - mr * mr, 0.0));
+    float maria = fbm(vec3(mp * 1.9, 3.7));
+    float crater = vnoise(vec3(mp * 7.0, 1.3));
+    vec3 mcol = mix(vec3(0.5, 0.52, 0.6), vec3(1.0, 0.95, 0.82), smoothstep(0.34, 0.6, maria));
+    mcol *= 0.82 + 0.3 * crater;
+    mcol *= 0.5 + 0.65 * limb;
+    col = mix(col, mcol * 0.95, disc);
+  }
   float g1 = exp(-ang * ang / (0.012 * 0.012));
   float g2 = exp(-ang * ang / (0.07 * 0.07));
   float g3 = exp(-ang * ang / (0.26 * 0.26));
-  col += vec3(1.0, 0.92, 0.75) * (g1 * 0.2 + g2 * 0.07) + vec3(0.42, 0.5, 0.9) * g3 * 0.035;
-  float ring = exp(-pow((ang - 0.2) / 0.012, 2.0)) * 0.05;
+  col += vec3(1.0, 0.92, 0.75) * (g1 * 0.16 + g2 * 0.05) + vec3(0.42, 0.5, 0.9) * g3 * 0.03;
+  float ring = exp(-pow((ang - 0.2) / 0.02, 2.0)) * 0.012;
   col += vec3(0.7, 0.75, 1.0) * ring;
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>
@@ -236,7 +240,7 @@ void main(){
     float rim = pow(1.0 - ndv, 2.2);
     float zone = mix(1.25, 0.5, smoothstep(0.12, 1.0, v)) * (0.78 + 0.35 * smoothstep(0.0, 0.18, v));
     float I = (zone + hot * 0.65) * light;
-    col = vCol * paper * I * 1.5;
+    col = vCol * paper * I * 0.95;
     col = mix(col, col * vCol * 1.9, rim * 0.55);
     col *= 1.0 + rim * 0.35;
     col += vec3(1.0, 0.84, 0.55) * hot * 0.22 * light * paper.r;
@@ -1228,7 +1232,7 @@ export function create(env) {
       // glow: wide halo around the paper, flame in the mouth, warm pool below
       const boost = noBloom ? 1.5 : 1;
       const a = light * fade;
-      pushGlow(L.x, L.y + 0.5 * s, L.z, 1.55 * s, 1.75 * s, lerp(L.c[0], 1, 0.3), lerp(L.c[1], 0.7, 0.3), lerp(L.c[2], 0.4, 0.3), 0.5 * a * boost, 0, 0.5 * s, 0);
+      pushGlow(L.x, L.y + 0.5 * s, L.z, 1.55 * s, 1.75 * s, lerp(L.c[0], 1, 0.3), lerp(L.c[1], 0.7, 0.3), lerp(L.c[2], 0.4, 0.3), 0.3 * a * boost, 0, 0.5 * s, 0);
       pushGlow(L.x, L.y + 0.04 * s, L.z, 0.2 * s, 0.34 * s, 1.5, 0.78, 0.3, 1.2 * clamp(L.heat * 3, 0, 1) * a, 1, 0.12 * s, L.ph);
       pushGlow(L.x, L.y - 0.04 * s, L.z, 0.62 * s, 0.62 * s, 1.0, 0.6, 0.25, 0.4 * a * boost, 0, 0.1 * s, 0);
       // falling embers

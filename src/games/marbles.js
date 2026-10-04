@@ -222,7 +222,7 @@ export function create(env) {
   const stage = createStage(root, {
     fov: FOV,
     gfx,
-    exposure: 1.0,
+    exposure: 1.15,
     envIntensity: 1.0,
     environment: false,
     shadows: true,
@@ -348,7 +348,7 @@ export function create(env) {
   bowl.add(bowlSpec);
   const bowlTintMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    uniforms: { uTint: { value: new THREE.Color('#6fb0a4') }, uBase: { value: 0.03 }, uEdge: { value: 0.3 } },
+    uniforms: { uTint: { value: new THREE.Color('#9fbdb8') }, uBase: { value: 0.02 }, uEdge: { value: 0.22 } },
     vertexShader: /* glsl */ `
       varying vec3 vN; varying vec3 vV;
       void main(){
@@ -387,15 +387,15 @@ export function create(env) {
     const arr = pal.colors.map((c) => {
       const tex = swirlTexture(c, pal.kind);
       const core = new THREE.MeshStandardMaterial({
-        map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: pal.kind === 'galaxy' ? 0.75 : 0.5,
+        map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: pal.kind === 'galaxy' ? 0.9 : 0.7,
         roughness: 0.3, metalness: 0, envMapIntensity: 0.6,
       });
       const base = new THREE.Color(c.c);
       const tint = base.clone().multiplyScalar(0.85);
       const shell = useTransmission
         ? new THREE.MeshPhysicalMaterial({
-          color: tint, transmission: 1, thickness: 0.6, ior: 1.5, roughness: 0.03, metalness: 0,
-          attenuationColor: base, attenuationDistance: 0.55, clearcoat: 1, clearcoatRoughness: 0.02,
+          color: tint.clone().lerp(new THREE.Color('#ffffff'), 0.35), transmission: 0.96, thickness: 0.5, ior: 1.5, roughness: 0.03, metalness: 0,
+          attenuationColor: base, attenuationDistance: 1.5, clearcoat: 1, clearcoatRoughness: 0.02,
           specularIntensity: 1, envMapIntensity: 1.7,
         })
         : new THREE.MeshStandardMaterial({
