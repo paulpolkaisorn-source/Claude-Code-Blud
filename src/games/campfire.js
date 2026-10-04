@@ -752,7 +752,8 @@ export function create(env) {
   sparks.points.renderOrder = 4;
   embers.points.userData.noAO = sparks.points.userData.noAO = true;
   scene.add(embers.points, sparks.points);
-  const emberCols = [new THREE.Color(3.4, 1.15, 0.22), new THREE.Color(4.2, 2.3, 0.7), new THREE.Color(2.4, 0.65, 0.12), new THREE.Color(1.8, 0.4, 0.08)];
+  const eb = pm > 1 ? 1 / Math.sqrt(pm) : 1; // keep the total ember glow steady as particle counts grow
+  const emberCols = [new THREE.Color(3.4, 1.15, 0.22), new THREE.Color(4.2, 2.3, 0.7), new THREE.Color(2.4, 0.65, 0.12), new THREE.Color(1.8, 0.4, 0.08)].map((c) => c.multiplyScalar(eb));
 
   const smokeTex = own(smokeTexture());
   const smokeN = Math.round(10 + 14 * pm);
@@ -886,7 +887,7 @@ export function create(env) {
   function randomCrackle() {
     if (!audio.ready) return;
     const Ic = clamp(I, 0, 1.2);
-    const lv = 0.5 + 0.5 * Ic;
+    const lv = 0.65 + 0.35 * Ic;
     if (!budgetOK(rand(0, 1))) return;
     const r = Math.random();
     const snapP = 0.035 + 0.05 * Ic;
@@ -1335,7 +1336,7 @@ export function create(env) {
         hissV = lerp(hissV, Math.random(), 0.25);
         const Is = Math.min(IcL, 1.3);
         SND.body.set({
-          gain: (0.05 + 0.3 * Math.pow(Is, 0.9)) * (0.82 + 0.3 * swell) * (1 + 0.8 * whoomph + 0.4 * Math.min(kick, 1)),
+          gain: (0.07 + 0.28 * Math.pow(Is, 0.9)) * (0.82 + 0.3 * swell) * (1 + 0.8 * whoomph + 0.4 * Math.min(kick, 1)),
           freq: 190 + 330 * Is + 450 * whoomph + 200 * Math.min(kick, 1),
           pan: firePan * 0.6,
         }, 0.12);
