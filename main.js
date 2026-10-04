@@ -193,7 +193,9 @@ function loadModel() {
     const bin = atob(embedded.textContent.trim());
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    loader.parse(bytes.buffer, '', onModelLoaded, onModelError);
+    const stream = new Blob([bytes]).stream();
+    const raw = embedded.dataset.gzip ? stream.pipeThrough(new DecompressionStream('gzip')) : stream;
+    new Response(raw).arrayBuffer().then((buf) => loader.parse(buf, '', onModelLoaded, onModelError), onModelError);
     return;
   }
   loader.load(
