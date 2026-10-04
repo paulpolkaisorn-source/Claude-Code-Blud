@@ -240,10 +240,10 @@ void main(){
     float rim = pow(1.0 - ndv, 2.2);
     float zone = mix(1.25, 0.5, smoothstep(0.12, 1.0, v)) * (0.78 + 0.35 * smoothstep(0.0, 0.18, v));
     float I = (zone + hot * 0.65) * light;
-    col = vCol * paper * I * 0.95;
+    col = vCol * paper * I * 0.66;
     col = mix(col, col * vCol * 1.9, rim * 0.55);
     col *= 1.0 + rim * 0.35;
-    col += vec3(1.0, 0.84, 0.55) * hot * 0.22 * light * paper.r;
+    col += vec3(1.0, 0.84, 0.55) * hot * 0.12 * light * paper.r;
     col += paper * vec3(0.045, 0.055, 0.1) * (1.0 - light);
   } else {
     // the glowing inner wall, glimpsed through the open bottom
@@ -1232,8 +1232,8 @@ export function create(env) {
       // glow: wide halo around the paper, flame in the mouth, warm pool below
       const boost = noBloom ? 1.5 : 1;
       const a = light * fade;
-      pushGlow(L.x, L.y + 0.5 * s, L.z, 1.55 * s, 1.75 * s, lerp(L.c[0], 1, 0.3), lerp(L.c[1], 0.7, 0.3), lerp(L.c[2], 0.4, 0.3), 0.3 * a * boost, 0, 0.5 * s, 0);
-      pushGlow(L.x, L.y + 0.04 * s, L.z, 0.2 * s, 0.34 * s, 1.5, 0.78, 0.3, 1.2 * clamp(L.heat * 3, 0, 1) * a, 1, 0.12 * s, L.ph);
+      pushGlow(L.x, L.y + 0.5 * s, L.z, 1.55 * s, 1.75 * s, lerp(L.c[0], 1, 0.3), lerp(L.c[1], 0.7, 0.3), lerp(L.c[2], 0.4, 0.3), 0.24 * a * boost, 0, 0.5 * s, 0);
+      pushGlow(L.x, L.y + 0.04 * s, L.z, 0.2 * s, 0.34 * s, 1.5, 0.78, 0.3, 0.95 * clamp(L.heat * 3, 0, 1) * a, 1, 0.12 * s, L.ph);
       pushGlow(L.x, L.y - 0.04 * s, L.z, 0.62 * s, 0.62 * s, 1.0, 0.6, 0.25, 0.4 * a * boost, 0, 0.1 * s, 0);
       // falling embers
       if (!L.held && L.heat > 0.4 && L.y < 34) {

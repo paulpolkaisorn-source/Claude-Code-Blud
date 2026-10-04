@@ -604,12 +604,12 @@ export function create(env) {
     const col = new THREE.Color();
     for (let i = 0; i < n; i++) {
       const a = ((i + 0.5) / n) * TAU * 3.0 + R() * 0.5; // golden-ish spread so the forest never clumps
-      const r = 13 + Math.pow(R(), 0.8) * 24;
+      const r = 16 + Math.pow(R(), 0.8) * 24;
       const s = (0.85 + R() * 0.8) * (r > 24 ? 1.25 : 1);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), R() * TAU);
       m.compose(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), q, new THREE.Vector3(s, s * (0.9 + R() * 0.35), s));
       trees.setMatrixAt(i, m);
-      col.setHSL(0.38 + R() * 0.12, 0.25 + R() * 0.2, 0.06 + R() * 0.07);
+      col.setHSL(0.38 + R() * 0.12, 0.25 + R() * 0.2, 0.035 + R() * 0.05);
       trees.setColorAt(i, col);
     }
     trees.instanceMatrix.needsUpdate = true;

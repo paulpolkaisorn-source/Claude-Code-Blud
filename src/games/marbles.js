@@ -592,7 +592,7 @@ export function create(env) {
   function frame() {
     const aspect = stage.width / Math.max(1, stage.height);
     const t = Math.tan((FOV * Math.PI) / 360);
-    const distH = 2.75 / (t * aspect);
+    const distH = 2.6 / (t * aspect);
     const distV = 2.3 / t;
     cam.dist = Math.max(distH, distV, 7.5);
     scene.fog.near = cam.dist * 1.1;
@@ -604,7 +604,7 @@ export function create(env) {
   function placeCamera(time) {
     const pitch = 0.74;
     const yaw = Math.sin(time * 0.11) * 0.05;
-    const ly = aspectPortrait() ? lookY - 0.15 : lookY;
+    const ly = aspectPortrait() ? lookY + 0.2 : lookY;
     camera.position.set(Math.sin(yaw) * cam.dist * Math.cos(pitch), ly + Math.sin(pitch) * cam.dist, Math.cos(yaw) * cam.dist * Math.cos(pitch));
     camera.lookAt(0, ly, 0);
   }
