@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Subwoofer Model</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        #container {
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 800px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 25px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            max-width: 300px;
+            line-height: 1.6;
+            z-index: 10;
+        }
+
+        .info h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .info p {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        <div class="info">
+            <h3>🔊 Subwoofer 3D Model</h3>
+            <p><strong>Rotate:</strong> Click + drag</p>
+            <p><strong>Zoom:</strong> Scroll wheel</p>
+            <p><strong>Pan:</strong> Right-click + drag</p>
+            <p style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+                Interactive 3D speaker system with realistic materials and lighting.
+            </p>
+        </div>
+        <div class="controls">
+            <button id="resetBtn">Reset View</button>
+            <button id="rotateBtn">Auto-Rotate: OFF</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene Setup
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+
+        // Camera Position
+        camera.position.set(0, 0.5, 3.5);
+        camera.lookAt(0, 0, 0);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 8, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -10;
+        directionalLight.shadow.camera.right = 10;
+        directionalLight.shadow.camera.top = 10;
+        directionalLight.shadow.camera.bottom = -10;
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0x667eea, 0.3);
+        pointLight.position.set(-3, 2, 3);
+        scene.add(pointLight);
+
+        // Background
+        scene.background = new THREE.Color(0x0f0f0f);
+        scene.fog = new THREE.Fog(0x0f0f0f, 20, 100);
+
+        // Create Subwoofer
+        const subwooferGroup = new THREE.Group();
+        scene.add(subwooferGroup);
+
+        // Enclosure (Cabinet)
+        const enclosureGeometry = new THREE.BoxGeometry(1.2, 1.5, 1.2);
+        const enclosureMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            metalness: 0.1,
+            roughness: 0.8,
+            emissive: 0x0a0a0a
+        });
+        const enclosure = new THREE.Mesh(enclosureGeometry, enclosureMaterial);
+        enclosure.castShadow = true;
+        enclosure.receiveShadow = true;
+        subwooferGroup.add(enclosure);
+
+        // Front Baffle (Slightly recessed)
+        const baffleGeometry = new THREE.BoxGeometry(1.1, 1.4, 0.15);
+        const baffleMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0d0d0d,
+            metalness: 0.05,
+            roughness: 0.9
+        });
+        const baffle = new THREE.Mesh(baffleGeometry, baffleMaterial);
+        baffle.position.z = 0.58;
+        baffle.castShadow = true;
+        baffle.receiveShadow = true;
+        subwooferGroup.add(baffle);
+
+        // Woofer Assembly Group
+        const wooferGroup = new THREE.Group();
+        wooferGroup.position.z = 0.62;
+        subwooferGroup.add(wooferGroup);
+
+        // Speaker Cone (Main Driver)
+        const coneGeometry = new THREE.ConeGeometry(0.35, 0.4, 32, 8, true);
+        const coneMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2a2a2a,
+            metalness: 0.2,
+            roughness: 0.7,
+            emissive: 0x0a0a0a
+        });
+        const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+        cone.rotation.x = Math.PI;
+        cone.position.z = -0.05;
+        cone.castShadow = true;
+        cone.receiveShadow = true;
+        wooferGroup.add(cone);
+
+        // Surround (Fabric Ring)
+        const surroundGeometry = new THREE.CylinderGeometry(0.38, 0.42, 0.08, 32);
+        const surroundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3d3d3d,
+            metalness: 0,
+            roughness: 0.95,
+            emissive: 0x0a0a0a
+        });
+        const surround = new THREE.Mesh(surroundGeometry, surroundMaterial);
+        surround.rotation.z = Math.PI / 2;
+        surround.castShadow = true;
+        surround.receiveShadow = true;
+        wooferGroup.add(surround);
+
+        // Dust Cap
+        const dustCapGeometry = new THREE.ConeGeometry(0.08, 0.12, 32);
+        const dustCapMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333333,
+            metalness: 0.3,
+            roughness: 0.6
+        });
+        const dustCap = new THREE.Mesh(dustCapGeometry, dustCapMaterial);
+        dustCap.position.z = -0.18;
+        dustCap.castShadow = true;
+        dustCap.receiveShadow = true;
+        wooferGroup.add(dustCap);
+
+        // Basket/Frame (Metal Ring)
+        const basketGeometry = new THREE.TorusGeometry(0.38, 0.02, 8, 32);
+        const basketMaterial = new THREE.MeshStandardMaterial({
+            color: 0x4a4a4a,
+            metalness: 0.8,
+            roughness: 0.3
+        });
+        const basket = new THREE.Mesh(basketGeometry, basketMaterial);
+        basket.rotation.y = Math.PI / 2;
+        basket.castShadow = true;
+        basket.receiveShadow = true;
+        wooferGroup.add(basket);
+
+        // Additional Basket Support Rings
+        for (let i = 0; i < 3; i++) {
+            const supportGeometry = new THREE.TorusGeometry(0.36 - i * 0.03, 0.01, 8, 16);
+            const supportMaterial = new THREE.MeshStandardMaterial({
+                color: 0x454545,
+                metalness: 0.7,
+                roughness: 0.4
+            });
+            const support = new THREE.Mesh(supportGeometry, supportMaterial);
+            support.rotation.y = Math.PI / 2;
+            support.position.z = -0.08 - i * 0.04;
+            support.castShadow = true;
+            support.receiveShadow = true;
+            wooferGroup.add(support);
+        }
+
+        // Port (Vent Tube)
+        const portGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 32);
+        const portMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            metalness: 0.05,
+            roughness: 0.8
+        });
+        const port = new THREE.Mesh(portGeometry, portMaterial);
+        port.position.set(0.3, -0.4, 0.62);
+        port.castShadow = true;
+        port.receiveShadow = true;
+        subwooferGroup.add(port);
+
+        // Port Ring Detail
+        const portRingGeometry = new THREE.TorusGeometry(0.125, 0.01, 8, 16);
+        const portRing = new THREE.Mesh(portRingGeometry, basketMaterial);
+        portRing.rotation.x = Math.PI / 2;
+        portRing.position.set(0.3, -0.55, 0.62);
+        portRing.castShadow = true;
+        portRing.receiveShadow = true;
+        subwooferGroup.add(portRing);
+
+        // Feet/Stand Bumps
+        const footPositions = [
+            [0.4, -0.76, 0.4],
+            [-0.4, -0.76, 0.4],
+            [0.4, -0.76, -0.4],
+            [-0.4, -0.76, -0.4]
+        ];
+
+        footPositions.forEach(pos => {
+            const footGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+            const footMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2a2a2a,
+                metalness: 0.3,
+                roughness: 0.6
+            });
+            const foot = new THREE.Mesh(footGeometry, footMaterial);
+            foot.position.set(...pos);
+            foot.castShadow = true;
+            foot.receiveShadow = true;
+            subwooferGroup.add(foot);
+        });
+
+        // Orbit Controls Implementation
+        let isRotating = false;
+        let isPanning = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotation = { x: 0, y: 0 };
+        let cameraDistance = 3.5;
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                isRotating = true;
+            } else if (e.button === 2) {
+                isPanning = true;
+            }
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            if (isRotating) {
+                rotation.y += deltaX * 0.005;
+                rotation.x += deltaY * 0.005;
+                rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+            }
+
+            if (isPanning) {
+                const panSpeed = 0.01;
+                camera.position.x -= deltaX * panSpeed;
+                camera.position.y += deltaY * panSpeed;
+            }
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isRotating = false;
+            isPanning = false;
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            cameraDistance += e.deltaY * 0.001;
+            cameraDistance = Math.max(1.5, Math.min(8, cameraDistance));
+        }, { passive: false });
+
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Auto-rotate toggle
+        let autoRotate = false;
+        document.getElementById('rotateBtn').addEventListener('click', () => {
+            autoRotate = !autoRotate;
+            document.getElementById('rotateBtn').textContent = `Auto-Rotate: ${autoRotate ? 'ON' : 'OFF'}`;
+        });
+
+        // Reset view
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            rotation = { x: 0, y: 0 };
+            cameraDistance = 3.5;
+            camera.position.x = 0;
+            camera.position.y = 0.5;
+            autoRotate = false;
+            document.getElementById('rotateBtn').textContent = 'Auto-Rotate: OFF';
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update camera position based on rotation
+            const radius = cameraDistance;
+            camera.position.x = Math.sin(rotation.y) * Math.cos(rotation.x) * radius;
+            camera.position.y = Math.sin(rotation.x) * radius + 0.5;
+            camera.position.z = Math.cos(rotation.y) * Math.cos(rotation.x) * radius;
+            camera.lookAt(0, 0.2, 0);
+
+            // Auto-rotate
+            if (autoRotate) {
+                rotation.y += 0.003;
+            }
+
+            // Gentle woofer oscillation
+            const oscillation = Math.sin(Date.now() * 0.001) * 0.02;
+            wooferGroup.position.z = 0.62 + oscillation;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
