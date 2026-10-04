@@ -33528,6 +33528,11 @@ void main() {
     out = toCreasedNormals(out, crease * DEG);
     out.deleteAttribute("uv1");
     out = mergeVertices(out, 1e-5);
+    const nrm = out.attributes.normal;
+    for (let i = 0; i < nrm.count; i++) {
+      const l = Math.hypot(nrm.getX(i), nrm.getY(i), nrm.getZ(i)) || 1;
+      nrm.setXYZ(i, nrm.getX(i) / l, nrm.getY(i) / l, nrm.getZ(i) / l);
+    }
     out.computeBoundingBox();
     out.computeBoundingSphere();
     return out;
@@ -33550,7 +33555,13 @@ void main() {
     m.setAttribute("position", new BufferAttribute(pos, 3));
     m.setAttribute("normal", new BufferAttribute(nor, 3));
     m.setAttribute("uv", new BufferAttribute(uv, 2));
-    return mergeVertices(m, 1e-5);
+    const out = mergeVertices(m, 1e-5);
+    const nrm = out.attributes.normal;
+    for (let i = 0; i < nrm.count; i++) {
+      const l = Math.hypot(nrm.getX(i), nrm.getY(i), nrm.getZ(i)) || 1;
+      nrm.setXYZ(i, nrm.getX(i) / l, nrm.getY(i) / l, nrm.getZ(i) / l);
+    }
+    return out;
   }
   function gridSurface(nu, nv, posFn, { uvFn = null, crease = 40, flip = false } = {}) {
     const cols = nu + 1;
@@ -33640,8 +33651,8 @@ void main() {
   var P = {
     R: 8,
     // flange outer radius
-    flangeInner: 6.93,
-    flangeT: 0.253,
+    flangeInner: 6.5,
+    flangeT: 0.45,
     mountR: 7.58,
     mountHoleR: 0.06,
     plateR: 7.52,
@@ -33651,50 +33662,54 @@ void main() {
     roll: {
       pts: [
         [5.52, 0.1],
-        [5.58, 0.182],
-        [5.78, 0.352],
-        [6.1, 0.517],
-        [6.5, 0.605],
-        [6.86, 0.552],
-        [7.06, 0.382],
-        [7.13, 0.182],
+        [5.55, 0.5],
+        [5.7, 0.95],
+        [6, 1.3],
+        [6.45, 1.5],
+        [6.85, 1.4],
+        [7.05, 1],
+        [7.12, 0.5],
         [7.14, 0.02]
       ]
     },
     // cone + dust cap
-    cone: { rTop: 5.52, zTop: 0.1, capR: 2.52, depth: 3.5, power: 1.75 },
+    cone: { rTop: 5.52, zTop: 0.1, capR: 2.18, depth: 3.5, power: 1.75 },
     cap: { height: 1 },
     weave: { tile: 0.7, rotDeg: 38 },
     // basket
     basketPts: [
-      [6.95, -0.3],
-      [6.7, -0.929],
-      [6.3, -1.837],
-      [5.8, -2.815],
-      [5.3, -3.794],
-      [4.8, -4.632],
-      [4.4, -5.191],
-      [4, -5.541]
+      [6.95, -0.45],
+      [6.7, -1],
+      [6.3, -1.796],
+      [5.8, -2.748],
+      [5.3, -3.7],
+      [4.8, -4.516],
+      [4.4, -5.06],
+      [4, -5.4]
     ],
+    motorTwist: 35,
+    // deg, clocking of the basket/motor relative to the cone logo and flange plates
     spokeCount: 4,
     spokePhi0: 45,
     // deg, centre of first spoke (model angle)
-    terminalPhi: 90,
+    terminalPhi: 180,
     // deg, centre of the terminal bay
     // motor
     funnel: [
-      [3.95, -5.541],
-      [4.212, -5.695],
-      [4.471, -5.926],
-      [4.772, -6.247],
-      [5.038, -6.569],
-      [5.188, -6.761],
-      [5.236, -6.826]
+      [3.95, -5.4],
+      [4.221, -5.582],
+      [4.489, -5.856],
+      [4.8, -6.236],
+      [5.076, -6.616],
+      [5.23, -6.844],
+      [5.281, -6.92]
     ],
-    band: { r: 5.382, z0: -6.826, z1: -10.329 },
-    endCap: { r: 4.829, recess: 0.14, dome: 0.22, plateR: 1.85, boreR: 0.62 },
-    // band lettering layout (angles around the band, degrees; u=0 at model +X, CCW seen from the front)
-    bandLayout: { text: [45, 225], alien: 315, bee: 135, alienRot: 0, beeRot: 0.35 }
+    band: { r: 5.494, z0: -6.92, z1: -10.8 },
+    endCap: { r: 4.98, recess: 0.3, dome: 0.62, plateR: 2.2, boreR: 0.72 },
+    // band lettering layout (angles around the band, degrees; u=0 at model +X, CCW seen from the front).
+    // Measured from the photos: items sit on a ~45 degree pitch: text, bee, text, alien, text, bee, text, alien.
+    // The terminal bay (terminalPhi) sits just after the first bee.
+    bandLayout: { text: [120, 210, 300, 30], bee: [165, 345], alien: [255, 75], alienRot: 0, beeRot: 0.35 }
   };
 
   // src/glyphs.js
@@ -34016,7 +34031,7 @@ void main() {
       roughnessMap: tex(rc, { repeat: true })
     };
   }
-  function makeBand({ circumference, height, pxPerIn = 240, layout }) {
+  function makeBand({ circumference, height, pxPerIn = 240, layout, debug = false }) {
     const W = Math.round(circumference * pxPerIn);
     const H = Math.round(height * pxPerIn);
     const rand = rng(11);
@@ -34026,7 +34041,7 @@ void main() {
     const c = cc.getContext("2d");
     h.fillStyle = "rgb(140,140,140)";
     h.fillRect(0, 0, W, H);
-    c.fillStyle = "#3d3d40";
+    c.fillStyle = "#58585c";
     c.fillRect(0, 0, W, H);
     const angX = (deg) => (deg % 360 + 360) % 360 / 360 * W;
     const pp = pxPerIn;
@@ -34042,11 +34057,11 @@ void main() {
         const natural = wordWidth(r.t, 0.45) * (hp / 10);
         const stretch = r.w * pp / natural;
         const x0 = cxPx - r.w * pp / 2 + r.dx * pp;
-        for (const [ctx, col, extra] of [[h, "rgb(40,40,40)", 0.9], [c, "#0b0b0c", 0.9]]) {
+        for (const [ctx, col, extra] of [[h, "rgb(40,40,40)", 0.9], [c, "#121213", 0.9]]) {
           drawWord(ctx, r.t, x0, y, hp, { thickness: r.th + extra, skew: r.skew, gap: 0.45, stretch, color: col, join: "miter" });
         }
         drawWord(h, r.t, x0, y, hp, { thickness: r.th - 0.15, skew: r.skew, gap: 0.45, stretch, color: "rgb(235,235,235)" });
-        drawWord(c, r.t, x0, y, hp, { thickness: r.th - 0.15, skew: r.skew, gap: 0.45, stretch, color: "#47474a" });
+        drawWord(c, r.t, x0, y, hp, { thickness: r.th - 0.15, skew: r.skew, gap: 0.45, stretch, color: "#606064" });
         y += hp * 1.28;
       }
     };
@@ -34061,15 +34076,35 @@ void main() {
       const fn = kind === "alien" ? drawAlienHead : drawBeeLogo;
       fn(h, cxPx, cyPx, s, { fill: "rgb(190,190,190)", stroke: "rgb(20,20,20)", line: 0.035, mode: "plate" });
       fn(h, cxPx, cyPx, s, { fill: "rgb(190,190,190)", stroke: "rgb(20,20,20)", line: 0.035, mode: "lines" });
-      fn(c, cxPx, cyPx, s, { fill: "#454548", stroke: "#0b0b0c", line: 0.035, mode: "plate" });
-      fn(c, cxPx, cyPx, s, { fill: "#454548", stroke: "#0b0b0c", line: 0.035, mode: "lines" });
+      fn(c, cxPx, cyPx, s, { fill: "#5e5e62", stroke: "#101011", line: 0.035, mode: "plate" });
+      fn(c, cxPx, cyPx, s, { fill: "#5e5e62", stroke: "#101011", line: 0.035, mode: "lines" });
       h.restore();
       c.restore();
     };
     const midY = H * 0.5;
     for (const a of layout.text) textBlock(angX(a), midY);
-    logo("alien", angX(layout.alien), midY, 2.1, layout.alienRot ?? 0);
-    logo("bee", angX(layout.bee), midY, 2, layout.beeRot ?? 0);
+    for (const a of [].concat(layout.alien)) logo("alien", angX(a), midY, 2.1, layout.alienRot ?? 0);
+    for (const a of [].concat(layout.bee)) logo("bee", angX(a), midY, 2, layout.beeRot ?? 0);
+    if (debug) {
+      c.fillStyle = "#ff0000";
+      for (const a of [].concat(layout.bee)) {
+        c.beginPath();
+        c.arc(angX(a), midY, 0.5 * pp, 0, TAU);
+        c.fill();
+      }
+      c.fillStyle = "#00ff00";
+      for (const a of [].concat(layout.alien)) {
+        c.beginPath();
+        c.arc(angX(a), midY, 0.5 * pp, 0, TAU);
+        c.fill();
+      }
+      layout.text.forEach((a, i) => {
+        c.fillStyle = i ? "#00ffff" : "#0000ff";
+        c.beginPath();
+        c.arc(angX(a), midY, 0.5 * pp, 0, TAU);
+        c.fill();
+      });
+    }
     const hd = h.getImageData(0, 0, W, H);
     for (let i = 0; i < hd.data.length; i += 4) {
       const n = (rand() - 0.5) * 9;
@@ -34099,8 +34134,8 @@ void main() {
       const t = th * DEG;
       const x = plateR * Math.sin(t);
       const y = plateR * Math.cos(t);
-      const pw = 1.36 * k;
-      const ph = 0.62 * k;
+      const pw = 1.26 * k;
+      const ph = 0.56 * k;
       for (const [ctx, fill] of [[h, "rgb(105,105,105)"], [c, "#070707"], [r, "rgb(0,150,0)"]]) {
         ctx.save();
         ctx.translate(X(x), Y(y));
@@ -34109,7 +34144,7 @@ void main() {
         ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
         ctx.restore();
       }
-      for (const [ctx, col] of [[h, "rgb(190,190,190)"], [c, "#4a4a4a"], [r, "rgb(0,120,0)"]]) {
+      for (const [ctx, col] of [[h, "rgb(170,170,170)"], [c, "#3a3a3a"], [r, "rgb(0,120,0)"]]) {
         ctx.save();
         ctx.translate(X(x), Y(y));
         ctx.rotate(t);
@@ -34156,7 +34191,7 @@ void main() {
     const c = canvas(W, H);
     const ctx = c.getContext("2d");
     ctx.clearRect(0, 0, W, H);
-    drawSundownLogo(ctx, W * 0.24, H * 0.405, W * 0.52, { color: "#eeeeec" });
+    drawSundownLogo(ctx, W * 0.2, H * 0.415, W * 0.6, { color: "#e9e9e7" });
     const t = new CanvasTexture(c);
     t.colorSpace = SRGBColorSpace;
     t.anisotropy = 16;
@@ -34242,12 +34277,12 @@ void main() {
     });
     M.rubber = new MeshPhysicalMaterial({
       name: "SurroundRubber",
-      color: 3158067,
-      roughness: 0.52,
+      color: 1842208,
+      roughness: 0.5,
       metalness: 0,
-      sheen: 0.4,
+      sheen: 0.25,
       sheenRoughness: 0.5,
-      sheenColor: new Color(7829367),
+      sheenColor: new Color(5592405),
       side: DoubleSide
     });
     M.thread = new MeshStandardMaterial({ name: "Thread", color: 0, roughness: 1, metalness: 0, envMapIntensity: 0 });
@@ -34271,6 +34306,7 @@ void main() {
         roughnessMap: carbon.roughnessMap,
         roughness: 1,
         metalness: 0,
+        specularIntensity: 0.35,
         clearcoat: 1,
         clearcoatRoughness: 0.035,
         side: FrontSide,
@@ -34296,7 +34332,7 @@ void main() {
       });
       const circ = TAU * P2.band.r;
       const h = Math.abs(P2.band.z0 - P2.band.z1);
-      const band = makeBand({ circumference: circ, height: h, pxPerIn: 230, layout: P2.bandLayout });
+      const band = makeBand({ circumference: circ, height: h, pxPerIn: 230, layout: P2.bandLayout, debug: !!P2.debugBand });
       M.band = new MeshPhysicalMaterial({
         name: "MotorBand",
         color: 16777215,
@@ -34480,12 +34516,17 @@ void main() {
     };
     const SPOKES = P2.spokeCount;
     const halfAngle = (s) => {
-      const base = lerp2(16, 21, smoothstep2(0, 0.7, s));
-      const top = 13 * (1 - smoothstep2(0, 0.12, s));
-      const bottom = (180 / SPOKES - base) * smoothstep2(0.58, 0.76, s);
+      const base = lerp2(12.5, 16, smoothstep2(0, 0.7, s));
+      const full = 180 / SPOKES;
+      const sm = (a, b, x) => {
+        const t = clamp2((x - a) / (b - a), 0, 1);
+        return t * t * t * (t * (t * 6 - 15) + 10);
+      };
+      const top = (full - base) * (1 - sm(0.04, 0.26, s));
+      const bottom = (full - base) * sm(0.48, 0.84, s);
       return (base + top + bottom) * DEG;
     };
-    const S_END = 0.77;
+    const S_END = 0.86;
     {
       const g = group("Basket");
       const spokes = [];
@@ -34504,12 +34545,15 @@ void main() {
           out.push(faceGrid(nu, 2, (u, v) => P3(lerp2(xA, xB, u), sB, lerp2(offA, offB, v))));
           return mergeGeos(out);
         };
-        spokes.push(slab({ xA: -1, xB: 1, sA: 0, sB: S_END, offA: -0.3, offB: 0, nu: 10, nv: 80 }));
-        for (const [xa, xb] of [[-1, -0.86], [0.86, 1]]) {
-          rails.push(slab({ xA: xa, xB: xb, sA: 0.04, sB: S_END - 0.02, offA: 0, offB: 0.2, nu: 2, nv: 80 }));
+        spokes.push(slab({ xA: -1, xB: 1, sA: 0, sB: S_END, offA: -0.34, offB: 0, nu: 10, nv: 80 }));
+        for (const [xa, xb] of [[-1, -0.82], [0.82, 1]]) {
+          rails.push(slab({ xA: xa, xB: xb, sA: 0.03, sB: S_END - 0.02, offA: 0, offB: 0.22, nu: 2, nv: 80 }));
         }
-        for (const s0 of [0.4, 0.47, 0.54, 0.61]) {
-          ribs.push(slab({ xA: -0.86, xB: 0.86, sA: s0, sB: s0 + 0.026, offA: 0, offB: 0.13, nu: 10, nv: 3 }));
+        for (const [xa, xb] of [[-0.98, -0.86], [0.86, 0.98]]) {
+          rails.push(slab({ xA: xa, xB: xb, sA: 0.05, sB: S_END - 0.04, offA: 0.18, offB: 0.27, nu: 2, nv: 80 }));
+        }
+        for (const s0 of [0.36, 0.43, 0.5, 0.57, 0.64]) {
+          ribs.push(slab({ xA: -0.82, xB: 0.82, sA: s0, sB: s0 + 0.03, offA: 0, offB: 0.17, nu: 10, nv: 3 }));
         }
       }
       add(g, mergeGeos(spokes), M.gloss, "Spokes");
@@ -34524,9 +34568,9 @@ void main() {
       }
       add(g, latheZ(neckProf, { segments: seg, crease: 50 }), M.gloss, "Neck");
       const terr = [];
-      for (const s0 of [0.8, 0.865, 0.93]) {
+      for (const s0 of [0.78, 0.835, 0.89, 0.945]) {
         const pr = [];
-        for (const [ds, off] of [[-0.035, 0], [-0.02, 0.16], [0.02, 0.16], [0.035, 0]]) {
+        for (const [ds, off] of [[-0.03, 0], [-0.03, 0.2], [0.03, 0.2], [0.03, 0]]) {
           const q = shell(s0 + ds);
           pr.push([q.r + off * q.nr, q.z + off * q.nz]);
         }
@@ -34537,7 +34581,7 @@ void main() {
     {
       const g = group("Terminals");
       const phi = P2.terminalPhi * DEG;
-      const s0 = 0.64;
+      const s0 = 0.84;
       const q = shell(s0);
       const origin = shellPoint(s0, phi, 0);
       const nrm = new V3(Math.cos(phi) * q.nr, Math.sin(phi) * q.nr, q.nz).normalize();
@@ -34549,24 +34593,24 @@ void main() {
         m.setPosition(origin.clone().addScaledVector(tangP, x).addScaledVector(along, y).addScaledVector(nrm, n));
         return geo.applyMatrix4(m);
       };
-      const cup = place(new BoxGeometry(2, 1.75, 0.55), 0, 0, 0.05);
+      const cup = place(new BoxGeometry(1.7, 1.5, 0.6), 0, 0, 0.1);
       cup.deleteAttribute("uv");
       add(g, finishGeometry(addUV0(cup), 30), M.blackPlastic, "TerminalCup");
       const posts = [];
       const rings = [];
       const whites = [];
-      for (const x of [-0.42, 0.42]) {
-        const post = new CylinderGeometry(0.115, 0.115, 0.8, 20);
+      for (const x of [-0.38, 0.38]) {
+        const post = new CylinderGeometry(0.15, 0.15, 0.9, 20);
         post.rotateX(Math.PI / 2);
-        place(post, x, 0.15, 0.55);
+        place(post, x, 0.15, 0.7);
         posts.push(post);
-        const ring = new CylinderGeometry(0.122, 0.122, 0.07, 20);
+        const ring = new CylinderGeometry(0.16, 0.16, 0.08, 20);
         ring.rotateX(Math.PI / 2);
-        place(ring, x, 0.15, 0.4);
+        place(ring, x, 0.15, 0.55);
         rings.push(ring);
-        const wt = new CylinderGeometry(0.122, 0.122, 0.05, 20);
+        const wt = new CylinderGeometry(0.16, 0.16, 0.06, 20);
         wt.rotateX(Math.PI / 2);
-        place(wt, x, 0.15, 0.31);
+        place(wt, x, 0.15, 0.47);
         whites.push(wt);
       }
       add(g, mergeGeos(posts), M.nickel, "TerminalPosts");
@@ -34620,7 +34664,7 @@ void main() {
       for (let i = 0; i <= N; i++) {
         const t = i / N;
         const r = lerp2(rc, plateR, t);
-        const z = zr - dome * Math.pow(t, 1.6);
+        const z = zr - dome * Math.pow(t, 1.15);
         dish.push([r, z]);
       }
       add(g, latheZ(dish, { segments: seg, crease: 60 }), M.chrome, "ChromeDish");
@@ -34630,14 +34674,14 @@ void main() {
       add(g, bore, M.nickel, "VentBore");
       const holes = [];
       const dark = [];
-      const ringsOf = [[12, plateR * 0.84, 0], [8, plateR * 0.58, 22.5]];
+      const ringsOf = [[16, plateR * 0.86, 0], [8, plateR * 0.6, 22.5]];
       for (const [n, rr, off] of ringsOf) {
         for (let i = 0; i < n; i++) {
           const a = (off + i * 360 / n) * DEG;
-          const ferrule = latheZ([[0.075, zp - 0.02], [0.062, zp - 0.025], [0.05, zp - 0.012], [0.05, zp + 0.1]], { segments: 14, crease: 50 });
+          const ferrule = latheZ([[0.098, zp - 0.02], [0.082, zp - 0.03], [0.065, zp - 0.012], [0.065, zp + 0.1]], { segments: 14, crease: 50 });
           ferrule.translate(rr * Math.cos(a), rr * Math.sin(a), 0);
           holes.push(ferrule);
-          const d = latheZ([[0, zp - 5e-3], [0.05, zp - 5e-3]], { segments: 14 });
+          const d = latheZ([[0, zp - 5e-3], [0.065, zp - 5e-3]], { segments: 14 });
           d.translate(rr * Math.cos(a), rr * Math.sin(a), 0);
           dark.push(d);
         }
@@ -34647,6 +34691,10 @@ void main() {
         add(g, mergeGeos(dark), M.blackPlastic, "VentHoles");
       }
     }
+    for (const n of ["Basket", "Terminals", "MotorFront", "MotorBand", "EndCap"]) {
+      const g = root.getObjectByName(n);
+      if (g) g.rotation.z = (P2.motorTwist || 0) * DEG;
+    }
     return root;
   }
   function addUV0(g) {
@@ -34655,7 +34703,7 @@ void main() {
   }
 
   // src/env.js
-  function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0.16, 0.08], panelGain = 1, flags = [] } = {}) {
+  function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0.16, 0.08], panelGain = 1, flags = [], bars = 0, flagColor = 328965 } = {}) {
     const scene = new Scene();
     const skyMat = new ShaderMaterial({
       side: BackSide,
@@ -34683,8 +34731,14 @@ void main() {
       scene.add(m);
       return m;
     };
-    for (const [w, h, pos] of flags) {
-      const f = new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ color: 328965, side: DoubleSide }));
+    const rnd = rng(4);
+    const all = [...flags];
+    for (let k = 0; k < bars; k++) {
+      const a = (k * 360 / bars + (rnd() - 0.5) * 30) * (Math.PI / 180);
+      all.push([8 + rnd() * 6, 60, [26 * Math.sin(a), (rnd() - 0.5) * 8, 26 * Math.cos(a)]]);
+    }
+    for (const [w, h, pos] of all) {
+      const f = new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ color: flagColor, side: DoubleSide }));
       f.position.set(...pos);
       f.lookAt(0, 0, 0);
       scene.add(f);
@@ -34693,8 +34747,11 @@ void main() {
     panel(34, 9, [0, -16, 15], 5);
     panel(7, 24, [-24, 2, 8], 5);
     panel(9, 24, [24, 2, 8], 6);
-    panel(20, 7, [0, 8, -24], 5);
-    panel(8, 8, [10, 22, -6], 5);
+    panel(24, 9, [0, 8, -24], 8);
+    panel(8, 8, [10, 22, -6], 6);
+    panel(4, 26, [-14, 2, -22], 7);
+    panel(4, 26, [14, 2, -22], 7);
+    panel(30, 4, [0, 16, -14], 7);
     const pm = new PMREMGenerator(renderer);
     const rt = pm.fromScene(scene, 0.02);
     pm.dispose();
@@ -34732,10 +34789,10 @@ void main() {
       scene.environment = createStudioEnvironment(renderer);
       scene.environmentIntensity = 1;
     }
-    const brightEnv = silhouette2 ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [0.7, 0.4, 0.2], panelGain: 1, flags: [[22, 14, [-20, -6, 6]], [18, 12, [16, -14, -10]], [14, 30, [-6, 2, -26]]] });
+    const brightEnv = silhouette2 ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [1.25, 0.9, 0.5], panelGain: 1, bars: 6, flagColor: 2500134 });
     const camera = new PerspectiveCamera(24, width / height, 1, 400);
     camera.position.set(0, 0, 60);
-    const state = { P: P2, textures, quality: quality2, silhouette: silhouette2, root: null, spin: 0, frozen: !!frozen };
+    const state = { P: P2, textures, quality: quality2, silhouette: silhouette2, root: null, spin: 0, roll: 0, frozen: !!frozen };
     const stage = new Group();
     scene.add(stage);
     function rebuild(Pover) {
@@ -34769,7 +34826,7 @@ void main() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
-    function setPose({ yaw = 0, pitch = 0, roll = 0, dist = 60, fov: fov2 = 24, target = [0, 0, -3.5], spin = 0, shiftX = 0, shiftY = 0 }) {
+    function setPose({ yaw = 0, pitch = 0, roll = 0, dist = 60, fov: fov2 = 24, target = [0, 0, -3.5], spin = 0, shiftX = 0, shiftY = 0, crop = null, rollMode = "camera" }) {
       const t = new Vector3(...target);
       const cp = Math.cos(pitch * Math.PI / 180);
       camera.position.set(
@@ -34779,10 +34836,19 @@ void main() {
       );
       camera.up.set(0, 1, 0);
       camera.lookAt(t);
+      state.roll = roll;
+      stage.quaternion.identity();
+      stage.position.set(0, 0, 0);
       if (roll) {
         const axis = new Vector3().subVectors(t, camera.position).normalize();
-        camera.up.applyAxisAngle(axis, roll * Math.PI / 180);
-        camera.lookAt(t);
+        if (rollMode === "stage") {
+          const q = new Quaternion().setFromAxisAngle(axis, -roll * Math.PI / 180);
+          stage.quaternion.copy(q);
+          stage.position.copy(t).sub(t.clone().applyQuaternion(q));
+        } else {
+          camera.up.applyAxisAngle(axis, roll * Math.PI / 180);
+          camera.lookAt(t);
+        }
       }
       camera.fov = fov2;
       controls.target.copy(t);
@@ -34790,7 +34856,11 @@ void main() {
       if (state.root) state.root.rotation.z = state.spin;
       const w = renderer.domElement.width;
       const h = renderer.domElement.height;
-      if (shiftX || shiftY) camera.setViewOffset(w, h, -shiftX * w, -shiftY * h, w, h);
+      if (crop) {
+        const [x0, y0, x1, y1, fw, fh] = crop;
+        camera.aspect = fw / fh;
+        camera.setViewOffset(fw, fh, x0, y0, x1 - x0, y1 - y0);
+      } else if (shiftX || shiftY) camera.setViewOffset(w, h, -shiftX * w, -shiftY * h, w, h);
       else camera.clearViewOffset();
       camera.updateProjectionMatrix();
       camera.updateMatrixWorld();
@@ -34804,10 +34874,11 @@ void main() {
 
   // src/views.js
   var VIEWS = [
-    { id: "front", label: "Front", pose: { yaw: 0, pitch: 0, roll: 0, dist: 62, fov: 20, spin: 0, target: [0, 0, -3.5] } },
-    { id: "front34", label: "Front \xBE", pose: { yaw: -42, pitch: 13, roll: 0, dist: 66, fov: 19, spin: 0, target: [0, 0, -3.5] } },
-    { id: "rear34a", label: "Rear \xBE", pose: { yaw: 150, pitch: 28, roll: 0, dist: 62, fov: 19, spin: 0, target: [0, 0, -3.5] } },
-    { id: "rear34b", label: "Rear \xBE II", pose: { yaw: -150, pitch: 28, roll: 0, dist: 66, fov: 19, spin: 0, target: [0, 0, -3.5] } }
+    { id: "front", label: "Front", pose: { "yaw": 0, "pitch": 0, "roll": 0, "dist": 68.4, "fov": 17.8, "spin": 0, "target": [0, 0, -3.5] } },
+    { id: "p4", label: "Front \xBE", pose: { "yaw": -43.7, "pitch": -3.1, "roll": -13.3, "dist": 39.2, "fov": 33.3, "spin": 350, "target": [0, 0, -3.5] } },
+    { id: "p1", label: "Rear \xBE", pose: { "yaw": 129.7, "pitch": 1.6, "roll": -52.2, "dist": 39.5, "fov": 33.3, "spin": 95, "target": [0, 0, -3.5] } },
+    { id: "p2", label: "Rear \xBE II", pose: { "yaw": -130.4, "pitch": 6.6, "roll": 37.1, "dist": 42, "fov": 33.3, "spin": 352, "target": [0, 0, -3.5] } },
+    { id: "cone", label: "Cone", pose: { "yaw": -43.7, "pitch": -3.1, "roll": -13.3, "dist": 26, "fov": 33.3, "spin": 350, "target": [0, 0, -1.2] } }
   ];
 
   // src/main.js
@@ -35036,7 +35107,7 @@ void main() {
     const c = viewer.controls;
     c.autoRotate = true;
     c.autoRotateSpeed = 0.9;
-    viewer.setPose(VIEWS[0].pose);
+    viewer.setPose({ ...VIEWS[1].pose, rollMode: "stage" });
     c.addEventListener("start", () => {
       c.autoRotate = false;
       setPressed(rotBtn, false);
@@ -35056,11 +35127,11 @@ void main() {
       const t = c.target;
       const d = viewer.camera.position.clone().sub(t);
       const dist = d.length();
-      return { yaw: Math.atan2(d.x, d.z) * 180 / Math.PI, pitch: Math.asin(d.y / dist) * 180 / Math.PI, dist, fov: viewer.camera.fov, spin: viewer.state.spin * 180 / Math.PI, target: [t.x, t.y, t.z] };
+      return { yaw: Math.atan2(d.x, d.z) * 180 / Math.PI, pitch: Math.asin(d.y / dist) * 180 / Math.PI, roll: viewer.state.roll || 0, dist, fov: viewer.camera.fov, spin: viewer.state.spin * 180 / Math.PI, target: [t.x, t.y, t.z] };
     };
     const flyTo = (pose) => {
       const a = cur();
-      const b = { ...pose, roll: 0 };
+      const b = { ...pose };
       let dy = (b.yaw - a.yaw + 540) % 360 - 180;
       fly = { a, b, dy, t0: performance.now(), dur: 900 };
       c.autoRotate = false;
@@ -35078,7 +35149,8 @@ void main() {
         fov: a.fov + (b.fov - a.fov) * e,
         spin: a.spin + (b.spin - a.spin) * e,
         target: a.target.map((v, i) => v + (b.target[i] - v) * e),
-        roll: 0
+        roll: a.roll + (b.roll - a.roll) * e,
+        rollMode: "stage"
       });
       if (k >= 1) fly = null;
     };

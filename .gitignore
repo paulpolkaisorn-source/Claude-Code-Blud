@@ -6,3 +6,5 @@ subwoofer/fit2.pid
 subwoofer/fit3.pid
 subwoofer/out_smoke.png
 subwoofer/nohup.out
+subwoofer/dist/glbview.html
+subwoofer/tools/*_stage*.json

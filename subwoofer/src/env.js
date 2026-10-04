@@ -1,11 +1,12 @@
 import * as THREE from 'three';
+import { rng } from './util.js';
 
 /**
  * Procedural product-photo studio used for image based lighting: a white cyclorama, a few big
  * softboxes (these produce the window-shaped reflections you see on the lacquered carbon and the
  * chrome in the photos) and a darker floor.
  */
-export function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0.16, 0.08], panelGain = 1, flags = [] } = {}) {
+export function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0.16, 0.08], panelGain = 1, flags = [], bars = 0, flagColor = 0x050505 } = {}) {
   const scene = new THREE.Scene();
 
   const skyMat = new THREE.ShaderMaterial({
@@ -36,9 +37,15 @@ export function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0
     return m;
   };
   // key softbox above & in front, fill from below-front, strips on both sides, rim from behind
-  // black flags (cards) give polished metal the dark reflections it has in a real studio
-  for (const [w, h, pos] of flags) {
-    const f = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0x050505, side: THREE.DoubleSide }));
+  // dark flags (cards) give polished metal the dark reflections it has in a real studio
+  const rnd = rng(4);
+  const all = [...flags];
+  for (let k = 0; k < bars; k++) {
+    const a = ((k * 360) / bars + (rnd() - 0.5) * 30) * (Math.PI / 180);
+    all.push([8 + rnd() * 6, 60, [26 * Math.sin(a), (rnd() - 0.5) * 8, 26 * Math.cos(a)]]);
+  }
+  for (const [w, h, pos] of all) {
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: flagColor, side: THREE.DoubleSide }));
     f.position.set(...pos);
     f.lookAt(0, 0, 0);
     scene.add(f);
@@ -47,8 +54,11 @@ export function createStudioEnvironment(renderer, { exposure = 1, sky = [0.55, 0
   panel(34, 9, [0, -16, 15], 5);
   panel(7, 24, [-24, 2, 8], 5);
   panel(9, 24, [24, 2, 8], 6);
-  panel(20, 7, [0, 8, -24], 5);
-  panel(8, 8, [10, 22, -6], 5);
+  panel(24, 9, [0, 8, -24], 8);
+  panel(8, 8, [10, 22, -6], 6);
+  panel(4, 26, [-14, 2, -22], 7);
+  panel(4, 26, [14, 2, -22], 7);
+  panel(30, 4, [0, 16, -14], 7);
 
   const pm = new THREE.PMREMGenerator(renderer);
   const rt = pm.fromScene(scene, 0.02);

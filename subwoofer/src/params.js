@@ -2,8 +2,8 @@
 // front photo). Z = 0 is the front face of the mounting flange.
 export const P = {
   R: 8.0, // flange outer radius
-  flangeInner: 6.93,
-  flangeT: 0.253,
+  flangeInner: 6.5,
+  flangeT: 0.45,
   mountR: 7.58,
   mountHoleR: 0.06,
   plateR: 7.52,
@@ -12,30 +12,33 @@ export const P = {
   // surround (rubber roll)
   roll: {
     pts: [
-      [5.52, 0.1], [5.58, 0.182], [5.78, 0.352], [6.1, 0.517], [6.5, 0.605], [6.86, 0.552], [7.06, 0.382], [7.13, 0.182], [7.14, 0.02],
+      [5.52, 0.1], [5.55, 0.5], [5.7, 0.95], [6.0, 1.3], [6.45, 1.5], [6.85, 1.4], [7.05, 1.0], [7.12, 0.5], [7.14, 0.02],
     ],
   },
 
   // cone + dust cap
-  cone: { rTop: 5.52, zTop: 0.1, capR: 2.52, depth: 3.5, power: 1.75 },
+  cone: { rTop: 5.52, zTop: 0.1, capR: 2.18, depth: 3.5, power: 1.75 },
   cap: { height: 1.0 },
   weave: { tile: 0.7, rotDeg: 38 },
 
   // basket
   basketPts: [
-    [6.95, -0.3], [6.7, -0.929], [6.3, -1.837], [5.8, -2.815], [5.3, -3.794], [4.8, -4.632], [4.4, -5.191], [4, -5.541],
+    [6.95, -0.45], [6.7, -1.0], [6.3, -1.796], [5.8, -2.748], [5.3, -3.7], [4.8, -4.516], [4.4, -5.06], [4.0, -5.4],
   ],
+  motorTwist: 35, // deg, clocking of the basket/motor relative to the cone logo and flange plates
   spokeCount: 4,
   spokePhi0: 45, // deg, centre of first spoke (model angle)
-  terminalPhi: 90, // deg, centre of the terminal bay
+  terminalPhi: 180, // deg, centre of the terminal bay
 
   // motor
   funnel: [
-    [3.95, -5.541], [4.212, -5.695], [4.471, -5.926], [4.772, -6.247], [5.038, -6.569], [5.188, -6.761], [5.236, -6.826],
+    [3.95, -5.4], [4.221, -5.582], [4.489, -5.856], [4.8, -6.236], [5.076, -6.616], [5.23, -6.844], [5.281, -6.92],
   ],
-  band: { r: 5.382, z0: -6.826, z1: -10.329 },
-  endCap: { r: 4.829, recess: 0.14, dome: 0.22, plateR: 1.85, boreR: 0.62 },
+  band: { r: 5.494, z0: -6.92, z1: -10.8 },
+  endCap: { r: 4.98, recess: 0.3, dome: 0.62, plateR: 2.2, boreR: 0.72 },
 
-  // band lettering layout (angles around the band, degrees; u=0 at model +X, CCW seen from the front)
-  bandLayout: { text: [45, 225], alien: 315, bee: 135, alienRot: 0, beeRot: 0.35 },
+  // band lettering layout (angles around the band, degrees; u=0 at model +X, CCW seen from the front).
+  // Measured from the photos: items sit on a ~45 degree pitch: text, bee, text, alien, text, bee, text, alien.
+  // The terminal bay (terminalPhi) sits just after the first bee.
+  bandLayout: { text: [120, 210, 300, 30], bee: [165, 345], alien: [255, 75], alienRot: 0, beeRot: 0.35 },
 };

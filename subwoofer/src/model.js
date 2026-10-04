@@ -63,7 +63,7 @@ export function makeMaterials({ textures = true, silhouette = false, P = DEFAULT
     name: 'ConeBackGloss', color: 0x030303, roughness: 0.1, metalness: 0.0, clearcoat: 1, clearcoatRoughness: 0.03, side: THREE.BackSide,
   });
   M.rubber = new THREE.MeshPhysicalMaterial({
-    name: 'SurroundRubber', color: 0x303033, roughness: 0.52, metalness: 0.0, sheen: 0.4, sheenRoughness: 0.5, sheenColor: new THREE.Color(0x777777), side: THREE.DoubleSide,
+    name: 'SurroundRubber', color: 0x1c1c20, roughness: 0.5, metalness: 0.0, sheen: 0.25, sheenRoughness: 0.5, sheenColor: new THREE.Color(0x555555), side: THREE.DoubleSide,
   });
   M.thread = new THREE.MeshStandardMaterial({ name: 'Thread', color: 0x000000, roughness: 1.0, metalness: 0.0, envMapIntensity: 0.0 });
   M.tape = new THREE.MeshStandardMaterial({ name: 'SeamTape', color: 0x080808, roughness: 0.55 });
@@ -81,7 +81,7 @@ export function makeMaterials({ textures = true, silhouette = false, P = DEFAULT
     const carbon = makeCarbon();
     M.carbon = new THREE.MeshPhysicalMaterial({
       name: 'CarbonFibre', map: carbon.map, normalMap: carbon.normalMap, normalScale: new THREE.Vector2(0.9, 0.9),
-      roughnessMap: carbon.roughnessMap, roughness: 1, metalness: 0.0, clearcoat: 1, clearcoatRoughness: 0.035, side: THREE.FrontSide,
+      roughnessMap: carbon.roughnessMap, roughness: 1, metalness: 0.0, specularIntensity: 0.35, clearcoat: 1, clearcoatRoughness: 0.035, side: THREE.FrontSide,
       color: 0xffffff,
     });
     const flange = makeFlangeDecals({ R: P.R, plateR: P.plateR, plateAngles: P.plateAnglesCW, arcTexts: [
@@ -93,7 +93,7 @@ export function makeMaterials({ textures = true, silhouette = false, P = DEFAULT
     });
     const circ = TAU * P.band.r;
     const h = Math.abs(P.band.z0 - P.band.z1);
-    const band = makeBand({ circumference: circ, height: h, pxPerIn: 230, layout: P.bandLayout });
+    const band = makeBand({ circumference: circ, height: h, pxPerIn: 230, layout: P.bandLayout, debug: !!P.debugBand });
     M.band = new THREE.MeshPhysicalMaterial({
       name: 'MotorBand', color: 0xffffff, map: band.map, normalMap: band.normalMap, normalScale: new THREE.Vector2(1, 1),
       roughness: 0.72, metalness: 0.05, side: THREE.DoubleSide,
@@ -286,13 +286,15 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
   };
   const SPOKES = P.spokeCount;
   const halfAngle = (s) => {
-    // radians: narrow spoke, flaring into the rim at the top and into the solid neck at the bottom
-    const base = lerp(16, 21, smoothstep(0, 0.7, s));
-    const top = 13 * (1 - smoothstep(0.0, 0.12, s));
-    const bottom = (180 / SPOKES - base) * smoothstep(0.58, 0.76, s);
+    // radians: narrow spoke; solid collar at the flange, flaring into the solid neck at the bottom
+    const base = lerp(12.5, 16, smoothstep(0, 0.7, s));
+    const full = 180 / SPOKES;
+    const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * t * (t * (t * 6 - 15) + 10); };
+    const top = (full - base) * (1 - sm(0.04, 0.26, s));
+    const bottom = (full - base) * sm(0.48, 0.84, s);
     return (base + top + bottom) * DEG;
   };
-  const S_END = 0.77;
+  const S_END = 0.86;
   {
     const g = group('Basket');
     const spokes = [];
@@ -311,14 +313,17 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
         out.push(faceGrid(nu, 2, (u, v) => P3(lerp(xA, xB, u), sB, lerp(offA, offB, v))));
         return mergeGeos(out);
       };
-      spokes.push(slab({ xA: -1, xB: 1, sA: 0.0, sB: S_END, offA: -0.3, offB: 0.0, nu: 10, nv: 80 }));
+      spokes.push(slab({ xA: -1, xB: 1, sA: 0.0, sB: S_END, offA: -0.34, offB: 0.0, nu: 10, nv: 80 }));
       // raised side rails (the "tub" edges seen on the cast spokes)
-      for (const [xa, xb] of [[-1, -0.86], [0.86, 1]]) {
-        rails.push(slab({ xA: xa, xB: xb, sA: 0.04, sB: S_END - 0.02, offA: 0, offB: 0.2, nu: 2, nv: 80 }));
+      for (const [xa, xb] of [[-1, -0.82], [0.82, 1]]) {
+        rails.push(slab({ xA: xa, xB: xb, sA: 0.03, sB: S_END - 0.02, offA: 0, offB: 0.22, nu: 2, nv: 80 }));
+      }
+      for (const [xa, xb] of [[-0.98, -0.86], [0.86, 0.98]]) {
+        rails.push(slab({ xA: xa, xB: xb, sA: 0.05, sB: S_END - 0.04, offA: 0.18, offB: 0.27, nu: 2, nv: 80 }));
       }
       // cross ribs near the neck
-      for (const s0 of [0.4, 0.47, 0.54, 0.61]) {
-        ribs.push(slab({ xA: -0.86, xB: 0.86, sA: s0, sB: s0 + 0.026, offA: 0, offB: 0.13, nu: 10, nv: 3 }));
+      for (const s0 of [0.36, 0.43, 0.5, 0.57, 0.64]) {
+        ribs.push(slab({ xA: -0.82, xB: 0.82, sA: s0, sB: s0 + 0.03, offA: 0, offB: 0.17, nu: 10, nv: 3 }));
       }
     }
     add(g, mergeGeos(spokes), M.gloss, 'Spokes');
@@ -335,9 +340,9 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
     }
     add(g, latheZ(neckProf, { segments: seg, crease: 50 }), M.gloss, 'Neck');
     const terr = [];
-    for (const s0 of [0.8, 0.865, 0.93]) {
+    for (const s0 of [0.78, 0.835, 0.89, 0.945]) {
       const pr = [];
-      for (const [ds, off] of [[-0.035, 0], [-0.02, 0.16], [0.02, 0.16], [0.035, 0]]) {
+      for (const [ds, off] of [[-0.03, 0], [-0.03, 0.2], [0.03, 0.2], [0.03, 0]]) {
         const q = shell(s0 + ds);
         pr.push([q.r + off * q.nr, q.z + off * q.nz]);
       }
@@ -350,7 +355,7 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
   {
     const g = group('Terminals');
     const phi = P.terminalPhi * DEG;
-    const s0 = 0.64;
+    const s0 = 0.84;
     const q = shell(s0);
     const origin = shellPoint(s0, phi, 0.0);
     const nrm = new V3(Math.cos(phi) * q.nr, Math.sin(phi) * q.nr, q.nz).normalize();
@@ -363,25 +368,25 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
       return geo.applyMatrix4(m);
     };
     // shallow black cup plus a shelf
-    const cup = place(new THREE.BoxGeometry(2.0, 1.75, 0.55), 0, 0, 0.05);
+    const cup = place(new THREE.BoxGeometry(1.7, 1.5, 0.6), 0, 0, 0.1);
     cup.deleteAttribute('uv');
     add(g, finishGeometry(addUV0(cup), 30), M.blackPlastic, 'TerminalCup');
     const posts = [];
     const rings = [];
     const whites = [];
-    for (const x of [-0.42, 0.42]) {
-      const post = new THREE.CylinderGeometry(0.115, 0.115, 0.8, 20);
+    for (const x of [-0.38, 0.38]) {
+      const post = new THREE.CylinderGeometry(0.15, 0.15, 0.9, 20);
       post.rotateX(Math.PI / 2); // along +Z local ... then to normal
       // make post axis along local +Z (normal): after rotateX axis is Z already
-      place(post, x, 0.15, 0.55);
+      place(post, x, 0.15, 0.7);
       posts.push(post);
-      const ring = new THREE.CylinderGeometry(0.122, 0.122, 0.07, 20);
+      const ring = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 20);
       ring.rotateX(Math.PI / 2);
-      place(ring, x, 0.15, 0.4);
+      place(ring, x, 0.15, 0.55);
       rings.push(ring);
-      const wt = new THREE.CylinderGeometry(0.122, 0.122, 0.05, 20);
+      const wt = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 20);
       wt.rotateX(Math.PI / 2);
-      place(wt, x, 0.15, 0.31);
+      place(wt, x, 0.15, 0.47);
       whites.push(wt);
     }
     add(g, mergeGeos(posts), M.nickel, 'TerminalPosts');
@@ -441,7 +446,7 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
     for (let i = 0; i <= N; i++) {
       const t = i / N; // 0 at the rim -> 1 at the plate edge
       const r = lerp(rc, plateR, t);
-      const z = zr - dome * Math.pow(t, 1.6);
+      const z = zr - dome * Math.pow(t, 1.15);
       dish.push([r, z]);
     }
     add(g, latheZ(dish, { segments: seg, crease: 60 }), M.chrome, 'ChromeDish');
@@ -454,14 +459,14 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
     // vent holes
     const holes = [];
     const dark = [];
-    const ringsOf = [[12, plateR * 0.84, 0.0], [8, plateR * 0.58, 22.5]];
+    const ringsOf = [[16, plateR * 0.86, 0.0], [8, plateR * 0.6, 22.5]];
     for (const [n, rr, off] of ringsOf) {
       for (let i = 0; i < n; i++) {
         const a = (off + (i * 360) / n) * DEG;
-        const ferrule = latheZ([[0.075, zp - 0.02], [0.062, zp - 0.025], [0.05, zp - 0.012], [0.05, zp + 0.1]], { segments: 14, crease: 50 });
+        const ferrule = latheZ([[0.098, zp - 0.02], [0.082, zp - 0.03], [0.065, zp - 0.012], [0.065, zp + 0.1]], { segments: 14, crease: 50 });
         ferrule.translate(rr * Math.cos(a), rr * Math.sin(a), 0);
         holes.push(ferrule);
-        const d = latheZ([[0, zp - 0.005], [0.05, zp - 0.005]], { segments: 14 });
+        const d = latheZ([[0, zp - 0.005], [0.065, zp - 0.005]], { segments: 14 });
         d.translate(rr * Math.cos(a), rr * Math.sin(a), 0);
         dark.push(d);
       }
@@ -472,6 +477,11 @@ export function buildModel({ P = DEFAULT_P, textures = true, silhouette = false,
     }
   }
 
+  // the motor assembly (basket, terminals, motor band, end cap) is clocked relative to the cone/flange
+  for (const n of ['Basket', 'Terminals', 'MotorFront', 'MotorBand', 'EndCap']) {
+    const g = root.getObjectByName(n);
+    if (g) g.rotation.z = (P.motorTwist || 0) * DEG;
+  }
   return root;
 }
 

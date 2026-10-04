@@ -22,12 +22,12 @@ export function createViewer({
     scene.environmentIntensity = 1.0;
   }
   // polished metals reflect a bright white cyclorama, lacquered black parts a dark studio with softboxes
-  const brightEnv = silhouette ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [0.7, 0.4, 0.2], panelGain: 1.0, flags: [[22, 14, [-20, -6, 6]], [18, 12, [16, -14, -10]], [14, 30, [-6, 2, -26]]] });
+  const brightEnv = silhouette ? null : createStudioEnvironment(renderer, window.__envBright || { sky: [1.25, 0.9, 0.5], panelGain: 1.0, bars: 6, flagColor: 0x262626 });
 
   const camera = new THREE.PerspectiveCamera(24, width / height, 1, 400);
   camera.position.set(0, 0, 60);
 
-  const state = { P, textures, quality, silhouette, root: null, spin: 0, frozen: !!frozen };
+  const state = { P, textures, quality, silhouette, root: null, spin: 0, roll: 0, frozen: !!frozen };
   const stage = new THREE.Group();
   scene.add(stage);
 
@@ -65,7 +65,7 @@ export function createViewer({
    * a roll around the view axis, a lens, a spin of the object about its own axis and an
    * optional principal point shift (fraction of image size).
    */
-  function setPose({ yaw = 0, pitch = 0, roll = 0, dist = 60, fov = 24, target = [0, 0, -3.5], spin = 0, shiftX = 0, shiftY = 0 }) {
+  function setPose({ yaw = 0, pitch = 0, roll = 0, dist = 60, fov = 24, target = [0, 0, -3.5], spin = 0, shiftX = 0, shiftY = 0, crop = null, rollMode = 'camera' }) {
     const t = new THREE.Vector3(...target);
     const cp = Math.cos(pitch * Math.PI / 180);
     camera.position.set(
@@ -75,10 +75,20 @@ export function createViewer({
     );
     camera.up.set(0, 1, 0);
     camera.lookAt(t);
+    state.roll = roll;
+    stage.quaternion.identity();
+    stage.position.set(0, 0, 0);
     if (roll) {
       const axis = new THREE.Vector3().subVectors(t, camera.position).normalize();
-      camera.up.applyAxisAngle(axis, roll * Math.PI / 180);
-      camera.lookAt(t);
+      if (rollMode === 'stage') {
+        // keep the camera upright (so orbit controls keep working) and turn the model about the view axis instead
+        const q = new THREE.Quaternion().setFromAxisAngle(axis, -roll * Math.PI / 180);
+        stage.quaternion.copy(q);
+        stage.position.copy(t).sub(t.clone().applyQuaternion(q));
+      } else {
+        camera.up.applyAxisAngle(axis, roll * Math.PI / 180);
+        camera.lookAt(t);
+      }
     }
     camera.fov = fov;
     controls.target.copy(t);
@@ -86,7 +96,12 @@ export function createViewer({
     if (state.root) state.root.rotation.z = state.spin;
     const w = renderer.domElement.width;
     const h = renderer.domElement.height;
-    if (shiftX || shiftY) camera.setViewOffset(w, h, -shiftX * w, -shiftY * h, w, h);
+    if (crop) {
+      // render only a window [x0,y0,x1,y1] of a larger full frame (used to mimic cropped/zoomed photos)
+      const [x0, y0, x1, y1, fw, fh] = crop;
+      camera.aspect = fw / fh;
+      camera.setViewOffset(fw, fh, x0, y0, x1 - x0, y1 - y0);
+    } else if (shiftX || shiftY) camera.setViewOffset(w, h, -shiftX * w, -shiftY * h, w, h);
     else camera.clearViewOffset();
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();

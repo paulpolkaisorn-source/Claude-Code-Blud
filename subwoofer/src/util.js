@@ -90,6 +90,11 @@ export function finishGeometry(g, crease = 35) {
   out = toCreasedNormals(out, crease * DEG);
   out.deleteAttribute('uv1');
   out = mergeVertices(out, 1e-5);
+  const nrm = out.attributes.normal;
+  for (let i = 0; i < nrm.count; i++) {
+    const l = Math.hypot(nrm.getX(i), nrm.getY(i), nrm.getZ(i)) || 1;
+    nrm.setXYZ(i, nrm.getX(i) / l, nrm.getY(i) / l, nrm.getZ(i) / l);
+  }
   out.computeBoundingBox();
   out.computeBoundingSphere();
   return out;
@@ -114,7 +119,13 @@ export function mergeGeos(list) {
   m.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   m.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
   m.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
-  return mergeVertices(m, 1e-5);
+  const out = mergeVertices(m, 1e-5);
+  const nrm = out.attributes.normal;
+  for (let i = 0; i < nrm.count; i++) {
+    const l = Math.hypot(nrm.getX(i), nrm.getY(i), nrm.getZ(i)) || 1;
+    nrm.setXYZ(i, nrm.getX(i) / l, nrm.getY(i) / l, nrm.getZ(i) / l);
+  }
+  return out;
 }
 
 /**

@@ -119,7 +119,7 @@ export function makeCarbon({ tile = 512, tows = 8 } = {}) {
 /* ------------------------------------------------------------------------------------------ */
 /* Motor-cover band: cylindrical wrap, 3.1" tall.                                              */
 /* ------------------------------------------------------------------------------------------ */
-export function makeBand({ circumference, height, pxPerIn = 240, layout }) {
+export function makeBand({ circumference, height, pxPerIn = 240, layout, debug = false }) {
   const W = Math.round(circumference * pxPerIn);
   const H = Math.round(height * pxPerIn);
   const rand = rng(11);
@@ -129,7 +129,7 @@ export function makeBand({ circumference, height, pxPerIn = 240, layout }) {
   const c = cc.getContext('2d');
   h.fillStyle = 'rgb(140,140,140)';
   h.fillRect(0, 0, W, H);
-  c.fillStyle = '#3d3d40';
+  c.fillStyle = '#58585c';
   c.fillRect(0, 0, W, H);
 
   const angX = (deg) => ((((deg % 360) + 360) % 360) / 360) * W;
@@ -148,11 +148,11 @@ export function makeBand({ circumference, height, pxPerIn = 240, layout }) {
       const stretch = (r.w * pp) / natural;
       const x0 = cxPx - (r.w * pp) / 2 + r.dx * pp;
       // outline (groove) first, then raised face
-      for (const [ctx, col, extra] of [[h, 'rgb(40,40,40)', 0.9], [c, '#0b0b0c', 0.9]]) {
+      for (const [ctx, col, extra] of [[h, 'rgb(40,40,40)', 0.9], [c, '#121213', 0.9]]) {
         drawWord(ctx, r.t, x0, y, hp, { thickness: r.th + extra, skew: r.skew, gap: 0.45, stretch, color: col, join: 'miter' });
       }
       drawWord(h, r.t, x0, y, hp, { thickness: r.th - 0.15, skew: r.skew, gap: 0.45, stretch, color: 'rgb(235,235,235)' });
-      drawWord(c, r.t, x0, y, hp, { thickness: r.th - 0.15, skew: r.skew, gap: 0.45, stretch, color: '#47474a' });
+      drawWord(c, r.t, x0, y, hp, { thickness: r.th - 0.15, skew: r.skew, gap: 0.45, stretch, color: '#606064' });
       y += hp * 1.28;
     }
   };
@@ -168,17 +168,24 @@ export function makeBand({ circumference, height, pxPerIn = 240, layout }) {
     const fn = kind === 'alien' ? drawAlienHead : drawBeeLogo;
     fn(h, cxPx, cyPx, s, { fill: 'rgb(190,190,190)', stroke: 'rgb(20,20,20)', line: 0.035, mode: 'plate' });
     fn(h, cxPx, cyPx, s, { fill: 'rgb(190,190,190)', stroke: 'rgb(20,20,20)', line: 0.035, mode: 'lines' });
-    fn(c, cxPx, cyPx, s, { fill: '#454548', stroke: '#0b0b0c', line: 0.035, mode: 'plate' });
-    fn(c, cxPx, cyPx, s, { fill: '#454548', stroke: '#0b0b0c', line: 0.035, mode: 'lines' });
+    fn(c, cxPx, cyPx, s, { fill: '#5e5e62', stroke: '#101011', line: 0.035, mode: 'plate' });
+    fn(c, cxPx, cyPx, s, { fill: '#5e5e62', stroke: '#101011', line: 0.035, mode: 'lines' });
     h.restore();
     c.restore();
   };
 
   const midY = H * 0.5;
   for (const a of layout.text) textBlock(angX(a), midY);
-  logo('alien', angX(layout.alien), midY, 2.1, layout.alienRot ?? 0);
-  logo('bee', angX(layout.bee), midY, 2.0, layout.beeRot ?? 0);
+  for (const a of [].concat(layout.alien)) logo('alien', angX(a), midY, 2.1, layout.alienRot ?? 0);
+  for (const a of [].concat(layout.bee)) logo('bee', angX(a), midY, 2.0, layout.beeRot ?? 0);
 
+  if (debug) {
+    c.fillStyle = '#ff0000';
+    for (const a of [].concat(layout.bee)) { c.beginPath(); c.arc(angX(a), midY, 0.5 * pp, 0, TAU); c.fill(); }
+    c.fillStyle = '#00ff00';
+    for (const a of [].concat(layout.alien)) { c.beginPath(); c.arc(angX(a), midY, 0.5 * pp, 0, TAU); c.fill(); }
+    layout.text.forEach((a, i) => { c.fillStyle = i ? '#00ffff' : '#0000ff'; c.beginPath(); c.arc(angX(a), midY, 0.5 * pp, 0, TAU); c.fill(); });
+  }
   // bead-blast grain
   const hd = h.getImageData(0, 0, W, H);
   for (let i = 0; i < hd.data.length; i += 4) {
@@ -215,8 +222,8 @@ export function makeFlangeDecals({ R = 8, px = 3072, plateR = 7.52, plateAngles,
     const t = th * DEG; // clockwise from top
     const x = plateR * Math.sin(t);
     const y = plateR * Math.cos(t);
-    const pw = 1.36 * k;
-    const ph = 0.62 * k;
+    const pw = 1.26 * k;
+    const ph = 0.56 * k;
     for (const [ctx, fill] of [[h, 'rgb(105,105,105)'], [c, '#070707'], [r, 'rgb(0,150,0)']]) {
       ctx.save();
       ctx.translate(X(x), Y(y));
@@ -226,7 +233,7 @@ export function makeFlangeDecals({ R = 8, px = 3072, plateR = 7.52, plateAngles,
       ctx.restore();
     }
     // text: SUNDOWN / AUDIO, tiny and tracked, raised inside the recess
-    for (const [ctx, col] of [[h, 'rgb(190,190,190)'], [c, '#4a4a4a'], [r, 'rgb(0,120,0)']]) {
+    for (const [ctx, col] of [[h, 'rgb(170,170,170)'], [c, '#3a3a3a'], [r, 'rgb(0,120,0)']]) {
       ctx.save();
       ctx.translate(X(x), Y(y));
       ctx.rotate(t);
@@ -281,7 +288,7 @@ export function makeDustLogo() {
   const ctx = c.getContext('2d');
   ctx.clearRect(0, 0, W, H);
   // planar front projection covering +-capR*1.1; the logo is about 1.9" wide on a 4.65" dia cap
-  drawSundownLogo(ctx, W * 0.24, H * 0.405, W * 0.52, { color: '#eeeeec' });
+  drawSundownLogo(ctx, W * 0.2, H * 0.415, W * 0.6, { color: '#e9e9e7' });
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 16;

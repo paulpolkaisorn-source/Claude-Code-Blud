@@ -1,0 +1,28 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+window.loadGLB = async (b64, w, h, yaw, pitch) => {
+  const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const canvas = document.getElementById('c');
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  r.setSize(w, h, false);
+  r.toneMapping = THREE.NeutralToneMapping;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
+  scene.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture;
+  const gltf = await new GLTFLoader().parseAsync(bin.buffer, '');
+  scene.add(gltf.scene);
+  const box = new THREE.Box3().setFromObject(gltf.scene);
+  const size = box.getSize(new THREE.Vector3());
+  const info = { size: size.toArray().map((v) => +(v / 0.0254).toFixed(2)), meshes: 0, tris: 0 };
+  gltf.scene.traverse((o) => { if (o.isMesh) { info.meshes++; info.tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; } });
+  const cam = new THREE.PerspectiveCamera(30, w / h, 0.05, 20);
+  const c = box.getCenter(new THREE.Vector3());
+  const d = 1.1;
+  const ya = (yaw * Math.PI) / 180, pa = (pitch * Math.PI) / 180;
+  cam.position.set(c.x + d * Math.cos(pa) * Math.sin(ya), c.y + d * Math.sin(pa), c.z + d * Math.cos(pa) * Math.cos(ya));
+  cam.lookAt(c);
+  r.render(scene, cam);
+  return { url: canvas.toDataURL('image/png'), info };
+};
+window.__glbReady = true;

@@ -186,7 +186,7 @@ function startUI() {
   const c = viewer.controls;
   c.autoRotate = true;
   c.autoRotateSpeed = 0.9;
-  viewer.setPose(VIEWS[0].pose);
+  viewer.setPose({ ...VIEWS[1].pose, rollMode: 'stage' });
   c.addEventListener('start', () => { c.autoRotate = false; setPressed(rotBtn, false); });
 
   const mk = (label, cls, fn) => {
@@ -206,11 +206,11 @@ function startUI() {
     const t = c.target;
     const d = viewer.camera.position.clone().sub(t);
     const dist = d.length();
-    return { yaw: Math.atan2(d.x, d.z) * 180 / Math.PI, pitch: Math.asin(d.y / dist) * 180 / Math.PI, dist, fov: viewer.camera.fov, spin: viewer.state.spin * 180 / Math.PI, target: [t.x, t.y, t.z] };
+    return { yaw: Math.atan2(d.x, d.z) * 180 / Math.PI, pitch: Math.asin(d.y / dist) * 180 / Math.PI, roll: viewer.state.roll || 0, dist, fov: viewer.camera.fov, spin: viewer.state.spin * 180 / Math.PI, target: [t.x, t.y, t.z] };
   };
   const flyTo = (pose) => {
     const a = cur();
-    const b = { ...pose, roll: 0 };
+    const b = { ...pose };
     let dy = ((b.yaw - a.yaw + 540) % 360) - 180;
     fly = { a, b, dy, t0: performance.now(), dur: 900 };
     c.autoRotate = false;
@@ -224,7 +224,7 @@ function startUI() {
     viewer.setPose({
       yaw: a.yaw + dy * e, pitch: a.pitch + (b.pitch - a.pitch) * e, dist: a.dist + (b.dist - a.dist) * e,
       fov: a.fov + (b.fov - a.fov) * e, spin: a.spin + (b.spin - a.spin) * e,
-      target: a.target.map((v, i) => v + (b.target[i] - v) * e), roll: 0,
+      target: a.target.map((v, i) => v + (b.target[i] - v) * e), roll: a.roll + (b.roll - a.roll) * e, rollMode: 'stage',
     });
     if (k >= 1) fly = null;
   };
