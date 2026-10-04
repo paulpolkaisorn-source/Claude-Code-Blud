@@ -431,7 +431,7 @@ export function create(env) {
     exposure: 1.0,
     environment: false,
     shadows: true,
-    bloom: { strength: 0.3, radius: 0.55, threshold: 1.15 },
+    bloom: { strength: 0.14, radius: 0.3, threshold: 1.3 },
     ao: true,
     aoRadius: 0.7,
   });
@@ -453,6 +453,8 @@ export function create(env) {
     };
   }
 
+  // Additive sprites blend in linear space on the composer path (gamma space on the direct path), so tame them there.
+  const AC = stage.composer ? 0.3 : 1;
   const disposables = [];
   const own = (x) => { disposables.push(x); return x; };
 
@@ -714,7 +716,7 @@ export function create(env) {
         uSeed: { value: rand(0, 10) },
         uTone: { value: lerp(0.12, 0.95, u) },
         uWidth: { value: lerp(0.74, 0.4, u) * rand(0.92, 1.08) },
-        uAlpha: { value: lerp(0.38, 0.6, u) * Math.min(1.1, Math.sqrt(3.4 / nLayers)) * (stage.composer ? 0.8 : 1) },
+        uAlpha: { value: lerp(0.38, 0.6, u) * Math.min(1.1, Math.sqrt(3.4 / nLayers)) * (stage.composer ? 0.7 : 1) },
         uHMul: { value: lerp(0.78, 1.0, u) * rand(0.95, 1.05) },
       },
       vertexShader: FLAME_VS,
@@ -1230,7 +1232,7 @@ export function create(env) {
     fireLight.intensity = 46 * lightK * flick;
     fireLight.position.set((n1 - 0.5) * 0.18 + windV.x * 0.1, 1.9 + (n2 - 0.5) * 0.2 + 0.1 * kick, (n2 - 0.5) * 0.14);
     fillLight.intensity = 6.5 * (0.35 + 0.65 * clamp(Ic, 0, 1.2)) * (0.85 + 0.3 * n2);
-    fireGlow.material.opacity = (0.06 + 0.4 * flameOn * Math.min(IcL, 1.1)) * (0.8 + 0.3 * n1 + 0.3 * kick);
+    fireGlow.material.opacity = AC * (0.06 + 0.4 * flameOn * Math.min(IcL, 1.1)) * (0.8 + 0.3 * n1 + 0.3 * kick);
     fireGlow.scale.setScalar(4.5 + 3 * Math.min(IcL, 1.2) + kick);
     fireGlow.position.y = 0.6 + 0.9 * Math.min(IcL, 1);
     scorch.material.opacity = 0.9;
@@ -1299,7 +1301,7 @@ export function create(env) {
     scene.fog.color.copy(skyU.uFog.value);
     scene.fog.density = lerp(A.dens, B.dens, mist);
     stars.material.opacity = lerp(A.stars, B.stars, mist) * (0.92 + 0.08 * Math.sin(time * 1.3));
-    moonGlow.material.opacity = lerp(0.6, 0.38, mist);
+    moonGlow.material.opacity = lerp(0.6, 0.38, mist) * (0.4 + 0.6 * AC);
     moonGlow.scale.setScalar(lerp(52, 78, mist));
     moonDisc.material.opacity = lerp(1, 0.4, mist);
     moonLight.intensity = lerp(0.55, 0.35, mist);

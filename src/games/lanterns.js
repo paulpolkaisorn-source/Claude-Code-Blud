@@ -100,7 +100,7 @@ void main(){
   float g2 = exp(-ang * ang / (0.07 * 0.07));
   float g3 = exp(-ang * ang / (0.26 * 0.26));
   col += vec3(1.0, 0.92, 0.75) * (g1 * 0.16 + g2 * 0.05) + vec3(0.42, 0.5, 0.9) * g3 * 0.03;
-  float ring = exp(-pow((ang - 0.2) / 0.02, 2.0)) * 0.012;
+  float ring = exp(-pow((ang - 0.2) / 0.02, 2.0)) * 0.006;
   col += vec3(0.7, 0.75, 1.0) * ring;
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>
@@ -131,7 +131,7 @@ void main(){
   if (a < 0.01) discard;
   vec3 c = vC * a;
   #ifdef NO_COMPOSER
-  c = pow(c, vec3(0.62));
+  c *= 1.5;
   #endif
   gl_FragColor = vec4(c, 1.0);
 }`;
@@ -180,7 +180,7 @@ void main(){
       g += dv / max(d, 0.001) * cos(w * 7.0) * env * 5.0;
     }
   }
-  float s = 0.019 / (1.0 + dist * 0.09);
+  float s = 0.014 / (1.0 + dist * 0.1);
   vec4 uvp = vUv;
   uvp.xy += vec2(g.x + g.y * 0.25, g.y * 0.4) * s * uvp.w;
   vec3 refl = vec3(0.0);
@@ -310,7 +310,7 @@ void main(){
   if (a < 0.002) discard;
   vec3 o = c * a;
   #ifdef NO_COMPOSER
-  o = pow(o, vec3(0.6));
+  if (vKind.x < 1.5) o *= 1.7;
   #endif
   gl_FragColor = vec4(o, 1.0);
 }`;
@@ -596,7 +596,7 @@ export function create(env) {
   const { audio, bus, hud, root, settings, gfx } = env;
   const lv = gfx.level;
   const maxL = [24, 40, 64, 90, 120, 150][lv];
-  const starCount = Math.round(720 * gfx.particles);
+  const starCount = Math.round(300 + 420 * gfx.particles);
   const sparkPool = Math.round(520 * gfx.particles);
   const flyPool = Math.round(44 * gfx.particles);
   const bodySegs = [14, 18, 24, 32, 40, 48][lv];
@@ -845,7 +845,7 @@ export function create(env) {
   }
 
   // embers falling from lanterns, fireflies
-  const sparks = new Sparkles(sparkPool, { size: 0.085, gravity: -0.5, drag: 0.7 });
+  const sparks = new Sparkles(sparkPool, { size: 0.12, gravity: -0.5, drag: 0.7 });
   sparks.points.renderOrder = 5;
   scene.add(sparks.points);
   const flies = new Sparkles(flyPool, { size: 0.11, drag: 0.08 });

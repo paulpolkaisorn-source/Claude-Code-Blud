@@ -394,8 +394,8 @@ export function create(env) {
       const tint = base.clone().multiplyScalar(0.85);
       const shell = useTransmission
         ? new THREE.MeshPhysicalMaterial({
-          color: tint.clone().lerp(new THREE.Color('#ffffff'), 0.35), transmission: 0.96, thickness: 0.5, ior: 1.5, roughness: 0.03, metalness: 0,
-          attenuationColor: base, attenuationDistance: 1.5, clearcoat: 1, clearcoatRoughness: 0.02,
+          color: tint, transmission: 1, thickness: 0.55, ior: 1.5, roughness: 0.03, metalness: 0,
+          attenuationColor: base, attenuationDistance: 0.8, clearcoat: 1, clearcoatRoughness: 0.02,
           specularIntensity: 1, envMapIntensity: 1.7,
         })
         : new THREE.MeshStandardMaterial({
@@ -651,7 +651,7 @@ export function create(env) {
     if (!spend(vn > 3 ? 0.8 : 1.15)) return;
     const pan = worldPan((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
     const f = (r) => clamp(540 / r, 1500, 5200) * rand(0.97, 1.03);
-    const lvl = 0.025 + 0.15 * Math.pow(s, 0.9);
+    const lvl = 0.02 + 0.115 * Math.pow(s, 0.9);
     const vel = 0.25 + 0.75 * s;
     audio.bell(bus, {
       freq: f(a.r), gain: lvl, pan, send: 0.3, vel, decay: 0.2 + 0.28 * s,
@@ -674,7 +674,7 @@ export function create(env) {
     const pan = worldPan(m.x, m.y, m.z);
     const h = clamp((m.y + R) / (R + Y_RIM + 0.5), 0, 1);
     const fb = (520 + 150 * h) * rand(0.985, 1.015);
-    const lvl = 0.03 + 0.16 * Math.pow(s, 0.85);
+    const lvl = 0.025 + 0.12 * Math.pow(s, 0.85);
     audio.bell(bus, {
       freq: fb, gain: lvl, pan, send: 0.45, vel: 0.3 + 0.7 * s, decay: 0.3 + 0.7 * s,
       partials: [[1, 1, 1], [2.32, 0.5, 0.6], [4.17, 0.28, 0.4], [6.63, 0.12, 0.25]],
@@ -1067,7 +1067,7 @@ export function create(env) {
     if (audio.ready && rollLow) {
       const e = 1 - Math.exp(-rollE / 7);
       const pan = clamp(rollX / 2.2, -0.8, 0.8);
-      rollLow.set({ gain: 0.2 * Math.pow(e, 1.15), freq: 240 + 760 * e, pan }, 0.06);
+      rollLow.set({ gain: 0.15 * Math.pow(e, 1.15), freq: 240 + 760 * e, pan }, 0.06);
       rollGrit.set({ gain: 0.045 * Math.pow(e, 1.6), freq: 1700 + 2300 * e, pan }, 0.06);
       rollRes.set({ gain: 0.03 * Math.pow(e, 1.3), freq: 640 + 360 * e, pan }, 0.08);
     }
