@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Wallpaper 4K</string>
+    <string name="live_wallpaper_label">Wallpaper 4K Video</string>
+    <string name="live_wallpaper_description">Plays your chosen video as a looping wallpaper.</string>
+    <string name="choose_media">Choose photo or video</string>
+    <string name="set_wallpaper">Set as wallpaper</string>
+    <string name="target_home">Home screen</string>
+    <string name="target_lock">Lock screen</string>
+    <string name="target_both">Both</string>
+    <string name="nothing_selected">Pick a photo or video first.</string>
+    <string name="hint">Photos are applied at up to 4K (3840 px on the long side). Videos play at their original resolution as a live wallpaper.</string>
+</resources>
