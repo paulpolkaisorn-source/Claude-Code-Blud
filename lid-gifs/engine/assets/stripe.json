@@ -1,0 +1,10 @@
+{
+  "model": "ROG Strix SCAR 18 (2026) G835LXG - AniMe Vision lid stripe",
+  "canvas": [564, 400],
+  "polygon": [[0.0, 0.0], [1.0, 1.0], [0.5317, 1.0], [0.0, 0.4713]],
+  "polygon_note": "Corners normalised to the stripe bounding box: top tip, bottom-right tip, left end of flat bottom edge, bottom of vertical left edge.",
+  "led_count": 810,
+  "levels": 8,
+  "source": "measured with measure_stripe.py from the Armoury Crate AniMe Vision editor screenshot (G835LXG), 2026-10-05",
+  "verified_on_device": false
+}

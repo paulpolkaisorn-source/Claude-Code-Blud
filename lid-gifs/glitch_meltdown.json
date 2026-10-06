@@ -1,0 +1,10 @@
+{
+  "fps": 20,
+  "seed": 7,
+  "constant_timing": true,
+  "segments": [
+    {"duration": 4.0, "layers": [
+      {"effect": "custom", "params": {"file": "glitch_meltdown.py", "params": {}}}
+    ]}
+  ]
+}
