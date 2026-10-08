@@ -21,9 +21,12 @@ Director log for the Claude Haiku 5.5 showcase page.
 
 - Phase 4 round 1 (14 agents): choreography call order with the entering section last and ctx.bleed (D22.1, D22.8, D22.11); DoF focus per aspect (D22.2); chromatic aberration exactly 0 at rest, with the root cause found (velocity and damping on the clamped page clock under slow frames) (D22.5); exposure measured against targets (anodised #3A3934 vs #34332F, kireji #A1302A vs #A9372E) and a soft contact shadow (D22.3, D22.4); phone speed column at 86 % width with text in the left band (D21.2); hero and speed annotations within 1 px of the drawn blocks at every progress (D20.2, D21.7); family 3D anchored to its DOM stage (D20.1, D22.12); code request types itself out with a seal caret (D21.3); cursor label knockouts (D22.6); Lenis resync before scrollToTarget, capabilities landings exact (D21.6).
 
+- Phase 4 round 2 and 3 (16 agents): text colour follows the section edge (ink front drawn exactly at the DOM boundary, measured within 0.3 px; per-block themes resolve to their own section); capabilities enters on the bleed; scroll velocity on the wall clock; closing text layer only in its own range (16 stops x 2 sizes, 0 leaks); loader:done the moment the last task settles (was 8 s late); code response streams in word bursts with the caret; family labels on their stations on phones (0.44 px) with the head above the stage; phantom outlines fade in; footer passes clicks through to the closing CTA; cursor tick halos; reduced-motion offsets hold.
+- Director tour (dev, 1440 and 375): every section shot at top and middle, 0 console messages, gl-ready in about 1 s.
+
 ## In progress
 
-- Phase 4 round 2 (11 agents, D23): text theme follows the ink front per block, capabilities entering on p1, wall-clock scroll velocity, closing text layer leaking over every section (strict booleans), speed fallback gate and paint-before-layout error, family phone labels at station pitch, phantom fade-in, blocks offset under reduced motion, pricing offset fade, code response streaming in bursts, cursor tick halos, loader timeout bug.
+- Phase 5, polish pass 1: QA shoots the production build at 375, 768, 1440 and 2560 (plus reduced motion and no-WebGL), four art-director reviews (whole page and one per act), fixes grouped by owner, plus director fixes (glyph halos instead of flat plates, D27; speed panel clear of the race row; wave cap at boundary 1).
 
 ## Rejected (and why)
 
@@ -36,6 +39,8 @@ Director log for the Claude Haiku 5.5 showcase page.
 - Opaque CSS section backgrounds over the canvas: they would hide the 3D; replaced by the gl-ready handover (D18).
 - Family labels over a fixed 3D stanza: in the integrated page the labels scrolled with the DOM while the stations stayed put, so they matched at one scroll position only. Replaced by DOM-anchored family 3D (D20.1, D22.12).
 - Capabilities and closing GL "re-apply" ticks: each handle re-wrote its state after the choreography to win against the previous section. A workaround for a choreography order bug; the order is fixed at the source (D22.1) and the ticks are removed (D22.9).
+- Section-level theme flip at the bleed midpoint, then a per-block flip: both left text on the wrong ground while an eased front crossed it (title at 1.0:1 contrast for about 300 px of scroll). Replaced by drawing the front at the DOM boundary (D25.1).
+- Flat var(--bg) plates behind headings: visible rectangles on the grained ground, and a plate on the capabilities title clipped the line above. Replaced by glyph halos (D27.1).
 - Exposure as first built: anodised fronts rendered mid-grey and the kireji bright red, against the direction's near-black and seal. Retuned to measured targets (D22.3).
 
 ## Cut or unverifiable
