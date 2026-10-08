@@ -1,6 +1,7 @@
 // game.js — state machine, fixed 60 Hz simulation, Crystal Rush rules, render interpolation (Opus-owned glue).
 import { DT, RULES, BRAWLERS, BRAWLER_IDS, TEAM, EV, bus, makeBrawler, BOT_NAMES, DIFFICULTY } from './contracts.js';
-import { MAPS, parseMap, generateMap } from './world/maps.js';
+import { MAPS, parseMap } from './world/maps.js';
+import { generateMap } from './world/generator.js';
 import { createArena } from './world/arena.js';
 import { createCrystalView } from './world/crystals.js';
 import { createBrawlerModel } from './entities/models.js';
@@ -99,7 +100,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     const parsed = parseMap(loadMapRows(cfg.mapId));
     const arena = createArena(scene, parsed);
     R.setArenaBounds(arena.cols, arena.rows);
-    const crystalView = createCrystalView(scene, 40);
+    const crystalView = createCrystalView(scene, MAX_CRYSTALS);
     const combat = createCombat({ scene, arena, bus });
     const ai = createAI({ arena, combat });
 
