@@ -84,7 +84,7 @@ export function initCapabilities(ctx: SectionContext): void {
 
   const cap0 = createCap0(svg0);
   const cap1 = createCap1(svg1);
-  const titleReveal = createTitleReveal(title, section);
+  const titleReveal = createTitleReveal(title);
 
   const dispatch = (name: string, detail: Record<string, unknown>): void => {
     document.dispatchEvent(new CustomEvent(name, { detail }));
@@ -150,6 +150,32 @@ export function initCapabilities(ctx: SectionContext): void {
     const offset = slots[index].getBoundingClientRect().top - button.getBoundingClientRect().top;
     scrollToTarget(button, { offset });
   };
+
+  // ---------- Theme flips (D23.1) ----------
+
+  // A block that changes theme changes at once. Its colour transitions (a card's name, text and mark, T.micro) are held
+  // so the flip is not a fade through the mid colours. The hold is set when the theme changes and lifted on the next
+  // tick. The style is read while the hold is in place, so the new colours are computed with no transition, and lifting
+  // the hold afterwards starts none. The transitions of the active card are unchanged outside a flip.
+  const flipped = new Set<HTMLElement>();
+  let holding = false;
+  const themes = new MutationObserver((records) => {
+    for (const record of records) {
+      if (!(record.target instanceof HTMLElement)) continue;
+      record.target.classList.add('is-theme-flip');
+      void getComputedStyle(record.target).color;
+      flipped.add(record.target);
+    }
+    if (holding) return;
+    holding = true;
+    const stop = addTick(() => {
+      stop();
+      holding = false;
+      for (const block of flipped) block.classList.remove('is-theme-flip');
+      flipped.clear();
+    }, PRIORITY.state);
+  });
+  themes.observe(section, { attributes: true, attributeFilter: ['data-theme'], subtree: true });
 
   // ---------- Activation and keyboard ----------
 

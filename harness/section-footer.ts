@@ -37,6 +37,10 @@ if (footer instanceof HTMLElement) {
     failures.push('disclaimer');
   }
   if (footer.querySelectorAll('.titleblock__value').length !== 5) failures.push('title-values');
+
+  // The drawing's unit is lowercase (D23.5): the SVG text's unit span resets the uppercase label style.
+  const unit = footer.querySelector<SVGTSpanElement>('.footer__dimension-label .footer__unit');
+  if (unit?.textContent !== 'bu' || getComputedStyle(unit).textTransform !== 'none') failures.push('footer-unit-case');
 } else {
   failures.push('no-footer');
 }

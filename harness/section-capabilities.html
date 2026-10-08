@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="/src/styles/fonts.css" />
     <link rel="stylesheet" href="/src/styles/tokens.css" />
     <link rel="stylesheet" href="/src/styles/base.css" />
+    <style>
+      /* Harness only. With WebGL each block stands on the ground the shader paints under it, and that ground takes the
+         block's own theme. Here the free blocks (the head and the intro) take that ground as their own background. The
+         cards paint their own background, and setBlocks gives the section the ground of the chosen theme. */
+      #capabilities [data-theme-block]:not(.cap-card) {
+        background: var(--bg);
+      }
+    </style>
   </head>
   <body>
     <div class="harness-spacer" style="height: 100vh" aria-hidden="true"></div>

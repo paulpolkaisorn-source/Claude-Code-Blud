@@ -27,6 +27,39 @@
   height: 100svh;
 }
 
+/* ---------- Block themes (D23.1) ---------- */
+
+/* With WebGL, src/choreo/theme-front.ts sets data-theme on each data-theme-block (the head, the intro and the three
+   cards), paper or ink, by where the ink front is. tokens.css defines the paper values on :root and the ink values under
+   [data-theme="ink"], but no [data-theme="paper"] block, so a paper block inside this ink section would keep the ink
+   tokens. These are the :root values of tokens.css (direction.md heading 3), restated for a paper block here. Every
+   colour inside a block then comes from a token that the block's own theme sets, so a block flips as a whole. */
+#capabilities [data-theme="paper"] {
+  --bg: var(--paper);
+  --bg-raised: var(--paper-deep);
+  --text-1: var(--ink);
+  --text-2: #45413A;
+  --text-3: #5E5A51;
+  --rule-hair: #7D786A;
+  --rule-strong: #3A3831;
+  --seal: var(--seal-red);
+  --seal-text: var(--seal-text-paper);
+  --focus: var(--seal-text-paper);
+  --code-string: var(--code-string-raw);
+}
+
+/* Selection in a paper block, as the paper theme sets it (pair P19). */
+#capabilities [data-theme="paper"] ::selection {
+  background: var(--seal-text);
+  color: var(--bg);
+}
+
+/* A block that changes theme changes at once: capabilities.ts marks it for one tick, and its colour transitions wait. */
+#capabilities .is-theme-flip,
+#capabilities .is-theme-flip * {
+  transition: none !important;
+}
+
 /* ---------- Title block (slot 1) ---------- */
 
 /* The wide title sits at 5 per cent of the viewport height rather than the act's 8 per cent, so the first row of
@@ -48,8 +81,17 @@
   margin: 0;
 }
 
+/* The title's characters during the reveal (cap-title.ts). --cap-mix runs from 0, text-3, to 1, the title's own colour.
+   color-mix reads both tokens from the character's block, so a character follows its block's theme if the block flips
+   while the reveal runs. The split is reverted when the reveal ends, and the title is text-1 again. */
+#capabilities .cap__char {
+  color: color-mix(in srgb, var(--text-1) calc(var(--cap-mix, 1) * 100%), var(--text-3));
+}
+
+/* The lede keeps text-2 as a block: [data-theme] sets text-1 on every block, and it comes after .t-lede in base.css. */
 #capabilities .cap__intro {
   margin: 0;
+  color: var(--text-2);
 }
 
 /* ---------- Card box (C7, direction.md heading 13) ---------- */

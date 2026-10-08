@@ -5,8 +5,9 @@
 // A run is 40 tokens. Token k enters at weightedStagger(40, { total: 39 / r, weight: 'front' })[k] seconds after the run's
 // first token, where r is the rate read once when the run starts: r = clamp(0.04 x |v|, 34, 160) tokens per second, with
 // v the smoothed scroll velocity in px/s (scrollState). Each token enters in text-3 and settles to text-1 over T.beat5
-// with settle. Text never fades, so a token is hidden before it enters and shown in full at its entry. After the 40th
-// token the stream holds for T.breath, clears, and starts the next run at token 0.
+// with settle. The colour is a mix of two tokens, driven by --mix (speed.css), so a token follows its theme block (D23.1)
+// and never holds a fixed colour value. Text never fades, so a token is hidden before it enters and shown in full at its
+// entry. After the 40th token the stream holds for T.breath, clears, and starts the next run at token 0.
 import { gsap } from 'gsap';
 import { E } from '../../core/ease';
 import { scrollState } from '../../core/scroll';
@@ -41,10 +42,10 @@ export interface Stream {
 }
 
 /**
- * Creates the stream over tokens, in document order. entry is the colour a token enters in (text-3) and settled is the
- * colour it settles to (text-1), both read from the tokens by the caller. Nothing runs until play is called.
+ * Creates the stream over tokens, in document order. Each token's colour mix is written as --mix (0 entering, 1 settled).
+ * Nothing runs until play is called.
  */
-export function createStream(tokens: readonly HTMLElement[], colours: { entry: string; settled: string }): Stream {
+export function createStream(tokens: readonly HTMLElement[]): Stream {
   let run: gsap.core.Timeline | null = null;
   let wanted = false;
   let alive = true;
@@ -60,7 +61,7 @@ export function createStream(tokens: readonly HTMLElement[], colours: { entry: s
   function clear(): void {
     for (const token of tokens) {
       token.classList.remove('is-caret');
-      gsap.set(token, { visibility: 'hidden', color: colours.settled });
+      gsap.set(token, { visibility: 'hidden', '--mix': 1 });
     }
   }
 
@@ -80,8 +81,8 @@ export function createStream(tokens: readonly HTMLElement[], colours: { entry: s
     tokens.forEach((token, k) => {
       const at = offsets[k];
       timeline.call(markCaret, [k], at);
-      timeline.set(token, { visibility: 'visible', color: colours.entry }, at);
-      timeline.to(token, { color: colours.settled, duration: T.beat5, ease: E.settle }, at);
+      timeline.set(token, { visibility: 'visible', '--mix': 0 }, at);
+      timeline.to(token, { '--mix': 1, duration: T.beat5, ease: E.settle }, at);
     });
     timeline.call(clear, [], offsets[STREAM_TOKENS - 1] + T.breath);
     return timeline;
@@ -104,7 +105,7 @@ export function createStream(tokens: readonly HTMLElement[], colours: { entry: s
       run = null;
       for (const token of tokens) {
         token.classList.remove('is-caret');
-        gsap.set(token, { visibility: 'visible', color: colours.settled });
+        gsap.set(token, { visibility: 'visible', '--mix': 1 });
       }
     },
     dispose(): void {

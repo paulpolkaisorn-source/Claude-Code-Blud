@@ -2,9 +2,10 @@
 // Open /harness/section-code.html on the dev server, optionally with ?nogl (html.no-gl, the static recede shows).
 // The page starts the section as the boot does, emits loader:done after its first tick and runs the checks on the
 // next tick. The verdict lands in dataset.harness ('pass' or 'fail:<names>') and the checks in dataset.harnessChecks.
-// The scroll states (the typing from p 0.10 to 0.45, the caret, the response stream and the marker from p 0.45 to 0.75)
-// are read by the Playwright driver, not here. At p 0 nothing is typed, the caret waits at the start of the request,
-// and the kireji of the no-WebGL recede is in the seal token (D21.3, D21.5).
+// The scroll states are read by the Playwright driver, not here. The windows are set at layout time (D23.4): the request
+// types from the progress at which its first code line reaches 85 per cent of the viewport height, over 0.30, and the
+// response streams over the next 0.25. At p 0 nothing is typed or streamed, the request caret waits at the start of the
+// request, and the kireji of the no-WebGL recede is in the seal token (D21.3, D21.5, D23.4).
 import { bus } from '../src/core/bus';
 import { env } from '../src/core/env';
 import { registerEases } from '../src/core/ease';
@@ -135,20 +136,34 @@ function runChecks(section: HTMLElement): void {
   record('panel is live and the marker is measured', panel?.classList.contains('is-live') === true && parseFloat(marker?.style.height ?? '0') > 0, marker?.style.height ?? '');
 
   const lit = document.querySelectorAll('.code__code--response .code__char.is-lit').length;
+  // The request's caret is the first in the document and the response's the second; the response's sits in its <pre>.
+  const responseCaret = document.querySelectorAll<HTMLElement>('.code__caret')[1] ?? null;
+  const responseFirst = document.querySelector<HTMLElement>('.code__code--response .code__char');
+  record(
+    'both carets are hidden from the accessibility tree',
+    caret?.getAttribute('aria-hidden') === 'true' && responseCaret?.getAttribute('aria-hidden') === 'true',
+  );
   if (env.reducedMotion) {
     record('reduced motion: no title split', document.querySelectorAll('.code__title-char').length === 0);
-    record('reduced motion: response in token colours from the start', lit === responseLength, `${lit} lit`);
-    record('reduced motion: stream not dimmed', response.length > 0 && !document.querySelector('.code__code--response.is-stream'));
+    record('reduced motion: response shown whole at once', lit === responseLength, `${lit} of ${responseLength} lit`);
+    record('reduced motion: no stream class', response.length > 0 && !document.querySelector('.code__code--response.is-stream'));
     record('reduced motion: request shown at once', typedGroups === groups.length, `${typedGroups} of ${groups.length} typed`);
-    record('reduced motion: no caret', caret?.hidden === true);
+    record('reduced motion: no caret', caret?.hidden === true && responseCaret?.hidden === true);
   } else {
     const glyphs = document.querySelectorAll('.code__title-char').length;
     record('title split into characters', glyphs > 0, `${glyphs} characters`);
     record('title keeps its full text as an accessible name', title?.getAttribute('aria-label') === TITLE, String(title?.getAttribute('aria-label')));
     record('stream at p 0 has no lit characters', lit === 0, `${lit} lit`);
-    record('response dimmed by the stream class', !!document.querySelector('.code__code--response.is-stream'));
+    record(
+      'unstreamed response characters are transparent (is-stream)',
+      !!document.querySelector('.code__code--response.is-stream') &&
+        responseFirst !== null &&
+        getComputedStyle(responseFirst).color === 'rgba(0, 0, 0, 0)',
+      responseFirst ? getComputedStyle(responseFirst).color : 'none',
+    );
     record('typing at p 0: no group typed yet', typedGroups === 0, `${typedGroups} typed`);
-    record('caret shown at the start of the request', caret !== null && caret.hidden === false && caret.style.left === '0px', caret?.style.left ?? 'none');
+    record('request caret at the start of the request', caret !== null && caret.hidden === false && caret.style.left === '0px', caret?.style.left ?? 'none');
+    record('response caret hidden at p 0', responseCaret?.hidden === true, '');
     const caretStyle = caret ? getComputedStyle(caret) : null;
     record('caret is 2 px wide in seal-text', caretStyle?.width === '2px' && caretStyle.backgroundColor === sealText, `${caretStyle?.width} ${caretStyle?.backgroundColor}`);
     const lineHeight = firstLine?.getBoundingClientRect().height ?? 0;

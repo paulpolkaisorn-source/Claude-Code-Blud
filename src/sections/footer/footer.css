@@ -137,12 +137,17 @@
   vector-effect: non-scaling-stroke;
 }
 
-/* SVG text is sized in the drawing's units: 0.1 bu is about 12 px at the 60svh column. */
+/* SVG text is sized in the drawing's units: 0.1 bu is about 12 px at the 60svh column. The unit stays lowercase (D23.5). */
 #footer .footer__dimension-label {
   font-family: var(--font-mono);
   font-size: 0.1px;
   font-weight: var(--fw-label);
   fill: var(--text-3);
+  text-transform: none;
+}
+
+#footer .footer__unit {
+  text-transform: none;
 }
 
 /* ---------- Title block (act III, footer 2D layer; direction.md heading 8 rule 6) ---------- */

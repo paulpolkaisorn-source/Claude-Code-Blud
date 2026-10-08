@@ -2,7 +2,7 @@
  * Code section, act II (ink). Scoped under #code. Owner: motion-2d.
  * Source: design/direction-act2.md, code (structure, 2D layer wide and narrow, phone landscape, copy, keyboard,
  * reduced motion and the no-WebGL fallback); design/direction.md headings 3, 4, 5, 8, 9 and 13;
- * design/drafts/director-decisions.md D16.1, D18 and D20.3.
+ * design/drafts/director-decisions.md D16.1, D18, D20.3, D21.3 and D23.4.
  *
  * Only tokens are used for colour, type, spacing and curves. The literals are the 2 px widths of the live marker and
  * the typing caret (D21.3), which are hairlines of the drawing and not spacing tokens. The section is 2 vh tall and the
@@ -147,9 +147,11 @@
   color: var(--text-3);
 }
 
-/* The response stream. The JavaScript adds is-stream; each character is text-3 until is-lit is set, and then text-1. */
+/* The response stream (D23.4). The JavaScript adds is-stream. Each character is transparent until the stream reaches
+   it, and then text-1 at once: a burst of words appears, it does not fade. The characters keep their place in the line
+   from the first frame, so nothing moves, and the text stays in the HTML once for screen readers. */
 #code .code__code--response.is-stream .code__char {
-  color: var(--text-3);
+  color: transparent;
 }
 
 #code .code__code--response.is-stream .code__char.is-lit {
@@ -163,8 +165,9 @@
   color: transparent;
 }
 
-/* The typing caret (D21.3): 2 px wide, one line tall, in seal-text. It is positioned inside the request box, so it
-   scrolls with the code. It takes no space in the layout. The script shows it only while the request types. */
+/* The typing caret (D21.3, D23.4): 2 px wide, one line tall, in seal-text. It is positioned inside its block's box, so it
+   scrolls with the code. It takes no space in the layout. The script shows one caret at a time: the request's while it
+   types, then the response's at the end of the streamed text. */
 #code .code__caret {
   position: absolute;
   left: 0;
@@ -177,7 +180,7 @@
 
 /* The live line marker: a 2 px seal bar in the padding of the panel, at the line the stream has reached. It is
    shown only once the script has measured the lines (is-live). While the request types, the caret is the live mark
-   and the marker waits in its box (is-streaming is set from p 0.45, and always under reduced motion). */
+   and the marker waits in its box (is-streaming is set when the typing ends, and always under reduced motion). */
 #code .code__marker {
   display: none;
   position: absolute;

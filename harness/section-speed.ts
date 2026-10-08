@@ -58,6 +58,21 @@ function runChecks(): void {
   check('h2 aria-label is Fastest', h2?.getAttribute('aria-label') === COPY.title, String(h2?.getAttribute('aria-label')));
   check('section theme and act', el.dataset.theme === 'paper' && el.dataset.act === '1');
   check('section cursor form marked caliper', el.dataset.cursor === 'caliper');
+  // D23.1: the title group, the notes and the example panel are the theme blocks, and no colour is written inline, so
+  // every colour comes from a token that [data-theme] redefines.
+  const themeBlocks = Array.from(el.querySelectorAll<HTMLElement>('[data-theme-block]'));
+  check(
+    'three theme blocks: title group, notes, example panel (D23.1)',
+    themeBlocks.length === 3 &&
+      themeBlocks[0].classList.contains('speed-title-group') &&
+      themeBlocks[1].classList.contains('speed-notes') &&
+      themeBlocks[2].classList.contains('speed-panel'),
+    themeBlocks.map((b) => b.className).join(' | '),
+  );
+  check(
+    'no inline colour in the section (tokens only, D23.1)',
+    Array.from(el.querySelectorAll<HTMLElement>('*')).every((n) => n.style.color === ''),
+  );
   check('kicker copy', text('.speed-kicker') === COPY.kicker);
   check('title text', text('.speed-title__text') === COPY.title);
   check('source note copy verbatim', text('.speed-source') === COPY.source, text('.speed-source'));

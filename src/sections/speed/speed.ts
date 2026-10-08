@@ -1,16 +1,23 @@
 // The speed section, the 2D layer of act I (design/direction-act1.md, speed; rules A1 to A13; director decisions D5,
-// D15.1, D20.2, D21.1, D21.2, D21.7 and D22.10 in design/drafts/director-decisions.md).
+// D15.1, D20.2, D21.1, D21.2, D21.7, D22.7, D22.10, D23.1 and D23.6 in design/drafts/director-decisions.md).
 //
 // What this file does:
 //   - The title "Fastest" is split into characters with SplitText and reassembled once, when its top crosses 80% of
 //     the viewport height (heading 8, rule 15; D2.3). Each character starts displaced by (i - centre) x 0.06em in
 //     text-3 and tweens to its set place and text-1 with settle over T.beat7, along the front profile of T.half. The
-//     source note, the footnote and the support line settle from text-3 to text-2 over T.beat5, T.half after the reveal
-//     starts.
+//     notes settle from text-3 to text-2 over T.beat5, T.half after the reveal starts. The colours are token mixes
+//     driven by --mix (speed.css), so a theme block takes the colours of the theme it is given (D23.1).
 //   - The race annotations (the dimension line, its 17 ticks and the "17" label) are placed on the blocks at the
 //     section's progress s, the same raw progress the 3D layer reads (speed-layer.ts, D21.1). Lenis is the only
 //     smoothing. The annotations are on screen while the race is, and they leave when the next section's entrance takes
 //     the blocks.
+//   - The annotation layer is off outside the section at every scroll position (D23.6). Each frame, strict booleans come
+//     from this section's own geometry and the smoothed scroll position: the section is current (its top has passed the
+//     scroll position and the next section's top has not), and, with WebGL and motion, the next section's top is still
+//     at least half a viewport below the scroll position. ScrollTrigger is not used for them. The layer is hidden with
+//     visibility, which also removes it from hit testing.
+//   - The no-WebGL fallback stays at opacity 0 until loader:done, then fades in over T.half with E.fade, and it appears
+//     at once under reduced motion (D22.7, D23.6). The layer does not paint before layout has filled its geometry.
 //   - On a phone (portrait), the head and the example panel share the left band: from the margin to 12 px left of the
 //     race column, at every phone width (D21.2).
 //   - The example stream runs while the section is in view and pauses when it leaves (speed-stream.ts).
@@ -23,6 +30,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import type { SectionContext } from '../../main';
+import { bus } from '../../core/bus';
 import { E } from '../../core/ease';
 import { onReducedMotionChange } from '../../core/env';
 import { scrollState } from '../../core/scroll';
@@ -49,11 +57,9 @@ const PASSED_TOLERANCE = 1;
 /** The elements this section drives. Null when the markup is incomplete. */
 interface Parts {
   wrap: HTMLElement;
-  head: HTMLElement;
   title: HTMLElement;
   titleText: HTMLElement;
-  notes: HTMLElement[];
-  panel: HTMLElement;
+  notes: HTMLElement;
   tokens: HTMLElement[];
   art: HTMLElement;
   rowFallback: HTMLElement;
@@ -67,13 +73,9 @@ interface Parts {
 /** The elements of the section, or null when the markup is incomplete. */
 function collect(el: HTMLElement): Parts | null {
   const wrap = el.querySelector<HTMLElement>('.speed-grid');
-  const head = el.querySelector<HTMLElement>('.speed-head');
   const title = el.querySelector<HTMLElement>('.speed-title');
   const titleText = el.querySelector<HTMLElement>('.speed-title__text');
-  const source = el.querySelector<HTMLElement>('.speed-source');
-  const footnote = el.querySelector<HTMLElement>('.speed-footnote');
-  const support = el.querySelector<HTMLElement>('.speed-support');
-  const panel = el.querySelector<HTMLElement>('.speed-panel');
+  const notes = el.querySelector<HTMLElement>('.speed-notes');
   const art = el.querySelector<HTMLElement>('.speed-art');
   const rowFallback = el.querySelector<HTMLElement>('.speed-fallback--row');
   const colFallback = el.querySelector<HTMLElement>('.speed-fallback--col');
@@ -84,13 +86,9 @@ function collect(el: HTMLElement): Parts | null {
   const tokens = Array.from(el.querySelectorAll<HTMLElement>('.speed-tok'));
   if (
     wrap === null ||
-    head === null ||
     title === null ||
     titleText === null ||
-    source === null ||
-    footnote === null ||
-    support === null ||
-    panel === null ||
+    notes === null ||
     art === null ||
     rowFallback === null ||
     colFallback === null ||
@@ -102,22 +100,7 @@ function collect(el: HTMLElement): Parts | null {
   ) {
     return null;
   }
-  return {
-    wrap,
-    head,
-    title,
-    titleText,
-    notes: [source, footnote, support],
-    panel,
-    tokens,
-    art,
-    rowFallback,
-    colFallback,
-    dim,
-    dimLine,
-    dimTicks,
-    dimLabel,
-  };
+  return { wrap, title, titleText, notes, tokens, art, rowFallback, colFallback, dim, dimLine, dimTicks, dimLabel };
 }
 
 function clamp01(value: number): number {
@@ -137,12 +120,6 @@ export function initSpeed(ctx: SectionContext): void {
 
   let reduced = ctx.reducedMotion;
   const root = document.documentElement;
-  const computed = getComputedStyle(el);
-  const colours = {
-    text1: computed.getPropertyValue('--text-1').trim(),
-    text2: computed.getPropertyValue('--text-2').trim(),
-    text3: computed.getPropertyValue('--text-3').trim(),
-  };
 
   const layer: SpeedLayer = createSpeedLayer({
     art: parts.art,
@@ -158,7 +135,7 @@ export function initSpeed(ctx: SectionContext): void {
   let chars: HTMLElement[] = [];
   let split: SplitText | null = null;
   if (!reduced) {
-    split = SplitText.create(parts.titleText, { type: 'chars', aria: 'none', tag: 'span' });
+    split = SplitText.create(parts.titleText, { type: 'chars', charsClass: 'speed-char', aria: 'none', tag: 'span' });
     chars = split.chars.filter((c): c is HTMLElement => c instanceof HTMLElement);
     for (const c of chars) c.setAttribute('aria-hidden', 'true');
   }
@@ -170,28 +147,29 @@ export function initSpeed(ctx: SectionContext): void {
     const size = parseFloat(getComputedStyle(parts.titleText).fontSize);
     const centre = (chars.length - 1) / 2;
     chars.forEach((c, i) => {
-      gsap.set(c, { x: (i - centre) * TITLE_SHIFT_EM * size, color: colours.text3 });
+      gsap.set(c, { x: (i - centre) * TITLE_SHIFT_EM * size, '--mix': 0 });
     });
   }
 
   // The reveal, once. Characters run on the front profile over T.half, each for T.beat7 with settle. The notes settle
-  // T.half after the reveal starts.
+  // T.half after the reveal starts. The notes are one group, so one --mix drives all three.
   let reveal: gsap.core.Timeline | null = null;
   if (!reduced) {
+    const timeline = gsap.timeline({ paused: true });
     const offsets = weightedStagger(chars.length, { total: T.half, weight: 'front' });
-    reveal = gsap.timeline({ paused: true });
     chars.forEach((c, i) => {
-      reveal?.to(c, { x: 0, color: colours.text1, duration: T.beat7, ease: E.settle }, offsets[i]);
+      timeline.to(c, { x: 0, '--mix': 1, duration: T.beat7, ease: E.settle }, offsets[i]);
     });
-    gsap.set(parts.notes, { color: colours.text3 });
-    reveal.to(parts.notes, { color: colours.text2, duration: T.beat5, ease: E.settle }, T.half);
+    gsap.set(parts.notes, { '--mix': 0 });
+    timeline.to(parts.notes, { '--mix': 1, duration: T.beat5, ease: E.settle }, T.half);
+    reveal = timeline;
     ScrollTrigger.create({
       trigger: parts.title,
       start: REVEAL_LINE,
       once: true,
       onEnter: () => {
         revealed = true;
-        reveal?.play();
+        timeline.play();
       },
     });
   }
@@ -200,8 +178,32 @@ export function initSpeed(ctx: SectionContext): void {
   let stream: Stream | null = null;
   if (!reduced) {
     gsap.set(parts.tokens, { visibility: 'hidden' });
-    stream = createStream(parts.tokens, { entry: colours.text3, settled: colours.text1 });
+    stream = createStream(parts.tokens);
   }
+
+  // The no-WebGL fallbacks stay at opacity 0 until loader:done, then fade in over T.half (D22.7, D23.6). Under reduced
+  // motion they appear at loader:done with no fade. The subscription is made here, before loader:done can be emitted.
+  const fallbacks: HTMLElement[] = [parts.rowFallback, parts.colFallback];
+  let fallbackShown = false;
+  let fallbackTween: gsap.core.Tween | null = null;
+  gsap.set(fallbacks, { opacity: 0 });
+
+  /** True when the page draws the race as the static fallback (no WebGL, or the context was lost). */
+  function noGlNow(): boolean {
+    return !ctx.gl || root.classList.contains('no-gl');
+  }
+
+  function revealFallbacks(): void {
+    fallbackShown = true;
+    fallbackTween?.kill();
+    fallbackTween = null;
+    if (!reduced && noGlNow()) {
+      fallbackTween = gsap.to(fallbacks, { opacity: 1, duration: T.half, ease: E.fade, overwrite: true });
+    } else {
+      gsap.set(fallbacks, { opacity: 1 });
+    }
+  }
+  bus.once('loader:done', () => revealFallbacks());
 
   /** The section below this one: its entrance takes the blocks from the race (the centre-line rule of act II). */
   const below = el.nextElementSibling instanceof HTMLElement ? el.nextElementSibling : null;
@@ -211,7 +213,7 @@ export function initSpeed(ctx: SectionContext): void {
   let belowTop = Number.POSITIVE_INFINITY;
   let measuredScrollHeight = -1;
   let measureDirty = true;
-  /** True while the section is in view (its ScrollTrigger is active). */
+  /** True while the section overlaps the viewport. Set each frame from the geometry, never from ScrollTrigger (D23.6). */
   let inView = false;
 
   function measure(): void {
@@ -228,6 +230,14 @@ export function initSpeed(ctx: SectionContext): void {
     return ctx.gl && !root.classList.contains('no-gl');
   }
 
+  /** Records whether the section is on screen, and runs or pauses the stream to match. */
+  function setInView(on: boolean): void {
+    if (on === inView) return;
+    inView = on;
+    if (on) stream?.play();
+    else stream?.pause();
+  }
+
   /**
    * One frame of the race annotations. The progress s is the one the choreography hands the 3D race, read from the same
    * smoothed scroll position (scrollState, D21.1). This tick runs at PRIORITY.state, before the choreography at
@@ -237,20 +247,24 @@ export function initSpeed(ctx: SectionContext): void {
     if (measureDirty || root.scrollHeight !== measuredScrollHeight) measure();
     const drawing = glDrawing();
     const y = scrollState.y;
+    const vh = Math.max(1, window.innerHeight);
     const s = height > 0 ? clamp01((y - top) / height) : 0;
     // The race is complete from the first frame in reduced motion and without WebGL: the canvas switch or the static
     // fallback shows the rest pose (act I speed).
     layer.follow(drawing && !reduced ? clamp01(s / RACE_SPAN) : 1);
+    // Strict booleans from this section's own geometry (D23.6). The section is current when its top has passed the scroll
+    // position and the next section's top has not, the choreography's rule (timeline.ts, indexAt). Outside that, the layer
+    // is not shown: not while the section enters from below, and not after it.
+    const gap = belowTop - y;
+    const current = height > 0 && y >= top - PASSED_TOLERANCE && gap > PASSED_TOLERANCE;
+    // The stream runs while the section is on screen, which is a different question (its copy is on screen).
+    setInView(height > 0 && top < y + vh && top + height > y);
     // The annotations are shown while the race is on screen. With WebGL and motion, the race holds while this section
     // is current, and it leaves when the next section's entrance takes the blocks: once that section's top is inside
-    // the centre line of the viewport (choreography rule C2). With reduced motion, the race is on screen from the
-    // moment this section is current until the next one is (the canvas switches at that point). Without WebGL, the
-    // static fallback stays on screen with the section, and so do the annotations.
-    const vh = Math.max(1, window.innerHeight);
-    const gap = belowTop - y;
-    let visible = inView;
-    if (drawing && reduced) visible = visible && y >= top - PASSED_TOLERANCE && gap > PASSED_TOLERANCE;
-    else if (drawing) visible = visible && gap >= vh / 2;
+    // the centre line of the viewport (choreography rule C2). With reduced motion, the race is on screen from the moment
+    // this section is current until the next one is (the canvas switches at that point). Without WebGL, the static
+    // fallback is on screen while the section is current.
+    const visible = drawing && !reduced ? current && gap >= vh / 2 : current;
     layer.show(visible);
   }
 
@@ -274,27 +288,9 @@ export function initSpeed(ctx: SectionContext): void {
     frame();
   }
 
-  // The section's trigger: it tells the object layer and the stream whether the section is in view. ScrollTrigger leaves
-  // isActive unset until it has reported a state, so the flag is read as a strict boolean.
-  ScrollTrigger.create({
-    trigger: el,
-    start: 'top bottom',
-    end: 'bottom top',
-    onToggle: (self) => {
-      inView = self.isActive === true;
-      if (inView) stream?.play();
-      else stream?.pause();
-    },
-    onRefresh: (self) => {
-      inView = self.isActive === true;
-      layout();
-      if (inView) stream?.play();
-      else stream?.pause();
-    },
-  });
-
   layout();
   window.addEventListener('resize', layout, { passive: true });
+  ScrollTrigger.addEventListener('refresh', layout);
   // The annotations are placed on every frame (PRIORITY.state, before the choreography at PRIORITY.state + 5).
   addTick(frame, PRIORITY.state);
 
@@ -302,16 +298,17 @@ export function initSpeed(ctx: SectionContext): void {
   function finalise(): void {
     reveal?.kill();
     reveal = null;
+    fallbackTween?.kill();
+    fallbackTween = null;
+    gsap.set(fallbacks, { opacity: fallbackShown ? 1 : 0 });
     stream?.finish();
     stream = null;
     if (split !== null) {
-      for (const c of chars) gsap.set(c, { clearProps: 'all' });
       split.revert();
       split = null;
       chars = [];
     }
-    gsap.set(parts.notes, { clearProps: 'color' });
-    gsap.set(parts.tokens, { clearProps: 'all' });
+    parts.notes.style.removeProperty('--mix');
   }
 
   onReducedMotionChange((next) => {

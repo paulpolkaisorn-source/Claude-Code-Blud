@@ -6,6 +6,26 @@
  * are written by GSAP (--mix runs from 0 to 1), so the page without JavaScript shows the final colours.
  */
 
+/* ---------- Block themes (D23.1) ---------- */
+
+/* With WebGL, src/choreo/theme-front.ts sets data-theme on each data-theme-block. tokens.css defines the paper values
+   on :root and the ink values under [data-theme="ink"], but no [data-theme="paper"] block, so a paper block inside an
+   ink element would keep the ink tokens. These are the :root values of tokens.css (direction.md heading 3), restated
+   for a paper block in this section, so a block flips cleanly whatever its section's theme is. */
+#pricing [data-theme="paper"] {
+  --bg: var(--paper);
+  --bg-raised: var(--paper-deep);
+  --text-1: var(--ink);
+  --text-2: #45413A;
+  --text-3: #5E5A51;
+  --rule-hair: #7D786A;
+  --rule-strong: #3A3831;
+  --seal: var(--seal-red);
+  --seal-text: var(--seal-text-paper);
+  --focus: var(--seal-text-paper);
+  --code-string: var(--code-string-raw);
+}
+
 /* ---------- Section height (act III C3: H 1.5 on desktop and tablet landscape) ---------- */
 
 @media (min-aspect-ratio: 1/1) and (min-width: 768px) {

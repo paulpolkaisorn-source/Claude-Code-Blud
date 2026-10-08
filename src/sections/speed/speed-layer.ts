@@ -150,6 +150,8 @@ export function createSpeedLayer(parts: LayerParts): SpeedLayer {
   let lastLabel = '';
   let labelOn: boolean | null = null;
   let shown: boolean | null = null;
+  /** True once layout has filled the rest geometry. Nothing is painted before it (D23.6). */
+  let laidOut = false;
 
   /** Places the no-WebGL boxes and the dimension svg for the viewport. The race itself is placed by follow. */
   function layout(): void {
@@ -170,6 +172,7 @@ export function createSpeedLayer(parts: LayerParts): SpeedLayer {
     lastLine = '';
     lastTicks = '';
     lastLabel = '';
+    laidOut = true;
   }
 
   /** The race poses at u, written as src/sections/speed/gl.ts writes them (writePoses). */
@@ -197,6 +200,8 @@ export function createSpeedLayer(parts: LayerParts): SpeedLayer {
 
   /** Draws the dimension line, its ticks and the label from the outlines in rects and their union, box. */
   function draw(u: number): void {
+    // Nothing is drawn before layout has filled the outlines and the union they are measured from (D23.6).
+    if (!laidOut || rects.length !== BLOCK_COUNT) return;
     const p = ef.settle(u);
     let start: number;
     let end: number;
@@ -260,6 +265,7 @@ export function createSpeedLayer(parts: LayerParts): SpeedLayer {
   }
 
   function follow(progress: number): void {
+    if (!laidOut) return;
     const size = viewportSize();
     if (!(size.width > 0 && size.height > 0)) return;
     const u = clamp01(progress);

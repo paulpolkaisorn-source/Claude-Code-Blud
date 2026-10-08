@@ -56,6 +56,29 @@
       #footer {
         height: 100vh;
       }
+      /* Test probes for theme-front (D23.1). Each is a data-theme-block with a centre at its top + 24 px. The probes are
+         absolute, so they do not change any section height. The sections are the containing blocks. */
+      section[id] {
+        position: relative;
+      }
+      .probe {
+        position: absolute;
+        left: 8%;
+        width: 40%;
+        height: 48px;
+        box-sizing: border-box;
+        border: 1px solid #888;
+      }
+      /* A sticky stage in speed, as speed.css has one: a 185 vh pin holding a 100 vh stage that sticks to the top. */
+      #speed .pin {
+        position: relative;
+        height: 185vh;
+      }
+      #speed .stage {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+      }
     </style>
   </head>
   <body>
@@ -63,12 +86,32 @@
     <section id="preloader" data-theme="paper" data-act="1" aria-hidden="true"></section>
     <main id="main" tabindex="-1">
       <section id="hero" data-theme="paper" data-act="1"></section>
-      <section id="speed" data-theme="paper" data-act="1"></section>
-      <section id="capabilities" data-theme="ink" data-act="2"></section>
+      <section id="speed" data-theme="paper" data-act="1">
+        <div class="pin">
+          <div class="stage">
+            <div class="probe" data-theme-block data-probe="speed-sticky" style="top: 40%"></div>
+          </div>
+        </div>
+        <div class="probe" data-theme-block data-probe="speed-a" style="top: 20%"></div>
+        <div class="probe" data-theme-block data-probe="speed-b" style="top: 97%"></div>
+      </section>
+      <section id="capabilities" data-theme="ink" data-act="2">
+        <div class="probe" data-theme-block data-probe="cap-a" style="top: 0%"></div>
+        <div class="probe" data-theme-block data-probe="cap-b" style="top: 45%"></div>
+        <div class="probe" data-theme-block data-probe="cap-c" style="top: 80%"></div>
+      </section>
       <section id="code" data-theme="ink" data-act="2"></section>
-      <section id="family" data-theme="ink" data-act="2"></section>
-      <section id="pricing" data-theme="ink" data-act="3"></section>
-      <section id="closing" data-theme="paper" data-act="3"></section>
+      <section id="family" data-theme="ink" data-act="2">
+        <div class="probe" data-theme-block data-probe="fam-a" style="top: 10%"></div>
+        <div class="probe" data-theme-block data-probe="fam-b" style="top: 85%"></div>
+      </section>
+      <section id="pricing" data-theme="ink" data-act="3">
+        <div class="probe" data-theme-block data-probe="pri-a" style="top: 5%"></div>
+        <div class="probe" data-theme-block data-probe="pri-b" style="top: 50%"></div>
+      </section>
+      <section id="closing" data-theme="paper" data-act="3">
+        <div class="probe" data-theme-block data-probe="closing-a" style="top: 50%"></div>
+      </section>
     </main>
     <section id="footer" data-theme="paper" data-act="3"></section>
     <script type="module" src="/harness/choreo.ts"></script>

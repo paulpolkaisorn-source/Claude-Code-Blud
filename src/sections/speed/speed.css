@@ -182,17 +182,24 @@ html:not(.js) #speed .speed-panel {
   margin-inline-start: var(--sp-1);
 }
 
-/* Source note: 12 px (sp-3) below the title. Footnote: 7 px (sp-2) below the source note. Support: 12 px below the
-   footnote. Each settles from text-3 to text-2 (heading 4, entrance colour). */
+/* Title characters settle from text-3 to text-1 (heading 8, rule 6), driven by --mix from 0 to 1 as pricing does. Every
+   colour here is a token, so a theme block that flips (D23.1) takes the colours of its new theme. */
+#speed .speed-char {
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-1));
+}
+
+/* The three notes are one theme block (D23.1). Source note: 12 px (sp-3) below the title, set on the group. Footnote:
+   7 px (sp-2) below the source note. Support: 12 px below the footnote. Each settles from text-3 to text-2 (heading 4,
+   entrance colour), with --mix set on the group. */
+#speed .speed-notes {
+  margin-top: var(--sp-3);
+}
+
 #speed .speed-source,
 #speed .speed-footnote,
 #speed .speed-support {
-  color: var(--text-2);
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-2));
   text-wrap: pretty;
-}
-
-#speed .speed-source {
-  margin-top: var(--sp-3);
 }
 
 #speed .speed-footnote {
@@ -239,6 +246,11 @@ html:not(.js) #speed .speed-panel {
   white-space: normal;
   overflow: visible;
   overflow-wrap: normal;
+}
+
+/* A token settles from text-3 to text-1 over its entry, driven by --mix (heading 8, rule 9). */
+#speed .speed-tok {
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-1));
 }
 
 /* The caret: 2 px wide, 1 em tall, seal-text, solid (A12). It follows the last token that has entered. */
@@ -295,16 +307,20 @@ html:not(.js) #speed .speed-panel {
   visibility: hidden;
 }
 
-#speed .speed-dim-label.is-on {
+/* The label shows only while the layer is on. A child's own visible value would show it through a hidden layer, so the
+   rule names the layer too (D23.6). */
+#speed .speed-art.is-on .speed-dim-label.is-on {
   visibility: visible;
 }
 
 /* No-WebGL fallback (architecture section 8, A7 and the speed fallback): the race as a static SVG, shown only under
-   html.no-gl. Portrait shows the vertical race, landscape the horizontal one. */
+   html.no-gl. Portrait shows the vertical race, landscape the horizontal one. It stays at opacity 0 until loader:done,
+   and speed.ts fades it in then (D23.6, as the hero does, D22.7). */
 #speed .speed-fallback {
   position: absolute;
   left: 0;
   top: 0;
+  opacity: 0;
 }
 
 #speed .speed-fallback--row,

@@ -1,15 +1,16 @@
-<section id="pricing" class="section section--pricing" data-theme="ink" data-act="3" aria-labelledby="pricing-title">
+<section id="pricing" class="section section--pricing" data-theme="paper" data-act="3" aria-labelledby="pricing-title">
   <div class="wrap">
     <div class="grid pricing__grid">
       <div class="pricing__head">
-        <p class="pricing__kicker t-label">Pricing</p>
-        <h2 id="pricing-title" class="pricing__title" aria-label="Pricing per million tokens">
+        <p class="pricing__kicker t-label" data-theme-block>Pricing</p>
+        <h2 id="pricing-title" class="pricing__title" data-theme-block aria-label="Pricing per million tokens">
           <span class="pricing__title-main t-display-xl">Pricing</span>
           <span class="pricing__title-tail t-heading">per million&nbsp;tokens</span>
         </h2>
-        <p class="pricing__intro t-small">Haiku 5.5 is priced by prompt length. Prompts over 100K tokens pay higher rates than prompts up to 100K.</p>
+        <p class="pricing__intro t-small" data-theme-block>Haiku 5.5 is priced by prompt length. Prompts over 100K tokens pay higher rates than prompts up to 100K.</p>
       </div>
-      <div class="pricing__table-panel">
+      <!-- The table panel is one block with its statements: the panel is opaque (--bg), so the statements sit on its ground. -->
+      <div class="pricing__table-panel" data-theme-block>
         <div class="pricing__table-wrap">
           <table class="pricing__table">
             <caption class="sr-only">Haiku 5.5 prices per million tokens</caption>
@@ -60,7 +61,7 @@
           <p class="pricing__statement pricing__statement--context t-small">A 1M-token context window and up to 128K output tokens.</p>
         </div>
       </div>
-      <div class="pricing__avail">
+      <div class="pricing__avail" data-theme-block>
         <h3 class="pricing__avail-title t-label">Availability</h3>
         <ul class="pricing__avail-list">
           <li class="pricing__avail-item t-small">Claude API, Amazon Bedrock (access required), Claude Platform on AWS, Google Cloud and Microsoft Foundry.</li>

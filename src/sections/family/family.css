@@ -61,6 +61,9 @@
 /* The intro is set beside the title, in columns 11 to 17 (wide only). */
 #family .family__intro {
   grid-column: 11 / 18;
+  /* A theme block (D23.1): once the choreography sets its data-theme, the [data-theme] rule would colour it text-1.
+     This rule keeps the lede at text-2, with a selector that outranks that rule. */
+  color: var(--text-2);
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {

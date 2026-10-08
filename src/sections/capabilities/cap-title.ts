@@ -3,9 +3,13 @@
 // The display-xl title is split into lines and characters with SplitText. Its parent keeps the full title as its
 // accessible name, and the characters are hidden from assistive technology. Once, when the title's top crosses 80 per
 // cent of the viewport height, each character starts displaced away from its line centre by (i - centre) x 0.06em and
-// in text-3. It settles to its set place and token colour with settle over T.beat7, and each line is staggered with
-// the front profile over T.half. Lines of fewer than five characters start together. Opacity never changes. Under
-// reduced motion the title is static: no split, no trigger.
+// in text-3. It settles to its set place and to the title's own token colour with settle over T.beat7, and each line is
+// staggered with the front profile over T.half. Lines of fewer than five characters start together. Opacity never
+// changes. Under reduced motion the title is static: no split, no trigger.
+//
+// The colour is not a fixed value. Each character carries --cap-mix, from 0 (text-3) to 1 (text-1), and capabilities.css
+// mixes the two tokens in the character's own block. A block can flip between paper and ink while the reveal runs
+// (D23.1), and the characters then follow it.
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
@@ -23,8 +27,8 @@ export interface TitleReveal {
   unmount(): void;
 }
 
-/** Builds the reveal for one title. The section is used for the token colour of text-3. */
-export function createTitleReveal(title: HTMLElement, section: HTMLElement): TitleReveal {
+/** Builds the reveal for one title. */
+export function createTitleReveal(title: HTMLElement): TitleReveal {
   gsap.registerPlugin(ScrollTrigger, SplitText);
   let split: SplitText | null = null;
   let reveal: gsap.core.Timeline | null = null;
@@ -32,12 +36,10 @@ export function createTitleReveal(title: HTMLElement, section: HTMLElement): Tit
   let revealed = false;
 
   /**
-   * One paused timeline for the current split. Each character starts displaced and in text-3, and settles to its place
-   * and token colour. The pre-reveal state is set here. Opacity is not touched.
+   * One paused timeline for the current split. Each character starts displaced and at --cap-mix 0 (text-3), and settles
+   * to --cap-mix 1 (the title's own token colour). The pre-reveal state is set here. Opacity is not touched.
    */
   const buildReveal = (lines: readonly Element[]): gsap.core.Timeline => {
-    const ink = getComputedStyle(title).color;
-    const grey = getComputedStyle(section).getPropertyValue('--text-3').trim();
     const timeline = gsap.timeline({ paused: true });
     for (const line of lines) {
       const chars = Array.from(line.querySelectorAll<HTMLElement>('.cap__char'));
@@ -46,8 +48,8 @@ export function createTitleReveal(title: HTMLElement, section: HTMLElement): Tit
       const centre = (n - 1) / 2;
       chars.forEach((char, i) => {
         const em = parseFloat(getComputedStyle(char).fontSize);
-        gsap.set(char, { x: (i - centre) * DISPLACE_EM * em, color: grey });
-        timeline.to(char, { x: 0, color: ink, duration: T.beat7, ease: E.settle, clearProps: 'transform,color' }, offsets[i]);
+        gsap.set(char, { x: (i - centre) * DISPLACE_EM * em, '--cap-mix': 0 });
+        timeline.to(char, { x: 0, '--cap-mix': 1, duration: T.beat7, ease: E.settle }, offsets[i]);
       });
     }
     return timeline;

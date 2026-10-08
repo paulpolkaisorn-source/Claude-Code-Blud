@@ -12,12 +12,57 @@
 // dataset.harness becomes 'pass' or 'fail:<checks>' once the page's own checks finish.
 import { bus } from '../src/core/bus';
 import { env } from '../src/core/env';
-import { initScroll } from '../src/core/scroll';
+import { initScroll, scrollState } from '../src/core/scroll';
 import type { SectionId } from '../src/core/types';
 import { createWorld, type GLBoot } from '../src/gl/boot';
 import { addTick, PRIORITY, type Tick } from '../src/core/ticker';
 import type { GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
-import { choreoSnapshot, initChoreo, type ChoreoSnapshot } from '../src/choreo/timeline';
+import {
+  choreoRefreshThemeBlocks,
+  choreoSnapshot,
+  choreoThemeBlocks,
+  initChoreo,
+  type ChoreoSnapshot,
+} from '../src/choreo/timeline';
+
+/** One probe (a data-theme-block of the page) as the frame placed it, next to the DOM's own centre (D23.1). */
+export interface ProbeState {
+  id: string;
+  section: SectionId | '';
+  /** The centre the DOM reports, in CSS px. */
+  domCentre: number;
+  /** The centre theme-front computed at the frame, in CSS px. NaN when the module does not report the block. */
+  centre: number;
+  /** The front line theme-front used at the frame, in CSS px. */
+  front: number;
+  /** The data-theme attribute at the frame, or null. */
+  theme: string | null;
+  /** The boundary the module reports the block in, or null. */
+  boundary: 1 | 2 | null;
+}
+
+/** The state of one choreography frame, read after the frame's choreography and draw. */
+export interface ProbeFrame {
+  frame: number;
+  scrollY: number;
+  stateY: number;
+  p1: number;
+  p2: number;
+  front1: number;
+  front2: number;
+  current: SectionId | null;
+  reduced: boolean;
+  noGl: boolean;
+  probes: ProbeState[];
+}
+
+/** One write to a data-theme attribute on the page, from a MutationObserver. */
+export interface WriteRecord {
+  frame: number;
+  id: string;
+  oldValue: string | null;
+  newValue: string | null;
+}
 
 /** One call of a recording handle. */
 export interface CallRecord {
@@ -71,6 +116,15 @@ interface HarnessApi {
   /** A copy of the setBleed calls since the last clearLog, in order. */
   bleeds(): BleedRecord[];
   clearLog(): void;
+  /** Adds or removes html.no-gl, as a context loss would (theme-front must then do nothing). */
+  setNoGl(on: boolean): void;
+  /** Per-frame records of every probe since the last clearProbes. A copy. */
+  probeFrames(): ProbeFrame[];
+  clearProbes(): void;
+  /** Every data-theme write on the page (probes and sections) since the last clearProbes, in order. A copy. */
+  writes(): WriteRecord[];
+  /** Re-measures the text blocks on the next frame. */
+  refreshThemeBlocks(): void;
 }
 
 declare global {
@@ -114,6 +168,55 @@ addTick((t) => {
   simSeconds += t.dt;
   frameCount += 1;
 }, PRIORITY.glRender + 10);
+
+// Per-frame probe record (D23.1). It runs after the frame's choreography (PRIORITY.state + 5), the draw (glRender) and
+// the frame counter (glRender + 10), so frameCount - 1 is the frame whose choreography it reports.
+const probeFrames: ProbeFrame[] = [];
+addTick(() => {
+  const snap = choreoSnapshot();
+  const modelled = new Map((choreoThemeBlocks() ?? []).map((b) => [b.el, b] as const));
+  const probes: ProbeState[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>('[data-probe]')) {
+    const m = modelled.get(el);
+    const r = el.getBoundingClientRect();
+    probes.push({
+      id: el.dataset.probe ?? '',
+      section: (el.closest('section')?.id ?? '') as SectionId | '',
+      domCentre: r.top + r.height / 2,
+      centre: m?.centre ?? Number.NaN,
+      front: m?.front ?? Number.NaN,
+      theme: el.getAttribute('data-theme'),
+      boundary: m?.boundary ?? null,
+    });
+  }
+  probeFrames.push({
+    frame: frameCount - 1,
+    scrollY: window.scrollY,
+    stateY: scrollState.y,
+    p1: snap?.p1 ?? Number.NaN,
+    p2: snap?.p2 ?? Number.NaN,
+    front1: snap?.front1 ?? Number.NaN,
+    front2: snap?.front2 ?? Number.NaN,
+    current: snap?.current ?? null,
+    reduced: env.reducedMotion,
+    noGl: root.classList.contains('no-gl'),
+    probes,
+  });
+}, PRIORITY.glRender + 11);
+
+// Every data-theme write on the page. A write that keeps the value is recorded too, so the driver can see one.
+const writes: WriteRecord[] = [];
+const writeObserver = new MutationObserver((records) => {
+  for (const rec of records) {
+    const el = rec.target as HTMLElement;
+    writes.push({
+      frame: frameCount - 1,
+      id: el.dataset.probe ?? (el.id === '' ? el.tagName.toLowerCase() : `#${el.id}`),
+      oldValue: rec.oldValue,
+      newValue: el.getAttribute('data-theme'),
+    });
+  }
+});
 
 const callLog: CallRecord[] = [];
 const bleedLog: BleedRecord[] = [];
@@ -312,6 +415,12 @@ async function main(): Promise<void> {
 
   // boot has already called initChoreo with the sections it collected. In fake mode this call replaces that one.
   if (fake) initChoreo(boot.world, FAKE_SECTIONS);
+  writeObserver.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+    attributeOldValue: true,
+    subtree: true,
+  });
   // ?norender skips the draws. The logic checks do not read pixels, and the frame rate on a loaded machine
   // is the limit on how long the driver has to wait. Every state still runs; only the frame is not drawn.
   if (params.has('norender')) boot.world.stage.setRenderHook(() => undefined);
@@ -338,6 +447,16 @@ async function main(): Promise<void> {
       callLog.length = 0;
       bleedLog.length = 0;
     },
+    setNoGl: (on: boolean) => {
+      root.classList.toggle('no-gl', on);
+    },
+    probeFrames: () => probeFrames.slice(),
+    clearProbes: () => {
+      probeFrames.length = 0;
+      writes.length = 0;
+    },
+    writes: () => writes.slice(),
+    refreshThemeBlocks: () => choreoRefreshThemeBlocks(),
   };
 
   await frames(3);
@@ -356,6 +475,19 @@ async function main(): Promise<void> {
     check('bleed is off at the top', snap.bleed === null, `bleed ${JSON.stringify(snap.bleed)}`);
     check('mix is 0 on paper', snap.m === 0, `m ${snap.m}`);
   }
+  // Theme-front (D23.1): the ten probes in the two boundaries are measured, and the one outside them is not touched.
+  const boundProbes = document.querySelectorAll('[data-probe]:not([data-probe="closing-a"])').length;
+  check(
+    'theme-front measures the boundary probes',
+    (choreoThemeBlocks() ?? []).length === boundProbes,
+    `${(choreoThemeBlocks() ?? []).length} of ${boundProbes}`,
+  );
+  const closingProbe = document.querySelector<HTMLElement>('[data-probe="closing-a"]');
+  check(
+    'theme-front leaves a block outside the boundaries alone',
+    closingProbe !== null && !closingProbe.hasAttribute('data-theme'),
+    `data-theme ${closingProbe?.getAttribute('data-theme') ?? 'absent'}`,
+  );
   if (fake) {
     check('fake: hero is current at the top', snap?.current === 'hero', `current ${snap?.current ?? 'none'}`);
     check(

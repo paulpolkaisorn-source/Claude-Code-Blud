@@ -8,7 +8,7 @@
 import { registerEases } from '../src/core/ease';
 import { env } from '../src/core/env';
 import { bus } from '../src/core/bus';
-import { viewportSize } from '../src/core/projection';
+import { stationCenters, viewportSize } from '../src/core/projection';
 import { addTick, initTicker } from '../src/core/ticker';
 import { initScroll } from '../src/core/scroll';
 import { initHover } from '../src/core/hover';
@@ -133,6 +133,54 @@ function runChecks(): void {
 
   const svg = section.querySelector('.family__svg');
   record('overlay svg present and aria-hidden', svg !== null && section.querySelector('.family__fallback')?.getAttribute('aria-hidden') === 'true', '');
+
+  // D23.1: one data-theme-block per visually separate text block: the head, the intro, the axis title, the four axis
+  // labels, the four stations and the notes.
+  const themeBlocks = section.querySelectorAll('[data-theme-block]').length;
+  record('theme blocks: head, intro, axis title, four axis labels, four stations, notes', themeBlocks === 12, String(themeBlocks));
+
+  // D23.8: on a phone, each station label sits on its own station, and the title, the label above and the viewport
+  // only push it as far as they must. Positions are in stage coordinates, which are viewport coordinates at rest.
+  if (stage !== null && title !== null && layout === 'narrow') {
+    const stageBox = stage.getBoundingClientRect();
+    const size = viewportSize();
+    const centres = stationCenters(size);
+    const style = getComputedStyle(section);
+    const gap = parseFloat(style.getPropertyValue('--sp-3'));
+    const sp4 = parseFloat(style.getPropertyValue('--sp-4'));
+    const floor = titleInkBottom(title) - stageBox.top + sp4;
+    const boxes = stations.map((li) => {
+      const r = li.getBoundingClientRect();
+      return { top: r.top - stageBox.top, bottom: r.bottom - stageBox.top, centre: (r.top + r.bottom) / 2 - stageBox.top };
+    });
+    const ordered = boxes.every((b, i) => i === 0 || b.top >= boxes[i - 1].bottom + gap - 0.5);
+    record(
+      'phone labels keep their order with a gap of sp-3',
+      ordered,
+      boxes.map((b) => `${b.top.toFixed(1)}-${b.bottom.toFixed(1)}`).join(' | '),
+    );
+    record(
+      'first phone label clears the title by sp-4',
+      boxes[0].top >= floor - 0.5,
+      `top ${boxes[0].top.toFixed(2)}, floor ${floor.toFixed(2)}`,
+    );
+    record(
+      'phone labels stay on screen',
+      boxes.every((b) => b.top >= -0.5 && b.bottom <= size.height - sp4 + 0.5),
+      boxes.map((b) => b.bottom.toFixed(1)).join(', '),
+    );
+    const placed = boxes.map(
+      (b, i) =>
+        Math.abs(b.centre - centres[i].y) <= 0.5 ||
+        Math.abs(b.top - floor) <= 0.5 ||
+        (i > 0 && Math.abs(b.top - (boxes[i - 1].bottom + gap)) <= 0.5),
+    );
+    record(
+      'each phone label is on its station, or pushed by the title or the label above',
+      placed.every(Boolean),
+      boxes.map((b, i) => `${(b.centre - centres[i].y).toFixed(2)}`).join(', '),
+    );
+  }
 
   const failed = checks.filter((c) => !c.ok).map((c) => c.name);
   document.documentElement.dataset.harnessChecks = JSON.stringify(checks);

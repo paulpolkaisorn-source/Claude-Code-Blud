@@ -14,7 +14,7 @@ import { T } from './timing';
 export interface ScrollState {
   /** Scroll position in px: Lenis's smoothed position while Lenis runs, window.scrollY otherwise. */
   y: number;
-  /** Scroll velocity in px/s, smoothed with a 0.1 s time constant. Positive is down. */
+  /** Scroll velocity in px/s, smoothed with a 0.1 s time constant on the wall clock. Positive is down. */
   velocity: number;
   /** Direction of the last movement larger than 0.5 px: 1 is down, -1 is up. */
   direction: 1 | -1;
@@ -35,6 +35,7 @@ const NATURALLY_FOCUSABLE =
 let lenis: Lenis | null = null;
 let initialized = false;
 let prevY = 0;
+let wallPrevMs = -1;
 
 function currentScroll(): number {
   return lenis ? lenis.scroll : window.scrollY;
@@ -45,14 +46,21 @@ function driveLenis(t: Tick): void {
   lenis?.raf(t.time * 1000);
 }
 
-/** Runs after Lenis in the same tick: reads the position and updates scrollState. */
-function updateScrollState(t: Tick): void {
+/**
+ * Runs after Lenis in the same tick: reads the position and updates scrollState. The velocity is measured on the wall
+ * clock (performance.now), not on the page clock: the page clock clamps dt to 50 ms, so with slow frames a move would
+ * be divided by too small a time and the velocity would be inflated (D23.3).
+ */
+function updateScrollState(): void {
   const y = currentScroll();
   const delta = y - prevY;
   prevY = y;
-  if (t.dt > 0) {
-    const blend = 1 - Math.exp(-t.dt / VELOCITY_TAU);
-    scrollState.velocity += (delta / t.dt - scrollState.velocity) * blend;
+  const nowMs = performance.now();
+  const wallDt = wallPrevMs < 0 ? 0 : (nowMs - wallPrevMs) / 1000;
+  wallPrevMs = nowMs;
+  if (wallDt > 0) {
+    const blend = 1 - Math.exp(-wallDt / VELOCITY_TAU);
+    scrollState.velocity += (delta / wallDt - scrollState.velocity) * blend;
   }
   if (delta > DIRECTION_EPSILON) scrollState.direction = 1;
   else if (delta < -DIRECTION_EPSILON) scrollState.direction = -1;

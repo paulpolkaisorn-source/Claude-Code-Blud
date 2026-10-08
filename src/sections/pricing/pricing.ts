@@ -1,8 +1,9 @@
 // Pricing section, 2D layer (design/direction-act3.md, pricing; design/drafts/director-decisions.md D2.1, D2.3,
-// D2.6, D18 and D19). Entrances start on loader:done and on each group's trigger line (its top at 80% of the
+// D2.6, D18, D19 and D23.1). Entrances start on loader:done and on each group's trigger line (its top at 80% of the
 // viewport). Nothing starts on a timer. Reduced motion keeps the final states (the CSS defaults): no split, no
-// rule drawing, no colour settle. The 3D layer is src/sections/pricing/gl.ts. This file reaches it only through
-// the bus ('theme') and projection.ts, and never imports from src/gl.
+// rule drawing, no colour settle. The text theme with WebGL is per block (src/choreo/theme-front.ts marks each
+// data-theme-block); this file only sets the section's theme without WebGL. The 3D layer is
+// src/sections/pricing/gl.ts. This file reaches it through projection.ts, and never imports from src/gl.
 import './pricing.css';
 
 import { gsap } from 'gsap';
@@ -119,21 +120,17 @@ function applyTheme(el: HTMLElement, theme: Theme): void {
 }
 
 /**
- * The section's theme (D10, act III C11). With WebGL, the section follows the choreography's 'theme' event, which
- * switches at the bleed front p = 0.5 together with the block mix. Without WebGL, the same switch is a plain cut at
- * p2 = 0.5, read from the scroll position (the top of the section, from the viewport bottom to the viewport top).
- * Reduced motion keeps the paper theme from the start, so no theme flip runs.
+ * The section's own theme (act III C11, D23.1). With WebGL the section does not change: the choreography's theme front
+ * sets data-theme on each text block, and the section keeps its paper value from the HTML, which is the theme of the
+ * ground below the boundary. Without WebGL the same switch is a plain cut at p2 = 0.5, read from the scroll position
+ * (the top of the section, from the viewport bottom to the viewport top). Reduced motion keeps the paper theme from the
+ * start, so no theme flip runs.
  */
 function bindTheme(el: HTMLElement, gl: boolean, reduced: boolean): void {
   if (reduced) {
     applyTheme(el, 'paper');
     return;
   }
-  bus.on('theme', (theme) => {
-    if (glActive(gl)) applyTheme(el, theme);
-  });
-  const latest = bus.last('theme');
-  if (latest !== undefined && glActive(gl)) applyTheme(el, latest);
   const byScroll = (self: ScrollTrigger): void => {
     if (!glActive(gl)) applyTheme(el, self.progress < 0.5 ? 'ink' : 'paper');
   };

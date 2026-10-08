@@ -144,6 +144,18 @@ async function main(): Promise<void> {
   const reduced = env.reducedMotion;
   console.log(`[scroll-harness] mode ${reduced ? 'reduced-motion' : 'default'}; env.reducedMotion=${env.reducedMotion}`);
 
+  // ?slow=<ms>: every frame takes at least this long in wall time (a busy tick ahead of the scroll state). It makes the
+  // frame rate slow without changing the page, so the wall-clock velocity (D23.3) is tested at a low frame rate.
+  const slowMs = Number(new URLSearchParams(location.search).get('slow') ?? '0');
+  if (slowMs > 0) {
+    ticker.addTick(() => {
+      const end = performance.now() + slowMs;
+      while (performance.now() < end) {
+        // Busy on purpose: this is the slow frame.
+      }
+    }, ticker.PRIORITY.input);
+  }
+
   // Boot. initScroll runs twice: the second call must not change anything.
   ticker.initTicker();
   initScroll();
@@ -297,6 +309,30 @@ async function main(): Promise<void> {
     check('reduced motion: top jump is instant', topRightAfterCall <= 2, `scrollY right after the call ${topRightAfterCall}`);
   }
 
+  // 6b. A 2400 px native jump (D23.3). The velocity is measured on the wall clock, so a jump does not leave a spike that
+  // a slow page clock would hold: it must be under 40 px/s within 1.5 s of wall time, at any frame rate.
+  await sleep(1200);
+  scrollToTarget('top');
+  await sleep(reduced ? 100 : 1200);
+  const jumpAt = performance.now();
+  window.scrollTo({ top: 2400, behavior: 'instant' });
+  await sleep(1800);
+  const afterJump = samples.filter((s) => s.t >= jumpAt);
+  const jumpPeak = afterJump.reduce((m, s) => Math.max(m, Math.abs(s.v)), 0);
+  const quietAt = afterJump.find((s) => Math.abs(s.v) < 40)?.t ?? Number.POSITIVE_INFINITY;
+  const quietMs = quietAt - jumpAt;
+  const gaps = afterJump.slice(1).map((s, i) => s.t - afterJump[i].t).sort((a, b) => a - b);
+  const frameMs = gaps.length > 0 ? gaps[Math.floor(gaps.length / 2)] : Number.NaN;
+  console.log(
+    `[scroll-harness] jump 2400 px: peak velocity ${jumpPeak.toFixed(0)} px/s, under 40 px/s after ${quietMs.toFixed(0)} ms` +
+      ` of wall time, median frame ${frameMs.toFixed(1)} ms, slow=${slowMs} ms`,
+  );
+  check(
+    'native jump 2400 px: velocity under 40 px/s within 1.5 s of wall time',
+    quietMs <= 1500 && Math.abs(afterJump[afterJump.length - 1]?.v ?? Number.NaN) < 40,
+    `under 40 px/s after ${quietMs.toFixed(0)} ms, peak ${jumpPeak.toFixed(0)} px/s, frame ${frameMs.toFixed(1)} ms`,
+  );
+
   // 7. Idle for one second: every rAF caller, its requests and its callbacks.
   const requested0 = new Map(requested);
   const fired0 = new Map(fired);
@@ -326,7 +362,8 @@ async function main(): Promise<void> {
   check('idle: one page-clock rAF chain', clock.length === 1, `${clock.length} chains`);
   check(
     'idle: the page clock makes exactly one rAF request per frame',
-    clockStats !== null && framesIdle >= 20 && Math.abs(clockStats.requests - framesIdle) <= 1,
+    // Five frames are enough to count requests per frame; a slow frame rate (?slow=) gives fewer frames in one second.
+    clockStats !== null && framesIdle >= 5 && Math.abs(clockStats.requests - framesIdle) <= 1,
     clockStats ? `${clockStats.requests} requests for ${clockStats.frames} frames` : 'no page-clock chain found',
   );
   check('idle: the page clock never has two requests pending', clockPending <= 1, `max pending ${clockPending}`);

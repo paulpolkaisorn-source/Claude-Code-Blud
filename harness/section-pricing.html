@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="/src/styles/fonts.css" />
     <link rel="stylesheet" href="/src/styles/tokens.css" />
     <link rel="stylesheet" href="/src/styles/base.css" />
+    <style>
+      /* Harness only. With WebGL each block stands on the ground the shader paints under it, which takes the block's own
+         theme. Here a free block (the title group and the intro) gets that ground as its own background, so a block set
+         to the other theme is tested on its ground. Panels already paint their own background. */
+      #pricing [data-theme-block]:not(.pricing__table-panel):not(.pricing__avail) {
+        background: var(--bg);
+      }
+    </style>
   </head>
   <body>
     <div style="height: 100vh" aria-hidden="true"></div>

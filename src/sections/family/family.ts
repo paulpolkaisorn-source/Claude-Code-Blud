@@ -1,5 +1,9 @@
 // The family section's 2D layer (design/direction-act2.md, family; design/drafts/director-decisions.md D4,
-// D16.4, D19.2, D20.1, D22.6 and D22.12; design/direction.md headings 8, 9 and 13).
+// D16.4, D19.2, D20.1, D22.6, D22.12, D23.1 and D23.8; design/direction.md headings 8, 9 and 13).
+//
+// Phone labels (D23.8): each label is centred on its station's projected y, and fitStack moves a label only as far as
+// the title's clearance, the label above and the viewport bottom require. Block themes (D23.1): the head, intro, axis
+// title, axis labels, stations and notes carry data-theme-block; theme-front.ts sets their theme.
 //
 // This file owns the title reveal (SplitText, once, at the 80 per cent line), the dimension axis, the four
 // station label blocks, the source notes and the box of the no-WebGL overlay. Every position that follows a
@@ -154,6 +158,54 @@ function lastLineRight(title: HTMLElement): number {
   return right;
 }
 
+/**
+ * The tops of a column of label blocks on a phone (D23.8). Block k is centred on centres[k] wherever the constraints
+ * allow, and they are: the first top is at least floor (the title's clearance); each block starts at least gap below
+ * the block above it, so no two overlap; and the last bottom is at most ceiling, so the column stays on screen.
+ * The result is the least-squares fit of the tops to their centred positions under those constraints. Writing each top
+ * as its offset plus the gaps above it turns the gap rule into "offsets never decrease", a monotone fit that
+ * pool-adjacent-violators solves. The fit is then clipped to the range the floor and the ceiling leave, which keeps
+ * it monotone, and a block moves only as far as the constraints need.
+ */
+function fitStack(
+  centres: readonly number[],
+  heights: readonly number[],
+  gap: number,
+  floor: number,
+  ceiling: number,
+): number[] {
+  const n = centres.length;
+  const offsets: number[] = [];
+  let run = 0;
+  for (let k = 0; k < n; k += 1) {
+    offsets.push(run);
+    run += heights[k] + gap;
+  }
+  const pools: { mean: number; count: number }[] = [];
+  for (let k = 0; k < n; k += 1) {
+    pools.push({ mean: centres[k] - heights[k] / 2 - offsets[k], count: 1 });
+    while (pools.length > 1 && pools[pools.length - 2].mean > pools[pools.length - 1].mean) {
+      const last = pools.pop();
+      const before = pools[pools.length - 1];
+      if (last === undefined) break;
+      const count = before.count + last.count;
+      before.mean = (before.mean * before.count + last.mean * last.count) / count;
+      before.count = count;
+    }
+  }
+  // The largest offset that the ceiling allows the last block. The offsets are monotone, so it bounds every block.
+  const upper = ceiling - heights[n - 1] - offsets[n - 1];
+  const tops: number[] = [];
+  for (const pool of pools) {
+    // The floor wins over the ceiling, because the title's clearance is the stronger rule.
+    const offset = Math.max(Math.min(pool.mean, upper), floor);
+    for (let j = 0; j < pool.count; j += 1) {
+      tops.push(offset + offsets[tops.length]);
+    }
+  }
+  return tops;
+}
+
 export function initFamily(ctx: SectionContext): void {
   const section = ctx.el;
   const stage = section.querySelector<HTMLElement>('.family__stage');
@@ -292,14 +344,20 @@ export function initFamily(ctx: SectionContext): void {
       const blockLeft = ox + (STANZA_HALF_BU + BLOCK_GAP_BU) * s;
       const blockWidth = size.width - edge - blockLeft;
       blocks.forEach((li) => place(li, { left: blockLeft, width: blockWidth }));
-      // Each block is centred on its station, unless that would reach the title or the block above it. The heights
-      // are read after the width is set, because the text wraps inside that width.
+      // Each block sits on its own station (D23.8): centred on the station's projected y. The title's clearance (sp-4
+      // below its lowest ink) and the block above it can push a block down, and the bottom of the viewport can stop
+      // it, so fitStack moves the column by the least amount that those constraints need. The heights are read after
+      // the width is set, because the text wraps inside that width.
       const heights = blocks.map((li) => li.offsetHeight);
-      let floor = inkBottom + edge;
+      const tops = fitStack(
+        pts.map((p) => p.y),
+        heights,
+        gap,
+        inkBottom + edge,
+        size.height - edge,
+      );
       blocks.forEach((li, i) => {
-        const top = Math.max(pts[i].y - heights[i] / 2, floor);
-        li.style.top = px(top);
-        floor = top + heights[i] + gap;
+        li.style.top = px(tops[i]);
       });
       place(fallback, {
         left: ox - (OVERLAY_SHORT_BU / 2) * s,

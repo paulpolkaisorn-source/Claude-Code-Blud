@@ -1,15 +1,19 @@
-// The code section's 2D layer (design/direction-act2.md, code; design/drafts/director-decisions.md D16.1, D18, D20.3 and
-// D21.1 to D21.3; design/direction.md headings 8, 9 and 13).
+// The code section's 2D layer (design/direction-act2.md, code; design/drafts/director-decisions.md D16.1, D18, D20.3,
+// D21.1 to D21.3 and D23.4; design/direction.md headings 8, 9 and 13).
 //
 // This file owns the title reveal (SplitText, once, when the title top crosses 80 per cent of the viewport height),
 // the colour settle of the kicker and the intro with it, the request that types itself out with its caret (D21.3),
-// the scroll-driven colour stream of the EXAMPLE OUTPUT block, the live line marker over both code blocks, the copy
+// the response that streams in bursts with its caret (D23.4), the live line marker over both code blocks, the copy
 // button and the character split of the response. Section progress p (C2) comes from one ScrollTrigger, from the
 // section's centre to its bottom edge. It is raw: Lenis is the only smoothing (D21.1).
 //
-// The request types out over p 0.10 to 0.45, then the response streams over p 0.45 to 0.75 (D21.3). The code lines do
-// not move. The text is in the HTML once: an untyped character group is transparent, not removed, so no-JS, reduced
-// motion and screen readers get the whole program, and the copy button copies it.
+// The two windows are set at layout time (D23.4, and again on every resize and font load). The request starts typing
+// when its first code line reaches 85 per cent of the viewport height, and types over 0.30 of progress. The response
+// then streams over the next 0.25, in bursts of 1 to 4 words at an uneven cadence. Both windows are clamped to the
+// section's progress range, and compressed by one factor when the section is too short for both. The code lines do not
+// move. The text is in the HTML once: an untyped group or an unstreamed character is transparent, not removed, so the
+// layout has its final size from the first frame, no-JS, reduced motion and screen readers get the whole program, and
+// the copy button copies it.
 //
 // The section imports nothing from src/gl. Its 3D layer is src/sections/code/gl.ts, which the choreography drives from
 // the same progress. The two layers share no state, so the section works without WebGL.
@@ -23,34 +27,52 @@ import { E } from '../../core/ease';
 import { onReducedMotionChange } from '../../core/env';
 import { T, weightedStagger } from '../../core/timing';
 
-/** The request types out over section progress 0.10 to 0.45 (D21.3). */
-const TYPE_FROM = 0.1;
-const TYPE_TO = 0.45;
-/** The response streams over 0.45 to 0.75, as the act specifies (D21.3; the Sequence of direction-act2, code). */
-const STREAM_FROM = TYPE_TO;
-const STREAM_SPAN = 0.3;
+/** The request starts typing when its first code line reaches this share of the viewport height (D23.4). */
+const TYPE_LINE_AT = 0.85;
+/** The request types out over this much section progress (D23.4). */
+const TYPE_SPAN = 0.3;
+/** The response streams over this much section progress, from the end of the typing (D23.4). */
+const STREAM_SPAN = 0.25;
 /** The typing cost of a character group, in character widths, on top of its own characters. */
 const GROUP_COST = 0.5;
 /** The pause at each line end, in character widths. */
 const LINE_HOLD = 3;
 /** A token longer than this is typed in parts of 3 or 4 characters. Shorter tokens are typed whole. */
 const TOKEN_MAX = 6;
+/** A burst of the response holds 1 to this many words (D23.4). */
+const BURST_MAX_WORDS = 4;
+/** The cost of a burst, in character widths, on top of its own characters. */
+const BURST_COST = 2;
+/** A burst that ends a sentence waits this many character widths longer, so the cadence is uneven on purpose. */
+const SENTENCE_HOLD = 6;
 /** The title reveals once, when its top crosses this line (direction.md heading 8, rule 5 and rule 15). */
 const REVEAL_START = 'top 80%';
 /** Each character starts displaced by (i - centre) times this many em (direction.md heading 8, rule 15). */
 const DISPLACE_EM = 0.06;
 /** A line of fewer characters than this starts all of its characters together (rule 15). */
 const STAGGER_MIN_CHARS = 5;
+/** The space kept between a caret and the edge of its box when the box scrolls to follow it (D23.4). */
+const CARET_MARGIN = 12;
 
 interface Piece {
   text: string;
   cls: string;
 }
 
+/** One burst of the response: its character count, the index after its last character, and its weight in the cadence. */
+interface Burst {
+  chars: number;
+  end: number;
+  weight: number;
+}
+
 /** Words, punctuation runs and whitespace. Joined in order, the matches are the text of the line. */
 const UNITS = /\s+|[A-Za-z0-9_$]+|[^\sA-Za-z0-9_$]+/g;
 const WHITESPACE = /^\s+$/;
 const WORD = /^[A-Za-z0-9_$]+$/;
+/** A word of the response with the spaces after it (D23.4). */
+const RESPONSE_WORD = /\S+\s*/g;
+const SENTENCE_END = /[.!?]\s*$/;
 
 type Kind = 'word' | 'punct' | 'space';
 
@@ -70,7 +92,7 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-/** A deterministic value in [0, 1) for group k, so the typing rhythm is uneven and the same on every load. */
+/** A deterministic value in [0, 1) for item k, so the rhythm is uneven and the same on every load. */
 function jitter(k: number): number {
   const s = Math.sin((k + 1) * 12.9898) * 43758.5453;
   return s - Math.floor(s);
@@ -155,25 +177,56 @@ function groupsOf(line: HTMLElement): Piece[] {
 }
 
 /**
- * The progress at which each request group appears (D21.3). A group costs its characters plus GROUP_COST, with a
- * deterministic jitter, and every line end adds LINE_HOLD. A line's share of the window is therefore weighted by its
- * length, with a short hold before the next line. The last group appears at TYPE_TO exactly.
+ * The start progress of each item of a sequence, spread over the window from `from` to `to` (D23.4). The first item
+ * starts at `from` and the last at `to`. The gap before an item is proportional to the weight of the item before it, so
+ * the rhythm is uneven and the sequence fills the window exactly.
  */
-function typingSchedule(lengths: readonly number[], lineOf: readonly number[], lineCount: number): number[] {
-  const cumulative: number[] = [];
+function scheduleOf(weights: readonly number[], from: number, to: number): number[] {
+  const n = weights.length;
+  if (n <= 1) return weights.map(() => from);
+  let before = 0;
+  for (let k = 0; k < n - 1; k += 1) before += weights[k];
+  const at: number[] = [];
   let acc = 0;
-  let k = 0;
-  for (let line = 0; line < lineCount; line += 1) {
-    while (k < lengths.length && lineOf[k] === line) {
-      acc += (lengths[k] + GROUP_COST) * (0.85 + 0.3 * jitter(k));
-      cumulative.push(acc);
-      k += 1;
-    }
-    if (line < lineCount - 1) acc += LINE_HOLD;
+  for (let k = 0; k < n - 1; k += 1) {
+    at.push(from + (before > 0 ? ((to - from) * acc) / before : 0));
+    acc += weights[k];
   }
-  const at = cumulative.map((c) => TYPE_FROM + ((TYPE_TO - TYPE_FROM) * c) / acc);
-  if (at.length > 0) at[at.length - 1] = TYPE_TO;
+  at.push(to);
   return at;
+}
+
+/**
+ * The bursts of the response (D23.4). A word is a run of non-space characters with the spaces after it. A burst is the
+ * next 1 to 4 words in order, so a burst can run on to the next line. The sizes come from a fixed sequence, so the
+ * rhythm is uneven and the same on every load. The last burst takes any characters the words do not cover.
+ */
+function burstsOf(lines: readonly string[]): Burst[] {
+  const words: string[] = [];
+  for (const line of lines) {
+    for (const match of line.matchAll(RESPONSE_WORD)) words.push(match[0]);
+  }
+  const total = lines.reduce((sum, line) => sum + line.length, 0);
+  const bursts: Burst[] = [];
+  let i = 0;
+  let end = 0;
+  while (i < words.length) {
+    const k = bursts.length;
+    const size = Math.min(words.length - i, 1 + Math.floor(jitter(1000 + k) * BURST_MAX_WORDS));
+    let chars = 0;
+    for (let j = i; j < i + size; j += 1) chars += words[j].length;
+    end += chars;
+    const sentence = SENTENCE_END.test(words[i + size - 1]);
+    const weight = (chars + BURST_COST) * (0.6 + 0.8 * jitter(2000 + k)) + (sentence ? SENTENCE_HOLD : 0);
+    bursts.push({ chars, end, weight });
+    i += size;
+  }
+  const last = bursts[bursts.length - 1];
+  if (last !== undefined) {
+    last.chars += total - end;
+    last.end = total;
+  }
+  return bursts;
 }
 
 export function initCode(ctx: SectionContext): void {
@@ -187,16 +240,21 @@ export function initCode(ctx: SectionContext): void {
   const marker = section.querySelector<HTMLElement>('.code__marker');
   const copy = section.querySelector<HTMLButtonElement>('.code__copy');
   const requestPre = requestCode?.closest<HTMLElement>('pre') ?? null;
-  if (!kicker || !title || !intro || !panel || !requestCode || !responseCode || !marker || !copy || !requestPre) return;
+  const responsePre = responseCode?.closest<HTMLElement>('pre') ?? null;
+  if (!kicker || !title || !intro || !panel || !requestCode || !responseCode || !marker || !copy || !requestPre || !responsePre) {
+    return;
+  }
 
   gsap.registerPlugin(ScrollTrigger, SplitText);
 
   let reduced = ctx.reducedMotion;
 
-  // ---------- Lines, the request groups and the response characters ----------
+  // ---------- Lines, the request groups, the response bursts and characters ----------
 
   const requestLines = Array.from(requestCode.querySelectorAll<HTMLElement>('.code__line'));
   const responseLines = Array.from(responseCode.querySelectorAll<HTMLElement>('.code__line'));
+  const firstLine = requestLines[0];
+  if (firstLine === undefined) return;
   // The marker walks both blocks as one list of lines: the request first, then the response.
   const allLines = [...requestLines, ...responseLines];
   const lineCount = allLines.length;
@@ -218,49 +276,68 @@ export function initCode(ctx: SectionContext): void {
     );
   });
   const groupCount = groupNodes.length;
-  const appear = typingSchedule(
-    groupNodes.map((node) => node.textContent?.length ?? 0),
-    groupLine,
-    requestLines.length,
-  );
+  // A group's weight is its characters and its jitter, and a line end adds its hold before the next line's first group.
+  const groupWeights = groupNodes.map((node, k) => {
+    const hold = k + 1 < groupCount ? (groupLine[k + 1] - groupLine[k]) * LINE_HOLD : 0;
+    return ((node.textContent?.length ?? 0) + GROUP_COST) * (0.85 + 0.3 * jitter(k)) + hold;
+  });
 
-  // The caret (D21.3): 2 px wide, one line tall, in seal-text. It sits inside the request's scroll box, so it scrolls
-  // with the code, and it takes no space in the layout.
-  const caret = document.createElement('span');
-  caret.className = 'code__caret';
-  caret.setAttribute('aria-hidden', 'true');
-  caret.hidden = true;
-  requestPre.append(caret);
+  // The response is cut into bursts before its characters are spans, while the text is still whole.
+  const responseTexts = responseLines.map((line) => line.textContent ?? '');
+  const bursts = burstsOf(responseTexts);
+  const burstWeights = bursts.map((burst) => burst.weight);
 
-  // Each response character becomes a span, so its colour can change on its own. The text is unchanged.
+  // Each response character becomes a span, so it can be shown on its own. The text is unchanged.
   const chars: HTMLElement[] = [];
-  for (const line of responseLines) {
-    const text = line.textContent ?? '';
+  const charLine: number[] = [];
+  responseLines.forEach((line, index) => {
     line.textContent = '';
-    for (const ch of text) {
+    for (const ch of responseTexts[index]) {
       const span = document.createElement('span');
       span.className = 'code__char';
       span.textContent = ch;
       line.append(span);
       chars.push(span);
+      charLine.push(index);
     }
-  }
+  });
   const charCount = chars.length;
 
-  let litCount = 0;
-  let markerIndex = 0;
+  // The carets (D21.3, D23.4): 2 px wide, one line tall, in seal-text. Each sits inside its block's scroll box, so it
+  // scrolls with the code, and it takes no space in the layout. One of them is shown at a time.
+  const makeCaret = (host: HTMLElement): HTMLSpanElement => {
+    const caret = document.createElement('span');
+    caret.className = 'code__caret';
+    caret.setAttribute('aria-hidden', 'true');
+    caret.hidden = true;
+    host.append(caret);
+    return caret;
+  };
+  const requestCaret = makeCaret(requestPre);
+  const responseCaret = makeCaret(responsePre);
+  const carets = [requestCaret, responseCaret];
+
+  // The state of the page, and the geometry it is placed by. Measured on layout changes only.
   let typed = 0;
+  let litCount = 0;
+  let streamedCount = 0;
+  let markerIndex = 0;
   let lineTops: number[] = [];
   let requestTops: number[] = [];
   let groupRight: number[] = [];
+  let responseTops: number[] = [];
+  let charRight: number[] = [];
+  let charLeft = 0;
+  let shownCaret: HTMLElement | null = null;
+  let lastP = Number.NaN;
 
-  /** Lights the first count characters of the response and darkens the rest. Only the characters that change are touched. */
-  const setLit = (count: number): void => {
-    const next = Math.min(charCount, Math.max(0, count));
-    for (let j = litCount; j < next; j += 1) chars[j].classList.add('is-lit');
-    for (let j = next; j < litCount; j += 1) chars[j].classList.remove('is-lit');
-    litCount = next;
-  };
+  // The windows, in section progress (D23.4). layoutWindows sets them, and the schedules follow from them.
+  let typeFrom = 0;
+  let typeTo = 0;
+  let streamFrom = 0;
+  let streamTo = 0;
+  let appear: number[] = [];
+  let burstAt: number[] = [];
 
   /** Moves the live marker to a line. Animated, it jumps with cut over T.micro. Reduced, it is set at once. */
   const placeMarker = (index: number, animate: boolean): void => {
@@ -274,32 +351,45 @@ export function initCode(ctx: SectionContext): void {
     }
   };
 
-  /** The caret sits after the last typed group, or at the start of the first line when nothing is typed. */
-  const placeCaret = (): void => {
-    if (requestTops.length === 0) return;
-    const at = typed > 0 ? typed - 1 : -1;
-    const x = at >= 0 ? groupRight[at] : 0;
-    const y = requestTops[at >= 0 ? groupLine[at] : 0];
-    caret.style.left = `${x}px`;
-    caret.style.top = `${y}px`;
+  /**
+   * The request's caret sits after its last typed group, or at the start of the first line when nothing is typed. The
+   * response's caret sits after its last streamed character, or at the start of the first line when nothing is streamed.
+   */
+  const placeCarets = (): void => {
+    if (requestTops.length > 0) {
+      const at = typed > 0 ? typed - 1 : -1;
+      requestCaret.style.left = `${at >= 0 ? groupRight[at] : 0}px`;
+      requestCaret.style.top = `${requestTops[at >= 0 ? groupLine[at] : 0]}px`;
+    }
+    if (responseTops.length > 0) {
+      const at = litCount > 0 ? litCount - 1 : -1;
+      responseCaret.style.left = `${at >= 0 ? charRight[at] : charLeft}px`;
+      responseCaret.style.top = `${responseTops[at >= 0 ? charLine[at] : 0]}px`;
+    }
   };
 
-  /** Reads where the lines and the request groups sit. The code does not move, so this runs on layout changes only. */
+  /** Reads where the lines, the request groups and the response characters sit. The code does not move, so this runs on layout changes only. */
   const measure = (): void => {
     const origin = panel.getBoundingClientRect();
     const border = panel.clientTop;
     lineTops = allLines.map((line) => line.getBoundingClientRect().top - origin.top - border);
-    const first = allLines[0];
-    marker.style.height = `${first ? first.getBoundingClientRect().height : 0}px`;
+    marker.style.height = `${firstLine.getBoundingClientRect().height}px`;
     placeMarker(markerIndex, false);
 
-    // The caret's coordinates are measured inside the request box's scrollable content, so they hold when it scrolls.
+    // The coordinates are measured inside each box's scrollable content, so they hold when the box scrolls.
     const box = requestPre.getBoundingClientRect();
     const boxX = box.left + requestPre.clientLeft - requestPre.scrollLeft;
     const boxY = box.top + requestPre.clientTop - requestPre.scrollTop;
     groupRight = groupNodes.map((node) => node.getBoundingClientRect().right - boxX);
     requestTops = requestLines.map((line) => line.getBoundingClientRect().top - boxY);
-    placeCaret();
+
+    const response = responsePre.getBoundingClientRect();
+    const responseX = response.left + responsePre.clientLeft - responsePre.scrollLeft;
+    const responseY = response.top + responsePre.clientTop - responsePre.scrollTop;
+    charRight = chars.map((span) => span.getBoundingClientRect().right - responseX);
+    charLeft = (chars.length > 0 ? chars[0].getBoundingClientRect().left : response.left) - responseX;
+    responseTops = responseLines.map((line) => line.getBoundingClientRect().top - responseY);
+    placeCarets();
   };
 
   /** Types the first count groups and untypes the rest. Only the groups that change are touched. */
@@ -309,23 +399,42 @@ export function initCode(ctx: SectionContext): void {
     for (let j = typed; j < next; j += 1) groupNodes[j].classList.remove('is-untyped');
     for (let j = next; j < typed; j += 1) groupNodes[j].classList.add('is-untyped');
     typed = next;
-    placeCaret();
+    placeCarets();
   };
 
-  /** How many groups are typed at section progress p. The scroll may run either way, so it counts from the current state. */
+  /** Shows the first count response characters and hides the rest. Only the characters that change are touched. */
+  const setLit = (count: number): void => {
+    const next = Math.min(charCount, Math.max(0, count));
+    if (next === litCount) return;
+    for (let j = litCount; j < next; j += 1) chars[j].classList.add('is-lit');
+    for (let j = next; j < litCount; j += 1) chars[j].classList.remove('is-lit');
+    litCount = next;
+    placeCarets();
+  };
+
+  /** How many request groups are typed at section progress p. The scroll may run either way, so it counts from the current state. */
   const typedAt = (p: number): number => {
     let n = typed;
-    while (n < groupCount && p >= appear[n]) n += 1;
+    while (n < appear.length && p >= appear[n]) n += 1;
     while (n > 0 && p < appear[n - 1]) n -= 1;
     return n;
+  };
+
+  /** How many response characters are streamed at section progress p: every character of the bursts whose start has been reached (D23.4). */
+  const streamedAt = (p: number): number => {
+    let n = streamedCount;
+    while (n < burstAt.length && p >= burstAt[n]) n += 1;
+    while (n > 0 && p < burstAt[n - 1]) n -= 1;
+    streamedCount = n;
+    return n > 0 ? bursts[n - 1].end : 0;
   };
 
   // ---------- Caret blink (D21.3): T.beat5 on, T.beat5 off, cut; only while p is still ----------
 
   const blink = gsap.timeline({ paused: true, repeat: -1 });
-  blink.set(caret, { opacity: 1 }, 0);
-  blink.set(caret, { opacity: 0 }, T.beat5);
-  blink.set(caret, { opacity: 1 }, T.beat5 * 2);
+  blink.set(carets, { opacity: 1 }, 0);
+  blink.set(carets, { opacity: 0 }, T.beat5);
+  blink.set(carets, { opacity: 1 }, T.beat5 * 2);
   let still: gsap.core.Tween | null = null;
 
   /** The caret on and not blinking. */
@@ -333,7 +442,7 @@ export function initCode(ctx: SectionContext): void {
     blink.pause();
     still?.kill();
     still = null;
-    gsap.set(caret, { opacity: 1 });
+    gsap.set(carets, { opacity: 1 });
   };
 
   /** Progress moved: the caret stays on, and blinks again once p has been still for T.beat5. */
@@ -345,53 +454,116 @@ export function initCode(ctx: SectionContext): void {
     });
   };
 
-  /** The caret is shown while the request types, and gone from p 0.45 on. Reduced motion has no caret. */
+  /**
+   * Keeps the caret inside the visible part of its block (D23.4). On a phone a streamed line runs past the edge of its box,
+   * so the box scrolls sideways, and only when the caret has moved out of view. The reader can still scroll the box.
+   */
+  const followCaret = (box: HTMLElement, caret: HTMLElement): void => {
+    const x = parseFloat(caret.style.left);
+    if (Number.isNaN(x)) return;
+    const visible = box.clientWidth;
+    if (x > box.scrollLeft + visible - CARET_MARGIN) box.scrollLeft = x - visible + CARET_MARGIN;
+    else if (x < box.scrollLeft + CARET_MARGIN) box.scrollLeft = Math.max(0, x - CARET_MARGIN);
+  };
+
+  /**
+   * The live caret (D21.3, D23.4). The request's caret waits at its insertion point and types. From the end of the typing
+   * the response's caret follows the stream, and from the end of the stream neither shows. Reduced motion has no caret.
+   */
   const applyCaret = (p: number, moved: boolean): void => {
-    if (reduced || p >= STREAM_FROM) {
-      caret.hidden = true;
+    const next = reduced ? null : p < typeTo ? requestCaret : p < streamTo ? responseCaret : null;
+    requestCaret.hidden = next !== requestCaret;
+    responseCaret.hidden = next !== responseCaret;
+    if (next === null) {
+      shownCaret = null;
       restCaret();
       return;
     }
-    const wasHidden = caret.hidden;
-    caret.hidden = false;
-    if (moved || wasHidden) moveCaret();
+    if (moved || next !== shownCaret) {
+      moveCaret();
+      followCaret(next === requestCaret ? requestPre : responsePre, next);
+    }
+    shownCaret = next;
   };
 
-  // ---------- Scroll-driven typing and stream (C2, D21.3) ----------
-
-  let lastP = Number.NaN;
+  // ---------- Scroll-driven typing and stream (C2, D23.4) ----------
 
   /**
-   * One scroll position. The request types over p 0.10 to 0.45. The response is coloured over p 0.45 to 0.75, and the
-   * marker is on line min(N - 1, floor(q N)), where q is the stream progress and N the lines of both blocks.
+   * One scroll position. The request types over its window and the response streams over the next. The marker is on line
+   * min(N - 1, floor(q N)), where q is the stream progress and N the lines of both blocks, and it is hidden until the
+   * stream starts.
    */
   const applyProgress = (p: number): void => {
     const moved = p !== lastP;
     lastP = p;
     setTyped(typedAt(p));
-    const q = clamp01((p - STREAM_FROM) / STREAM_SPAN);
-    setLit(Math.floor(q * charCount));
+    setLit(streamedAt(p));
+    const span = streamTo - streamFrom;
+    const q = span > 0 ? clamp01((p - streamFrom) / span) : p >= streamFrom ? 1 : 0;
     const index = Math.min(lineCount - 1, Math.floor(q * lineCount));
     if (index !== markerIndex) {
       markerIndex = index;
       placeMarker(index, true);
     }
-    panel.classList.toggle('is-streaming', p >= STREAM_FROM);
+    panel.classList.toggle('is-streaming', p >= typeTo);
+    // Before the stream the response holds no visible text, so its box goes back to the start (D23.4).
+    if (p < typeTo && responsePre.scrollLeft !== 0) responsePre.scrollLeft = 0;
     applyCaret(p, moved);
   };
 
-  /** Reduced motion: every group is typed, the response is in its token colours and the marker is on line 1. No caret. */
+  /** Reduced motion: every group is typed, the response is shown whole and the marker is on line 1. No caret. */
   const applyStatic = (): void => {
     setTyped(groupCount);
     setLit(charCount);
     markerIndex = 0;
     placeMarker(0, false);
     panel.classList.add('is-streaming');
-    caret.hidden = true;
+    shownCaret = null;
+    requestCaret.hidden = true;
+    responseCaret.hidden = true;
     restCaret();
   };
 
   let stream: ScrollTrigger | null = null;
+
+  /**
+   * The windows at layout time (D23.4). The request types from the section progress at which its first code line reaches
+   * 85 per cent of the viewport height, and the response streams from the end of the typing. The progress is the
+   * ScrollTrigger's own (its start and end scroll positions), so the windows agree with the progress that drives them.
+   * Both stay inside [0, 1]: a start before 0 is set to 0, and a section too short for both windows scales them by one
+   * factor, so their ratio holds and the stream ends at 1.
+   */
+  const layoutWindows = (): void => {
+    if (stream === null) return;
+    const range = stream.end - stream.start;
+    const lineTop = firstLine.getBoundingClientRect().top + window.scrollY;
+    const raw = range > 0 ? (lineTop - TYPE_LINE_AT * window.innerHeight - stream.start) / range : 0;
+    typeFrom = clamp01(raw);
+    const room = 1 - typeFrom;
+    const total = TYPE_SPAN + STREAM_SPAN;
+    const scale = room >= total ? 1 : room / total;
+    typeTo = typeFrom + TYPE_SPAN * scale;
+    streamFrom = typeTo;
+    streamTo = streamFrom + STREAM_SPAN * scale;
+  };
+
+  /** The start progress of every request group and every response burst, in the current windows. */
+  const rebuildSchedules = (): void => {
+    appear = scheduleOf(groupWeights, typeFrom, typeTo);
+    burstAt = scheduleOf(burstWeights, streamFrom, streamTo);
+  };
+
+  /**
+   * Layout time (D23.4, and on every resize and font load): the geometry, then the windows and their schedules, then the
+   * state at the current progress. Reduced motion has no stream, so it stops after the geometry.
+   */
+  const layout = (): void => {
+    measure();
+    if (stream === null) return;
+    layoutWindows();
+    rebuildSchedules();
+    applyProgress(stream.progress);
+  };
 
   /** Section progress p from the section's centre (p 0) to its bottom edge at the centre (p 1), as C2 defines. */
   const armStream = (): void => {
@@ -402,7 +574,7 @@ export function initCode(ctx: SectionContext): void {
       end: 'bottom center',
       onUpdate: (self) => applyProgress(self.progress),
     });
-    applyProgress(stream.progress);
+    layout();
   };
 
   const disarmStream = (): void => {
@@ -558,9 +730,9 @@ export function initCode(ctx: SectionContext): void {
   panel.classList.add('is-live');
   measure();
   applyMotion();
-  ScrollTrigger.addEventListener('refresh', measure);
-  bus.once('loader:done', measure);
-  void document.fonts.ready.then(measure);
+  ScrollTrigger.addEventListener('refresh', layout);
+  bus.once('loader:done', layout);
+  void document.fonts.ready.then(layout);
   onReducedMotionChange((value) => {
     reduced = value;
     applyMotion();

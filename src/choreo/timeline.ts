@@ -10,6 +10,9 @@
 //   2. Ink bleed (D10, direction-3d 10.10). Each boundary's raw position is eased with sym and smoothed
 //      with T.beat7. The eased values go into ctx.bleed before any handle call (D22.8). The bleed, the block
 //      mix m and the theme follow from the two values.
+//   2b. Text theme (D23.1). theme-front sets data-theme on each data-theme-block from the same eased values: a block
+//      takes the lower section's theme when its centre is below the boundary's front line, else the upper section's.
+//      The geometry is cached (theme-front.ts), so no layout is read per frame.
 //   3. Current section: the last section in page order with a height whose top has passed the scroll
 //      position. A change applies at once, except under reduced motion, where it runs as a canvas switch
 //      (direction-act1 A5): fade out over T.half, change at opacity 0, fade in over T.half. The depth of
@@ -18,7 +21,7 @@
 //   4. Handles, in this order (D22.1, D22.11). (a) The current section's update(progress) every frame, with
 //      no skip on unchanged progress. (c) The section that was entering on the last frame, if its progress is
 //      now 0 and it is not current: one update(0), so its last write is its entry pose. (b) The next section in
-//      page order, if its own progress is above 0 (it is entering): update(progress). Its write is the last of
+//      page order, if it is entering (its progress is above 0, and capabilities also while p1 is above 0, D23.2): update(progress). Its write is the last of
 //      the frame, so a current section never overwrites an entering one. (c) runs before (b), and the two never
 //      name the same section in one frame. A section without a handle gets its formation and camera key set
 //      directly while it is current.
@@ -41,6 +44,7 @@ import type { SectionId, Theme } from '../core/types';
 import { formationFor } from '../gl/blocks/formations';
 import { cameraKey } from '../gl/rig';
 import type { CameraKey, GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../gl/section-gl';
+import { createThemeFront, type ThemeBlockState } from './theme-front';
 
 /** The state the harness and QA read. A copy, taken on request. */
 export interface ChoreoSnapshot {
@@ -69,6 +73,13 @@ export interface ChoreoSnapshot {
   /** The canvas opacity set by the switch, 1 when no switch sets it. */
   canvasOpacity: number;
   reducedMotion: boolean;
+  /** Screen y of the front line of boundary 1 and boundary 2 at the last frame, CSS px (theme-front). */
+  front1: number;
+  front2: number;
+  /** Scroll velocity in px/s, as the blocks and the post read it on the last frame (scroll.ts, wall clock). */
+  velocity: number;
+  /** The damped speed of the post's aberration, in px/s (post.dampedSpeed). */
+  dampedSpeed: number;
 }
 
 type ProgressRule = 'none' | 'reading' | 'centre' | 'pricing' | 'closing';
@@ -172,11 +183,28 @@ function frontShows(p: number): boolean {
   return p > FRONT_LOW && p < FRONT_HIGH;
 }
 
-let activeInstance: { dispose(): void; snapshot(): ChoreoSnapshot } | null = null;
+interface ActiveInstance {
+  dispose(): void;
+  snapshot(): ChoreoSnapshot;
+  themeBlocks(): ThemeBlockState[];
+  refreshThemeBlocks(): void;
+}
+
+let activeInstance: ActiveInstance | null = null;
 
 /** The state of the active choreography, or null when none runs. */
 export function choreoSnapshot(): ChoreoSnapshot | null {
   return activeInstance === null ? null : activeInstance.snapshot();
+}
+
+/** The text blocks of the active choreography as the last frame placed them (theme-front), or null when none runs. */
+export function choreoThemeBlocks(): ThemeBlockState[] | null {
+  return activeInstance === null ? null : activeInstance.themeBlocks();
+}
+
+/** Re-measures the text blocks on the next frame, after a layout change the module cannot see. No-op without a choreography. */
+export function choreoRefreshThemeBlocks(): void {
+  activeInstance?.refreshThemeBlocks();
 }
 
 /**
@@ -210,6 +238,8 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   for (const slot of slots) {
     slot.handle = slot.section.setup?.(world) ?? null;
   }
+  /** Text theme per block, following the ink front (D23.1). Driven from frame(); it starts no loop of its own. */
+  const themeFront = createThemeFront();
 
   // Geometry. cachedHeight is the document scroll height at the last measure.
   let cachedHeight = -1;
@@ -230,6 +260,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     }
     cachedHeight = document.documentElement.scrollHeight;
     geoDirty = false;
+    themeFront.invalidate();
   }
 
   // The context handed to handles. Its objects are reused; only prev changes per call.
@@ -380,6 +411,16 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   // Ink bleed, mix and theme state.
   let p1 = 0;
   let p2 = 0;
+
+  /**
+   * A section is entering while its own progress is above 0. Capabilities also enters while the bleed p1 is above 0
+   * (D23.2): its centre-line progress is still 0 while the front crosses the lower half of the screen, and its handle
+   * reads p1 itself.
+   */
+  function entering(index: number): boolean {
+    return progressAt[index] > 0 || (slots[index].section.id === BOUNDARY_1 && p1 > 0);
+  }
+
   let primed = false;
   let mix = Number.NaN;
   let bleedOn = false;
@@ -457,6 +498,8 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       world.lighting.setMix(m);
       world.post.setMix(m);
     }
+    // Text theme per block, against the same eased front the background draws (D23.1).
+    themeFront.update(p1, p2, vh, y);
 
     // Current section, then the handles (D22.1, D22.11). The current section is updated every frame. A section that
     // was entering on the last frame gets one update(0) once its progress is back at 0. The next section in page order
@@ -487,14 +530,14 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       }
     }
 
-    // (c) before (b): a section that was entering on the last frame, now at 0 and not current, gets one update(0).
-    const left = enteredIndex >= 0 && enteredIndex !== cur && progressAt[enteredIndex] === 0 ? enteredIndex : -1;
+    // (c) before (b): a section that was entering on the last frame, no longer entering and not current, gets one update(0).
+    const left = enteredIndex >= 0 && enteredIndex !== cur && !entering(enteredIndex) ? enteredIndex : -1;
     if (left >= 0) slots[left].handle?.update(0, t, fillCtx(left));
 
-    // (b) the next section in page order, while its own progress is above 0. Its write is the last of the frame.
+    // (b) the next section in page order, while it is entering. Its write is the last of the frame.
     enteredIndex = -1;
     const next = cur + 1;
-    if (next < slots.length && progressAt[next] > 0) {
+    if (next < slots.length && entering(next)) {
       enteredIndex = next;
       slots[next].handle?.update(progressAt[next], t, fillCtx(next));
     }
@@ -530,6 +573,10 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       switching: phase !== 'idle',
       canvasOpacity: canvas.style.opacity === '' ? 1 : Number(canvas.style.opacity),
       reducedMotion: reduced,
+      front1: themeFront.frontOf(1),
+      front2: themeFront.frontOf(2),
+      velocity: scrollState.velocity,
+      dampedSpeed: world.post.dampedSpeed,
     };
   }
 
@@ -580,11 +627,17 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     world.blocks.setBreath(null);
     world.blocks.setActiveGroup(null);
     world.blocks.setSmear(0);
+    themeFront.dispose();
     shown = -1;
     if (activeInstance === instance) activeInstance = null;
   }
 
-  const instance = { dispose, snapshot };
+  const instance: ActiveInstance = {
+    dispose,
+    snapshot,
+    themeBlocks: () => themeFront.blocks(),
+    refreshThemeBlocks: () => themeFront.invalidate(),
+  };
   activeInstance = instance;
   return { dispose };
 }
