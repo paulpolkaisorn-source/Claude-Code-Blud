@@ -536,14 +536,15 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     ui.show('menu');
     audio.music('menu');
   }
-  function closePreview() { if (g.preview) { g.preview.dispose(); g.preview = null; } }
+  // One preview renderer for the page lifetime: paused off the select screen, never context-lost.
+  function closePreview() { if (g.preview) g.preview.pause(); }
   function toSelect(mode) {
     g.cfg.mode = mode || g.cfg.mode;
     g.state = 'select';
     ui.show('select');
     ui.setSelected(g.cfg.brawlerId);
-    closePreview();
-    if (ui.previewCanvas) g.preview = createPreview(ui.previewCanvas, g.cfg.brawlerId);
+    if (g.preview) { g.preview.setBrawler(g.cfg.brawlerId); g.preview.resume(); }
+    else if (ui.previewCanvas) g.preview = createPreview(ui.previewCanvas, g.cfg.brawlerId);
   }
   function toMatchmaking() {
     closePreview();

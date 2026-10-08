@@ -1,5 +1,6 @@
 // preview.js: select-screen 3D preview. Own WebGLRenderer on the given canvas, pedestal + turntable,
-// idle breathing with an attack every 3 s. The rAF loop stops on dispose.
+// idle breathing with an attack every 3 s. pause()/resume() stop and restart the rAF loop so one preview can live
+// for the whole page (a canvas whose context was lost can never be reused). The loop also stops on dispose.
 import * as THREE from 'three';
 import { toonMat } from '../render/toon.js';
 import { createBrawlerModel } from './models.js';
@@ -32,7 +33,7 @@ export function createPreview(canvas, brawlerId) {
   turn.position.y = 0.22;
   scene.add(turn);
 
-  let model = null, alive = true, raf = 0, t = 0, nextAttack = ATTACK_EVERY, last = 0;
+  let model = null, alive = true, running = true, raf = 0, t = 0, nextAttack = ATTACK_EVERY, last = 0;
 
   function resize() {
     if (!alive) return;
@@ -57,7 +58,7 @@ export function createPreview(canvas, brawlerId) {
   }
 
   function frame() {
-    if (!alive) return;
+    if (!alive || !running) return;
     raf = requestAnimationFrame(frame);
     const now = performance.now();
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
@@ -74,9 +75,23 @@ export function createPreview(canvas, brawlerId) {
     renderer.render(scene, camera);
   }
 
+  function pause() {
+    running = false;
+    cancelAnimationFrame(raf);
+  }
+
+  function resume() {
+    if (!alive || running) return;
+    running = true;
+    last = 0;
+    resize();
+    raf = requestAnimationFrame(frame);
+  }
+
   function dispose() {
     if (!alive) return;
     alive = false;
+    running = false;
     cancelAnimationFrame(raf);
     window.removeEventListener('resize', resize);
     if (model) {
@@ -86,7 +101,6 @@ export function createPreview(canvas, brawlerId) {
     podium.geometry.dispose();
     podium.material.dispose();
     renderer.dispose();
-    renderer.forceContextLoss();
   }
 
   resize();
@@ -94,5 +108,5 @@ export function createPreview(canvas, brawlerId) {
   window.addEventListener('resize', resize);
   raf = requestAnimationFrame(frame);
 
-  return { setBrawler, resize, dispose };
+  return { setBrawler, resize, pause, resume, dispose };
 }

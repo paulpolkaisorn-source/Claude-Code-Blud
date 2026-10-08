@@ -8,7 +8,7 @@ import { PLAYER_COLOR, CRYSTAL_COLOR, OUTLINE_COLOR } from '../contracts.js';
 
 export const JOY_RADIUS = 52;  // px: knob travel. Full deflection = move magnitude 1 / aimLen 1
 export const DEADZONE = 12;    // px: a drag past this starts aiming
-export const TAP_MS = 220;     // ms: quick-tap window
+export const TAP_MS = 350;     // ms: quick-tap window (lenient for real thumbs; a longer still press cancels)
 const MOVE_DEAD = 4;           // px: the move stick ignores jitter below this
 const RING_HALF = 78;          // px: floating ring is 156px across
 
