@@ -1,0 +1,190 @@
+/* Claude Haiku 5.5 motion graphic: tokens, stage, scene visibility, controls. */
+
+/* ---- Tokens. Scenes depend on these names; the stage stays cream in every theme. ---- */
+:root {
+  --bg: #F4EFE6;
+  --paper: #FAF7F2;
+  --ink: #1F1E1D;
+  --ink-soft: #4A4640;
+  --muted: #8A8378;
+  --line: #DDD5C8;
+  --accent: #D97757;
+  --accent-deep: #B85C3E;
+  --sage: #7D9A7A;
+  --sky: #6A8CAF;
+
+  --serif: 'Fraunces', Georgia, serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --ease-out: cubic-bezier(.22,1,.36,1);
+  --ease-in-out: cubic-bezier(.65,0,.35,1);
+
+  /* Page chrome around the stage only. */
+  --page: #E6DFD2;
+  --bg-rgb: 244, 239, 230;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #151413; }
+}
+:root[data-theme="dark"] { --page: #151413; }
+
+/* ---- Page ---- */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+html { background: var(--page); }
+body {
+  overflow: hidden;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--sans);
+  display: grid;
+  place-items: center;
+  -webkit-font-smoothing: antialiased;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Stage: 16:9, centred, as large as the viewport allows. Scenes size themselves in cqw/cqh. ---- */
+#stage {
+  position: relative;
+  width: min(100vw, 177.78vh);
+  width: min(100vw, 177.78dvh);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg);
+  container-type: size;
+}
+
+/* ---- Scenes: one <section> each; shown only while it carries .active ---- */
+.scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 600ms var(--ease-in-out), visibility 0s linear 600ms;
+}
+.scene.active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 600ms var(--ease-in-out), visibility 0s;
+}
+
+/* Pause: freeze every CSS animation inside scenes where it is (timeline.js pauses its own clock). */
+#stage.paused .scene *,
+#stage.paused .scene *::before,
+#stage.paused .scene *::after {
+  animation-play-state: paused !important;
+}
+
+/* Reduced motion: animations finish at once and leave the final frame (scenes use fill-mode: both). */
+@media (prefers-reduced-motion: reduce) {
+  .scene *, .scene *::before, .scene *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ---- Shown when no scenes are registered ---- */
+.empty {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+
+/* ---- Controls overlay along the bottom of the stage ---- */
+.controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 16px 14px;
+  background: linear-gradient(to top, rgba(var(--bg-rgb), .92), rgba(var(--bg-rgb), 0));
+  transition: opacity 400ms var(--ease-out);
+}
+/* Fade after 2s of pointer idleness; stay solid while hovered or while a keyboard user has focus on a control. */
+#stage.idle .controls:not(:hover) { opacity: .15; }
+#stage.idle .controls:not(:hover):has(:focus-visible) { opacity: 1; }
+
+.btn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 200ms, color 200ms;
+}
+.btn:hover { border-color: var(--ink-soft); color: var(--accent-deep); }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+.btn:focus-visible,
+.dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.progress {
+  flex: 1;
+  min-width: 40px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--line);
+}
+.progress__fill {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+}
+
+.dots {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+.dot {
+  box-sizing: content-box;
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  margin: 0;
+  padding: 6px;                 /* larger hit area; background is clipped to the 9px dot */
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--muted);
+  background-clip: content-box;
+  cursor: pointer;
+  transition: background-color 200ms, transform 250ms var(--ease-out);
+}
+.dot:hover { background-color: var(--ink-soft); }
+.dot[aria-current="step"] { background-color: var(--accent-deep); transform: scale(1.25); }
+
+@media (max-width: 520px) {
+  .controls { gap: 8px; padding: 30px 10px 10px; }
+  .btn { width: 32px; height: 32px; }
+  .dot { padding: 5px; }
+}

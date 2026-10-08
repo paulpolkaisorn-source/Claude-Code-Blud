@@ -1,0 +1,506 @@
+/* Scenes s1-s3 (Claude Haiku 5.5). Every selector is scoped to its scene; every keyframe is prefixed.
+   Motion is keyed off .active and uses fill-mode both; all of it settles by ~5.1s (scene is 6s). */
+
+/* =====================================================================
+   s1 - The poem
+   ===================================================================== */
+.scene[data-scene="s1"] .s1-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.scene[data-scene="s1"] .s1-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='-.07 0 0 0 1 -.07 0 0 0 1 -.07 0 0 0 1 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.scene[data-scene="s1"] .s1-petal {
+  position: absolute;
+  display: block;
+  opacity: .13;
+  border-radius: 58% 42% 55% 45% / 48% 56% 44% 52%;
+}
+.scene[data-scene="s1"] .s1-petal-1 { left: 5cqw;  top: 12cqh;    width: 7cqw;   height: 7cqw;   background: var(--accent); }
+.scene[data-scene="s1"] .s1-petal-2 { right: 5cqw; top: 68cqh;    width: 5.5cqw; height: 5.5cqw; background: var(--sage); }
+.scene[data-scene="s1"] .s1-petal-3 { left: 7cqw;  bottom: 8cqh;  width: 4.2cqw; height: 4.2cqw; background: var(--sky); }
+.scene[data-scene="s1"] .s1-petal-4 { right: 10cqw; top: 11cqh;   width: 3.2cqw; height: 3.2cqw; background: var(--accent); }
+.scene[data-scene="s1"] .s1-petal-5 { left: 44cqw; bottom: 4cqh;  width: 2.4cqw; height: 2.4cqw; background: var(--sage); }
+
+.scene[data-scene="s1"] .s1-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 22cqh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1.15cqw;
+  line-height: 1;
+  letter-spacing: .42em;
+  text-indent: .42em;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+.scene[data-scene="s1"] .s1-rule {
+  position: absolute;
+  left: 50%;
+  top: 27.6cqh;
+  width: 5cqw;
+  margin-left: -2.5cqw;
+  height: .14cqw;
+  background: var(--accent);
+}
+.scene[data-scene="s1"] .s1-poem {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 32cqh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 5.1cqw;
+  line-height: 1.22;
+  color: var(--ink);
+}
+.scene[data-scene="s1"] .s1-line {
+  display: block;
+  white-space: nowrap;
+}
+.scene[data-scene="s1"] .s1-w {
+  display: inline-block;
+}
+.scene[data-scene="s1"] .s1-seal {
+  position: absolute;
+  left: 50%;
+  top: 74cqh;
+  width: 2.4cqw;
+  height: 2.4cqw;
+  margin-left: -1.2cqw;
+  box-sizing: border-box;
+  border: .12cqw solid var(--accent);
+  border-radius: 50%;
+}
+.scene[data-scene="s1"] .s1-seal::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: .9cqw;
+  height: .9cqw;
+  margin: -.45cqw 0 0 -.45cqw;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.scene[data-scene="s1"].active .s1-petal-1 { animation: s1-drift-a 4800ms var(--ease-in-out) 0ms both; }
+.scene[data-scene="s1"].active .s1-petal-2 { animation: s1-drift-b 4600ms var(--ease-in-out) 0ms both; }
+.scene[data-scene="s1"].active .s1-petal-3 { animation: s1-drift-a 4400ms var(--ease-in-out) 150ms both; }
+.scene[data-scene="s1"].active .s1-petal-4 { animation: s1-drift-b 4200ms var(--ease-in-out) 250ms both; }
+.scene[data-scene="s1"].active .s1-petal-5 { animation: s1-drift-a 4000ms var(--ease-in-out) 350ms both; }
+.scene[data-scene="s1"].active .s1-caption { animation: s1-caption 1300ms var(--ease-out) 200ms both; }
+.scene[data-scene="s1"].active .s1-rule { animation: s1-rule 1000ms var(--ease-in-out) 500ms both; }
+.scene[data-scene="s1"].active .s1-w { animation: s1-word 1000ms var(--ease-out) calc(var(--lb, 0ms) + var(--wi, 0) * 90ms) both; }
+.scene[data-scene="s1"].active .s1-seal { animation: s1-seal 900ms var(--ease-out) 4200ms both; }
+
+@keyframes s1-drift-a {
+  from { transform: translate3d(-2.5cqw, -3cqh, 0) rotate(-18deg); }
+  to   { transform: translate3d(1.5cqw, 1.5cqh, 0) rotate(8deg); }
+}
+@keyframes s1-drift-b {
+  from { transform: translate3d(3cqw, -2cqh, 0) rotate(12deg); }
+  to   { transform: translate3d(-1.5cqw, 2cqh, 0) rotate(-10deg); }
+}
+@keyframes s1-caption {
+  from { opacity: 0; letter-spacing: .7em; transform: translate3d(0, .8cqh, 0); }
+  to   { opacity: 1; letter-spacing: .42em; transform: none; }
+}
+@keyframes s1-rule {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s1-word {
+  from { opacity: 0; transform: translate3d(0, .55em, 0); filter: blur(.28cqw); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes s1-seal {
+  0%   { opacity: 0; transform: scale(.3) rotate(-120deg); }
+  65%  { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* =====================================================================
+   s2 - The title + family
+   ===================================================================== */
+.scene[data-scene="s2"] .s2-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.scene[data-scene="s2"] .s2-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='-.07 0 0 0 1 -.07 0 0 0 1 -.07 0 0 0 1 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.scene[data-scene="s2"] .s2-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 22cqh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 8cqw;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.scene[data-scene="s2"] .s2-tw {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: .08em .06em .16em;
+  margin: -.08em -.06em -.16em;
+}
+.scene[data-scene="s2"] .s2-tin {
+  display: inline-block;
+}
+.scene[data-scene="s2"] .s2-ver {
+  color: var(--accent);
+}
+.scene[data-scene="s2"] .s2-kicker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 42.5cqh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1.15cqw;
+  line-height: 1;
+  letter-spacing: .42em;
+  text-indent: .42em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.scene[data-scene="s2"] .s2-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50.5cqh;
+  display: flex;
+  justify-content: center;
+  gap: 2.2cqw;
+}
+.scene[data-scene="s2"] .s2-slot {
+  position: relative;
+  flex: none;
+  width: 16cqw;
+  height: 21cqh;
+}
+.scene[data-scene="s2"] .s2-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding: 1.7cqw 1.7cqw 1.9cqw;
+  background: var(--paper);
+  border: .08cqw solid var(--line);
+  border-radius: 1.1cqw;
+  box-shadow: 0 .6cqw 1.8cqw -.8cqw color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.scene[data-scene="s2"] .s2-dot {
+  display: block;
+  box-sizing: border-box;
+  width: 1.8cqw;
+  height: 1.8cqw;
+  border-radius: 50%;
+  border: .1cqw solid var(--ink-soft);
+}
+.scene[data-scene="s2"] .s2-name {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 2.2cqw;
+  line-height: 1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.scene[data-scene="s2"] .s2-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 1.2cqh);
+  margin: 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.9cqw;
+  line-height: 1;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+
+.scene[data-scene="s2"].active .s2-title { animation: s2-settle 1800ms var(--ease-out) 150ms both; }
+.scene[data-scene="s2"].active .s2-tin { animation: s2-rise 1100ms var(--ease-out) calc(200ms + var(--wi, 0) * 150ms) both; }
+.scene[data-scene="s2"].active .s2-kicker { animation: s2-fade 900ms var(--ease-out) 1000ms both; }
+.scene[data-scene="s2"].active .s2-slot { animation: s2-enter 1100ms var(--ease-out) calc(1450ms + var(--i, 0) * 130ms) both; }
+.scene[data-scene="s2"].active .s2-dim { animation: s2-dim 900ms var(--ease-out) 3300ms both; }
+.scene[data-scene="s2"].active .s2-hl { animation: s2-lift 900ms var(--ease-out) 3300ms both; }
+.scene[data-scene="s2"].active .s2-hl .s2-dot { animation: s2-dotfill 900ms var(--ease-out) 3300ms both; }
+.scene[data-scene="s2"].active .s2-hl .s2-name { animation: s2-namehl 900ms var(--ease-out) 3300ms both; }
+.scene[data-scene="s2"].active .s2-note { animation: s2-note 900ms var(--ease-out) 3800ms both; }
+
+@keyframes s2-settle {
+  from { transform: scale(1.035); }
+  to   { transform: none; }
+}
+@keyframes s2-rise {
+  from { transform: translate3d(0, 110%, 0); }
+  to   { transform: none; }
+}
+@keyframes s2-fade {
+  from { opacity: 0; transform: translate3d(0, 1.2cqh, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s2-enter {
+  from { opacity: 0; transform: translate3d(0, 4.5cqh, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s2-dim {
+  from { opacity: 1; }
+  to   { opacity: .55; }
+}
+@keyframes s2-lift {
+  from {
+    transform: none;
+    background-color: var(--paper);
+    border-color: var(--line);
+  }
+  to {
+    transform: translate3d(0, -2cqh, 0);
+    background-color: color-mix(in srgb, var(--accent) 14%, var(--paper));
+    border-color: var(--accent);
+  }
+}
+@keyframes s2-dotfill {
+  from { background-color: transparent; border-color: var(--ink-soft); }
+  to   { background-color: var(--accent); border-color: var(--accent); }
+}
+@keyframes s2-namehl {
+  from { color: var(--ink); }
+  to   { color: var(--accent-deep); }
+}
+@keyframes s2-note {
+  from { opacity: 0; transform: translate3d(0, -1cqh, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* =====================================================================
+   s3 - Speed
+   ===================================================================== */
+.scene[data-scene="s3"] .s3-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.scene[data-scene="s3"] .s3-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='-.07 0 0 0 1 -.07 0 0 0 1 -.07 0 0 0 1 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.scene[data-scene="s3"] .s3-head {
+  position: absolute;
+  left: 8cqw;
+  top: 10cqh;
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 6.4cqw;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.scene[data-scene="s3"] .s3-hw {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: .08em .06em .16em;
+  margin: -.08em -.06em -.16em;
+}
+.scene[data-scene="s3"] .s3-hin {
+  display: inline-block;
+}
+.scene[data-scene="s3"] .s3-em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.scene[data-scene="s3"] .s3-streak {
+  position: absolute;
+  left: 0;
+  height: .2cqw;
+  border-radius: .2cqw;
+  background: var(--muted);
+  opacity: 0;
+}
+.scene[data-scene="s3"] .s3-k1 { top: 37cqh; width: 9cqw; }
+.scene[data-scene="s3"] .s3-k2 { top: 42cqh; width: 14cqw; background: var(--accent); }
+.scene[data-scene="s3"] .s3-k3 { top: 47cqh; width: 6cqw; }
+.scene[data-scene="s3"] .s3-k4 { top: 52cqh; width: 11cqw; }
+.scene[data-scene="s3"] .s3-k5 { top: 57cqh; width: 7cqw; background: var(--accent); }
+.scene[data-scene="s3"] .s3-k6 { top: 62cqh; width: 16cqw; }
+
+.scene[data-scene="s3"] .s3-card {
+  position: absolute;
+  left: 34cqw;
+  top: 31cqh;
+  width: 54cqw;
+  height: auto;
+  box-sizing: border-box;
+  padding: 3.2cqw 3.6cqw;
+  background: var(--paper);
+  border: .08cqw solid var(--line);
+  border-radius: 1.2cqw;
+  box-shadow: 0 1.2cqw 3.2cqw -1.6cqw color-mix(in srgb, var(--ink) 26%, transparent);
+}
+.scene[data-scene="s3"] .s3-label {
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1cqw;
+  line-height: 1;
+  letter-spacing: .32em;
+  color: var(--muted);
+}
+.scene[data-scene="s3"] .s3-live {
+  display: block;
+  width: .9cqw;
+  height: .9cqw;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.scene[data-scene="s3"] .s3-typed {
+  display: flex;
+  align-items: center;
+  margin-top: 4.6cqh;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 5cqw;
+  line-height: 1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.scene[data-scene="s3"] .s3-prompt {
+  margin-right: 1.2cqw;
+  color: var(--accent-deep);
+}
+.scene[data-scene="s3"] .s3-type {
+  display: block;
+  overflow: hidden;
+  width: 8ch;
+  white-space: nowrap;
+}
+.scene[data-scene="s3"] .s3-cursor {
+  display: block;
+  width: .55em;
+  height: 1em;
+  margin-left: .05em;
+  background: var(--accent);
+}
+.scene[data-scene="s3"] .s3-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8cqh;
+  margin-top: 4.4cqh;
+}
+.scene[data-scene="s3"] .s3-bar {
+  display: block;
+  height: 1.5cqh;
+  border-radius: .8cqh;
+  background: var(--line);
+  transform-origin: 0 50%;
+}
+.scene[data-scene="s3"] .s3-bar-1 { width: 78%; }
+.scene[data-scene="s3"] .s3-bar-2 { width: 56%; }
+.scene[data-scene="s3"] .s3-bar-3 { width: 34%; }
+
+.scene[data-scene="s3"] .s3-say {
+  position: absolute;
+  left: 8cqw;
+  top: 75cqh;
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 2.9cqw;
+  line-height: 1.2;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.scene[data-scene="s3"] .s3-ph {
+  display: inline-block;
+}
+
+.scene[data-scene="s3"].active .s3-hin { animation: s3-rise 1000ms var(--ease-out) calc(80ms + var(--wi, 0) * 120ms) both; }
+.scene[data-scene="s3"].active .s3-streak { animation: s3-rush 720ms cubic-bezier(.55, 0, .85, .45) calc(1000ms + var(--d, 0ms)) both; }
+.scene[data-scene="s3"].active .s3-card { animation: s3-card 1000ms var(--ease-out) 450ms both; }
+.scene[data-scene="s3"].active .s3-type { animation: s3-type 650ms steps(8, end) 1300ms both; }
+.scene[data-scene="s3"].active .s3-cursor { animation: s3-blink 800ms steps(1, end) 1950ms 3 both; }
+.scene[data-scene="s3"].active .s3-bar-1 { animation: s3-bar 600ms steps(6, end) 2100ms both; }
+.scene[data-scene="s3"].active .s3-bar-2 { animation: s3-bar 600ms steps(6, end) 2350ms both; }
+.scene[data-scene="s3"].active .s3-bar-3 { animation: s3-bar 600ms steps(6, end) 2600ms both; }
+.scene[data-scene="s3"].active .s3-ph-1 { animation: s3-ph 800ms var(--ease-out) 2900ms both; }
+.scene[data-scene="s3"].active .s3-ph-2 { animation: s3-ph 800ms var(--ease-out) 3450ms both; }
+.scene[data-scene="s3"].active .s3-ph-3 { animation: s3-ph 800ms var(--ease-out) 4000ms both; }
+
+@keyframes s3-rise {
+  from { transform: translate3d(0, 110%, 0); }
+  to   { transform: none; }
+}
+@keyframes s3-rush {
+  0%   { opacity: 0; transform: translate3d(var(--s, -12cqw), 0, 0); }
+  15%  { opacity: .9; }
+  85%  { opacity: .9; }
+  100% { opacity: 0; transform: translate3d(var(--e, 31cqw), 0, 0); }
+}
+@keyframes s3-card {
+  from { opacity: 0; transform: translate3d(0, 4cqh, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s3-type {
+  from { width: 0; }
+  to   { width: 8ch; }
+}
+@keyframes s3-blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes s3-bar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s3-ph {
+  from { opacity: 0; transform: translate3d(0, .8em, 0); filter: blur(.2cqw); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}

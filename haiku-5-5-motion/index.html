@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claude Haiku 5.5</title>
+  <meta name="description" content="A short looping motion graphic about Claude Haiku 5.5, built from a sequence of scenes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="scenes-a.css">
+  <link rel="stylesheet" href="scenes-b.css">
+</head>
+<body>
+  <h1 class="sr-only">Claude Haiku 5.5</h1>
+
+  <div id="stage" role="region" aria-label="Claude Haiku 5.5 animation">
+    <p id="empty" class="empty" hidden>No scenes loaded</p>
+
+    <div id="controls" class="controls">
+      <button type="button" id="btn-play" class="btn" aria-label="Pause" title="Pause (Space)"></button>
+      <button type="button" id="btn-restart" class="btn" aria-label="Restart" title="Restart (R)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6h2v12H6zM18 6v12l-8.5-6z"/></svg>
+      </button>
+      <div class="progress" aria-hidden="true"><div id="progress-fill" class="progress__fill"></div></div>
+      <nav id="dots" class="dots" aria-label="Scenes"></nav>
+    </div>
+  </div>
+
+  <script src="scenes-a.js"></script>
+  <script src="scenes-b.js"></script>
+  <script src="timeline.js"></script>
+</body>
+</html>

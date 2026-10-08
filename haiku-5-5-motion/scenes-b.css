@@ -1,0 +1,485 @@
+/* scenes-b.css: scene s4 "Effort + teamwork" (7000ms) and scene s5 "Outro" (6000ms).
+   Every selector is scoped to .scene[data-scene="sN"] and every name is prefixed sN-.
+   Base rules describe each scene's final frame. Animations run only under .active and
+   use fill-mode both, so the last keyframe holds until the crossfade out.
+   Sizes are cqw/cqh against the stage: 1cqw is 1% of its width, 1cqh is 1% of its height. */
+
+
+/* ============================================================
+   s4  Effort + teamwork
+   ============================================================ */
+
+/* Beat wrappers. Beat 1 has left by the end of the scene, so its final frame is hidden. */
+.scene[data-scene="s4"] .s4-b1,
+.scene[data-scene="s4"] .s4-b2 {
+  position: absolute;
+  inset: 0;
+}
+.scene[data-scene="s4"] .s4-b1 {
+  opacity: 0;
+}
+
+/* Headlines */
+.scene[data-scene="s4"] .s4-h1,
+.scene[data-scene="s4"] .s4-h2 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--serif);
+  font-weight: 400;
+  color: var(--ink);
+}
+.scene[data-scene="s4"] .s4-h1 {
+  top: 31cqh;
+  font-size: 6.2cqw;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+}
+.scene[data-scene="s4"] .s4-h2 {
+  top: 14cqh;
+  font-size: 4.4cqw;
+  line-height: 1.1;
+  letter-spacing: -0.008em;
+}
+.scene[data-scene="s4"] .s4-h1 em,
+.scene[data-scene="s4"] .s4-h2 em {
+  font-style: italic;
+  color: var(--accent-deep);
+}
+
+/* Dial: a zero-height anchor at track level, 58cqw wide, starting at x = 21cqw */
+.scene[data-scene="s4"] .s4-dial {
+  position: absolute;
+  left: 21cqw;
+  top: 62cqh;
+  width: 58cqw;
+  height: 0;
+}
+.scene[data-scene="s4"] .s4-cap {
+  position: absolute;
+  left: 0;
+  top: -6.8cqh;
+  font-family: var(--mono);
+  font-size: 1.2cqw;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.scene[data-scene="s4"] .s4-track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0.5cqw;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--line);
+}
+.scene[data-scene="s4"] .s4-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+.scene[data-scene="s4"] .s4-stop {
+  position: absolute;
+  top: 50%;
+  width: 1.2cqw;
+  height: 1.2cqw;
+  box-sizing: border-box;
+  border: 0.16cqw solid var(--muted);
+  border-radius: 50%;
+  background: var(--paper);
+  transform: translate(-50%, -50%);
+}
+.scene[data-scene="s4"] .s4-lab {
+  position: absolute;
+  top: 4.4cqh;
+  transform: translateX(-50%);
+  font-family: var(--sans);
+  font-size: 1.5cqw;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.scene[data-scene="s4"] .s4-lab-max {
+  color: var(--accent-deep);
+}
+
+/* Carriage sits on the track; the knob and its pulse are centred on it */
+.scene[data-scene="s4"] .s4-carriage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform: translateX(58cqw);
+}
+.scene[data-scene="s4"] .s4-knob,
+.scene[data-scene="s4"] .s4-pulse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3.4cqw;
+  height: 3.4cqw;
+  box-sizing: border-box;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.scene[data-scene="s4"] .s4-knob {
+  background: var(--accent);
+  border: 0.3cqw solid var(--paper);
+  box-shadow: 0 0.5cqw 1.4cqw -0.4cqw color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.scene[data-scene="s4"] .s4-pulse {
+  border: 0.16cqw solid var(--accent);
+  opacity: 0;
+}
+
+/* Diagram (beat 2): the SVG uses a 1600x900 viewBox, so it scales with the stage */
+.scene[data-scene="s4"] .s4-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.scene[data-scene="s4"] .s4-ln {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.scene[data-scene="s4"] .s4-dd,
+.scene[data-scene="s4"] .s4-du {
+  opacity: 0;
+  transform: translate(var(--dx), var(--dy));
+}
+.scene[data-scene="s4"] .s4-dd {
+  fill: var(--accent);
+}
+.scene[data-scene="s4"] .s4-du {
+  fill: var(--sage);
+}
+
+.scene[data-scene="s4"] .s4-orch {
+  position: absolute;
+  left: 50cqw;
+  top: 45cqh;
+  width: 22cqw;
+  height: 9cqh;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: 1.8cqw;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.scene[data-scene="s4"] .s4-ring {
+  position: absolute;
+  left: 50cqw;
+  top: 45cqh;
+  width: 22cqw;
+  height: 9cqh;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  border: 0.14cqw solid var(--accent);
+  border-radius: 999px;
+  opacity: 0;
+}
+.scene[data-scene="s4"] .s4-hk {
+  position: absolute;
+  top: 78cqh;
+  width: 11.5cqw;
+  height: 6.6cqh;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 0.18cqw solid var(--accent);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--accent-deep);
+  font-family: var(--sans);
+  font-size: 1.5cqw;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Beat 1 timeline (ms from activation). The dial glides low -> medium -> high -> max
+   over the 3200ms carry/fill keyframes below. */
+@keyframes s4-rise {
+  from { opacity: 0; transform: translateY(2.4cqh); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s4-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes s4-carry {
+  0%, 28%   { transform: translateX(0cqw);      animation-timing-function: var(--ease-in-out); }
+  41%, 47%  { transform: translateX(19.333cqw); animation-timing-function: var(--ease-in-out); }
+  59%, 66%  { transform: translateX(38.667cqw); animation-timing-function: var(--ease-in-out); }
+  81%, 100% { transform: translateX(58cqw); }
+}
+@keyframes s4-fillrun {
+  0%, 28%   { width: 0%;       animation-timing-function: var(--ease-in-out); }
+  41%, 47%  { width: 33.333%;  animation-timing-function: var(--ease-in-out); }
+  59%, 66%  { width: 66.667%;  animation-timing-function: var(--ease-in-out); }
+  81%, 100% { width: 100%; }
+}
+@keyframes s4-land {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  40%  { transform: translate(-50%, -50%) scale(1.14); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes s4-pulse {
+  from { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0;   transform: translate(-50%, -50%) scale(2.6); }
+}
+@keyframes s4-lab-on {
+  from { color: var(--muted); }
+  to   { color: var(--accent-deep); }
+}
+@keyframes s4-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6cqh); }
+}
+
+/* Beat 2 timeline */
+@keyframes s4-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes s4-draw {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes s4-go {
+  0%   { opacity: 0; transform: translate(0px, 0px); }
+  12%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+}
+@keyframes s4-ring {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  12%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.16); }
+}
+
+.scene[data-scene="s4"].active .s4-h1 {
+  animation: s4-rise 900ms var(--ease-out) 150ms both;
+}
+.scene[data-scene="s4"].active .s4-dial {
+  animation: s4-fade 700ms var(--ease-out) 350ms both;
+}
+.scene[data-scene="s4"].active .s4-carriage {
+  animation: s4-carry 3200ms linear 0ms both;
+}
+.scene[data-scene="s4"].active .s4-fill {
+  animation: s4-fillrun 3200ms linear 0ms both;
+}
+.scene[data-scene="s4"].active .s4-knob {
+  animation: s4-land 380ms var(--ease-out) 2592ms both;
+}
+.scene[data-scene="s4"].active .s4-pulse {
+  animation: s4-pulse 800ms var(--ease-out) 2600ms 2 both;
+}
+.scene[data-scene="s4"].active .s4-lab-max {
+  animation: s4-lab-on 600ms var(--ease-out) 2592ms both;
+}
+.scene[data-scene="s4"].active .s4-b1 {
+  animation: s4-exit 500ms var(--ease-in-out) 3100ms both;
+}
+.scene[data-scene="s4"].active .s4-h2 {
+  animation: s4-rise 760ms var(--ease-out) 3420ms both;
+}
+.scene[data-scene="s4"].active .s4-orch {
+  animation: s4-pop 480ms var(--ease-out) 3750ms both;
+}
+.scene[data-scene="s4"].active .s4-ln {
+  animation: s4-draw 520ms var(--ease-in-out) calc(4000ms + var(--i) * 70ms) both;
+}
+.scene[data-scene="s4"].active .s4-hk {
+  animation: s4-pop 420ms var(--ease-out) calc(4430ms + var(--i) * 70ms) both;
+}
+.scene[data-scene="s4"].active .s4-dd {
+  animation: s4-go 560ms var(--ease-in-out) calc(4700ms + var(--i) * 90ms) both;
+}
+.scene[data-scene="s4"].active .s4-du {
+  animation: s4-go 600ms cubic-bezier(.4, 0, .6, 1) calc(5200ms + var(--j) * 120ms) both;
+}
+.scene[data-scene="s4"].active .s4-ring {
+  animation: s4-ring 440ms var(--ease-out) 5820ms both;
+}
+
+
+/* ============================================================
+   s5  Outro
+   ============================================================ */
+
+.scene[data-scene="s5"] .s5-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.scene[data-scene="s5"] .s5-title {
+  margin: 0;
+  white-space: nowrap;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 8.2cqw;
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.scene[data-scene="s5"] .s5-ver {
+  color: var(--accent);
+}
+
+/* Code chip. The width is fixed at 27ch, so typing never moves the chip. */
+.scene[data-scene="s5"] .s5-chip {
+  display: flex;
+  align-items: center;
+  box-sizing: content-box;
+  width: 25.8ch;
+  margin-top: 5cqh;
+  padding: 2.2cqh 2.6ch;
+  border: 0.12cqw solid var(--line);
+  border-radius: 1.2cqw;
+  background: var(--paper);
+  box-shadow: 0 1.2cqh 3cqh -2cqh color-mix(in srgb, var(--ink) 22%, transparent);
+  font-family: var(--mono);
+  font-size: 1.9cqw;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.scene[data-scene="s5"] .s5-typed {
+  display: block;
+  flex: none;
+  width: 25ch;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.scene[data-scene="s5"] .s5-key {
+  color: var(--muted);
+}
+.scene[data-scene="s5"] .s5-val {
+  color: var(--accent-deep);
+}
+.scene[data-scene="s5"] .s5-caret {
+  display: block;
+  flex: none;
+  width: 0.55ch;
+  height: 1.15em;
+  margin-left: 0.25ch;
+  background: var(--accent);
+}
+
+.scene[data-scene="s5"] .s5-tag {
+  margin: 4.6cqh 0 0;
+  font-family: var(--sans);
+  font-size: 2.1cqw;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.scene[data-scene="s5"] .s5-rule {
+  display: block;
+  width: 12cqw;
+  height: 0.16cqw;
+  margin-top: 3.4cqh;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.scene[data-scene="s5"] .s5-dots {
+  display: flex;
+  gap: 2.2cqw;
+  margin-top: 2.6cqh;
+}
+.scene[data-scene="s5"] .s5-dot {
+  display: block;
+  width: 0.9cqw;
+  height: 0.9cqw;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.scene[data-scene="s5"] .s5-dot-b {
+  background: var(--sage);
+}
+.scene[data-scene="s5"] .s5-dot-c {
+  background: var(--sky);
+}
+
+@keyframes s5-rise {
+  from { opacity: 0; transform: translateY(2.4cqh); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s5-fade {
+  from { opacity: 0; transform: translateY(1.2cqh); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes s5-type {
+  from { width: 0ch; }
+  to   { width: 25ch; }
+}
+/* Three hard blinks, then the caret rests visible on the last frame. */
+@keyframes s5-caret {
+  0%   { opacity: 1; animation-timing-function: step-end; }
+  50%  { opacity: 0; animation-timing-function: step-end; }
+  100% { opacity: 1; }
+}
+@keyframes s5-rule {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes s5-settle {
+  from { opacity: 0; transform: translateY(-2.6cqh) scale(0.6); }
+  to   { opacity: 1; transform: none; }
+}
+
+.scene[data-scene="s5"].active .s5-title {
+  animation: s5-rise 900ms var(--ease-out) 150ms both;
+}
+.scene[data-scene="s5"].active .s5-chip {
+  animation: s5-fade 600ms var(--ease-out) 1100ms both;
+}
+.scene[data-scene="s5"].active .s5-typed {
+  animation: s5-type 1400ms steps(25, end) 1500ms both;
+}
+.scene[data-scene="s5"].active .s5-caret {
+  animation: s5-caret 600ms linear 2900ms 3 both;
+}
+.scene[data-scene="s5"].active .s5-tag {
+  animation: s5-fade 700ms var(--ease-out) 3250ms both;
+}
+.scene[data-scene="s5"].active .s5-rule {
+  animation: s5-rule 800ms var(--ease-in-out) 3800ms both;
+}
+.scene[data-scene="s5"].active .s5-dot {
+  animation: s5-settle 650ms var(--ease-out) calc(4300ms + var(--i) * 110ms) both;
+}
