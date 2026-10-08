@@ -2,15 +2,17 @@
 // placed each frame with worldToScreen. The node count is fixed at creation; when every node is busy the oldest is reused.
 const POOL = 48;
 const LIFE = 0.8;
+const MERGE = 0.15;
 const STYLE_ID = 'fx-num-style';
 const CSS = `
 .fx-layer{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:5}
 .fx-num{position:absolute;left:0;top:0;opacity:0;white-space:nowrap;pointer-events:none;
-  font:900 24px/1 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#ffffff;
+  font:900 24px/1 "Arial Rounded MT Bold",ui-rounded,"SF Pro Rounded","Nunito","Trebuchet MS",system-ui,sans-serif;color:#ffffff;
   text-shadow:-2px -2px 0 #1a1230,2px -2px 0 #1a1230,-2px 2px 0 #1a1230,2px 2px 0 #1a1230,0 3px 0 #1a1230;
   will-change:transform,opacity}
 .fx-num.heal{color:#7dff9e}
 .fx-num.super{color:#ffd23d;font-size:36px}
+@media (max-width:600px){.fx-num{font-size:17px}.fx-num.super{font-size:25px}}
 `;
 
 // kind: 0 = damage, 1 = super damage (bigger, gold), 2 = heal (green, prefixed with +).
@@ -31,11 +33,23 @@ export function createNumbers({ overlay, worldToScreen }) {
     const el = document.createElement('span');
     el.className = 'fx-num';
     layer.appendChild(el);
-    items.push({ el, on: false, age: 0, x: 0, y: 0, z: 0 });
+    items.push({ el, on: false, age: 0, x: 0, y: 0, z: 0, key: null, kind: 0, value: 0 });
   }
   const out = { x: 0, y: 0, visible: false };
 
-  function spawn(value, x, y, z, kind = 0) {
+  // key (optional, e.g. the target entity): hits on the same key within MERGE s add up into one number (pellets).
+  function spawn(value, x, y, z, kind = 0, key = null) {
+    if (key !== null) {
+      for (let i = 0; i < POOL; i++) {
+        const it = items[i];
+        if (!it.on || it.key !== key || it.kind !== kind || it.age > (kind === 2 ? 0.3 : MERGE)) continue;
+        it.value += value || 0;
+        it.age = 0; it.x = x; it.y = y; it.z = z;
+        const v = Math.round(it.value);
+        it.el.textContent = kind === 2 ? '+' + v : String(v);
+        return i;
+      }
+    }
     let pick = -1, oldest = 0, oldestAge = -1;
     for (let i = 0; i < POOL; i++) {
       const it = items[i];
@@ -45,7 +59,7 @@ export function createNumbers({ overlay, worldToScreen }) {
     if (pick < 0) pick = oldest;
     const it = items[pick];
     const v = Math.round(value || 0);
-    it.on = true; it.age = 0; it.x = x; it.y = y; it.z = z;
+    it.on = true; it.age = 0; it.x = x; it.y = y; it.z = z; it.key = key; it.kind = kind; it.value = value || 0;
     it.el.textContent = kind === 2 ? '+' + v : String(v);
     it.el.className = 'fx-num' + (kind === 1 ? ' super' : kind === 2 ? ' heal' : '');
     return pick;

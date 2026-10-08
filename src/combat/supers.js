@@ -164,7 +164,7 @@ function pulseTotem(ctx, t, brawlers) {
     const dx = e.x - t.x, dz = e.z - t.z;
     if (dx * dx + dz * dz > r2) continue;
     if (e.team === t.team) ctx.heal(e, heal, t.owner, e.x, e.z);
-    else ctx.damage(e, dmg, t.owner, true, e.x, e.z);
+    else ctx.damage(e, dmg, t.owner, false, e.x, e.z);   // zone ticks: no super hit-stop spam
   }
 }
 

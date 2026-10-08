@@ -86,7 +86,7 @@ export function createFX({ scene, bus, worldToScreen, overlay }) {
       tint(BRAWLERS[p.source.brawlerId].color, 1.5);
       burst(add, 8, p.x, 0.6, p.z, 0, PI, 1.5, 3.5, 1.5, 0.3, 0.05, 0.25, 0.45, 3, -6, 1);
     }
-    spawnNumber(p.amount, p.x, p.z, big ? 1 : 0);
+    spawnNumber(p.amount, p.x, p.z, big ? 1 : 0, p.target);
     if (big) { hitstop(inv ? 55 : 40); shakeAt(p.x, p.z, 0.55, 0.22, inv); }
   }
 
@@ -94,7 +94,7 @@ export function createFX({ scene, bus, worldToScreen, overlay }) {
     tint(HEAL, 1.4);
     burst(add, 10, p.x, 0.4, p.z, 0, PI, 0.2, 0.9, 1.9, 0.2, 0.04, 0.5, 0.75, 2.5, 0, 1);
     rings.add(p.x, 0.05, p.z, 0.9, 0.4, 0.12, HEAL, 1);
-    spawnNumber(p.amount, p.x, p.z, 2);
+    spawnNumber(p.amount, p.x, p.z, 2, p.target);
   }
 
   function onDeath(p) {
@@ -166,7 +166,7 @@ export function createFX({ scene, bus, worldToScreen, overlay }) {
     burst(add, 12, p.x, 0.2, p.z, 0, PI, 0.1, 0.6, 1.6, 0.18, 0.03, 0.4, 0.7, 1, 0, 1);
   }
 
-  function spawnNumber(amount, x, z, kind) { nums.spawn(amount, x, 1.15, z, kind); }
+  function spawnNumber(amount, x, z, kind, key) { nums.spawn(amount, x, 1.15, z, kind, key || null); }
 
   const subs = [
     bus.on(EV.SHOT, onShot),
