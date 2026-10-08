@@ -6,7 +6,8 @@
 //   1. its formation pose (setTransition or setPoses), scaled by its entrance multiplier;
 //   2. the idle breath, a vertical offset on y;
 //   3. its lift, on y and z, damped with T.half.
-// The group above the mesh carries the pointer tilt and the group offset, both damped with T.half. A
+// The group above the mesh carries the pointer tilt and the group offset. Both are damped with T.half, except
+// that under reduced motion the group offset snaps to its target, so a DOM-anchored offset holds (D23.9). A
 // block's matrix is written only when it differs from the last write, so the instance buffer is uploaded
 // only when something moved.
 import * as THREE from 'three';
@@ -294,8 +295,9 @@ export class Blocks {
 
   /**
    * The group offset target in bu. The current value eases to it with T.half, as the code section's pointer
-   * translation and the family and pricing anchors need. With immediate, the current value is set as well, so
-   * the group sits at the offset from now on, with no damping (D22.13).
+   * translation needs. Under reduced motion it snaps to the target instead (D23.9). With immediate, the current value
+   * is set as well, so the group sits at the offset from now on, with no damping (D22.13). The family and pricing
+   * anchors pass immediate.
    */
   setGroupOffset(x: number, y: number, z: number, immediate = false): void {
     this.offsetTarget[0] = requireFinite(x, 'group offset x');
@@ -322,8 +324,9 @@ export class Blocks {
   }
 
   /**
-   * Reduced motion holds the breath, tilt, lifts, group offset and smear at 0. It snaps them to 0 at once,
-   * with no damping, and keeps them there until it is switched off.
+   * Reduced motion holds the breath, tilt, lifts and smear at 0, and snaps the group offset to its target (D23.9). Each
+   * of them is set at once, with no damping, and kept so until reduced motion is switched off. The group offset is not
+   * forced to 0, so a DOM-anchored offset (family, pricing) holds.
    */
   setReducedMotion(rm: boolean): void {
     const wasReduced = this.reduced;
@@ -331,7 +334,7 @@ export class Blocks {
     if (rm) {
       this.tiltX = 0;
       this.tiltY = 0;
-      this.offset.fill(0);
+      for (let c = 0; c < 3; c += 1) this.offset[c] = this.offsetTarget[c];
       this.liftY.fill(0);
       this.liftZ.fill(0);
       this.breathGain.fill(0);
@@ -367,7 +370,7 @@ export class Blocks {
     this.tiltX = damp(this.tiltX, rm ? 0 : this.tiltTargetX, a);
     this.tiltY = damp(this.tiltY, rm ? 0 : this.tiltTargetY, a);
     for (let c = 0; c < 3; c += 1) {
-      this.offset[c] = damp(this.offset[c], rm ? 0 : this.offsetTarget[c], a);
+      this.offset[c] = rm ? this.offsetTarget[c] : damp(this.offset[c], this.offsetTarget[c], a);
     }
     this.group.rotation.set(this.tiltX, this.tiltY, 0);
     this.group.position.set(this.offset[0], this.offset[1], this.offset[2]);

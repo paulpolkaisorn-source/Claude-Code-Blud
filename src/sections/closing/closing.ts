@@ -1,8 +1,8 @@
-// Closing section, 2D layer (design/direction-act3.md, closing; design/drafts/director-decisions.md D7).
-// Everything here is scroll-linked: the text layer's thresholds (C15), the dimension line's draw (C3, write progress
-// w_c) and the haiku's colour turn-on (C3, reading progress s). Each one is armed on loader:done. The column itself is
-// the 3D layer in src/sections/closing/gl.ts. This file reads the column's footprint through projection.ts and never
-// imports from src/gl.
+// Closing section, 2D layer (design/direction-act3.md, closing; design/drafts/director-decisions.md D7 and D23.5).
+// Everything here is scroll-linked: the text layer's range (C15), the dimension line's draw (C3, write progress w_c) and
+// the haiku's colour turn-on (C3, reading progress s). Each one is armed on loader:done. The column itself is the 3D
+// layer in src/sections/closing/gl.ts. This file reads the column's footprint through projection.ts and never imports
+// from src/gl.
 import './closing.css';
 
 import { gsap } from 'gsap';
@@ -11,14 +11,17 @@ import type { SectionContext } from '../../main';
 import { bus } from '../../core/bus';
 import { E } from '../../core/ease';
 import { boundsOf, formationRects, viewportSize } from '../../core/projection';
-import { scrollToTarget } from '../../core/scroll';
+import { scrollState, scrollToTarget } from '../../core/scroll';
+import { PRIORITY, addTick } from '../../core/ticker';
 import { T } from '../../core/timing';
 
 /** The write runs over the first SPAN of the entrance: w_c is 0 at the viewport bottom and 1 at 1 - SPAN (C3). */
 const SPAN = 0.6;
 
-/** The write progress where the text layer appears on desktop: w_c at the section top at 86% (C15). */
+/** The text layer's range starts on desktop when the section top reaches this share of the viewport height (C15). */
 const LAYER_ON_DESKTOP_PCT = 86;
+
+/** The write progress where the dimension line starts to draw on desktop: w_c at the section top at 86% (C15). */
 const DRAW_START_DESKTOP = (1 - LAYER_ON_DESKTOP_PCT / 100) / SPAN;
 
 /** The write is complete when the section top reaches this height (C3). */
@@ -113,31 +116,81 @@ function colourTimeline(chars: readonly HTMLElement[]): ReturnType<typeof gsap.t
   return timeline;
 }
 
-/** Sets the layer's visibility state. Written only when it changes. */
-function setLayerOn(layer: HTMLElement, on: boolean): void {
-  if (layer.classList.contains('is-on') !== on) layer.classList.toggle('is-on', on);
+/** The section's box in document coordinates, cached. It is measured again only when it can have moved (armLayer). */
+interface Box {
+  /** Top edge, in CSS px from the top of the document. */
+  top: number;
+  /** Height, in CSS px. */
+  height: number;
+  /** The page height when the box was measured. A different page height means the box may have moved. */
+  pageHeight: number;
 }
 
 /**
- * The breakpoint-dependent triggers. The text layer appears when the section top reaches 86% of the viewport height on
- * desktop, and at the viewport top on phone (C15). It hides when the section bottom passes the viewport top. The
- * dimension line draws from the write progress w_c, which starts at DRAW_START_DESKTOP on desktop and at 0 on phone (C3).
- * gsap.matchMedia reverts these triggers when the breakpoint changes.
+ * Sets the layer's visibility class. The argument is always a strict boolean, and the class is written only when the
+ * state changes. A toggle with an undefined force flips the class, which is how the layer used to show at load (D23.5).
  */
-function armMode(p: Parts, desktop: boolean, reduced: boolean): void {
-  // The phone start has a 1 px tolerance, so the layer is on at the section top itself (ScrollTrigger reports a
-  // trigger exactly at its start as inactive). The offset moves the viewport line down by 1 px, so the trigger
-  // passes it 1 px before the section top. The layer's visibility is a class, so the text never fades (rule 6).
-  ScrollTrigger.create({
-    trigger: p.el,
-    start: desktop ? `top ${LAYER_ON_DESKTOP_PCT}%` : 'top top+=1',
-    end: 'bottom top',
-    onRefresh: (self) => setLayerOn(p.layer, self.isActive),
-    onToggle: (self) => setLayerOn(p.layer, self.isActive),
-  });
-  // Reduced motion and the no-WebGL column (hidden dimension line, static in the fallback) do not draw.
-  if (reduced || document.documentElement.classList.contains('no-gl')) return;
+function setLayerOn(layer: HTMLElement, on: boolean): void {
+  const isOn = layer.classList.contains('is-on');
+  if (on && !isOn) layer.classList.add('is-on');
+  else if (!on && isOn) layer.classList.remove('is-on');
+}
 
+/**
+ * Whether the text layer is in its range (C15). On desktop the section top is at or above 86% of the viewport height;
+ * on phone and portrait it is at or above the viewport top. In both cases the section bottom must still be below the
+ * viewport top, so the range ends when the section has left the screen. The scroll position is the one the choreography
+ * reads (scrollState.y), so the layer and the 3D writes are decided on the same frame.
+ */
+function inLayerRange(box: Box, scrollY: number, vh: number, desktop: boolean): boolean {
+  if (!(box.height > 0)) return false;
+  const topPx = box.top - scrollY;
+  const threshold = desktop ? (vh * LAYER_ON_DESKTOP_PCT) / 100 : 0;
+  return topPx <= threshold && topPx + box.height > 0;
+}
+
+/**
+ * Sets the text layer's visibility on every frame (D23.5). The state is computed from the cached box and scrollState, not
+ * toggled by trigger callbacks, so a refresh, a breakpoint change or a first measurement cannot leave the class in a state
+ * that the geometry does not give. The box is measured on the first frame, and again only when it can have moved: on a
+ * resize, a ScrollTrigger refresh, a font load, a breakpoint change, or a change of the page height. The layer is hidden
+ * by CSS unless the class is set, so the text is never shown out of range.
+ */
+function armLayer(p: Parts): void {
+  const box: Box = { top: 0, height: 0, pageHeight: -1 };
+  let dirty = true;
+  const desktopQuery = window.matchMedia(DESKTOP_QUERY);
+  let desktop = desktopQuery.matches;
+  desktopQuery.addEventListener('change', (event) => {
+    desktop = event.matches;
+    dirty = true;
+  });
+
+  const markDirty = (): void => {
+    dirty = true;
+  };
+  window.addEventListener('resize', markDirty, { passive: true });
+  ScrollTrigger.addEventListener('refresh', markDirty);
+  if (typeof document.fonts !== 'undefined') void document.fonts.ready.then(markDirty);
+
+  addTick(() => {
+    if (dirty || document.documentElement.scrollHeight !== box.pageHeight) {
+      const rect = p.el.getBoundingClientRect();
+      box.top = rect.top + window.scrollY;
+      box.height = rect.height;
+      box.pageHeight = document.documentElement.scrollHeight;
+      dirty = false;
+    }
+    setLayerOn(p.layer, inLayerRange(box, scrollState.y, Math.max(1, window.innerHeight), desktop));
+  }, PRIORITY.state);
+}
+
+/**
+ * The dimension line's draw for one breakpoint (C3). The write runs from the bottom of the viewport to the write end. It
+ * starts at DRAW_START_DESKTOP on desktop and at 0 on phone. Reduced motion and the no-WebGL column do not draw.
+ */
+function armDraw(p: Parts, desktop: boolean, reduced: boolean): void {
+  if (reduced || document.documentElement.classList.contains('no-gl')) return;
   const start = desktop ? DRAW_START_DESKTOP : 0;
   const bottomTick = p.el.querySelector<HTMLElement>('.closing__dim-tick--bottom');
   gsap.set(p.dimLine, { scaleY: 0 });
@@ -157,6 +210,7 @@ function armMode(p: Parts, desktop: boolean, reduced: boolean): void {
 
 /** Arms the scroll-linked layer. Runs once, on loader:done. */
 function arm(p: Parts, reduced: boolean, chars: readonly HTMLElement[]): void {
+  armLayer(p);
   if (!reduced && chars.length > 0) {
     gsap.set(chars, { '--mix': 0 });
     ScrollTrigger.create({
@@ -167,9 +221,10 @@ function arm(p: Parts, reduced: boolean, chars: readonly HTMLElement[]): void {
       animation: colourTimeline(chars),
     });
   }
+  // gsap.matchMedia reverts a breakpoint's draw when the breakpoint changes. The layer's range does not depend on it.
   const media = gsap.matchMedia();
-  media.add(DESKTOP_QUERY, () => armMode(p, true, reduced));
-  media.add(PHONE_QUERY, () => armMode(p, false, reduced));
+  media.add(DESKTOP_QUERY, () => armDraw(p, true, reduced));
+  media.add(PHONE_QUERY, () => armDraw(p, false, reduced));
 }
 
 /** Starts the closing section's 2D layer. Its only export. */
@@ -188,7 +243,7 @@ export function initClosing(ctx: SectionContext): void {
     scrollToTarget('sources');
   });
 
-  // Reduced motion: no per-character turn-on, and the line stays at full length. The layer still appears at its thresholds.
+  // Reduced motion: no per-character turn-on, and the line stays at full length. The layer still appears at its range.
   const chars = ctx.reducedMotion ? [] : splitHaiku(parts.haiku);
   bus.once('loader:done', () => arm(parts, ctx.reducedMotion, chars));
 }

@@ -384,7 +384,7 @@ function main(): void {
   advance(600);
   check('breath off: every block returns exactly to the stanza', sameFloats(readBack(), stanzaRef));
 
-  // Reduced motion holds breath, tilt, lifts, group offset and smear at 0.
+  // Reduced motion holds breath, lifts, tilt and smear at 0, and snaps the group offset to its target (D23.9).
   blocks.setBreath({ amplitude: AMP, phase: 'rows' });
   blocks.setLift(0, 0.2, 0.1);
   blocks.setTilt(1, 1);
@@ -399,15 +399,32 @@ function main(): void {
   blocks.setSmear(0.6);
   advance(60);
   check(
-    'reduced motion holds breath, lifts, tilt and group offset at 0 (exact)',
+    'reduced motion holds breath, lifts and tilt at 0, and the group offset at its target 0.5 (exact)',
     sameFloats(readBack(), stanzaRef) &&
       blocks.group.rotation.x === 0 &&
       blocks.group.rotation.y === 0 &&
-      blocks.group.position.x === 0 &&
+      blocks.group.position.x === 0.5 &&
+      blocks.group.position.y === 0 &&
       blocks.group.position.z === 0,
+    `position ${blocks.group.position.toArray().join(',')}`,
   );
   check('reduced motion holds the smear at 0, including a new request', smearUniform() === 0, `uSmear=${String(smearUniform())}`);
+  // No damping under reduced motion: a new target is the group position on the very next update (D23.9).
+  blocks.setGroupOffset(-0.3, 0.2, 0.05);
+  advance(1);
+  check(
+    'reduced motion snaps a new group offset to its target on the next update (no damping)',
+    blocks.group.position.x === -0.3 && blocks.group.position.y === 0.2 && blocks.group.position.z === 0.05,
+    `position ${blocks.group.position.toArray().join(',')}`,
+  );
   blocks.setReducedMotion(false);
+  blocks.setGroupOffset(0, 0, 0);
+  advance(1);
+  check(
+    'leaving reduced motion damps the group offset again (one frame: -0.3 e^(-dt/0.35) in x)',
+    Math.abs(blocks.group.position.x + 0.3 * Math.exp(-FRAME / T.half)) < 1e-9,
+    `x ${blocks.group.position.x.toFixed(9)}`,
+  );
   advance(30);
   check('leaving reduced motion holds the breath for T.hold again (block 5 at rest)', el(5, 13) === 0, `y5=${el(5, 13)}`);
   check('leaving reduced motion restores the smear request (0.6)', smearUniform() === 0.6, `uSmear=${String(smearUniform())}`);

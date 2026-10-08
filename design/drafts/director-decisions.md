@@ -172,3 +172,14 @@ The canvas is fixed and the DOM scrolls. Any 2D element that labels or annotates
 12. Speed GL: the setDof call in speed/gl.ts is redundant under D22.2 and is removed. The single-lift rule for touch in both orientations is accepted.
 13. Cursor: the caliper and ruler ticks and lines get a 1 px var(--bg) halo so they read where they cross blocks.
 14. Accepted as built: hero annotations from the front-face P1 (sub-pixel against the silhouette), annotations shown at loader:done with WebGL; the speed overlay hidden from s 0.833; lighting fill 1.6 at paper (4.6 x the direction value, D22.3 measured targets win); catcher 30 x 30 and shadow camera +-14; capabilities blocks also follow p1.
+
+## D24. Phase 4 round 2 follow-ups
+
+1. Family on phones: the head group (kicker, title, intro) moves out of the stage into the section's flow above it (the first 50 svh of the section), so the stage holds only the axis and the four station labels, each at its own station's projected y (within 3 px). The stage keeps the D22.12 anchor contract. This replaces the stacked labels that sat up to 61 px off their stations, and stops the Slower outline crossing the title.
+2. Family entry: the anchor residual dy x (1 - e) while the entry runs (8 px at stage top +0.2 vh) is accepted; the lock is exact from the end of the entry.
+3. Pricing under reduced motion: the family stanza scrolls away with its labels and the pricing row appears at the reduced-motion cut (w_p 0.5). Accepted.
+4. The speed smear damps on the wall clock, like the post (timeline.ts).
+5. Footer: the footer box passes pointer events through except on its own links, buttons and text blocks, so the closing CTA stays clickable wherever it is visible.
+6. Closing text layer and keyboard: the CTA links must stay reachable by Tab from anywhere on the page. When one receives focus outside the layer's range, the page scrolls the closing into range (scrollToTarget) so the focused link is visible. (Phase 6, accessibility.)
+7. Family GL round 2 choices accepted: the carried x also moves the phantom group; the phantom material is transparent; the carry is read on the first entering frame and kept through setActive(true).
+8. Tokens: [data-theme="paper"] restates the paper colour tokens so a paper block inside an ink section flips back (added by the director in tokens.css).

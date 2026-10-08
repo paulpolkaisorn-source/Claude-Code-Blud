@@ -156,3 +156,19 @@
   --focus: #E7735F;
   --code-string: var(--code-string-raw);
 }
+
+/* Paper theme restated, so a block marked data-theme="paper" inside an ink section flips back (D23.1). The values
+   are the :root ones above. */
+[data-theme="paper"] {
+  --bg: var(--paper);
+  --bg-raised: var(--paper-deep);
+  --text-1: #151512;
+  --text-2: #45413A;
+  --text-3: #5E5A51;
+  --rule-hair: #7D786A;
+  --rule-strong: #3A3831;
+  --seal: var(--seal-red);
+  --seal-text: var(--seal-text-paper);
+  --focus: #9A2820;
+  --code-string: var(--code-string-raw);
+}

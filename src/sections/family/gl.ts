@@ -13,10 +13,17 @@
 // their 2D labels at every scroll position, and the 3D scrolls with the page through the section. The entry move
 // still follows p.
 //
+// Pointer x (D23.7). The code section leaves a pointer x offset on the blocks group. The family reads it while e is 0
+// (at the entry start, or on the first frame that finds the entry under way) and writes x = that value x (1 - e) on
+// both groups, in the same immediate write as the anchor y. Between those reads the value is held, so the offset
+// fades out with the entry. Scrolling down, the family becomes current at p 0.25 and keeps the value: the code
+// section's setActive zeroes the offset just before the family's setActive, and the family's own write restores it.
+// Scrolling up, the family's setActive(false) starts a new read, so the code section's offset is carried back.
+//
 // Phantom outlines: the three sibling stations (Slower, Moderate, Fast) carry one LineSegments with one
-// LineDashedMaterial. They are static and visible once p > 0 (under reduced motion, whenever the section is
-// current). Hover runs a sibling's dash, one dash period per second. The Haiku station lifts the stanza 0.15 bu
-// along its own up axis with follow. Touch uses the same events with toggle set.
+// LineDashedMaterial. Their opacity is e times their rest opacity (1), so they fade in with the entry and are hidden at
+// e = 0 (D23.7). They are static. Hover runs a sibling's dash, one dash period per second. The Haiku station lifts the
+// stanza 0.15 bu along its own up axis with follow. Touch uses the same events with toggle set.
 //
 // Decisions in this file, each reported to the director:
 // - The hover run is continuous at 0.24 bu per second, as the brief and direction-3d 11.8 state. The act file's
@@ -30,9 +37,12 @@
 // - The idle breath starts when the formation arrives (p 0.5), through blocks.setBreath.
 // - Three segments per corner put no vertex at the 45 degree point, so each depth edge meets the chord between
 //   the 30 and 60 degree vertices, 0.0012 bu inside the true arc.
-// - The anchor's e is the eased completion that drives the formation, sym(u), so the offset and the formation move
-//   in step. Its distance and field of view are the blend that the rig applies this frame: rig.update runs after
-//   this handle, so the stage camera still holds the previous frame here. The anchor writes x as 0 (D22.12).
+// - The entry completion e is the eased progress that drives the formation, sym(u), so the offset, the fade and the
+//   formation move in step. The distance and field of view of the offset are the blend that the rig applies this
+//   frame: rig.update runs after this handle, so the stage camera still holds the previous frame here.
+// - The phantom group takes the blocks' x offset as well as its y, so the family moves as one object in the entry
+//   (D23.7). The fade uses the material opacity; it needs transparent set, because three.js ignores opacity on an
+//   opaque material.
 // - blocks.ts holds the group offset at 0 under reduced motion (Blocks.update). There the phantom group follows the
 //   anchor and the blocks do not, until the director decides how the anchor behaves under reduced motion.
 import * as THREE from 'three';
@@ -83,6 +93,8 @@ const GAP = 0.07;
 const PERIOD = DASH + GAP;
 /** Hover run speed: one dash period per second (direction-3d 11.8). */
 const RUN_SPEED = PERIOD;
+/** Rest opacity of the phantom outlines. The entry scales it by e, so they fade in and are hidden at e = 0 (D23.7). */
+const PHANTOM_OPACITY = 1;
 /** Phantom colour, rule-hair-ink as an sRGB hex. THREE.Color converts it to linear. */
 const PHANTOM_HEX = 0x75705f;
 /** Far plane of a phone family view (act A3). */
@@ -217,7 +229,9 @@ function setup(world: GLWorld): SectionGLHandle {
     gapSize: GAP,
     scale: 1,
     depthWrite: false,
-    transparent: false,
+    // Transparent, so that the opacity the entry sets blends. It starts at 0: the update sets it before the first frame.
+    transparent: true,
+    opacity: 0,
   });
   const outlines = new THREE.LineSegments(geometry, material);
   outlines.name = 'family-phantoms';
@@ -250,6 +264,10 @@ function setup(world: GLWorld): SectionGLHandle {
   let disposed = false;
   let lastS = 0;
   let lastRm = false;
+  /** The group offset x that the code section left at the entry start (D23.7). It is held while the entry runs. */
+  let carriedX = 0;
+  /** True while an entry is under way and carriedX holds its value. False at start and after setActive(false). */
+  let carrying = false;
   let keyWidth = -1;
   let keyHeight = -1;
   const keys = new Map<string, CameraKey>();
@@ -273,27 +291,33 @@ function setup(world: GLWorld): SectionGLHandle {
   let anchor: HTMLElement | null = null;
 
   /**
-   * Writes the anchor offset of this frame, immediately (D20.1, D22.12). The blocks group and the phantom group move
-   * in world y by -dy / pxPerBu x e, where dy is the stage's rect.top in px and pxPerBu = H / (2 d tan(fov / 2)) for
-   * the camera's distance d to the z = 0 plane. u is the entry progress of this frame, and the distance and the field of
-   * view are the blend the rig applies this frame (see the header). A missing anchor gives dy 0.
+   * Writes the group offset of this frame, immediately (D20.1, D22.12, D23.7). The blocks group and the phantom group
+   * move in world y by -dy / pxPerBu x e, where dy is the stage's rect.top in px and pxPerBu = H / (2 d tan(fov / 2))
+   * for the camera's distance d to the z = 0 plane. In x they carry the pointer offset of the code section: the x that
+   * blocks.groupOffset holds while e is 0, times 1 - e. e is this frame's entry completion, and the distance and the
+   * field of view are the blend the rig applies this frame (see the header). A missing anchor gives dy 0.
    */
-  function writeAnchor(from: CameraKey, to: CameraKey, u: number, rm: boolean, height: number): void {
-    const k = ef.sym(u);
-    const d = Math.abs(from.position[2] + (to.position[2] - from.position[2]) * k);
-    const fov = from.fov + (to.fov - from.fov) * k;
+  function writeOffset(from: CameraKey, to: CameraKey, e: number, height: number): void {
+    const d = Math.abs(from.position[2] + (to.position[2] - from.position[2]) * e);
+    const fov = from.fov + (to.fov - from.fov) * e;
     const pxPerBu = height / (2 * d * Math.tan((fov * Math.PI) / 360));
     if (anchor === null || !anchor.isConnected) anchor = document.querySelector<HTMLElement>(ANCHOR);
     const dy = anchor === null ? 0 : anchor.getBoundingClientRect().top;
-    const e = rm ? 1 : k;
+    // Read at the entry start: while e is 0, and on the first frame that finds the entry under way (the choreography
+    // does not call this handle at e 0 when the entry starts while the code section is current). Held after that.
+    if (e === 0 || !carrying) carriedX = blocks.groupOffset[0];
+    carrying = e > 0;
+    const x = carriedX * (1 - e);
     const y = pxPerBu > 0 && Number.isFinite(pxPerBu) ? (-dy * e) / pxPerBu : 0;
-    blocks.setGroupOffset(0, y, 0, true);
+    blocks.setGroupOffset(x, y, 0, true);
+    group.position.x = x;
     group.position.y = y;
   }
 
   /** Puts the blocks group and the phantom group back at zero, at once. */
   function clearAnchor(): void {
     blocks.setGroupOffset(0, 0, 0, true);
+    group.position.x = 0;
     group.position.y = 0;
   }
 
@@ -382,11 +406,13 @@ function setup(world: GLWorld): SectionGLHandle {
       const from = keyFor(ctx.prev === null ? 'family' : ctx.prev.key, ctx.size, portrait);
       const to = keyFor('family', ctx.size, portrait);
       const u = rm ? 1 : clamp01(s / REST_AT);
+      const e = ef.sym(u);
       rig.blend(from, to, u);
       // Written on every call, whether or not the section is current: the pricing handle scales this same offset (D22.14).
-      writeAnchor(from, to, u, rm, ctx.size.height);
+      writeOffset(from, to, e, ctx.size.height);
+      material.opacity = e * PHANTOM_OPACITY;
 
-      group.visible = rm ? active : s > 0;
+      group.visible = rm ? active : e > 0;
       group.rotation.z = portrait ? PORTRAIT_TURN : 0;
       setFar(active && portrait ? FAR_PHONE : defaultFar);
 
@@ -410,6 +436,9 @@ function setup(world: GLWorld): SectionGLHandle {
         return;
       }
       active = false;
+      // The code section takes the pointer offset back when it becomes current, so the next frame that finds an entry
+      // under way reads the offset again (D23.7).
+      carrying = false;
       flags.fill(false);
       const hadLift = liftState.value !== 0;
       snapLift();

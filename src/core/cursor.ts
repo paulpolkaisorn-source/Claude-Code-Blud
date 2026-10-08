@@ -153,7 +153,8 @@ function buildForms(layer: HTMLElement): Refs {
   const caliperUnit = make('span', 'cursor-unit');
   caliperUnit.textContent = 'bu';
   caliperValue.append(caliperNumber, ' ', caliperUnit);
-  caliper.append(caliperTick, caliperDim, caliperValue);
+  // The dimension line is appended before the tick, so the tick's halo (cursor.css, D23.13) lies over the line where they meet.
+  caliper.append(caliperDim, caliperTick, caliperValue);
 
   const marker = make('div', 'cursor-form cursor-marker');
 

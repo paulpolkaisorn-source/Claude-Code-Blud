@@ -284,6 +284,11 @@ html.js:not(.no-gl) #closing .closing__dim {
   white-space: nowrap;
 }
 
+/* The unit is written in lowercase, as in the drawing (D23.5). The label style above is uppercase, so it is reset here. */
+#closing .closing__unit {
+  text-transform: none;
+}
+
 /* ---------- Haiku colour turn-on (act III closing, sequence 5) ----------
    Each character mixes from text-3 (--mix 0) to text-1 (--mix 1). The mix is written by GSAP, and it is 1 without it. */
 #closing .closing__char {

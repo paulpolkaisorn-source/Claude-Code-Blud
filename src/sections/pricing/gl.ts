@@ -16,10 +16,11 @@
 // Keep-alive. The choreography arms this section's breath (amplitude 0.010, phase zero) when the section becomes
 // current, and blocks.setBreath starts it T.hold later. The handle keeps no breath state of its own.
 //
-// Family anchor (D22.14). The family's DOM anchor carries into this section and fades out with the entry. The family
-// writes its group offset (blocks.groupOffset) and the y of its phantom group ('family-phantom-group') earlier in each
-// frame, while it is the section before this one. update() reads both, multiplies them by 1 - sym(w_p) and writes
-// them back at once, so the blocks come back from where the family left them and sit on the world origin at w_p 1.
+// Family anchor (D22.14, D23.10). The family's DOM anchor carries into this section and fades out with the entry. The
+// family writes its group offset (blocks.groupOffset) and the y of its phantom group ('family-phantom-group') earlier in
+// each frame, while it is the section before this one. update() reads both, multiplies them by 1 - cut(w_p) and writes
+// them back at once. The fade is front-loaded (cut, not sym), so the blocks come back into view early in the entry, and
+// they sit on the world origin at w_p 1.
 // setActive resets the offsets only at eff 1, at once, so it never fights that fade.
 //
 // Reduced motion. The entry is complete once w_p reaches 0.5, the point where the section top crosses 80 % of the
@@ -128,12 +129,13 @@ function setup(world: GLWorld): SectionGLHandle {
   }
 
   /**
-   * Fades the family's DOM anchor out over the entry (D22.14). The family has written its group offset and the y of its
-   * phantom group earlier in this frame, so both are read here, multiplied by 1 - sym(eff) and written back at once.
-   * At eff 1 both are exactly 0. The offset is written immediately, so blocks.update adds no damping to the fade.
+   * Fades the family's DOM anchor out over the entry (D22.14, D23.10). The family has written its group offset and the y of
+   * its phantom group earlier in this frame, so both are read here, multiplied by 1 - cut(eff) and written back at once.
+   * The cut curve is front-loaded: the offset is 0.32 of its value at eff 0.1 and 0.10 at eff 0.25. At eff 1 both are
+   * exactly 0. The offset is written immediately, so blocks.update adds no damping to the fade.
    */
   function fadeAnchor(eff: number): void {
-    const k = 1 - ef.sym(eff);
+    const k = 1 - ef.cut(eff);
     const [x, y, z] = blocks.groupOffset;
     blocks.setGroupOffset(x * k, y * k, z * k, true);
     const phantoms = findPhantomGroup();

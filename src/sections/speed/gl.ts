@@ -9,10 +9,10 @@
 // take ef.settle. The camera blends from the previous section's key (the hero) to the speed key through rig.blend,
 // which applies ef.sym. At u = 1 everything holds.
 //
-// The choreography draws the smear (smear: true) and sets the depth of field from dof. Two values here depend on the
-// viewport or on u, so this layer sets them itself: the depth of field focus is the speed key's distance from the
-// z = 0 plane (31.95 bu at 1440 by 900, 51.12 bu on a phone; direction-3d 10.8, D22.2), and the breath starts T.hold
-// after u reaches 1 (act I speed, 3D layer), whatever the choreography requested when the section became current.
+// The choreography draws the smear (smear: true) and sets the depth of field from dof. Its focus is the speed key's
+// distance from the z = 0 plane at the current size (31.95 bu at 1440 by 900, 51.12 bu on a phone; D22.2), so this
+// layer sets no depth of field (D23.12). The breath starts T.hold after u reaches 1 (act I speed, 3D layer), whatever
+// the choreography requested when the section became current.
 //
 // Pointer and touch (act I speed; direction-3d 10.13; D22.10). At rest (u = 1, reduced motion off), one block at a
 // time is lifted by LIFT_BU. The lifted block is the one under a fine pointer that is not touch (hover), or the one
@@ -50,7 +50,7 @@ const SCRUB = { total: 0.35, lead: 0.1 } as const;
 const BREATH: BreathMode = { amplitude: 0.012, phase: 'zero' };
 /** The lift of the hovered or tapped block, in bu: along y on a landscape viewport, along x on a phone (D22.10). */
 const LIFT_BU = 0.15;
-/** Depth of field bokeh scale in px (direction-3d 10.8). The focus is the speed key's z, set in update(). */
+/** Depth of field bokeh scale in px (direction-3d 10.8). The choreography applies it with the focus from dof (D22.2). */
 const DOF_BOKEH = 1.2;
 /** Largest travel, in CSS px, between a touch down and its up that still counts as a tap. */
 const TAP_SLOP_PX = 10;
@@ -85,7 +85,7 @@ function takesNoTap(target: EventTarget | null): boolean {
 
 /** Builds the speed handle on the shared world: the race entry, the camera, the breath, the lifts and the taps. */
 function setup(world: GLWorld): SectionGLHandle {
-  const { blocks, post, rig } = world;
+  const { blocks, rig } = world;
   /** The hero's exit pose, where the race starts. It does not depend on the viewport, so it is read once. */
   const exit: readonly Pose[] = heroExitPoses(false, []);
   /** The 17 poses written each frame. blocks.setPoses copies them, so this array is reused. */
@@ -114,8 +114,6 @@ function setup(world: GLWorld): SectionGLHandle {
   let atRest = false;
   /** The breath state last requested of the shared blocks (BREATH_UNSET, BREATH_OFF or BREATH_ON). */
   let breathSent = BREATH_UNSET;
-  /** The focus last given to the depth of field, or NaN when none has been given since the section was activated. */
-  let focusSet = Number.NaN;
 
   /** The camera key of a name for the current size. The key is built once per size and then reused. */
   function keyOf(name: KeyName): CameraKey {
@@ -182,7 +180,6 @@ function setup(world: GLWorld): SectionGLHandle {
     }
     blocks.setBreath(null);
     breathSent = BREATH_OFF;
-    focusSet = Number.NaN;
     blocks.setTilt(0, 0);
     blocks.setGroupOffset(0, 0, 0);
   }
@@ -257,14 +254,6 @@ function setup(world: GLWorld): SectionGLHandle {
       writePoses(u, ctx.prev, portrait);
       rig.blend(from, to, u);
 
-      // The depth of field focus is the speed key's distance (direction-3d 10.8, D22.2). The pass itself is removed under
-      // reduced motion by the post stack.
-      const focus = to.position[2];
-      if (focus !== focusSet) {
-        focusSet = focus;
-        post.setDof({ focus, bokeh: DOF_BOKEH });
-      }
-
       // The breath starts T.hold after the race completes (act I speed). It is requested only when its state changes, so
       // a section that enters after this one keeps the breath it asked for.
       const breathWanted = rest ? BREATH_ON : BREATH_OFF;
@@ -283,7 +272,6 @@ function setup(world: GLWorld): SectionGLHandle {
         tapped = -1;
         pendingTap = null;
         breathSent = BREATH_UNSET;
-        focusSet = Number.NaN;
         liftX.fill(0);
         for (let i = 0; i < BLOCK_COUNT; i += 1) {
           sentY[i] = 0;

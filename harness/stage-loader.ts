@@ -1,9 +1,14 @@
 // Harness for src/gl/stage.ts and src/core/loader.ts (architecture section 10a).
-// Open /harness/stage-loader.html on the dev server. The verdict lands in dataset.harness.
+// Open /harness/stage-loader.html on the dev server, or on a production build of this page. The verdict
+// lands in dataset.harness. One mode per page load:
+//   (none)           stage checks, then the loader run. The tasks settle in the reverse of their
+//                    registration order, and the failing task is the last to settle.
+//   ?loader-stall    slow path: the frame loop is stopped while the last task settles at 7.5 s.
+//   ?loader-timeout  the 8 s safety net: one task never settles and one settles after the timeout.
 // The viewport check waits for an outside setViewportSize: the page sets dataset.harnessStep to
-// 'await-viewport', and the Playwright driver resizes the viewport. ?loader-timeout runs the 8 s
-// safety check on its own page load.
+// 'await-viewport', and the Playwright driver resizes the viewport.
 import * as THREE from 'three';
+import { gsap } from 'gsap';
 import { env } from '../src/core/env';
 import { bus } from '../src/core/bus';
 import { addTick, initTicker, PRIORITY, type Tick } from '../src/core/ticker';
@@ -198,13 +203,16 @@ async function mainCheck(): Promise<void> {
   }
   check('registerTask rejects a zero weight', zeroWeightRejected);
 
-  // Weights 1, 2, 1. Each task records its true state in truth just before it settles or reports.
-  const truth = { rejecting: 0, partial: 0, slow: 0 };
-  const trueProgress = (): number => (1 * truth.rejecting + 2 * truth.partial + 1 * truth.slow) / 4;
+  // Weights 1, 2, 1. Registration order: rejecting, partial, quick. The settle order is the reverse: quick
+  // at 100 ms, partial at 300 ms, and rejecting last at 500 ms, the failing task. Each task records its true
+  // state just before it settles or reports, and the failing task records the frame of its settle.
+  const truth = { rejecting: 0, partial: 0, quick: 0, lastSettleFrame: -1 };
+  const trueProgress = (): number => (1 * truth.rejecting + 2 * truth.partial + 1 * truth.quick) / 4;
 
   registerTask('rejecting-task', 1, async () => {
-    await sleep(150);
+    await sleep(500);
     truth.rejecting = 1;
+    truth.lastSettleFrame = currentFrame;
     throw new Error('rejecting-task fails on purpose');
   });
   registerTask('partial-task', 2, async (report) => {
@@ -216,18 +224,18 @@ async function mainCheck(): Promise<void> {
     await sleep(200);
     truth.partial = 1;
   });
-  registerTask('slow-task', 1, async () => {
-    await sleep(600);
-    truth.slow = 1;
+  registerTask('quick-task', 1, async () => {
+    await sleep(100);
+    truth.quick = 1;
   });
 
   const events: { v: number; frame: number; truth: number }[] = [];
-  const doneAt: number[] = [];
+  const done: { events: number; frame: number }[] = [];
   bus.on('loader:progress', (v) => {
     events.push({ v, frame: currentFrame, truth: trueProgress() });
   });
   bus.on('loader:done', () => {
-    doneAt.push(events.length);
+    done.push({ events: events.length, frame: currentFrame });
   });
 
   const running = startLoading();
@@ -259,16 +267,23 @@ async function mainCheck(): Promise<void> {
     'loader:progress shows intermediate values and ends at exactly 1',
     values.some((v) => v > 0 && v < 1) && values[values.length - 1] === 1 && bus.last('loader:progress') === 1,
   );
-  const frames = events.map((e) => e.frame);
+  // Every value but the last is a frame-driven event, at most one per frame. The last value is the final 1,
+  // which goes out with loader:done when the load ends, so it may share a frame with the event before it.
+  const frameEvents = events.slice(0, -1).map((e) => e.frame);
   check(
-    'at most one loader:progress per frame',
-    frames.every((f, i) => i === 0 || f > frames[i - 1]),
-    `frames=${frames.join(',')}`,
+    'frame-driven loader:progress goes out at most once per frame',
+    frameEvents.every((f, i) => i === 0 || f > frameEvents[i - 1]),
+    `frames=${frameEvents.join(',')}`,
   );
   check(
     "'loader:done' fires exactly once, after the last progress event",
-    doneAt.length === 1 && doneAt[0] === events.length,
-    `doneCount=${doneAt.length} progressEvents=${events.length}`,
+    done.length === 1 && done[0].events === events.length,
+    `doneCount=${done.length} progressEvents=${events.length}`,
+  );
+  check(
+    "'loader:done' fires in the frame of the last settle, with no frame in between",
+    done.length === 1 && done[0].frame === truth.lastSettleFrame,
+    `done frame=${done[0]?.frame} last settle frame=${truth.lastSettleFrame}`,
   );
   check('loaderProgress() is 1 after the run', loaderProgress() === 1, `value=${loaderProgress()}`);
   const rejectWarnings = warnings.filter((w) => w.includes('rejecting-task')).length;
@@ -296,37 +311,122 @@ async function mainCheck(): Promise<void> {
   check('dispose() runs without throwing', disposeOk);
 }
 
-/** Safety net: one task never settles and one settles at once. loader:done must come at 8 s, unforced. */
+/**
+ * Slow path: the frame loop is stopped while the last task settles. Every frame is a gsap tick, so with the
+ * ticker asleep no frame runs at all. loader:done must come at the settle itself (7.5 s), not at the 8 s safety
+ * timeout, and no timeout warning may appear. The failing task settles first; the last to settle succeeds.
+ */
+async function stallCheck(): Promise<void> {
+  const seen = { lastSettleAt: -1 };
+  let doneAt = -1;
+  let doneCount = 0;
+  const progressEvents: number[] = [];
+  bus.on('loader:progress', (v) => {
+    progressEvents.push(v);
+  });
+  bus.on('loader:done', () => {
+    doneCount += 1;
+    doneAt = performance.now();
+  });
+
+  registerTask('last-settler', 1, async () => {
+    await sleep(7500);
+    seen.lastSettleAt = performance.now();
+  });
+  registerTask('early-failer', 2, async () => {
+    await sleep(1000);
+    throw new Error('early-failer fails on purpose');
+  });
+  registerTask('middle', 1, async (report) => {
+    report(0.5);
+    await sleep(3000);
+  });
+
+  const startedAt = performance.now();
+  const running = startLoading();
+  // Stop the frame loop after startLoading: an addTick would wake the ticker again.
+  gsap.ticker.sleep();
+  const finishedInTime = await Promise.race([running.then(() => true), sleep(12000).then(() => false)]);
+  gsap.ticker.wake();
+
+  check('startLoading resolves while the frame loop is stopped', finishedInTime);
+  check(
+    'loader:done comes at the last settle, with no frame to wait for',
+    doneCount === 1 && seen.lastSettleAt >= 0 && doneAt >= seen.lastSettleAt && doneAt - seen.lastSettleAt < 25,
+    `doneCount=${doneCount} lastSettle=${Math.round(seen.lastSettleAt - startedAt)} ms done=${Math.round(doneAt - startedAt)} ms`,
+  );
+  check(
+    'loader:done fires before the 8 s safety timeout',
+    doneAt >= 0 && doneAt - startedAt < 7900,
+    `done=${Math.round(doneAt - startedAt)} ms`,
+  );
+  check(
+    'the final progress value (1) goes out before loader:done',
+    progressEvents.length >= 1 && progressEvents[progressEvents.length - 1] === 1,
+    `progress=${progressEvents.join(',')}`,
+  );
+  check('no timeout warning: the safety timeout did not fire', !warnings.some((w) => w.includes('still waiting')));
+  const failWarnings = warnings.filter((w) => w.includes('early-failer')).length;
+  check('the failing task is warned once, with its name', failWarnings === 1, `warnings=${failWarnings}`);
+  check('loaderProgress() is 1 after the run', loaderProgress() === 1, `value=${loaderProgress()}`);
+}
+
+/**
+ * Safety net: one task never settles, one settles at once, one settles after the timeout. loader:done must come
+ * once, at 8 s, and the late settle must not emit it again. The timeout is warned in development only.
+ */
 async function timeoutCheck(): Promise<void> {
   registerTask('stuck-task', 1, (report) => {
     report(0.5);
     return new Promise<void>(() => undefined);
   });
   registerTask('quick-task', 1, async () => undefined);
+  registerTask('late-task', 1, async () => {
+    await sleep(8600);
+  });
   const values: number[] = [];
   let doneCount = 0;
+  let eventsAtDone = -1;
   bus.on('loader:progress', (v) => {
     values.push(v);
   });
   bus.on('loader:done', () => {
     doneCount += 1;
+    eventsAtDone = values.length;
   });
   const t0 = performance.now();
   await startLoading();
   const elapsed = performance.now() - t0;
   check('loader:done fires at the 8 s safety timeout', elapsed >= 7900 && elapsed <= 9500, `elapsed=${Math.round(elapsed)} ms`);
   check("'loader:done' fires once on timeout", doneCount === 1, `count=${doneCount}`);
+  // Weights 1, 1, 1: (0.5 + 1 + 0) / 3 at the timeout. It is not forced to 1.
   check(
     'progress is not forced to 1 on timeout',
-    loaderProgress() === 0.75 && bus.last('loader:progress') === 0.75 && values[values.length - 1] === 0.75,
+    loaderProgress() === 0.5 && bus.last('loader:progress') === 0.5 && values[values.length - 1] === 0.5,
     `loaderProgress=${loaderProgress()} events=${values.join(',')}`,
   );
-  check('the timeout is warned with the pending task name', warnings.some((w) => w.includes('stuck-task')));
+  if (import.meta.env.DEV) {
+    check(
+      'development: the timeout is warned with the pending task names',
+      warnings.some((w) => w.includes('still waiting') && w.includes('stuck-task') && w.includes('late-task')),
+    );
+  } else {
+    check('production: the timeout is silent (no "still waiting" warning)', !warnings.some((w) => w.includes('still waiting')));
+  }
+  await sleep(1500);
+  check(
+    "a task that settles after the timeout does not emit 'loader:done' or progress again",
+    doneCount === 1 && values.length === eventsAtDone,
+    `done=${doneCount} progress after done=${values.length - eventsAtDone}`,
+  );
 }
 
 async function main(): Promise<void> {
-  if (new URLSearchParams(location.search).has('loader-timeout')) {
+  const params = new URLSearchParams(location.search);
+  if (params.has('loader-timeout')) {
     await timeoutCheck();
+  } else if (params.has('loader-stall')) {
+    await stallCheck();
   } else {
     await mainCheck();
   }

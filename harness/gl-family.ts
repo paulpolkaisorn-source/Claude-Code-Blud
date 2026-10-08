@@ -4,7 +4,9 @@
 // update(p, tick, ctx) with p from window.__family.set, and the previous section is the code SectionGL literal
 // (formation recede, key hero). The checks below run first, timed where the hover tweens and the dash need real
 // time. The verdict goes to document.documentElement.dataset.harness. Playwright then drives the screenshot states
-// through window.__family.
+// through window.__family. The pointer offset that the code section leaves on the blocks (D23.7) is written before the
+// family each frame while window.__family.pointer(x) has set it; current(on) gives the family the choreography's
+// setActive, so the screenshots can reproduce the code-to-family handoff.
 import * as THREE from 'three';
 import { familyGL } from '../src/sections/family/gl';
 import { createWorld } from '../src/gl/boot';
@@ -27,6 +29,10 @@ interface Report {
 interface FamilyControls {
   set(s: number): void;
   hover(station: number | null, toggle?: boolean): void;
+  /** The code section's pointer x offset, written each frame before the family runs (null for none). */
+  pointer(x: number | null): void;
+  /** The family's current state, set the way the choreography sets it: the code section's zeroing first when on. */
+  current(on: boolean): void;
 }
 
 interface FamilyWindow extends Window {
@@ -39,6 +45,15 @@ interface FamilyWindow extends Window {
 const ENVIRONMENT_NOTICES = ['GPU stall due to ReadPixels', 'KHR_parallel_shader_compile extension not supported'];
 const PERIOD = 0.24;
 const LIFT = 0.15;
+/**
+ * The pointer x offset the code section leaves at 1300 px of 1440 (0.2 bu x 0.806, pointer.sx of that position), and
+ * two other values for the switch checks (D23.7).
+ */
+const CODE_X = 0.2 * (1300 / 1440 * 2 - 1);
+const CODE_X_B = 0.1;
+const CODE_X_C = -0.08;
+/** Progress at which the entry completes (gl.ts REST_AT, direction-act2 family Sequence). */
+const REST_P = 0.5;
 /** Stations 0 to 2 carry a phantom outline; station 3 is the Haiku stanza. */
 const SIBLINGS = 3;
 const CAMERA_TOL = 1e-3;
@@ -133,9 +148,13 @@ async function main(): Promise<void> {
   const placeAnchor = (): void => {
     anchorEl.style.top = `${(1 - 2 * drive.s) * window.innerHeight}px`;
   };
+  // The code section's pointer x offset (D23.7). While it is set, it is written before the family runs each frame, as the
+  // choreography orders the current section before an entering one (D22.1). Reduced motion gets none (D23.9).
+  let codeX: number | null = null;
   addTick((tick: Tick) => {
     if (!drive.on) return;
     placeAnchor();
+    if (codeX !== null && !env.reducedMotion) blocks.setGroupOffset(codeX, 0, 0);
     handle.update(drive.s, tick, ctxNow());
   }, PRIORITY.scroll);
 
@@ -202,11 +221,11 @@ async function main(): Promise<void> {
     check('the phantoms are one LineSegments with 216 vertices (36 segments per outline)', positions.count === 216, `count=${positions.count}`);
     check('the lineDistance attribute matches the vertex count', distance.length === 216, `length=${distance.length}`);
     check(
-      'the material is a LineDashedMaterial, dash 0.17 and gap 0.07, opaque, no depth write',
+      'the material is a LineDashedMaterial, dash 0.17 and gap 0.07, transparent for the fade, no depth write',
       material instanceof THREE.LineDashedMaterial &&
         Math.abs(material.dashSize - 0.17) < 1e-9 &&
         Math.abs(material.gapSize - 0.07) < 1e-9 &&
-        material.transparent === false &&
+        material.transparent === true &&
         material.depthWrite === false,
     );
     check(
@@ -253,7 +272,14 @@ async function main(): Promise<void> {
       `length=${distance[31].toFixed(4)}`,
     );
 
-    // Entry start: p 0 is the recede formation and the hero key, and the phantom group stays hidden.
+    // Fade and carry (D23.7). Opacity is e x 1 and the x offset is the read x x (1 - e), with e from sym(p / 0.5).
+    // Under reduced motion e is 1 at every progress and no pointer offset is written.
+    const wantOpacity = (s: number): number => (rm ? 1 : ef.sym(clamp01(s / REST_P)));
+    const wantX = (s: number): number => (rm ? 0 : CODE_X * (1 - ef.sym(clamp01(s / REST_P))));
+
+    // Entry start: p 0 is the recede formation and the hero key, and the phantom group stays hidden. The code section's
+    // pointer offset is set first, so the entry start reads it (D23.7).
+    codeX = CODE_X;
     drive.s = 0;
     await frames(4);
     // Under reduced motion every entry is complete at once (C14), so p 0 already holds the family formation and key.
@@ -277,6 +303,18 @@ async function main(): Promise<void> {
       rm ? 'reduced motion shows the phantoms at p 0 (static, section current)' : 'the phantoms are hidden at p 0',
       group.visible === rm,
       `visible=${group.visible}`,
+    );
+    check(
+      rm ? 'reduced motion: the phantoms are opaque at p 0' : 'the phantoms have opacity 0 at the entry start (e 0)',
+      Math.abs(material.opacity - wantOpacity(0)) < 1e-9,
+      `opacity=${material.opacity}`,
+    );
+    check(
+      rm ? 'reduced motion: no pointer offset at p 0' : 'the entry start reads the code pointer offset (x = read x)',
+      Math.abs(blocks.groupOffset[0] - wantX(0)) < 1e-9 &&
+        Math.abs(blocks.group.position.x - wantX(0)) < 1e-9 &&
+        Math.abs(group.position.x - wantX(0)) < 1e-9,
+      `target=${blocks.groupOffset[0].toFixed(5)} blocks=${blocks.group.position.x.toFixed(5)} phantoms=${group.position.x.toFixed(5)} want=${wantX(0).toFixed(5)}`,
     );
 
     // Mid-entry: the kireji leads, so its share of the way is larger than block 0's (its stagger position is 0).
@@ -303,6 +341,18 @@ async function main(): Promise<void> {
       'mid-entry: the group is visible',
       group.visible === true,
       `visible=${group.visible}`,
+    );
+    check(
+      'mid-entry: the phantom opacity is e (0.5 at p 0.25)',
+      Math.abs(material.opacity - wantOpacity(0.25)) < 1e-6 && (rm || Math.abs(material.opacity - 0.5) < 1e-6),
+      `opacity=${material.opacity.toFixed(5)} want=${wantOpacity(0.25).toFixed(5)}`,
+    );
+    check(
+      'mid-entry: the blocks and the phantoms carry x = read x x (1 - e)',
+      Math.abs(blocks.groupOffset[0] - wantX(0.25)) < 1e-9 &&
+        Math.abs(blocks.group.position.x - wantX(0.25)) < 1e-9 &&
+        Math.abs(group.position.x - wantX(0.25)) < 1e-9,
+      `target=${blocks.groupOffset[0].toFixed(5)} blocks=${blocks.group.position.x.toFixed(5)} phantoms=${group.position.x.toFixed(5)} want=${wantX(0.25).toFixed(5)}`,
     );
 
     // Rest: p 0.5 holds the family formation and the family camera key (phone x at +0.28 W(z)).
@@ -357,15 +407,22 @@ async function main(): Promise<void> {
         `got=${group.position.y.toFixed(5)} want=${want.toFixed(5)}`,
       );
       check(
-        `anchor at ${label}: blocks.groupOffset holds the same y`,
-        Math.abs(blocks.groupOffset[1] - want) < 1e-4 && blocks.groupOffset[0] === 0 && blocks.groupOffset[2] === 0,
-        `got=${blocks.groupOffset[1].toFixed(5)} want=${want.toFixed(5)}`,
+        `anchor at ${label}: blocks.groupOffset holds the same y and the carried x`,
+        Math.abs(blocks.groupOffset[1] - want) < 1e-4 &&
+          Math.abs(blocks.groupOffset[0] - wantX(s)) < 1e-9 &&
+          blocks.groupOffset[2] === 0,
+        `got=${blocks.groupOffset[0].toFixed(5)},${blocks.groupOffset[1].toFixed(5)} want=${wantX(s).toFixed(5)},${want.toFixed(5)}`,
+      );
+      check(
+        `anchor at ${label}: the phantoms carry the same x and their opacity is e`,
+        Math.abs(group.position.x - wantX(s)) < 1e-9 && Math.abs(material.opacity - wantOpacity(s)) < 1e-6,
+        `x=${group.position.x.toFixed(5)} opacity=${material.opacity.toFixed(5)} want=${wantX(s).toFixed(5)},${wantOpacity(s).toFixed(5)}`,
       );
       if (!rm) {
         check(
-          `anchor at ${label}: the blocks group moves to the same y`,
-          Math.abs(blocks.group.position.y - want) < 1e-4,
-          `got=${blocks.group.position.y.toFixed(5)} want=${want.toFixed(5)}`,
+          `anchor at ${label}: the blocks group moves to the same y and x`,
+          Math.abs(blocks.group.position.y - want) < 1e-4 && Math.abs(blocks.group.position.x - wantX(s)) < 1e-9,
+          `got=${blocks.group.position.x.toFixed(5)},${blocks.group.position.y.toFixed(5)} want=${wantX(s).toFixed(5)},${want.toFixed(5)}`,
         );
       }
     }
@@ -499,12 +556,76 @@ async function main(): Promise<void> {
     }
     check('a null event stops the run and the offset holds', same);
 
+    // The carry through the switches (D23.7). An entry that starts while the code section is current reads the code
+    // offset on its first frame. A switch to the family as current keeps the value, although the code section's
+    // setActive has zeroed the offset just before the family's setActive. A switch back to the code section makes the
+    // next entry frame read the offset again. Reduced motion has no pointer offset, so it is skipped there.
+    if (!rm) {
+      const carried = (read: number, s: number): number => read * (1 - ef.sym(clamp01(s / REST_P)));
+      handle.setActive(false, ctxNow());
+      codeX = CODE_X_B;
+      drive.s = 0;
+      await frames(3);
+      check(
+        'an entry that starts while the code section is current reads its offset (p 0)',
+        Math.abs(blocks.groupOffset[0] - CODE_X_B) < 1e-9,
+        `target=${blocks.groupOffset[0].toFixed(5)} want=${CODE_X_B}`,
+      );
+      drive.s = 0.25;
+      await frames(3);
+      check(
+        'the entry holds the value it read: x = read x (1 - e) at p 0.25 while the family is not current',
+        Math.abs(blocks.groupOffset[0] - carried(CODE_X_B, 0.25)) < 1e-9,
+        `target=${blocks.groupOffset[0].toFixed(5)} want=${carried(CODE_X_B, 0.25).toFixed(5)}`,
+      );
+      // The switch to the family as current, in the choreography's order: the code section's setActive zeroes the offset
+      // (its setActive writes 0), then the family's setActive clears it, and the family's update writes the carried value.
+      codeX = null;
+      blocks.setGroupOffset(0, 0, 0);
+      handle.setActive(true, ctxNow());
+      drive.s = 0.3;
+      await frames(3);
+      check(
+        'a switch to current keeps the carried value (setActive does not drop it): x = read x (1 - e) at p 0.3',
+        Math.abs(blocks.groupOffset[0] - carried(CODE_X_B, 0.3)) < 1e-9 && Math.abs(group.position.x - carried(CODE_X_B, 0.3)) < 1e-9,
+        `target=${blocks.groupOffset[0].toFixed(5)} phantoms=${group.position.x.toFixed(5)} want=${carried(CODE_X_B, 0.3).toFixed(5)}`,
+      );
+      // Scrolling back up: the family stops being current, the code section takes the offset back, and the next entry
+      // frame reads it again.
+      handle.setActive(false, ctxNow());
+      codeX = CODE_X_C;
+      drive.s = 0.25;
+      await frames(3);
+      check(
+        'after the family stops being current, the next entry frame reads the code offset again',
+        Math.abs(blocks.groupOffset[0] - carried(CODE_X_C, 0.25)) < 1e-9,
+        `target=${blocks.groupOffset[0].toFixed(5)} want=${carried(CODE_X_C, 0.25).toFixed(5)}`,
+      );
+      drive.s = 0;
+      await frames(3);
+      check(
+        'p 0 holds the offset read on the way back (x = read x)',
+        Math.abs(blocks.groupOffset[0] - CODE_X_C) < 1e-9 && Math.abs(group.position.x - CODE_X_C) < 1e-9,
+        `target=${blocks.groupOffset[0].toFixed(5)} phantoms=${group.position.x.toFixed(5)}`,
+      );
+      codeX = null;
+      handle.setActive(true, ctxNow());
+      drive.s = 0.5;
+      await frames(4);
+      check(
+        'at rest the carried offset is gone: x 0 on the blocks and the phantoms',
+        blocks.groupOffset[0] === 0 && Math.abs(blocks.group.position.x) < 1e-9 && group.position.x === 0,
+        `target=${blocks.groupOffset[0]} blocks=${blocks.group.position.x} phantoms=${group.position.x}`,
+      );
+    }
+    codeX = null;
+
     // Events after the section leaves are ignored, and setActive(false) tidies the world.
     handle.setActive(false, ctxNow());
     check(
-      'setActive(false) zeroes the anchor offset at once (phantoms and blocks target)',
-      group.position.y === 0 && blocks.groupOffset[1] === 0,
-      `group=${group.position.y} target=${blocks.groupOffset[1]}`,
+      'setActive(false) zeroes the anchor offset at once (phantoms and blocks target, x and y)',
+      group.position.x === 0 && group.position.y === 0 && blocks.groupOffset[0] === 0 && blocks.groupOffset[1] === 0,
+      `group=${group.position.x},${group.position.y} target=${blocks.groupOffset[0]},${blocks.groupOffset[1]}`,
     );
     drive.on = false;
     await wait(50);
@@ -538,6 +659,12 @@ async function main(): Promise<void> {
     },
     hover(station: number | null, toggle = false): void {
       document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station, toggle } }));
+    },
+    pointer(x: number | null): void {
+      codeX = x;
+    },
+    current(on: boolean): void {
+      handle.setActive(on, ctxNow());
     },
   };
   win.__familyReport = report;

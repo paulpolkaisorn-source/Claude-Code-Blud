@@ -3,7 +3,7 @@
 // speed handle is driven the way the choreography drives it: setActive(true), then update(progress, tick, ctx) every frame.
 // Synchronous checks run first and set document.documentElement.dataset.harness. They cover the registration, the race
 // entry at u = 0, 0.05, 0.5 and 1 (direction-3d 11.2 and 11.3, the kireji on anticipate), the camera from the hero key to
-// the speed key (direction-act1 A7 and D15.1), the depth of field focus, the breath (held off until u = 1, then T.hold
+// the speed key (direction-act1 A7 and D15.1), that the handle makes no depth of field call (D23.12), the breath (held off until u = 1, then T.hold
 // later), the hover lift (fine pointer, at rest, footprints without the lift), taps (a tap toggles, a moved tap, a
 // cancelled tap and a tap on a control do nothing), reduced motion, the portrait race, setActive(false) and dispose.
 // The lift runs along y on a landscape viewport and along x on a portrait one (D22.10), and each check reads the lift
@@ -172,14 +172,12 @@ async function main(): Promise<void> {
   initChoreo(world, []);
   for (let i = 0; i < BLOCK_COUNT; i += 1) world.blocks.setEntrance(i, 1);
 
-  // Depth of field: a spy on the post stack, which records the focus and bokeh the section asked for.
-  const dofSeen = { focus: Number.NaN, bokeh: Number.NaN };
+  // Depth of field: a spy on the post stack. The choreography sets the focus and bokeh from dof (D22.2), so the handle
+  // must make no setDof call at all (D23.12). Every call made while the handle runs is counted.
+  let dofCalls = 0;
   const postSetDof = world.post.setDof;
   world.post.setDof = (cfg): void => {
-    if (cfg !== null) {
-      dofSeen.focus = cfg.focus;
-      dofSeen.bokeh = cfg.bokeh;
-    }
+    dofCalls += 1;
     postSetDof(cfg);
   };
 
@@ -366,11 +364,6 @@ async function main(): Promise<void> {
     if (size.width === 375 && size.height === 812) {
       check('at 375 by 812 the speed key is z 51.12 (D15.1)', Math.abs(speedZ - 51.12) < 0.01);
     }
-    check(
-      'depth of field focus is the speed key z with bokeh 1.2 (direction-3d 10.8)',
-      Math.abs(dofSeen.focus - speedZ) < 1e-6 && Math.abs(dofSeen.bokeh - 1.2) < 1e-9,
-      `focus ${dofSeen.focus.toFixed(4)}, bokeh ${dofSeen.bokeh}`,
-    );
 
     // The race is a row on a landscape viewport and a column on a phone (D15.1), so each check compares a block with its own
     // race position. The breath is one shared value (every block has phase 0). Block 0 is never lifted in these checks, so
@@ -508,9 +501,9 @@ async function main(): Promise<void> {
     const phoneZ = expectedSpeedZ({ width: 375, height: 812 });
     cam = cameraPos();
     check(
-      'portrait race is a column: x 0 and y (8 - k) x 0.95, camera z 51.12 and the focus follows it',
-      matrixError(raceXY(true), true) < EPS && Math.abs(cam.z - phoneZ) < 1e-3 && Math.abs(dofSeen.focus - phoneZ) < 1e-6,
-      `max error ${matrixError(raceXY(true), true).toExponential(2)}, camera z ${cam.z.toFixed(4)}, focus ${dofSeen.focus.toFixed(4)}`,
+      'portrait race is a column: x 0 and y (8 - k) x 0.95, and the camera is at z 51.12 (D15.1)',
+      matrixError(raceXY(true), true) < EPS && Math.abs(cam.z - phoneZ) < 1e-3,
+      `max error ${matrixError(raceXY(true), true).toExponential(2)}, camera z ${cam.z.toFixed(4)}`,
     );
     handle.update(0.25, tick, contextFor());
     step(2);
@@ -622,6 +615,13 @@ async function main(): Promise<void> {
     step(240, () => handle.update(0.25, tick, contextFor({ reducedMotion: true })));
     check('reduced run: no breath after the hold', Math.abs(yOf(0) - raceXY(portrait)[0][1]) < 1e-6, `y0 ${yOf(0)}`);
   }
+
+  // Both runs: the handle leaves the depth of field to the choreography (D22.2, D23.12).
+  check(
+    'the speed handle makes no post.setDof call in any state (the choreography sets the focus from dof)',
+    dofCalls === 0,
+    `setDof calls ${dofCalls}`,
+  );
 
   const problems = [...report.failures, ...report.diagnostics];
   root.dataset.harness = problems.length === 0 ? 'pass' : `fail:${problems.join('; ')}`;

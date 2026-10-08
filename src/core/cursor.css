@@ -129,6 +129,21 @@
   transform-origin: 0 0;
 }
 
+/*
+ * The caliper and ruler lines carry a 1 px halo in var(--bg) (D23.13), so they read where they cross a block. The
+ * labels keep their knockout (D22.6). The tick and the ruler tick are not scaled, so a spread shadow is exactly 1 px on
+ * every side. The dimension line is scaled along x, and a spread shadow would stretch its end caps with the scale. Its
+ * halo is two shadows offset 1 px above and below, which have the line's own width, so the scale carries them exactly.
+ */
+.cursor-caliper-tick,
+.cursor-ruler-tick {
+  box-shadow: 0 0 0 1px var(--bg);
+}
+
+.cursor-caliper-dim {
+  box-shadow: 0 -1px 0 0 var(--bg), 0 1px 0 0 var(--bg);
+}
+
 /* Marker: a 7 px square in seal-ink, centred on the pointer. */
 .cursor-marker {
   width: var(--sp-2);

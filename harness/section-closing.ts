@@ -1,7 +1,8 @@
 // Harness for the closing section's 2D layer (architecture section 10a). Open /harness/section-closing.html on the dev
 // server. Flags: ?nogl adds html.no-gl (the in-flow layout and the static column show). The page boots the same modules as
 // main.ts, emits loader:done after its first tick, runs its checks on the next tick and writes the result to
-// document.documentElement.dataset.harness ('pass' or 'fail:<names>') and dataset.harnessChecks (JSON).
+// document.documentElement.dataset.harness ('pass' or 'fail:<names>') and dataset.harnessChecks (JSON). The checks run on
+// the third tick, after the layer's first state frame.
 
 import { registerEases } from '../src/core/ease';
 import { env } from '../src/core/env';
@@ -69,6 +70,20 @@ function runChecks(): void {
   const expectFixed = root.contains('js') && !root.contains('no-gl');
   record('text layer is fixed only with JS and WebGL', fixed === expectFixed, `fixed ${fixed}, expected ${expectFixed}`);
 
+  // The harness puts 100 vh of spacer above the section, so its top is at 100% of the viewport: outside the text
+  // layer's range (C15). The class must be absent, not merely hidden (D23.5).
+  const onAtLoad = layer?.classList.contains('is-on') ?? true;
+  record('text layer is off below its range (no class at load)', layer !== null && onAtLoad === false, `is-on ${onAtLoad}`);
+
+  // Every "bu" unit is lowercase (D23.5): the unit span resets the uppercase label style.
+  const units = Array.from(section.querySelectorAll<HTMLElement>('.closing__unit'));
+  const unitCase = units.map((u) => `${u.textContent}:${getComputedStyle(u).textTransform}`);
+  record(
+    'both 4.54 bu labels set the unit in lowercase',
+    units.length === 2 && units.every((u) => u.textContent === 'bu' && getComputedStyle(u).textTransform === 'none'),
+    unitCase.join(', '),
+  );
+
   if (fixed) {
     const box = boundsOf(formationRects('column', 'closing', viewportSize()));
     const line = section.querySelector<HTMLElement>('.closing__dim-line')?.getBoundingClientRect();
@@ -93,6 +108,8 @@ function runChecks(): void {
   document.documentElement.dataset.harness = failed.length === 0 ? 'pass' : `fail:${failed.join('; ')}`;
 }
 
+// Tick 1 emits loader:done, which arms the layer. Tick 2 is the layer's first state frame (a tick added mid-tick runs on
+// the next one), so the checks run on tick 3, after the class has been decided.
 let ticks = 0;
 const stop = addTick(() => {
   ticks += 1;
@@ -100,7 +117,7 @@ const stop = addTick(() => {
     bus.emit('loader:done');
     return;
   }
-  if (ticks === 2) {
+  if (ticks === 3) {
     runChecks();
     stop();
   }

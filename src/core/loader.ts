@@ -1,6 +1,9 @@
 // Asset loader (architecture sections 5 and 6). Registered tasks run concurrently. Progress is the
 // weighted mean of what the tasks have really reported. It goes out on the bus at most once per
-// frame, and 'loader:done' fires once: when every task has settled, or 8 s after startLoading.
+// frame, and its final value goes out just before 'loader:done'. 'loader:done' fires once: the moment
+// the last task settles, or 8 s after startLoading if a task never settles. The completion check runs
+// in the settle itself, not in a frame: the frame loop can be late or paused (a long synchronous GL
+// step, a hidden tab), and the load must not wait for it.
 import { bus } from './bus';
 import { addTick, initTicker, PRIORITY } from './ticker';
 
@@ -19,7 +22,7 @@ interface Task {
 }
 
 const tasks: Task[] = [];
-/** Registered tasks that have not settled yet. */
+/** Registered tasks that have not settled yet. The load ends when this reaches 0. */
 let unsettled = 0;
 let started = false;
 let finished = false;
@@ -41,6 +44,27 @@ function currentProgress(): number {
   return sum / total;
 }
 
+/** Sends the current progress on the bus when it has changed since the last send. */
+function emitProgress(): void {
+  const value = currentProgress();
+  if (value !== lastEmitted) {
+    lastEmitted = value;
+    bus.emit('loader:progress', value);
+  }
+}
+
+/** Ends the load, once. The current progress goes out first, so a listener sees it before loader:done. */
+function finish(): void {
+  if (finished) return;
+  finished = true;
+  clearTimeout(timer);
+  removeFrameTick?.();
+  removeFrameTick = null;
+  emitProgress();
+  bus.emit('loader:done');
+  resolveStart();
+}
+
 function settle(task: Task, failed: boolean, reason: unknown): void {
   if (task.settled) return;
   task.settled = true;
@@ -49,6 +73,8 @@ function settle(task: Task, failed: boolean, reason: unknown): void {
   if (failed) {
     console.warn(`[loader] task "${task.name}" failed; the page continues without it`, reason);
   }
+  // The last task to settle ends the load in this same turn of the event loop. Nothing waits for a frame.
+  if (unsettled === 0) finish();
 }
 
 function runTask(task: Task): void {
@@ -70,33 +96,21 @@ function runTask(task: Task): void {
   );
 }
 
-function finish(): void {
-  if (finished) return;
-  finished = true;
-  clearTimeout(timer);
-  removeFrameTick?.();
-  removeFrameTick = null;
-  bus.emit('loader:done');
-  resolveStart();
-}
-
-/** Runs once per frame. It emits a changed value, and finishes when nothing is left unsettled. */
+/** Runs once per frame. It sends the progress when it has changed. */
 function onFrame(): void {
   if (finished) return;
-  const value = currentProgress();
-  if (value !== lastEmitted) {
-    lastEmitted = value;
-    bus.emit('loader:progress', value);
-  }
-  if (unsettled === 0) finish();
+  emitProgress();
 }
 
 function onTimeout(): void {
   if (finished) return;
-  const waiting = tasks.filter((t) => !t.settled).map((t) => t.name);
-  console.warn(
-    `[loader] still waiting after ${TIMEOUT_MS / 1000} s for ${waiting.join(', ')}; emitting loader:done without them`,
-  );
+  // The warning is for development only. A production load that times out ends silently, the same way.
+  if (import.meta.env.DEV) {
+    const waiting = tasks.filter((t) => !t.settled).map((t) => t.name);
+    console.warn(
+      `[loader] still waiting after ${TIMEOUT_MS / 1000} s for ${waiting.join(', ')}; emitting loader:done without them`,
+    );
+  }
   finish();
 }
 
@@ -123,8 +137,8 @@ export function registerTask(
 
 /**
  * Runs every registered task concurrently and starts the progress clock. The returned promise
- * resolves together with loader:done, which fires once: when all tasks have settled, or 8 s after
- * this call at the latest. Calling it again returns the same promise.
+ * resolves together with loader:done, which fires once: as soon as all tasks have settled, or 8 s
+ * after this call at the latest. Calling it again returns the same promise.
  */
 export function startLoading(): Promise<void> {
   if (startPromise) return startPromise;
@@ -137,6 +151,8 @@ export function startLoading(): Promise<void> {
   timer = setTimeout(onTimeout, TIMEOUT_MS);
   removeFrameTick = addTick(onFrame, PRIORITY.state);
   for (const task of tasks) runTask(task);
+  // A task settles in a later turn, never inside this loop, so only an empty task list can end the load here.
+  if (unsettled === 0) finish();
   return startPromise;
 }
 

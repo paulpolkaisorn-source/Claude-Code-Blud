@@ -504,32 +504,41 @@ async function main(): Promise<void> {
     );
   }
 
-  // Family anchor (D22.14). On feeding frames the harness puts a 2 bu anchor offset in place of the family's DOM anchor.
-  // The pricing handle carries it out by 1 - sym(eff) at once, and it is exactly 0 at eff 1. Under reduced motion eff is
-  // 0 below w_p 0.5 and 1 from it (the same rule as update()).
+  // Family anchor (D22.14, D23.10). On feeding frames the harness puts a 2 bu anchor offset in place of the family's DOM
+  // anchor. The pricing handle carries it out by 1 - cut(eff) at once, and it is exactly 0 at eff 1. The cut curve is
+  // front-loaded: the multiplier is about 0.32 at w_p 0.1, 0.10 at w_p 0.25 and 0.02 at w_p 0.5. Under reduced motion eff
+  // is 0 below w_p 0.5 and 1 from it (the same rule as update()). The blocks group snaps to the offset there too (D23.9),
+  // so its check runs in both modes.
   const FAKE = 2;
   drive.fake = FAKE;
-  for (const topVh of [1, 0.9, 0.8, 0.6]) {
+  const multiplier = new Map<number, number>();
+  for (const topVh of [1, 0.96, 0.9, 0.8, 0.6]) {
     show(topVh);
     await framesN(3);
     const w = entranceOf(topVh);
     const eff = reduced ? (w >= 0.5 ? 1 : 0) : w;
-    const want = FAKE * (1 - ef.sym(eff));
+    const want = FAKE * (1 - ef.cut(eff));
     const a = anchorOf();
+    multiplier.set(Math.round(w * 100), a.offsetY / FAKE);
     check(
-      `anchor fade at w_p ${w.toFixed(2)}: the blocks offset and the phantom group carry ${want.toFixed(6)} bu`,
+      `anchor fade at w_p ${w.toFixed(2)}: the blocks offset and the phantom group carry ${want.toFixed(6)} bu (1 - cut)`,
       Math.abs(a.offsetY - want) < 1e-9 && a.phantomY !== null && Math.abs(a.phantomY - want) < 1e-9,
       `offset=${a.offsetY.toFixed(6)} phantom=${String(a.phantomY)}`,
     );
-    // Under reduced motion the group position is not asserted: Blocks.update eases it toward 0 there instead of
-    // snapping it, so an immediate write is only partly kept (reported to the director; blocks.ts is not owned here).
-    if (!reduced) {
-      check(
-        `anchor fade at w_p ${w.toFixed(2)}: the blocks group sits at ${want.toFixed(6)} bu (immediate, no damping)`,
-        Math.abs(a.groupY - want) < 1e-6,
-        `group=${a.groupY.toFixed(6)}`,
-      );
-    }
+    check(
+      `anchor fade at w_p ${w.toFixed(2)}: the blocks group sits at ${want.toFixed(6)} bu (immediate, no damping)`,
+      Math.abs(a.groupY - want) < 1e-6,
+      `group=${a.groupY.toFixed(6)}`,
+    );
+  }
+  if (!reduced) {
+    // Front-loaded, not sym (D23.10): sym would leave 0.92 of the offset at w_p 0.25 and cut leaves 0.10.
+    const at25 = multiplier.get(25) ?? Number.NaN;
+    check(
+      'anchor fade is front-loaded: at w_p 0.25 the offset is below a fifth of its value (cut, not sym)',
+      at25 < 0.2 && at25 > 0.05,
+      `multiplier at w_p 0.25 = ${at25.toFixed(4)}`,
+    );
   }
   check(
     'anchor fade at w_p 1: the offsets are exactly 0',
