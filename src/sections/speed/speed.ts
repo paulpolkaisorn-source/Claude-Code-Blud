@@ -16,6 +16,10 @@
 //     scroll position and the next section's top has not), and, with WebGL and motion, the next section's top is still
 //     at least half a viewport below the scroll position. ScrollTrigger is not used for them. The layer is hidden with
 //     visibility, which also removes it from hit testing.
+//   - The boundary (D25.3). The next section's top is the ink front on screen (D25.1). The layer is off as soon as that top
+//     is above the dimension line (its y in landscape, the bottom of the column in portrait), and the "17" label is hidden
+//     as soon as the top is above the label's bottom, so the front never crosses either. Both lines come from the rest race
+//     footprints, cached on layout, and the compare is a strict boolean each frame.
 //   - The no-WebGL fallback stays at opacity 0 until loader:done, then fades in over T.half with E.fade, and it appears
 //     at once under reduced motion (D22.7, D23.6). The layer does not paint before layout has filled its geometry.
 //   - On a phone (portrait), the head and the example panel share the left band: from the margin to 12 px left of the
@@ -33,6 +37,7 @@ import type { SectionContext } from '../../main';
 import { bus } from '../../core/bus';
 import { E } from '../../core/ease';
 import { onReducedMotionChange } from '../../core/env';
+import { boundsOf, formationRects, viewportSize, type ScreenRect } from '../../core/projection';
 import { scrollState } from '../../core/scroll';
 import { addTick, PRIORITY } from '../../core/ticker';
 import { T, weightedStagger } from '../../core/timing';
@@ -50,6 +55,10 @@ const TITLE_SHIFT_EM = 0.06;
 
 /** The head and the panel sit 12 px (sp-3) left of the race column in portrait. */
 const HEAD_GAP = 12;
+
+/** The dimension line sits 19 px (sp-4) outside the race, and the "17" label 5 px (sp-1) below the line (speed-layer.ts). */
+const DIM_GAP = 19;
+const LABEL_GAP = 5;
 
 /** A section's top this close to the scroll position (px) counts as passed, as in the choreography (reduced motion). */
 const PASSED_TOLERANCE = 1;
@@ -215,6 +224,17 @@ export function initSpeed(ctx: SectionContext): void {
   let measureDirty = true;
   /** True while the section overlaps the viewport. Set each frame from the geometry, never from ScrollTrigger (D23.6). */
   let inView = false;
+  /** The race at rest as P1 footprints. The boundary references below are cut from them on layout (D25.3). */
+  const restRects: ScreenRect[] = [];
+  /**
+   * The screen y the dimension line reaches: its y in landscape, and the bottom of the column in portrait, where the line
+   * ends beside it. The layer is off once the next section's top is above this line (D25.3). Cached on layout.
+   */
+  let lineY = Number.NEGATIVE_INFINITY;
+  /** The bottom of the "17" label: the line, its gap and the label's height. The label is hidden above this (D25.3). */
+  let labelBottom = Number.NEGATIVE_INFINITY;
+  /** Whether the label is hidden through its inline visibility (D25.3), so that a change is written once. */
+  let labelHidden = false;
 
   function measure(): void {
     const rect = el.getBoundingClientRect();
@@ -239,6 +259,16 @@ export function initSpeed(ctx: SectionContext): void {
   }
 
   /**
+   * Hides or shows the "17" label through its own inline visibility (D25.3). The layer's rule shows the label while the layer
+   * is on, so the inline value is the override, and '' hands the rule back. It is written only when the value changes.
+   */
+  function setLabelHidden(on: boolean): void {
+    if (on === labelHidden) return;
+    labelHidden = on;
+    parts.dimLabel.style.visibility = on ? 'hidden' : '';
+  }
+
+  /**
    * One frame of the race annotations. The progress s is the one the choreography hands the 3D race, read from the same
    * smoothed scroll position (scrollState, D21.1). This tick runs at PRIORITY.state, before the choreography at
    * PRIORITY.state + 5, so both read the same scroll value in the same frame.
@@ -255,6 +285,7 @@ export function initSpeed(ctx: SectionContext): void {
     // Strict booleans from this section's own geometry (D23.6). The section is current when its top has passed the scroll
     // position and the next section's top has not, the choreography's rule (timeline.ts, indexAt). Outside that, the layer
     // is not shown: not while the section enters from below, and not after it.
+    // The screen y of the next section's top: the ink front on screen (D25.1).
     const gap = belowTop - y;
     const current = height > 0 && y >= top - PASSED_TOLERANCE && gap > PASSED_TOLERANCE;
     // The stream runs while the section is on screen, which is a different question (its copy is on screen).
@@ -264,14 +295,24 @@ export function initSpeed(ctx: SectionContext): void {
     // the centre line of the viewport (choreography rule C2). With reduced motion, the race is on screen from the moment
     // this section is current until the next one is (the canvas switches at that point). Without WebGL, the static
     // fallback is on screen while the section is current.
-    const visible = drawing && !reduced ? current && gap >= vh / 2 : current;
+    // D25.3: the layer is also off once the next section's top is above the dimension line, and the "17" label is hidden
+    // once the top is above the label's bottom. Strict booleans from the cached references.
+    const boundaryClear = gap >= lineY;
+    const labelClear = gap >= labelBottom;
+    const visible = drawing && !reduced ? current && gap >= vh / 2 && boundaryClear : current && boundaryClear;
     layer.show(visible);
+    setLabelHidden(!labelClear);
   }
 
   /** Places the head, the panel and the object layer for the viewport. */
   function layout(): void {
     layer.layout();
     measureDirty = true;
+    // The dimension line's reference (D25.3), cut from the rest race footprints that the layer places its line from.
+    const size = viewportSize();
+    formationRects('race', 'speed', size, restRects);
+    lineY = size.width >= size.height ? boundsOf(restRects).y1 + DIM_GAP : restRects[restRects.length - 1].y1;
+    labelBottom = lineY + LABEL_GAP + parts.dimLabel.getBoundingClientRect().height;
     if (layer.isLandscape()) {
       el.style.removeProperty('--speed-head-w');
       el.style.removeProperty('--speed-panel-w');

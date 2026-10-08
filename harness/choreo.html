@@ -50,6 +50,25 @@
       #pricing {
         height: 150vh;
       }
+      /* The top padding of the two lower sections, as the page sets it (base.css .section, capabilities.css). Capabilities
+         has none, so the wave cap of boundary 1 is 0; pricing has sp-6, sp-7 and sp-8 (D25.1). */
+      #capabilities {
+        padding-top: 0;
+      }
+      #pricing {
+        box-sizing: border-box;
+        padding-top: 50px;
+      }
+      @media (min-width: 768px) {
+        #pricing {
+          padding-top: 81px;
+        }
+      }
+      @media (min-width: 1024px) {
+        #pricing {
+          padding-top: 131px;
+        }
+      }
       #closing {
         height: 250vh;
       }
@@ -105,7 +124,7 @@
         <div class="probe" data-theme-block data-probe="fam-a" style="top: 10%"></div>
         <div class="probe" data-theme-block data-probe="fam-b" style="top: 85%"></div>
       </section>
-      <section id="pricing" data-theme="ink" data-act="3">
+      <section id="pricing" data-theme="paper" data-act="3">
         <div class="probe" data-theme-block data-probe="pri-a" style="top: 5%"></div>
         <div class="probe" data-theme-block data-probe="pri-b" style="top: 50%"></div>
       </section>

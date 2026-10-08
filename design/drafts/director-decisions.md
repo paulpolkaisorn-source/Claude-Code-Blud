@@ -190,3 +190,10 @@ The canvas is fixed and the DOM scrolls. Any 2D element that labels or annotates
 2. Text that scrolls across the fixed 3D gets a per-line knockout (background var(--bg), box-decoration-break: clone, padding 0 0.2em, no other change of layout): the hero lede and CTA row on phones, the capabilities head and intro, the pricing head and intro. Labels already have knockouts (D22.6).
 3. The speed annotation layer turns off as soon as the capabilities top edge passes above the dimension line's y (the boundary would otherwise cross the "17" label).
 4. Seal #B5312A on paper-deep #E4DCCB (4.48:1) is allowed for graphics only (card mark, cap-2 active step); never for text.
+
+## D26. Family and footer follow-ups (round 3 reports)
+
+1. The family head (kicker, title, intro) joins the D25.2 knockout list: the code section's recede pose and the phantom outlines cross it during the family entry at every size.
+2. Short phones (narrow layout, viewport height below what the four labels need): labels stay centred on their stations where the stack fits, and are pushed apart by the minimum amount (12 px gaps) only where it does not. Centring wins wherever it is possible.
+3. Accepted: the family head scrolls in above the stage on phones (it is above the viewport while the stage is at rest); the anchor residual during the phone entry (up to 22 px at stage top +0.2 vh); the axis title stays above the axis inside the stage; head padding sp-6.
+4. Footer: pass-through accepted as built. The phone-landscape overlap of the closing CTA and the footer title block goes to the polish passes.

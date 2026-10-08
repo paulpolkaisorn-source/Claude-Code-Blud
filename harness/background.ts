@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { addTick, initTicker, PRIORITY } from '../src/core/ticker';
 import type { Theme } from '../src/core/types';
-import { createBackground, type Background } from '../src/gl/background/background';
+import { createBackground, frontParam, type Background, type BleedArg } from '../src/gl/background/background';
 import { createStage, type Stage } from '../src/gl/stage';
 
 const LAST = 1000;
@@ -18,7 +18,7 @@ const PAPER_RGB = [241, 236, 224];
 const INK_RGB = [21, 21, 18];
 const PAPER_HEX = '#F1ECE0';
 
-type BleedState = { boundary: 1 | 2; p: number };
+type BleedState = BleedArg;
 interface Rect {
   x: number;
   y: number;
@@ -103,6 +103,41 @@ function shaderOf(mesh: THREE.Mesh): THREE.ShaderMaterial {
 function uniformNumber(material: THREE.ShaderMaterial, name: string): number {
   const value: unknown = material.uniforms[name].value;
   return typeof value === 'number' ? value : Number.NaN;
+}
+
+function medianOf(xs: number[]): number {
+  const sorted = [...xs].sort((p, q) => p - q);
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
+/**
+ * The R values of one full column, top row first. readPixels returns the rows from the bottom, so row r from the top
+ * is buffer row H - 1 - r.
+ */
+function columnTopFirst(buf: Uint8Array, H: number): number[] {
+  const out: number[] = new Array<number>(H);
+  for (let r = 0; r < H; r++) out[r] = buf[(H - 1 - r) * 4];
+  return out;
+}
+
+/**
+ * Where a column crosses from paper to ink (or back): the continuous row, in device px from the top, where the R value
+ * passes the mid value between the plateaus at the top and the bottom. Null when the column has no such crossing.
+ */
+function crossingOf(col: number[]): number | null {
+  const n = col.length;
+  const top = medianOf(col.slice(0, 5));
+  const bottom = medianOf(col.slice(n - 5));
+  if (Math.abs(top - bottom) < 80) return null;
+  const mid = (top + bottom) / 2;
+  const falling = top > bottom;
+  for (let k = 0; k < n - 1; k++) {
+    const a = col[k];
+    const b = col[k + 1];
+    const crosses = falling ? a > mid && b <= mid : a < mid && b >= mid;
+    if (crosses) return k + 0.5 + (a - mid) / (a - b);
+  }
+  return null;
 }
 
 /** Vignette factor at a device pixel centre, the same formula as the shader (display units). */
@@ -294,30 +329,92 @@ async function main(): Promise<void> {
   // The rim band: mid colour just below the front, ink-raised over ink and paper-deep over paper.
   bg.setTheme('paper');
   bg.setBleed({ boundary: 1, p: 0.5 });
-  const rimInk = await readMain([{ x: midX, y: 0, w: 1, h: H }]);
+  const rimInk = await readMain([-2, -1, 0, 1, 2].map((d) => ({ x: midX + d, y: 0, w: 1, h: H })));
   let inkRimPixels = 0;
-  for (let i = 0; i < H; i++) {
-    const r = rimInk[0][i * 4];
-    if (r >= 28 && r <= 40) inkRimPixels += 1;
+  for (const buf of rimInk) {
+    for (let i = 0; i < H; i++) {
+      const r = buf[i * 4];
+      if (r >= 28 && r <= 40) inkRimPixels += 1;
+    }
   }
   check(
     'rim band over ink is ink-raised (34,33,29) just below the front',
     inkRimPixels >= 5,
-    `pixels with R in 28..40 on the centre column: ${inkRimPixels} (a 0.010 vh band is about 9 px)`,
+    `pixels with R in 28..40 over five columns at the centre: ${inkRimPixels} (a 0.010 vh band is about 9 px a column)`,
   );
   bg.setTheme('ink');
   bg.setBleed({ boundary: 2, p: 0.5 });
-  const rimPaper = await readMain([{ x: midX, y: 0, w: 1, h: H }]);
+  // The band is measured over five columns: its width depends on where the wave crosses each column, so a single column
+  // gives a count that moves with uTime (the first run counted 4 on the centre column, 5 is the bar).
+  const rimPaper = await readMain([-2, -1, 0, 1, 2].map((d) => ({ x: midX + d, y: 0, w: 1, h: H })));
   let paperRimPixels = 0;
-  for (let i = 0; i < H; i++) {
-    const r = rimPaper[0][i * 4];
-    if (r >= 222 && r <= 234) paperRimPixels += 1;
+  for (const buf of rimPaper) {
+    for (let i = 0; i < H; i++) {
+      const r = buf[i * 4];
+      if (r >= 222 && r <= 234) paperRimPixels += 1;
+    }
   }
   check(
     'rim band over paper is paper-deep (228,220,203) just below the front',
     paperRimPixels >= 5,
-    `pixels with R in 222..234 on the centre column: ${paperRimPixels} (a 0.010 vh band is about 9 px)`,
+    `pixels with R in 222..234 over five columns at the centre: ${paperRimPixels} (a 0.010 vh band is about 9 px a column)`,
   );
+
+  // 4b. The front's mean line, the wave and the default amplitude (D25.1). Each column is read in full, so its crossing
+  // of the mid colour between the plateaus is the front's height in that column. Positions are device px from the top.
+  const fullColumns = (xs: number[]): Promise<number[][]> =>
+    readMain(xs.map((x) => ({ x, y: 0, w: 1, h: H }))).then((bufs) => bufs.map((b) => columnTopFirst(b, H)));
+  const meanLineDev = (p: number): number => (1.12 - 1.24 * p) * H;
+  const probeCols = [Math.floor(W * 0.1), Math.floor(W * 0.5), Math.floor(W * 0.9)];
+  const mapCases: { label: string; bleed: BleedState; theme: Theme }[] = [
+    { label: 'boundary 1, p 0.2', bleed: { boundary: 1, p: 0.2, wave: 0 }, theme: 'paper' },
+    { label: 'boundary 1, p 0.8', bleed: { boundary: 1, p: 0.8, wave: 0 }, theme: 'paper' },
+    { label: 'boundary 2, p 0.35', bleed: { boundary: 2, p: 0.35, wave: 0 }, theme: 'ink' },
+  ];
+  for (const mc of mapCases) {
+    bg.setTheme(mc.theme);
+    bg.setBleed(mc.bleed);
+    const got = (await fullColumns(probeCols)).map((col) => crossingOf(col));
+    const want = meanLineDev(mc.bleed.p);
+    check(
+      `front position: ${mc.label} puts the mean line at (1.12 - 1.24 p) H, within 1 px`,
+      got.every((g) => g !== null && Math.abs(g - want) <= 1),
+      `want ${want.toFixed(2)} got ${got.map((g) => (g === null ? 'none' : g.toFixed(2))).join(', ')}`,
+    );
+  }
+  // frontParam is the inverse of that mapping: the p for a screen y puts the mean line on that y.
+  const yCase = 0.37 * H;
+  bg.setTheme('paper');
+  bg.setBleed({ boundary: 1, p: frontParam(yCase / H, 1), wave: 0 });
+  const yGot = (await fullColumns(probeCols)).map((col) => crossingOf(col));
+  check(
+    'frontParam(y, h) puts the mean line on y (device px), within 1 px',
+    yGot.every((g) => g !== null && Math.abs(g - yCase) <= 1),
+    `want ${yCase.toFixed(2)} got ${yGot.map((g) => (g === null ? 'none' : g.toFixed(2))).join(', ')}`,
+  );
+
+  // The wave: 16 columns across the width cross within the amplitude of the mean line, and the crossings spread.
+  const waveAmp = 40;
+  const waveP = 0.5;
+  const waveCols = Array.from({ length: 16 }, (_, i) => Math.floor(((i + 0.5) / 16) * W));
+  bg.setTheme('paper');
+  bg.setBleed({ boundary: 1, p: waveP, wave: waveAmp });
+  const waveY = (await fullColumns(waveCols)).map((col) => crossingOf(col));
+  const waveMean = meanLineDev(waveP);
+  const waveSpread = waveY.every((g) => g !== null) ? Math.max(...(waveY as number[])) - Math.min(...(waveY as number[])) : 0;
+  check(
+    `wave: every column crosses within ${waveAmp} px of the mean line`,
+    waveY.every((g) => g !== null && Math.abs(g - waveMean) <= waveAmp + 1),
+    `mean ${waveMean.toFixed(1)} got ${waveY.map((g) => (g === null ? 'none' : g.toFixed(1))).join(', ')}`,
+  );
+  check('wave: the front varies along x (spread at least half the amplitude)', waveSpread >= 0.5 * waveAmp, `spread ${waveSpread.toFixed(1)} px`);
+  bg.setBleed({ boundary: 1, p: waveP });
+  check(
+    'wave: without a wave argument the amplitude is 0.06 of the canvas height',
+    Math.abs(uniformNumber(mat, 'uWavePx') - 0.06 * stage.size.height) < 1e-6,
+    `uWavePx=${uniformNumber(mat, 'uWavePx')} canvas height ${stage.size.height}`,
+  );
+  bg.setBleed(null);
 
   // Paper fibre, nominal: the colour near the centre varies, but stays close to the base.
   bg.setTheme('paper');
@@ -329,9 +426,10 @@ async function main(): Promise<void> {
     `uFibreAmp=${String(mat.uniforms.uFibreAmp.value.x)},${String(mat.uniforms.uFibreAmp.value.y)} sample=${rgbText(fibreSample[0], 0)}`,
   );
 
-  // 5. Reduced motion: the bleed is ignored and uTime is frozen. Then both come back.
+  // 5. Reduced motion: uTime is frozen, and the front is a plain cut at its mean line: no wave, no soft edge, no rim
+  // band (D25.1). Then the wave comes back.
   bg.setTheme('paper');
-  bg.setBleed({ boundary: 1, p: 0.5 });
+  bg.setBleed({ boundary: 1, p: 0.5, wave: waveAmp });
   bg.setReducedMotion(true);
   const frozenFrom = uniformNumber(mat, 'uTime');
   await frames(4);
@@ -342,17 +440,33 @@ async function main(): Promise<void> {
     `uTime ${frozenFrom} -> ${frozenTo}`,
   );
   check(
-    'reduced motion: the bleed is ignored (uBleedActive 0)',
-    uniformNumber(mat, 'uBleedActive') === 0,
-    `uBleedActive=${uniformNumber(mat, 'uBleedActive')}`,
+    'reduced motion: the front is a plain cut (uBleedActive 1, uWavePx 0, uHardEdge 1)',
+    uniformNumber(mat, 'uBleedActive') === 1 && uniformNumber(mat, 'uWavePx') === 0 && uniformNumber(mat, 'uHardEdge') === 1,
+    `uBleedActive=${uniformNumber(mat, 'uBleedActive')} uWavePx=${uniformNumber(mat, 'uWavePx')} uHardEdge=${uniformNumber(mat, 'uHardEdge')}`,
   );
+  const cutY = (await fullColumns(waveCols)).map((col) => crossingOf(col));
+  check(
+    'reduced motion: every column crosses at the mean line, within 1 px',
+    cutY.every((g) => g !== null && Math.abs(g - meanLineDev(0.5)) <= 1),
+    `mean ${meanLineDev(0.5).toFixed(1)} got ${cutY.map((g) => (g === null ? 'none' : g.toFixed(1))).join(', ')}`,
+  );
+  const cutRim = await readMain([{ x: midX, y: 0, w: 1, h: H }]);
+  let cutRimPixels = 0;
+  for (let i = 0; i < H; i++) {
+    const r = cutRim[0][i * 4];
+    if (r >= 28 && r <= 40) cutRimPixels += 1;
+  }
+  check('reduced motion: no rim band below the cut', cutRimPixels === 0, `pixels with R in 28..40: ${cutRimPixels}`);
   bg.setReducedMotion(false);
   await frames(4);
   const resumedTo = uniformNumber(mat, 'uTime');
   check(
-    'reduced motion off: uTime runs again and the bleed comes back',
-    resumedTo > frozenTo && uniformNumber(mat, 'uBleedActive') === 1,
-    `uTime ${frozenTo} -> ${resumedTo}, uBleedActive=${uniformNumber(mat, 'uBleedActive')}`,
+    'reduced motion off: uTime runs again and the front comes back with its wave',
+    resumedTo > frozenTo &&
+      uniformNumber(mat, 'uBleedActive') === 1 &&
+      uniformNumber(mat, 'uHardEdge') === 0 &&
+      uniformNumber(mat, 'uWavePx') === waveAmp,
+    `uTime ${frozenTo} -> ${resumedTo}, uBleedActive=${uniformNumber(mat, 'uBleedActive')} uWavePx=${uniformNumber(mat, 'uWavePx')}`,
   );
   bg.setBleed(null);
 

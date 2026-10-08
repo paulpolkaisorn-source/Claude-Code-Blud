@@ -7,12 +7,14 @@
 //   1. Geometry. Section tops and heights are cached. They are measured on init, on window resize, on
 //      stage resize, when the fonts are ready, and when the document scroll height changes. No other
 //      frame reads layout.
-//   2. Ink bleed (D10, direction-3d 10.10). Each boundary's raw position is eased with sym and smoothed
-//      with T.beat7. The eased values go into ctx.bleed before any handle call (D22.8). The bleed, the block
-//      mix m and the theme follow from the two values.
-//   2b. Text theme (D23.1). theme-front sets data-theme on each data-theme-block from the same eased values: a block
-//      takes the lower section's theme when its centre is below the boundary's front line, else the upper section's.
-//      The geometry is cached (theme-front.ts), so no layout is read per frame.
+//   2. Ink bleed (D10, direction-3d 10.10, D25.1). Each boundary's raw position is eased with sym and smoothed with
+//      T.beat7. The eased values go into ctx.bleed before any handle call (D22.8) and set the block mix m. They do not
+//      place the ink front. Its mean line is the screen y of the lower section's top edge, computed each frame from
+//      the cached geometry and scrollState.y with no easing, and its wave is capped by the lower section's top padding.
+//      The background draws the front; with no front on screen, the ground takes the theme of the section it lies in.
+//   2b. Text theme (D23.1, D25.1). theme-front sets data-theme on each data-theme-block from the same front lines: a
+//      block takes the lower section's theme when its centre is below the boundary's front line, else the upper
+//      section's. The geometry is cached (theme-front.ts), so no layout is read per frame.
 //   3. Current section: the last section in page order with a height whose top has passed the scroll
 //      position. A change applies at once, except under reduced motion, where it runs as a canvas switch
 //      (direction-act1 A5): fade out over T.half, change at opacity 0, fade in over T.half. The depth of
@@ -41,6 +43,7 @@ import { scrollState } from '../core/scroll';
 import { addTick, PRIORITY, type Tick } from '../core/ticker';
 import { T } from '../core/timing';
 import type { SectionId, Theme } from '../core/types';
+import { frontParam } from '../gl/background/background';
 import { formationFor } from '../gl/blocks/formations';
 import { cameraKey } from '../gl/rig';
 import type { CameraKey, GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../gl/section-gl';
@@ -62,8 +65,8 @@ export interface ChoreoSnapshot {
   p2: number;
   /** Block mix m, in [0, 1]. */
   m: number;
-  /** The bleed passed to the background, or null when the background shows a cut or a settled theme. */
-  bleed: { boundary: 1 | 2; p: number } | null;
+  /** The front passed to the background (p and the wave in CSS px), or null when no front is drawn. */
+  bleed: { boundary: 1 | 2; p: number; wave: number } | null;
   /** The theme side: ink when m is at least 0.5. */
   theme: Theme;
   /** Smear strength applied to the blocks, in [0, 1]. */
@@ -108,13 +111,12 @@ const BOUNDARY_2: SectionId = 'pricing';
 /** A bleed or smear value this close to its target is taken as arrived. */
 const ARRIVE = 1e-3;
 /**
- * Outside its window a bleed is drawn only while its front can reach the viewport. The front lies at
- * 1.12 - 1.24 p plus at most 0.06 of noise, with a soft edge of 0.012 (direction-3d 10.10). Beyond these
- * values the whole viewport lies on one side of the front, so the background shows the same colours
- * with or without it.
+ * The ink front's wave (D25.1): its amplitude is at most WAVE_VH of the canvas height (the amplitude the shader drew
+ * before D25.1) and at most WAVE_PAD_SHARE of the lower section's top padding, which keeps it under the 60 % the act
+ * allows, so no text block can sit on the other section's ground.
  */
-const FRONT_LOW = 0.02;
-const FRONT_HIGH = 0.98;
+const WAVE_VH = 0.06;
+const WAVE_PAD_SHARE = 0.5;
 
 /** Smear strength reaches 1 at this scroll speed, in px/s (direction-3d 10.11). */
 const SMEAR_FULL_SPEED = 2400;
@@ -129,6 +131,8 @@ interface Geo {
   top: number;
   /** Height, in CSS px. */
   height: number;
+  /** The computed padding-top, in CSS px, read once per layout (D25.1: it caps the wave of a front). */
+  padTop: number;
 }
 
 interface Slot {
@@ -141,6 +145,12 @@ interface Slot {
 
 function clamp01(v: number): number {
   return Number.isNaN(v) ? 0 : Math.min(1, Math.max(0, v));
+}
+
+/** A CSS length in px as a number, 0 when it does not parse. */
+function pxOf(value: string): number {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 /** Progress of a section from its top and height in viewport heights (topVh, heightVh). */
@@ -178,9 +188,9 @@ function easeBoundary(p: number, raw: number, k: number, fresh: boolean, reduced
   return Math.abs(next - target) < ARRIVE ? target : next;
 }
 
-/** True while a boundary's front can reach the viewport, outside its window (see FRONT_LOW). */
-function frontShows(p: number): boolean {
-  return p > FRONT_LOW && p < FRONT_HIGH;
+/** Screen y of a boundary's front line, the top edge of its lower section (D25.1), in CSS px. NaN for a missing section. */
+function frontScreenY(geo: Geo, scrollY: number): number {
+  return geo.found ? geo.top - scrollY : Number.NaN;
 }
 
 interface ActiveInstance {
@@ -220,7 +230,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   const geoOf = (id: SectionId): Geo => {
     const known = geos.get(id);
     if (known !== undefined) return known;
-    const created: Geo = { id, found: false, top: 0, height: 0 };
+    const created: Geo = { id, found: false, top: 0, height: 0, padTop: 0 };
     geos.set(id, created);
     return created;
   };
@@ -252,10 +262,12 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       if (el === null) {
         geo.top = 0;
         geo.height = 0;
+        geo.padTop = 0;
       } else {
         const rect = el.getBoundingClientRect();
         geo.top = rect.top + window.scrollY;
         geo.height = rect.height;
+        geo.padTop = pxOf(getComputedStyle(el).paddingTop);
       }
     }
     cachedHeight = document.documentElement.scrollHeight;
@@ -424,10 +436,11 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   let primed = false;
   let mix = Number.NaN;
   let bleedOn = false;
-  const bleedArg: { boundary: 1 | 2; p: number } = { boundary: 1, p: 0 };
+  const bleedArg: { boundary: 1 | 2; p: number; wave: number } = { boundary: 1, p: 0, wave: 0 };
   let bgTheme: Theme | null = null; // last theme set on the background
   let eventTheme: Theme | null = null; // last theme emitted on the bus
   let smear = 0;
+  let smearMs = -1; // performance.now() at the last smear step, or -1 before the first (D24.4)
   /** The index of the section that got the entering update on the last frame, or -1. */
   let enteredIndex = -1;
 
@@ -458,23 +471,32 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     ctx.bleed.p1 = p1;
     ctx.bleed.p2 = p2;
 
-    // The bleed: the boundary whose window holds the scroll position, else one whose front is still moving on screen.
+    // The ink front on screen (D25.1). Each mean line is the screen y of its lower section's top edge, from the cached
+    // geometry and the scroll position: no easing and no smoothing. NaN for a missing section.
+    const front1 = frontScreenY(boundary1, y);
+    const front2 = frontScreenY(boundary2, y);
+    const H = ctx.size.height;
+    const pf1 = frontParam(front1, H);
+    const pf2 = frontParam(front2, H);
+    // A front is drawn while its mean line can reach the canvas, which is p inside [0, 1]. The two boundaries are seven
+    // viewport heights apart (capabilities, code and family), so at most one of them is drawn at a time.
     let board: 0 | 1 | 2 = 0;
-    if (!reduced) {
-      if (raw1 > 0 && raw1 < 1) board = 1;
-      else if (raw2 > 0 && raw2 < 1) board = 2;
-      else if (frontShows(p1)) board = 1;
-      else if (frontShows(p2)) board = 2;
-    }
-    const bp = board === 2 ? p2 : p1;
+    if (pf1 > 0 && pf1 < 1) board = 1;
+    else if (pf2 > 0 && pf2 < 1) board = 2;
 
-    // Block mix: 0 before boundary 1, p1 inside it, 1 between, 1 - p2 inside boundary 2, 0 after.
-    const m = Math.min(p1, 1 - p2);
-    const side: Theme = m >= 0.5 ? 'ink' : 'paper';
+    // The ground at the screen centre: ink between boundary 1 and boundary 2, paper elsewhere. With no front drawn it is the
+    // ground of the whole screen, and it is the theme the bus carries.
+    const centre = H / 2;
+    const side: Theme = front1 < centre && centre <= front2 ? 'ink' : 'paper';
     if (board !== 0) {
-      if (!bleedOn || bleedArg.boundary !== board || bleedArg.p !== bp) {
+      // The wave is capped by the lower section's top padding (D25.1). Reduced motion turns it into a plain cut in the background.
+      const lowerPad = board === 1 ? boundary1.padTop : boundary2.padTop;
+      const wave = Math.min(WAVE_VH * H, WAVE_PAD_SHARE * lowerPad);
+      const fp = board === 1 ? pf1 : pf2;
+      if (!bleedOn || bleedArg.boundary !== board || bleedArg.p !== fp || bleedArg.wave !== wave) {
         bleedArg.boundary = board;
-        bleedArg.p = bp;
+        bleedArg.p = fp;
+        bleedArg.wave = wave;
         world.background.setBleed(bleedArg);
       }
       bleedOn = true;
@@ -492,14 +514,18 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       eventTheme = side;
       bus.emit('theme', side);
     }
+
+    // Block mix: 0 before boundary 1, p1 inside it, 1 between, 1 - p2 inside boundary 2, 0 after. The eased values set it,
+    // so the 3D keeps them (D25.1).
+    const m = Math.min(p1, 1 - p2);
     if (m !== mix) {
       mix = m;
       world.blocks.setMix(m);
       world.lighting.setMix(m);
       world.post.setMix(m);
     }
-    // Text theme per block, against the same eased front the background draws (D23.1).
-    themeFront.update(p1, p2, vh, y);
+    // Text theme per block, against the same front lines the background draws (D23.1, D25.1).
+    themeFront.update(front1, front2, y);
 
     // Current section, then the handles (D22.1, D22.11). The current section is updated every frame. A section that
     // was entering on the last frame gets one update(0) once its progress is back at 0. The next section in page order
@@ -542,10 +568,14 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       slots[next].handle?.update(progressAt[next], t, fillCtx(next));
     }
 
-    // Smear from the scroll velocity, on the speed section only (direction-3d 10.11).
+    // Smear from the scroll velocity, on the speed section only (direction-3d 10.11). The damping runs on the wall clock,
+    // like the post's (D24.4): the page clock clamps dt, so a slow frame would stretch the smear.
     const smearWanted = !reduced && shown >= 0 && slots[shown].section.smear === true;
     const smearTarget = smearWanted ? clamp01(Math.abs(scrollState.velocity) / SMEAR_FULL_SPEED) : 0;
-    smear += (smearTarget - smear) * (1 - Math.exp(-t.dt / T.micro));
+    const nowMs = performance.now();
+    const dtWall = smearMs < 0 ? 0 : (nowMs - smearMs) / 1000;
+    smearMs = nowMs;
+    smear += (smearTarget - smear) * (1 - Math.exp(-dtWall / T.micro));
     if (Math.abs(smearTarget - smear) < ARRIVE) smear = smearTarget;
     world.blocks.setSmear(smear);
     world.post.setVelocity(scrollState.velocity);
@@ -567,7 +597,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       p1,
       p2,
       m: lastM,
-      bleed: bleedOn ? { boundary: bleedArg.boundary, p: bleedArg.p } : null,
+      bleed: bleedOn ? { boundary: bleedArg.boundary, p: bleedArg.p, wave: bleedArg.wave } : null,
       theme: lastSide,
       smear,
       switching: phase !== 'idle',

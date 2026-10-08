@@ -24,8 +24,10 @@ uniform vec3 uPaperDeep;     // linear: rim colour over paper
 uniform vec3 uInkRaised;     // linear: rim colour over ink
 uniform float uBase;         // 0 paper, 1 ink: the theme when no bleed is active
 uniform float uBleedActive;  // 0 or 1
-uniform float uBleedP;       // 0..1, eased with sym and smoothed by the caller
+uniform float uBleedP;       // front position: the mean line at (1.12 - 1.24 p) canvas heights from the top (D25.1)
 uniform float uBleedDir;     // 1: paper above, ink below (boundary 1); 2: ink above, paper below (boundary 2)
+uniform float uWavePx;       // wave amplitude in CSS px; 0 is a straight front
+uniform float uHardEdge;     // 1: a plain cut at the front (reduced motion): no soft edge and no rim band
 uniform vec2 uFibreAmp;      // fibre amplitude in sRGB units: (above the front, below the front)
 uniform vec2 uVignette;      // vignette strength: (above the front, below the front)
 uniform float uFibreOctaves; // 2, 3 or 4
@@ -146,13 +148,15 @@ void main() {
     vec3 belowCol = bgSide(mix(sPaper, sInk, newIsInk), uFibreAmp.y, uVignette.y, fibre, shape);
     vec3 rimCol = bgSide(mix(bgEncodeSRGB(uPaperDeep), bgEncodeSRGB(uInkRaised), newIsInk), uFibreAmp.y, uVignette.y, fibre, shape);
 
-    // The front in viewport heights from the top: y_b = 1.12 - 1.24 p, plus 0.06 of fBm along x.
-    float front = (1.12 - 1.24 * uBleedP) + 0.06 * bgFrontNoise(2.2 * x + 0.4 * uTime);
-    // The edge softens from the old theme into the mid-colour band (edge softness 0.012, centred on
-    // the front). The band runs 0.010 below the edge, then the new theme takes over.
-    float d = y - front;                                              // positive below the front
-    float edge = smoothstep(-0.006, 0.006, d);
-    float band = 1.0 - smoothstep(0.008, 0.012, d);                   // 1 across 0..0.010, soft outer edge
+    // The mean line in viewport heights from the top: 1.12 - 1.24 p. The choreography sets p so that the mean line sits on
+    // the DOM boundary (D25.1). The wave is fBm along x, uWavePx in CSS px at its amplitude.
+    float waveVh = uWavePx / max(cssSize.y, 1.0);
+    float front = (1.12 - 1.24 * uBleedP) + waveVh * bgFrontNoise(2.2 * x + 0.4 * uTime);
+    // The edge softens from the old theme into the mid-colour band (edge softness 0.012, centred on the front). The band
+    // runs 0.010 below the edge, then the new theme takes over. A plain cut (uHardEdge 1) has neither.
+    float d = y - front;                                                           // positive below the front
+    float edge = mix(smoothstep(-0.006, 0.006, d), step(0.0, d), uHardEdge);
+    float band = (1.0 - smoothstep(0.008, 0.012, d)) * (1.0 - uHardEdge);         // 1 across 0..0.010, soft outer edge
     colour = mix(aboveCol, mix(belowCol, rimCol, band), edge);
   } else {
     colour = bgSide(mix(sPaper, sInk, uBase), uFibreAmp.x, uVignette.x, fibre, shape);

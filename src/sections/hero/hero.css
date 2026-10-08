@@ -298,3 +298,33 @@ html.js:not(.reduced-motion) #hero .hero-lede {
 #hero .hero-tap.is-on {
   visibility: visible;
 }
+
+/* ---------- Knockouts (D25.2) ----------
+   On a phone (portrait) the lede and the link scroll across the fixed blocks. Each line of copy sits on a box of the
+   section's own ground (var(--bg)) that reaches 0.2em past both ends of the line. An equal negative margin keeps every
+   glyph where it was, so the layout is the same with or without the knock. The link is one line, so it is the knock
+   itself. The lede is several lines and takes an inline .knock span around its copy (the markup does not have the span
+   yet; see the report). The multi-line knock uses box-decoration-break: slice, because clone changes the line breaks of
+   wrapped copy in Chromium, with or without padding. */
+@media (orientation: portrait) {
+  #hero .hero-link {
+    padding-inline: 0.2em;
+    margin-inline: -0.2em;
+    background: var(--bg);
+  }
+
+  /* The underline and the hover line keep the length of the text, not of the knock. */
+  #hero .hero-link::before,
+  #hero .hero-link::after {
+    left: 0.2em;
+    right: 0.2em;
+  }
+
+  #hero .knock {
+    background: var(--bg);
+    padding-inline: 0.2em;
+    margin-inline: -0.2em;
+    box-decoration-break: slice;
+    -webkit-box-decoration-break: slice;
+  }
+}

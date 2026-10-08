@@ -10,6 +10,8 @@
 // ?norender skips the draws. The logic does not read pixels.
 //
 // dataset.harness becomes 'pass' or 'fail:<checks>' once the page's own checks finish.
+import { gsap } from 'gsap';
+import * as THREE from 'three';
 import { bus } from '../src/core/bus';
 import { env } from '../src/core/env';
 import { initScroll, scrollState } from '../src/core/scroll';
@@ -91,10 +93,57 @@ export interface BleedRecord {
   bleed: { boundary: 1 | 2; p: number } | null;
 }
 
+/** One sweep (D25.1): the lower section's top edge moves on screen from fromY to toY and back, at a fixed frame gap. */
+export interface SweepOptions {
+  /** 1 for the top of capabilities, 2 for the top of pricing. */
+  boundary: 1 | 2;
+  /** Wall-clock gap between two frames, in ms. */
+  frameMs: number;
+  /** Screen y of the lower section's top edge at the two ends of the sweep, in CSS px. */
+  fromY: number;
+  toY: number;
+  /** Distance between two samples, in CSS px. */
+  stepPx: number;
+  /** The columns to read, as fractions of the canvas width. They sit where no DOM or block is needed: the background alone is read. */
+  columns: number[];
+}
+
+/** One sample of a sweep. Each column holds the ink front's crossing in CSS px from the top, or null where there is none. */
+export interface SweepSample {
+  dir: 'down' | 'up';
+  /** window.scrollY and scrollState.y (the choreography's scroll position) at the frame. */
+  scrollY: number;
+  stateY: number;
+  /** Screen y of the lower section's top edge from the DOM, in CSS px. */
+  dom: number;
+  /** The mean line the choreography gave the front, in CSS px. */
+  front: number;
+  /** The front passed to the background (p and the wave in CSS px), or null when none was drawn. */
+  bleed: { p: number; wave: number } | null;
+  /** The lower section's computed padding-top, in CSS px. */
+  padTop: number;
+  uTime: number;
+  reduced: boolean;
+  cols: (number | null)[];
+  /** The R value of the top row of each column (the upper ground), the median of five rows. */
+  topR: number[];
+  /** The shader's wave value per column, in [-1, 1], from the same noise at that column and uTime. */
+  noise: number[];
+  /** Blocks of the two boundary sections whose data-theme is not their own section's data-theme. */
+  probesOff: number;
+}
+
 /** What the driver reads from the page. */
 interface HarnessApi {
   readonly fake: boolean;
   readonly world: GLWorld;
+  /**
+   * Stops the page's own frame loop (gsap.ticker.sleep). After this, frames run only through sweep(), each one a manual
+   * gsap.ticker.tick() at the gap the sweep asks for.
+   */
+  manual(): void;
+  /** A scroll sweep of one boundary (see SweepOptions). Runs on the manual frames only. */
+  sweep(opts: SweepOptions): Promise<SweepSample[]>;
   snapshot(): ChoreoSnapshot | null;
   passCount(): number;
   /** The focus of the depth-of-field pass in bu, or null when the pass is not in the chain. */
@@ -382,6 +431,64 @@ function frames(n: number): Promise<void> {
   });
 }
 
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const nextFrame = (): Promise<void> => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+function medianOf(xs: number[]): number {
+  const sorted = [...xs].sort((p, q) => p - q);
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
+/** The R values of one full column, top row first. readPixels returns rows from the bottom. */
+function columnTopFirst(buf: Uint8Array, H: number): number[] {
+  const out: number[] = new Array<number>(H);
+  for (let r = 0; r < H; r++) out[r] = buf[(H - 1 - r) * 4];
+  return out;
+}
+
+/**
+ * The continuous row (device px from the top) where a column crosses from paper to ink, or back, or null. Paper reads
+ * about 241 and ink about 21 in display values, vignette and fibre included, so the mid value is 131 for both
+ * boundaries. The rim band (34 over ink, 228 over paper) stays on its own side of it. A fixed mid keeps the crossing
+ * exact when the front lies near the top or bottom of the canvas, where the column has no plateau to measure.
+ */
+function crossingOf(col: number[]): number | null {
+  const mid = 131;
+  for (let k = 0; k < col.length - 1; k++) {
+    const a = col[k];
+    const b = col[k + 1];
+    if ((a > mid && b <= mid) || (a < mid && b >= mid)) return k + 0.5 + (a - mid) / (a - b);
+  }
+  return null;
+}
+
+// The shader's wave (background.frag.glsl bgFrontNoise, bgValueNoise, bgHash11), in double precision. It predicts the
+// wave at a column so the front can be checked against the mean line.
+function fract(v: number): number {
+  return v - Math.floor(v);
+}
+function hash11(v: number): number {
+  let p = fract(v * 0.1031);
+  p *= p + 33.33;
+  p *= p + p;
+  return fract(p);
+}
+function valueNoise(x: number): number {
+  const i = Math.floor(x);
+  const f = x - i;
+  const u = f * f * f * (f * (f * 6 - 15) + 10);
+  return (hash11(i) + (hash11(i + 1) - hash11(i)) * u) * 2 - 1;
+}
+function frontNoise(x: number): number {
+  const x2 = x * 2.03;
+  return (valueNoise(x) + 0.5 * valueNoise(x2) + 0.25 * valueNoise(x2 * 2.03)) / 1.75;
+}
+
+/** Ramp from a to b, in steps of at most step, ending at b. */
+function rampCount(a: number, b: number, step: number): number {
+  return Math.max(1, Math.round(Math.abs(b - a) / step));
+}
+
 async function main(): Promise<void> {
   root.dataset.harness = 'running';
   const canvas = document.getElementById('gl');
@@ -425,9 +532,113 @@ async function main(): Promise<void> {
   // is the limit on how long the driver has to wait. Every state still runs; only the frame is not drawn.
   if (params.has('norender')) boot.world.stage.setRenderHook(() => undefined);
 
+  /** Reads the background alone (blocks and post are off for this draw) at the given device columns, top row first. */
+  const readBackground = (columns: number[]): { cols: number[][]; uTime: number } => {
+    const { renderer, scene, camera } = boot.world.stage;
+    const bg = boot.world.background.mesh;
+    const saved = scene.children.map((c) => c.visible);
+    for (const c of scene.children) c.visible = c === bg;
+    renderer.render(scene, camera);
+    scene.children.forEach((c, i) => {
+      c.visible = saved[i];
+    });
+    const gl = renderer.getContext();
+    if (!(gl instanceof WebGL2RenderingContext)) throw new Error('readBackground: no WebGL2 context');
+    const H = canvas.height;
+    const buf = new Uint8Array(H * 4);
+    const cols = columns.map((cx) => {
+      gl.readPixels(cx, 0, 1, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+      return columnTopFirst(buf, H);
+    });
+    const material = bg.material;
+    const uTime = material instanceof THREE.ShaderMaterial ? Number(material.uniforms.uTime.value) : Number.NaN;
+    return { cols, uTime };
+  };
+
+  /** The next frame reads the background at these columns once it is drawn. Resolves inside that frame. */
+  const queueReadback = (columns: number[]): Promise<{ cols: number[][]; uTime: number }> =>
+    new Promise((resolve) => {
+      const remove = addTick(() => {
+        remove();
+        resolve(readBackground(columns));
+      }, PRIORITY.glRender + 5);
+    });
+
+  const sampleOf = (
+    dir: 'down' | 'up',
+    rb: { cols: number[][]; uTime: number },
+    lower: HTMLElement,
+    columns: number[],
+    W: number,
+    dpr: number,
+  ): SweepSample => {
+    const snap = choreoSnapshot();
+    if (snap === null) throw new Error('sweep: no choreography is running');
+    const cols = rb.cols.map((col) => {
+      const c = crossingOf(col);
+      return c === null ? null : c / dpr;
+    });
+    const noise = columns.map((cx) => frontNoise(2.2 * ((cx + 0.5) / W) + 0.4 * rb.uTime));
+    const probesOff = [...document.querySelectorAll<HTMLElement>('[data-probe]')].filter((el) => {
+      const sec = el.closest('section');
+      if (sec === null || !['speed', 'capabilities', 'family', 'pricing'].includes(sec.id)) return false;
+      return el.getAttribute('data-theme') !== sec.getAttribute('data-theme');
+    }).length;
+    return {
+      dir,
+      scrollY: window.scrollY,
+      stateY: scrollState.y,
+      dom: lower.getBoundingClientRect().top,
+      front: lower.id === 'capabilities' ? snap.front1 : snap.front2,
+      bleed: snap.bleed === null ? null : { p: snap.bleed.p, wave: snap.bleed.wave },
+      padTop: Number.parseFloat(getComputedStyle(lower).paddingTop),
+      uTime: rb.uTime,
+      reduced: env.reducedMotion,
+      cols,
+      topR: rb.cols.map((col) => medianOf(col.slice(0, 5))),
+      noise,
+      probesOff,
+    };
+  };
+
+  /**
+   * Scrolls so the lower section's top edge is at fromY, then moves it to toY and back, one sample per stepPx. Each sample
+   * is one frame at the sweep's gap after a state frame, so the scroll is in the state and the readback is of that frame.
+   */
+  async function sweep(opts: SweepOptions): Promise<SweepSample[]> {
+    const lower = document.getElementById(opts.boundary === 1 ? 'capabilities' : 'pricing');
+    if (lower === null) throw new Error(`sweep: no section for boundary ${opts.boundary}`);
+    const W = boot.world.stage.canvas.width;
+    const dpr = W / boot.world.stage.size.width;
+    const columns = opts.columns.map((f) => Math.min(W - 1, Math.max(0, Math.floor(f * W))));
+    const out: SweepSample[] = [];
+    const ramp = async (from: number, to: number): Promise<void> => {
+      const dir: 'down' | 'up' = to < from ? 'down' : 'up';
+      const n = rampCount(from, to, opts.stepPx);
+      for (let i = 1; i <= n; i += 1) {
+        const sy = from + ((to - from) * i) / n;
+        const docTop = lower.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: docTop - sy, behavior: 'instant' });
+        await nextFrame();
+        await delay(opts.frameMs);
+        gsap.ticker.tick();
+        await delay(opts.frameMs);
+        const job = queueReadback(columns);
+        gsap.ticker.tick();
+        const rb = await job;
+        out.push(sampleOf(dir, rb, lower, columns, W, dpr));
+      }
+    };
+    await ramp(opts.fromY, opts.toY);
+    await ramp(opts.toY, opts.fromY);
+    return out;
+  }
+
   window.choreoHarness = {
     fake,
     world: boot.world,
+    manual: () => gsap.ticker.sleep(),
+    sweep: (opts: SweepOptions) => sweep(opts),
     snapshot: choreoSnapshot,
     passCount: () => boot.world.post.composer.passes.length,
     dofFocus: () => depthOfField(boot.world)?.cocMaterial.focusDistance ?? null,

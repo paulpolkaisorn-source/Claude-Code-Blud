@@ -1,12 +1,12 @@
-// Text theme follows the ink front, block by block (D23.1). With WebGL, every element marked data-theme-block inside
-// the two sections of an ink-bleed boundary takes the theme of the ground under its centre: the lower section's theme
-// when the centre is below the boundary's front line on screen, the upper section's theme otherwise. Outside a bleed
-// window the front is off screen, and the blocks of each section keep their own theme.
+// Text theme follows the ink front, block by block (D23.1, D25.1). With WebGL, every element marked data-theme-block
+// inside the two sections of an ink-bleed boundary takes the theme of the ground under its centre: the lower section's
+// theme when the centre is below the boundary's front line on screen, the upper section's theme otherwise. Outside a
+// bleed window the front is off screen, and the blocks of each section keep their own theme.
 //
-// The front line is the screen y of the background's ink front (src/gl/background/background.frag.glsl). The shader puts
-// the front at y = 1.12 - 1.24 p in viewport heights from the top, plus a wave of at most 0.06 along x. This module uses
-// the mean line. p is the eased, smoothed value the choreography passes to the background, so the two move together.
-// Under reduced motion p is the cut at raw 0.5, and the same rule applies to the cut.
+// The front line is the screen y of the lower section's top edge (D25.1). The choreography passes it every frame, from
+// the cached geometry and the scroll position: it is the same value the background draws as the mean line of its front,
+// with no easing. Every block of the lower section lies below that edge and every block of the upper section above it,
+// so each block resolves to its own section's theme by construction.
 //
 // Geometry is cached. The document top and height of each block are read when the module is invalidated: on resize,
 // on font load, on a ScrollTrigger refresh and when the choreography re-measures its sections. Nothing is read per
@@ -20,15 +20,6 @@ import type { SectionId, Theme } from '../core/types';
 
 /** The attribute that marks a text block for this module. The 2D owners put it on each text block. */
 export const THEME_BLOCK_ATTR = 'data-theme-block';
-
-/** The front's mean line: y = FRONT_AT_0 - FRONT_SLOPE * p, in viewport heights from the top (background.frag.glsl). */
-const FRONT_AT_0 = 1.12;
-const FRONT_SLOPE = 1.24;
-
-/** Screen y of a boundary's front, in CSS px, for its eased bleed progress p and the viewport height vh. */
-export function frontLine(p: number, vh: number): number {
-  return (FRONT_AT_0 - FRONT_SLOPE * p) * vh;
-}
 
 interface Boundary {
   readonly upper: SectionId;
@@ -91,10 +82,11 @@ export interface ThemeBlockState {
 
 export interface ThemeFront {
   /**
-   * One frame. p1 and p2 are the eased boundary progress of the choreography, vh the viewport height in CSS px and
-   * scrollY the smoothed scroll position. Writes data-theme on a block only when its theme changes.
+   * One frame. front1 and front2 are the screen y of each boundary's front line in CSS px (the top edge of its lower
+   * section, D25.1), and scrollY the scroll position the block centres are measured from. NaN marks a missing section,
+   * and its blocks take the upper theme. Writes data-theme on a block only when its theme changes.
    */
-  update(p1: number, p2: number, vh: number, scrollY: number): void;
+  update(front1: number, front2: number, scrollY: number): void;
   /** Marks the cached geometry stale. It is measured again at the next update. */
   invalidate(): void;
   /** The blocks as the last update placed them. A copy. */
@@ -126,7 +118,7 @@ export function createThemeFront(): ThemeFront {
   /** The attribute each block carried before the module first wrote it, so dispose and no-GL can restore it. */
   const original = new WeakMap<HTMLElement, string | null>();
   /** The screen y of each boundary's front at the last update, CSS px. */
-  const fronts: [number, number] = [0, 0];
+  const fronts: [number, number] = [Number.NaN, Number.NaN];
   let dirty = true;
   let written = false;
   let disposed = false;
@@ -223,15 +215,15 @@ export function createThemeFront(): ThemeFront {
     dirty = true;
   }
 
-  function update(p1: number, p2: number, vh: number, scrollY: number): void {
+  function update(front1: number, front2: number, scrollY: number): void {
     if (disposed) return;
     if (document.documentElement.classList.contains('no-gl')) {
       restore();
       return;
     }
     if (dirty) measure();
-    fronts[0] = frontLine(p1, vh);
-    fronts[1] = frontLine(p2, vh);
+    fronts[0] = front1;
+    fronts[1] = front2;
     for (const e of entries) {
       const stage = e.stage;
       const top =

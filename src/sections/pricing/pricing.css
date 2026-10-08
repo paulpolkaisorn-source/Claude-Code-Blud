@@ -403,3 +403,35 @@
 #pricing .gl-fallback__band .is-kireji {
   fill: var(--seal);
 }
+
+/* ---------- Knockouts (D25.2) ----------
+   The kicker, the two title lines and the intro scroll across the fixed blocks at every size. Each line of copy sits on a
+   box of its block's ground (var(--bg), which follows the block's theme), reaching 0.2em past both ends of the line, and
+   an equal negative margin keeps every glyph in place. The kicker is one line: as an inline-block it leaves the layout
+   below where it was (measured at 1440 and 375). Each title line is a one-line block: fit-content keeps it a block, so
+   the two lines keep their stacking, and sizes its box to the text. The intro is several lines and takes an inline .knock
+   span around its copy (the markup does not have the span yet; see the report). The multi-line knock uses
+   box-decoration-break: slice, because clone changes the line breaks of wrapped copy in Chromium. */
+#pricing .pricing__kicker {
+  display: inline-block;
+  vertical-align: top;
+  padding-inline: 0.2em;
+  margin-inline: -0.2em;
+  background: var(--bg);
+}
+
+#pricing .pricing__title-main,
+#pricing .pricing__title-tail {
+  width: fit-content;
+  padding-inline: 0.2em;
+  margin-inline: -0.2em;
+  background: var(--bg);
+}
+
+#pricing .knock {
+  background: var(--bg);
+  padding-inline: 0.2em;
+  margin-inline: -0.2em;
+  box-decoration-break: slice;
+  -webkit-box-decoration-break: slice;
+}

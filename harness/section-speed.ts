@@ -47,7 +47,85 @@ function text(selector: string): string {
   return document.querySelector(selector)?.textContent ?? '';
 }
 
-function runChecks(): void {
+/** Waits for real time, so that the page's own loop (gsap's ticker) runs. The harness adds no frame loop of its own. */
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * Scrolls to target and waits until the position has stopped moving, then gives the page a few frames to act on it.
+ * Lenis moves the scroll position over several frames, so the wait ends only when two reads in a row agree.
+ */
+async function settleScroll(target: number): Promise<void> {
+  window.scrollTo(0, target);
+  let last = Number.NaN;
+  for (let i = 0; i < 80; i += 1) {
+    await wait(40);
+    const now = window.scrollY;
+    if (now === last && Math.abs(now - target) < 2) break;
+    last = now;
+  }
+  await wait(160);
+}
+
+/**
+ * D25.3. The layer is off once the next section's top is above the dimension line, and the "17" label is hidden once that
+ * top is above the label's bottom. The next section here is the spacer after the speed section, so the test scrolls the
+ * spacer's top to 40 px above the line, to 40 px below it, and to 10 px below it (inside the label).
+ */
+async function boundaryChecks(): Promise<void> {
+  const speed = document.getElementById('speed');
+  const line = document.querySelector<SVGLineElement>('.speed-dim__line');
+  const label = document.querySelector<HTMLElement>('.speed-dim-label');
+  const art = document.querySelector<HTMLElement>('.speed-art');
+  const below = speed?.nextElementSibling;
+  if (speed === null || line === null || label === null || art === null || !(below instanceof HTMLElement)) {
+    check('boundary checks: markup present', false);
+    return;
+  }
+  const size = viewportSize();
+  const landscape = size.width >= size.height;
+  // The line's reach in portrait is its lower end, which is where the label sits.
+  const reference = Number(landscape ? line.getAttribute('y1') : line.getAttribute('y2'));
+  const belowDoc = below.getBoundingClientRect().top + window.scrollY;
+
+  const at = async (gap: number): Promise<{ on: boolean; hidden: boolean; top: number }> => {
+    await settleScroll(belowDoc - gap);
+    return {
+      on: art.classList.contains('is-on'),
+      hidden: label.style.visibility === 'hidden',
+      top: below.getBoundingClientRect().top,
+    };
+  };
+  const above = await at(reference - 40);
+  const beside = await at(reference + 40);
+  const inLabel = await at(reference + 10);
+  check(
+    'layer off once the next top is above the dimension line (D25.3)',
+    above.on === false,
+    `next top ${above.top.toFixed(2)} line ${reference.toFixed(2)} on ${String(above.on)}`,
+  );
+  check(
+    'layer on while the next top is below the dimension line',
+    beside.on === true,
+    `next top ${beside.top.toFixed(2)} line ${reference.toFixed(2)} on ${String(beside.on)}`,
+  );
+  check(
+    'label hidden while the next top is inside the label (D25.3)',
+    inLabel.hidden === true && inLabel.on === true,
+    `next top ${inLabel.top.toFixed(2)} hidden ${String(inLabel.hidden)} on ${String(inLabel.on)}`,
+  );
+  check(
+    'label shown again once the next top clears the label',
+    beside.hidden === false,
+    `next top ${beside.top.toFixed(2)} hidden ${String(beside.hidden)}`,
+  );
+  window.scrollTo(0, 0);
+}
+
+async function runChecks(): Promise<void> {
   const el = document.getElementById('speed');
   if (el === null) {
     check('section#speed present', false, 'no element with id speed');
@@ -158,6 +236,7 @@ function runChecks(): void {
     }
   }
 
+  await boundaryChecks();
   const failed = checks.filter((c) => !c.ok).map((c) => c.name);
   (window as unknown as { __speedChecks: Check[] }).__speedChecks = checks;
   root.dataset.harnessChecks = JSON.stringify(checks);
@@ -178,6 +257,8 @@ if (speed === null) {
     remove?.();
     bus.emit('loader:done');
     // The checks run after the first tick, when the section has placed its object layer.
-    setTimeout(runChecks, 0);
+    setTimeout(() => {
+      void runChecks();
+    }, 0);
   }, PRIORITY.state);
 }
