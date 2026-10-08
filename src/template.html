@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Velvet Hours: a cozy, fail-state-free sensory sandbox of sand, glass, slime and bubble wrap. Works offline.">
+<title>Velvet Hours</title>
+<style>/*__CSS__*/</style>
+</head>
+<body>
+<div id="stage" class="stage">
+  <canvas id="gl" aria-label="Velvet Hours scene"></canvas>
+  <div id="sheet" class="sheet"></div>
+  <div id="kbd-cursor" class="kbd-cursor" aria-hidden="true"></div>
+</div>
+<div id="wipe" class="wipe" aria-hidden="true"></div>
+
+<header class="hud ui">
+  <div class="brand">
+    <p class="kicker">Velvet Hours</p>
+    <h1 id="station-name" class="station-name"></h1>
+    <p id="station-hint" class="hint"></p>
+  </div>
+  <div class="top-right">
+    <div id="flow" class="flow" aria-hidden="true">
+      <svg viewBox="0 0 60 60">
+        <circle class="track" cx="30" cy="30" r="25"></circle>
+        <circle id="flow-arc" class="arc" cx="30" cy="30" r="25" transform="rotate(-90 30 30)"></circle>
+      </svg>
+      <span id="flow-label">Still</span>
+    </div>
+    <button id="settings-btn" class="icon-btn" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M5.5 18.5l2.1-2.1M16.4 7.6l2.1-2.1"></path></svg>
+    </button>
+  </div>
+</header>
+
+<nav id="dock" class="dock ui" aria-label="Stations"></nav>
+<p class="keys ui">Arrows move the cursor · Space or Enter acts · Q / E or 1–4 switch stations</p>
+<p id="quality-label" class="quality ui"></p>
+<div id="toast" class="toast ui" role="status" aria-live="polite"></div>
+
+<section id="settings" class="panel ui" aria-label="Settings" hidden>
+  <h2>Settings</h2>
+  <div class="row">
+    <span>Quality</span>
+    <div class="seg" role="group" aria-label="Quality">
+      <button type="button" data-q="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-q="low" aria-pressed="false">Low</button>
+      <button type="button" data-q="high" aria-pressed="false">High</button>
+      <button type="button" data-q="ultra" aria-pressed="false">Ultra</button>
+    </div>
+  </div>
+  <label class="row">
+    <span>Volume <output id="vol-out">80%</output></span>
+    <input id="vol" type="range" min="0" max="1" step="0.01">
+  </label>
+  <div class="row">
+    <span>Sound</span>
+    <button id="mute" class="pill" type="button" aria-pressed="false">Mute</button>
+  </div>
+  <fieldset class="mix">
+    <legend>Station mix</legend>
+    <label>Sand <input type="range" min="0" max="1" step="0.01" data-mix="sand"></label>
+    <label>Glass <input type="range" min="0" max="1" step="0.01" data-mix="crystal"></label>
+    <label>Slime <input type="range" min="0" max="1" step="0.01" data-mix="slime"></label>
+    <label>Bubbles <input type="range" min="0" max="1" step="0.01" data-mix="bubble"></label>
+    <label>Room and pad <input type="range" min="0" max="1" step="0.01" data-mix="ambient"></label>
+  </fieldset>
+  <label class="row toggle">
+    <span>Reduce effects</span>
+    <input id="reduce" type="checkbox">
+  </label>
+  <label class="row toggle">
+    <span>Flow meter</span>
+    <input id="flow-toggle" type="checkbox">
+  </label>
+  <p class="meta">Time in the room: <span id="time-spent">0h 00m</span></p>
+</section>
+
+<div id="start" class="start">
+  <div class="start-card">
+    <p class="kicker">A sensory sandbox</p>
+    <h1>Velvet Hours</h1>
+    <p>Sound begins with your first tap. Headphones recommended.</p>
+    <button id="start-btn" class="primary" type="button">Tap to begin</button>
+  </div>
+</div>
+<div id="nogl" class="nogl" hidden>
+  <p>Velvet Hours needs WebGL, and it is not available in this browser. Try a current version of Chrome, Edge, Firefox or Safari.</p>
+</div>
+
+<script>/*__JS__*/</script>
+</body>
+</html>
