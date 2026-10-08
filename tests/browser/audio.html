@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Audio tests</title>
+  <style>html,body{margin:0;height:100%;background:#123;overflow:hidden}</style>
+</head>
+<body>
+  <script type="module">
+    import { test, assert, run, wait } from './harness.js';
+    import { bus, EV } from '../../src/contracts.js';
+    import { createAudio } from '../../src/audio/audio.js';
+    import { SFX_NAMES } from '../../src/audio/synth.js';
+
+    const A = createAudio(bus);
+    const near = (a, b) => Math.abs(a - b) < 1e-5;   // AudioParam values are Float32
+    const gainsAre = (g, m, s, u) => near(g.master, m) && near(g.sfx, s) && near(g.music, u);
+    const shot = (brawlerId, isSuper = false) => ({ b: { brawlerId, isPlayer: false }, x: 0, z: 0, dirX: 0, dirZ: -1, isSuper });
+    // Waits past the same-sound throttle, then reports how many plays a bus emit caused.
+    const fire = async (emit) => {
+      await wait(35);
+      const before = A.stats().plays;
+      emit();
+      return A.stats().plays - before;
+    };
+
+    test('pre-unlock calls are silent no-ops', () => {
+      assert(A.play('hit') === false, 'play before unlock must be a no-op');
+      A.setVolumes({ master: 0.5, sfx: 0.25, music: 0.75 });
+      A.music('battle');                       // remembered; starts when the context is unlocked
+      bus.emit(EV.SHOT, shot('rivet'));
+      bus.emit(EV.MATCH_END, { outcome: 'victory', winner: 0 });
+      assert(A.play('no_such_sound') === false, 'unknown sound names are ignored');
+      const s = A.stats();
+      assert(s.state === 'none', 'no AudioContext before unlock, got ' + s.state);
+      assert(s.plays === 0, 'nothing plays before unlock');
+    });
+
+    test('unlock creates a running context and starts remembered music', async () => {
+      A.unlock();
+      A.unlock();                              // idempotent
+      await wait(200);
+      const s = A.stats();
+      assert(s.state === 'running', 'AudioContext should be running, got ' + s.state);
+      assert(s.mode === 'battle', 'remembered music request should start on unlock, got ' + s.mode);
+    });
+
+    test('every SFX plays without throwing', () => {
+      for (const name of SFX_NAMES) assert(A.play(name) === true, 'play failed: ' + name);
+      assert(A.stats().plays >= SFX_NAMES.length, 'every sound should have started');
+    });
+
+    test('setVolumes sets the master, sfx and music gains', () => {
+      A.setVolumes({ master: 0.5, sfx: 0.25, music: 0.75 });
+      let g = A.stats().gains;
+      assert(gainsAre(g, 0.5, 0.25, 0.75), JSON.stringify(g));
+      A.setVolumes({ master: 3, sfx: -1 });    // clamped to [0, 1]; music untouched
+      g = A.stats().gains;
+      assert(gainsAre(g, 1, 0, 0.75), JSON.stringify(g));
+      A.setVolumes({ master: 0.8, sfx: 0.9, music: 0.5 });
+      g = A.stats().gains;
+      assert(gainsAre(g, 0.8, 0.9, 0.5), JSON.stringify(g));
+    });
+
+    test('music switches with a crossfade and stops on null', async () => {
+      A.music('menu');
+      assert(A.stats().mode === 'menu', 'mode should follow the request');
+      await wait(100);
+      A.music('battle');
+      assert(A.stats().mode === 'battle', 'mode should follow the switch');
+      await wait(900);                         // crossfade done: the old track is retired
+      assert(A.stats().tracks === 1, 'only the new track should remain, tracks=' + A.stats().tracks);
+      A.music(null);
+      assert(A.stats().mode === null, 'null means silence');
+      await wait(900);                         // fade-out done
+      assert(A.stats().tracks === 0, 'fade-out should retire the track, tracks=' + A.stats().tracks);
+      A.music('bogus');
+      assert(A.stats().mode === null, 'unknown mood is silence');
+    });
+
+    test('bus events drive SFX with their filters', async () => {
+      assert(await fire(() => bus.emit(EV.SHOT, shot('pip'))) === 1, 'SHOT plays the brawler shot');
+      assert(await fire(() => bus.emit(EV.SHOT, shot('lumen', true))) === 1, 'super SHOT plays super');
+      assert(await fire(() => bus.emit(EV.SUPER_READY, { b: { isPlayer: false } })) === 0, 'bots do not chime');
+      assert(await fire(() => bus.emit(EV.SUPER_READY, { b: { isPlayer: true } })) === 1, 'player super chime');
+      assert(await fire(() => bus.emit(EV.COUNTDOWN, { team: 0, seconds: 9 })) === 0, 'countdown only in last 5s');
+      assert(await fire(() => bus.emit(EV.COUNTDOWN, { team: 0, seconds: 3 })) === 1, 'countdown beep');
+      assert(await fire(() => bus.emit(EV.MATCH_END, { outcome: 'victory', winner: 0 })) === 1, 'victory');
+      assert(await fire(() => bus.emit(EV.MATCH_END, { outcome: 'defeat', winner: 1 })) === 1, 'defeat');
+      assert(await fire(() => bus.emit(EV.MATCH_END, { outcome: 'draw', winner: -1 })) === 1, 'draw');
+      assert(await fire(() => bus.emit(EV.UI_CLICK, {})) === 1, 'click');
+      assert(await fire(() => bus.emit(EV.HEAL, { amount: 5 })) === 1, 'heal');
+      assert(await fire(() => bus.emit(EV.EXPLOSION, { x: 0, z: 0, radius: 1, team: 0, isSuper: false })) === 1, 'explosion');
+      assert(await fire(() => bus.emit(EV.CRYSTAL_PICKUP, { b: null })) === 1, 'crystal pickup');
+      assert(await fire(() => bus.emit(EV.DEATH, { victim: null, killer: null })) === 1, 'death');
+      assert(await fire(() => bus.emit(EV.WALL_DESTROYED, { c: 0, r: 0 })) === 1, 'wall break');
+      assert(await fire(() => bus.emit(EV.DASH, { b: null })) === 1, 'dash');
+      assert(await fire(() => bus.emit(EV.RESPAWN, { b: null })) === 1, 'respawn');
+      assert(await fire(() => {
+        bus.emit(EV.HIT, { amount: 1 });
+        bus.emit(EV.HIT, { amount: 1 });
+        bus.emit(EV.HIT, { amount: 1 });
+      }) === 1, 'HIT bursts are throttled to one');
+      assert(await fire(() => bus.emit(EV.SHOT, { b: null })) === 0, 'SHOT without a brawler is ignored');
+    });
+
+    test('UI_SETTINGS updates the volumes', async () => {
+      bus.emit(EV.UI_SETTINGS, { master: 0.6, sfx: 0.4, music: 0.3, quality: 'low' });
+      const g = A.stats().gains;
+      assert(gainsAre(g, 0.6, 0.4, 0.3), JSON.stringify(g));
+      bus.emit(EV.UI_SETTINGS, { master: 0.8, sfx: 0.9, music: 0.5, quality: 'auto' });
+    });
+
+    test('200 rapid plays respect the 24-voice cap', async () => {
+      await wait(1500);                        // let earlier voices finish
+      let peak = 0;
+      const n = SFX_NAMES.length;
+      for (let i = 0; i < 200; i++) {
+        A.play(SFX_NAMES[i % n]);
+        const v = A.stats().voices;
+        if (v > peak) peak = v;
+        if (i % n === n - 1) await wait(35);   // lets the same-sound throttle reopen
+      }
+      const s = A.stats();
+      assert(peak <= 24, 'voice cap exceeded: peak ' + peak);
+      assert(s.stolen > 0, 'the cap should have been exercised');
+    });
+
+    test('finished voices are released and pruned', async () => {
+      await wait(1500);                        // every voice has ended on the audio clock
+      await wait(35);
+      assert(A.play('click') === true, 'click should start');
+      assert(A.stats().voices === 1, 'expired voices should be pruned, voices=' + A.stats().voices);
+    });
+
+    await run();
+  </script>
+</body>
+</html>
