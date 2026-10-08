@@ -149,6 +149,7 @@ const ctx: SectionGLContext = {
   portrait: false,
   reducedMotion: env.reducedMotion,
   size: { width: 1, height: 1 },
+  bleed: { p1: 1, p2: 0 },
 };
 
 const scratchM = new THREE.Matrix4();

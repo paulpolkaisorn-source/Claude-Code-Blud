@@ -14,6 +14,13 @@ import { createRig } from './rig';
 import { initQuality } from './quality';
 import type { GLWorld, SectionGL } from './section-gl';
 
+declare global {
+  interface Window {
+    /** Development-only inspection hook for Playwright checks (absent from production builds). */
+    __hk?: { world: GLWorld; sections: readonly SectionGL[]; choreo: Record<string, unknown> | undefined };
+  }
+}
+
 /** What main.ts gets back from the GL chunk: the world plus the two loader steps that follow the chunk load. */
 export interface GLBoot {
   world: GLWorld;
@@ -116,6 +123,9 @@ export function createWorld(canvas: HTMLCanvasElement): GLBoot {
   const world: GLWorld = { stage, blocks, material, lighting, background, post, rig };
   const sections = collectSections();
   choreoInit()?.(world, sections);
+  if (import.meta.env.DEV) {
+    window.__hk = { world, sections, choreo: choreoModules['../choreo/timeline.ts'] };
+  }
 
   return {
     world,

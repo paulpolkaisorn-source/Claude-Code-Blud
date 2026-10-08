@@ -155,6 +155,7 @@ async function main(): Promise<void> {
     portrait: isPortrait(),
     reducedMotion: env.reducedMotion,
     size: size(),
+    bleed: { p1: 1, p2: 1 },
   });
 
   const drive = { on: false, progress: 0 };

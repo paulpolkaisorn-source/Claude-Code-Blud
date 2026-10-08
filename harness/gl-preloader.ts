@@ -139,6 +139,7 @@ const ctx: SectionGLContext = {
   portrait: size.width / size.height < 1,
   reducedMotion: env.reducedMotion,
   size: { width: size.width, height: size.height },
+  bleed: { p1: 0, p2: 0 },
 };
 
 let handle: SectionGLHandle | undefined;

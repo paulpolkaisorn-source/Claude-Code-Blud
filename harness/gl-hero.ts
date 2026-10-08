@@ -174,7 +174,7 @@ async function main(): Promise<void> {
   // reduced-motion checks pass true. The reduced-motion run also sets env.reducedMotion, which boot reads.
   function contextFor(over: Partial<SectionGLContext> = {}): SectionGLContext {
     const size = viewport();
-    return { prev, portrait: size.width < size.height, reducedMotion: false, size, ...over };
+    return { prev, portrait: size.width < size.height, reducedMotion: false, size, bleed: { p1: 0, p2: 0 }, ...over };
   }
 
   // The 17 instance matrices, read back as the GPU buffer holds them.
