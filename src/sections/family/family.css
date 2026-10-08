@@ -1,0 +1,345 @@
+/*
+ * Family section, act II (ink). Scoped under #family. Owner: motion-2d.
+ * Source: design/direction-act2.md, family; design/direction.md headings 3, 4, 5, 8 and 13;
+ * design/drafts/director-decisions.md D4, D16.4 and D19.2.
+ *
+ * family.ts places everything that follows a 3D block (the axis, the four station blocks, the notes
+ * and the no-WebGL overlay) from src/core/projection.ts. This file sets the section height, the layout
+ * per viewport class, the type colours and the shapes. Every colour is a token except block-steel,
+ * the act II block material of direction.md heading 3, which tokens.css does not carry.
+ */
+
+#family {
+  --family-block-steel: #BDB7A9;
+  height: 200vh;
+  height: 200svh;
+  padding-block: 0;
+}
+
+/* The fixed 100 svh block. Its top sits half a viewport below the section top (act II, structure). */
+#family .family__stage {
+  position: absolute;
+  inset-inline: 0;
+  top: 50vh;
+  top: 50svh;
+  height: 100vh;
+  height: 100svh;
+}
+
+/* ---------- Head: kicker, title and intro ---------- */
+
+#family .family__head {
+  position: absolute;
+  top: 12vh;
+  top: 12svh;
+  left: 50%;
+  translate: -50% 0;
+  width: min(100%, var(--wrap-max));
+  padding-inline: var(--margin);
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: start;
+  pointer-events: none;
+}
+
+/* Wide: the kicker sits one gap above the title, so the title keeps the 12 per cent top. */
+#family .family__kicker {
+  position: absolute;
+  left: var(--margin);
+  bottom: 100%;
+  margin-bottom: var(--sp-2);
+  color: var(--seal-text);
+}
+
+/* Columns 1 to 9. Six columns set the title in three lines, and the third runs into the axis at 343 px on a
+   1440 by 900 screen. Nine columns hold "Four models," on one line, so the title stays above the axis. */
+#family .family__title {
+  grid-column: 1 / 10;
+}
+
+/* The intro is set beside the title, in columns 11 to 17 (wide only). */
+#family .family__intro {
+  grid-column: 11 / 18;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  #family .family__stage[data-layout="wide"] .family__intro {
+    grid-column: 10 / 18;
+  }
+}
+
+/* Narrow (aspect below 1.0): one column, 19 px margins, the kicker in the flow above the title. The head is in the
+   flow of the stage, so an absolutely placed intro in the spacer measures from the stage and not from the head. */
+#family .family__stage[data-layout="narrow"] .family__head {
+  position: static;
+  translate: none;
+  left: auto;
+  top: auto;
+  width: auto;
+  margin-block-start: var(--sp-2);
+  padding-inline: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#family .family__stage[data-layout="narrow"] .family__kicker {
+  position: static;
+  margin-bottom: var(--sp-2);
+}
+
+#family .family__stage[data-layout="narrow"] .family__title,
+#family .family__stage[data-layout="narrow"] .family__intro {
+  grid-column: 1 / -1;
+}
+
+/* Narrow: the intro is read by assistive technology, and it is drawn in the spacer below the block only when the
+   spacer has room for it (family.ts, placeIntro). Otherwise it stays visually hidden, as sr-only text does. */
+#family .family__stage[data-layout="narrow"] .family__intro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+#family .family__stage[data-layout="narrow"] .family__intro.is-spacer {
+  top: calc(100% + var(--sp-5));
+  left: var(--sp-4);
+  right: var(--sp-4);
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+/* Title split (GSAP SplitText, direction.md heading 8, rule 15). Words stay whole; characters move. */
+#family .family__line {
+  display: block;
+}
+
+#family .family__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+#family .family__char {
+  display: inline-block;
+}
+
+/* ---------- Axis (aria-hidden, decorative) ---------- */
+
+#family .family__axis-title {
+  position: absolute;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+#family .family__stage[data-layout="narrow"] .family__axis-title {
+  right: var(--sp-4);
+  top: var(--sp-2);
+}
+
+#family .family__axis {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#family .family__axis-line,
+#family .family__tick {
+  position: absolute;
+  background: var(--rule-hair);
+}
+
+#family .family__axis-label {
+  position: absolute;
+  color: var(--text-2);
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+}
+
+#family .family__axis-label[data-role="haiku"] {
+  color: var(--text-1);
+}
+
+#family .family__stage[data-layout="narrow"] .family__axis-label {
+  display: none;
+}
+
+/* ---------- Station label blocks (DOM, plain text, not focusable) ---------- */
+
+#family .family__stations {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+#family .family__station {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  color: var(--text-2);
+  pointer-events: auto;
+}
+
+#family .family__station[data-role="haiku"] {
+  color: var(--text-1);
+}
+
+/* Every line of a station takes the station colour, so the label styles do not override it. */
+#family .family__station > * {
+  margin: 0;
+  color: inherit;
+}
+
+#family .family__latency {
+  margin-block-start: var(--sp-2);
+}
+
+#family .family__desc {
+  margin-block-start: var(--sp-3);
+  text-wrap: pretty;
+}
+
+#family .family__price {
+  margin-block-start: var(--sp-3);
+}
+
+/* Each price is two lines, so the label style never has to wrap or run past the block. */
+#family .family__price > span {
+  display: block;
+}
+
+/* ---------- Source notes, in the spacer below the block ---------- */
+
+#family .family__notes {
+  position: absolute;
+  top: calc(100% + var(--sp-5));
+  width: 50%;
+  pointer-events: none;
+}
+
+#family .family__stage[data-layout="narrow"] .family__notes {
+  left: var(--sp-4);
+  right: var(--sp-4);
+  width: auto;
+}
+
+#family .family__note {
+  color: var(--text-3);
+}
+
+#family .family__note + .family__note {
+  margin-block-start: var(--sp-3);
+}
+
+/* ---------- No-WebGL overlay (shown only under html.no-gl, aria-hidden) ---------- */
+
+#family .family__fallback {
+  position: absolute;
+  pointer-events: none;
+}
+
+#family .family__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+#family .family__phantoms rect {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: var(--fam-px, 0.02);
+  stroke-dasharray: 0.17 0.07;
+}
+
+#family .family__blocks rect {
+  fill: var(--family-block-steel);
+}
+
+#family .family__blocks .family__kireji {
+  fill: var(--seal);
+}
+
+/* ---------- Placement pending: nothing is drawn at a guessed position before family.ts has placed it ---------- */
+
+#family:not(.is-placed) .family__axis,
+#family:not(.is-placed) .family__axis-title,
+#family:not(.is-placed) .family__stations,
+#family:not(.is-placed) .family__notes,
+#family:not(.is-placed) .family__fallback {
+  visibility: hidden;
+}
+
+/* ---------- Without JavaScript: one column, in reading order ---------- */
+
+html.no-js #family.section {
+  height: auto;
+  padding-block: var(--sp-8);
+}
+
+html.no-js #family .family__stage {
+  position: static;
+  height: auto;
+  padding-inline: var(--margin);
+}
+
+html.no-js #family .family__head {
+  position: static;
+  translate: none;
+  width: auto;
+  display: block;
+  padding-inline: 0;
+}
+
+html.no-js #family .family__kicker {
+  position: static;
+  margin-bottom: var(--sp-2);
+}
+
+html.no-js #family .family__intro {
+  margin-block-start: var(--sp-3);
+}
+
+html.no-js #family .family__axis,
+html.no-js #family .family__fallback {
+  display: none;
+}
+
+html.no-js #family .family__axis-title {
+  position: static;
+  display: block;
+  margin-block: var(--sp-5) var(--sp-3);
+}
+
+html.no-js #family .family__stations {
+  position: static;
+  display: grid;
+  gap: var(--sp-5);
+  pointer-events: auto;
+}
+
+html.no-js #family .family__station {
+  position: static;
+}
+
+html.no-js #family .family__notes {
+  position: static;
+  width: auto;
+  margin-block-start: var(--sp-5);
+}
+
+html.no-js #family .family__stations,
+html.no-js #family .family__notes,
+html.no-js #family .family__axis-title {
+  visibility: visible;
+}

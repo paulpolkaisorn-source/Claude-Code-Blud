@@ -1,0 +1,425 @@
+/*
+ * Footer section, 2D layer. Owner: motion-2d.
+ * Source: design/direction-act3.md, footer (2D layer, sequence, reduced motion, no-WebGL fallback); design/drafts/
+ * director-decisions.md D2.1, D8 and D18; design/direction.md headings 3 to 5, 8 and 13; content/copy.md ## footer.
+ * Every rule is scoped under #footer. Colours are tokens and durations come from tokens. --mix is written by GSAP
+ * (0 to 1); without JavaScript it reads 1, so the page shows the final colours. Breakpoints follow act III C9:
+ * landscape means an aspect of 1.0 or more, and portrait and phone (below 1.0) use one column at any width.
+ */
+
+/* ---------- Section padding (act III C2 and C9) ---------- */
+
+/* Portrait and phone: the panel starts 50 px (sp-6) below the top edge, and the section ends 50 px below it. */
+#footer {
+  padding-block: var(--sp-6);
+}
+
+/* Landscape keeps the padding of base.css: 81 px (sp-7) from 768 px and 131 px (sp-8) from 1024 px. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #footer {
+    padding-block: var(--sp-7);
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  #footer {
+    padding-block: var(--sp-8);
+  }
+}
+
+/* ---------- Grid (base.css: 17 columns from 768 px, one column below) ---------- */
+
+/* Portrait and phone: one column at every width, so a portrait tablet does not take the 17-column track. */
+#footer .footer__grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Landscape from 768 px: the 17-column track of base.css. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #footer .footer__grid {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  }
+}
+
+/* Phone landscape (below 768 px): the text takes the left 47% of the width (6% to 47%), and the column keeps the right. */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  #footer .footer__grid {
+    grid-template-columns: 6% minmax(0, 41%);
+    column-gap: 0;
+    margin-inline: calc(-1 * var(--margin));
+  }
+}
+
+/* ---------- The text panel ---------- */
+
+/* Portrait and phone: all footer text sits in one opaque panel that covers the column behind it (act III, Deviation 6). */
+#footer .footer__panel {
+  position: relative;
+  margin-inline: calc(-1 * var(--margin));
+  padding: var(--sp-4);
+  background: var(--bg);
+}
+
+/* Landscape: no panel. The text sits in columns 1 to 8 (desktop) or 1 to 9 (tablet), so it never covers the column. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #footer .footer__panel {
+    grid-column: 1 / 9;
+    grid-row: 1;
+    margin-inline: 0;
+    padding: 0;
+    background: transparent;
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) and (max-width: 1023px) {
+  #footer .footer__panel {
+    grid-column: 1 / 10;
+  }
+}
+
+/* Phone landscape: the text panel is the left column, with no background and no padding. */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  #footer .footer__panel {
+    grid-column: 2;
+    grid-row: 1;
+    margin-inline: 0;
+    padding: 0;
+    background: transparent;
+  }
+}
+
+/* ---------- No-WebGL fallback: the static column (act III, footer; architecture section 8) ---------- */
+
+/* base.css shows .gl-fallback only under html.no-gl. The column is 60svh tall everywhere. */
+#footer .footer__fallback {
+  height: 60svh;
+}
+
+#footer .footer__fallback svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Desktop and tablet landscape: columns 12 to 13 (924.82 to 1071.88 px), top at the section's top padding. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #footer .footer__fallback {
+    grid-column: 12 / 14;
+    grid-row: 1;
+    align-self: start;
+  }
+}
+
+/* Phone landscape: centred on 72% of the width, beside the text panel. */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  #footer .footer__fallback {
+    position: absolute;
+    top: var(--sp-6);
+    left: 72%;
+    width: 40px;
+    transform: translateX(-50%);
+  }
+}
+
+#footer .footer__column rect {
+  /* Block material, direction.md heading 3 (block-anodized). A 3D material value, so it is not a token. */
+  fill: #2B2A26;
+}
+
+#footer .footer__column .is-kireji {
+  fill: var(--seal);
+}
+
+#footer .footer__dimension {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* SVG text is sized in the drawing's units: 0.1 bu is about 12 px at the 60svh column. */
+#footer .footer__dimension-label {
+  font-family: var(--font-mono);
+  font-size: 0.1px;
+  font-weight: var(--fw-label);
+  fill: var(--text-3);
+}
+
+/* ---------- Title block (act III, footer 2D layer; direction.md heading 8 rule 6) ---------- */
+
+#footer .footer__title {
+  position: relative;
+}
+
+/* Without JavaScript the outer rule is not drawn, so CSS keeps the block's 2 px frame. The html class switches to js
+   before first paint (head-env, or env.ts on a harness page), and then the drawn rule takes over. */
+html.no-js #footer .footer__title {
+  outline: 2px solid var(--rule-strong);
+  outline-offset: -2px;
+}
+
+#footer .titleblock {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+/* Portrait and phone: two cells per row. The table, its body and each row lay out as blocks and grids, so the four
+   cells reflow to two rows (SCALE and SHEET, then REV and DATE). Table semantics stay on the elements. */
+#footer .titleblock,
+#footer .titleblock tbody {
+  display: block;
+}
+
+#footer .titleblock tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+#footer .titleblock__row--title .titleblock__cell--title {
+  grid-column: 1 / -1;
+}
+
+#footer .titleblock td {
+  position: relative;
+  min-height: var(--cell-h, 86px);
+  padding: var(--sp-3);
+  vertical-align: top;
+  text-align: left;
+}
+
+/* Row 1 is 92 px (minimum), row 2 is 86 px (minimum), direction.md act III, footer 2D layer. */
+#footer .titleblock__cell--title {
+  --cell-h: 92px;
+}
+
+/* Landscape from 768 px: the table keeps its cell row, with the column widths of the grid. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #footer .titleblock {
+    display: table;
+  }
+
+  #footer .titleblock tbody {
+    display: table-row-group;
+  }
+
+  #footer .titleblock tr {
+    display: table-row;
+  }
+
+  #footer .titleblock td {
+    height: var(--cell-h, 86px);
+    min-height: 0;
+  }
+}
+
+/* Cell widths. Cells 1 to 3 span two columns and the gutter after them, so their right edges sit on the start of
+   columns 3, 5 and 7; cell 4 is columns 7 and 8. Chromium drops the px term of a calc() on a <col> (it resolves the
+   percentage alone), so the widths are percentages of the table. The grid's exact ratio (2c + g) / W varies from
+   25.42% to 25.48% between 1024 and 2560 px, so 25.45% keeps every boundary within 0.9 px of the grid line. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  #footer .titleblock__col--a,
+  #footer .titleblock__col--b,
+  #footer .titleblock__col--c {
+    width: 25.45%;
+  }
+
+  #footer .titleblock__col--d {
+    width: 23.65%;
+  }
+}
+
+/* Tablet landscape (768 to 1023 px): the title block is columns 1 to 9, with the same four cells. The exact ratio
+   (2 c + 2 g) / W is 22.53% to 22.64% over this range, so 22.59% keeps each boundary within 0.6 px of the grid. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) and (max-width: 1023px) {
+  #footer .titleblock__col--a,
+  #footer .titleblock__col--b,
+  #footer .titleblock__col--c {
+    width: 22.59%;
+  }
+
+  #footer .titleblock__col--d {
+    width: 32.23%;
+  }
+}
+
+#footer .titleblock__label {
+  display: block;
+  margin: 0 0 var(--sp-2);
+}
+
+/* Value colour: text-3 at --mix 0, the token colour at --mix 1 (heading 8, rule 6). */
+#footer .titleblock__value {
+  display: block;
+  margin: 0;
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-1));
+}
+
+#footer .titleblock__value--rev,
+#footer .titleblock__value--date {
+  white-space: nowrap;
+}
+
+/* Outer rule: 2 px rule-strong around the whole block. Its path is measured from the block (footer.ts). */
+#footer .titleblock__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+#footer .titleblock__frame path {
+  fill: none;
+  stroke: var(--rule-strong);
+  stroke-width: 2px;
+}
+
+/* Inner rules: 1 px rule-hair, each drawn over its cell's right or bottom edge. The SVG viewBoxes are 1000 by 1
+   (horizontal) and 1 by 1000 (vertical), so the stroke is exactly 1 px whatever the size of the cell. */
+/* max-width is reset because base.css caps every svg at 100% of its box, and the phone row rule is 200% wide. */
+#footer .titleblock__rule {
+  position: absolute;
+  display: block;
+  max-width: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+#footer .titleblock__rule path {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1px;
+}
+
+#footer .titleblock__rule--title {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+}
+
+#footer .titleblock__rule--rows {
+  left: 0;
+  bottom: 0;
+  width: 200%;
+  height: 1px;
+}
+
+#footer .titleblock__rule--scale,
+#footer .titleblock__rule--sheet,
+#footer .titleblock__rule--rev {
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+}
+
+/* A rule that belongs to the other layout is hidden with visibility, not display, so that its path keeps a length
+   for GSAP when the layout changes. Portrait and phone: the row rule shows and the SHEET rule is hidden. */
+#footer .titleblock__rule--sheet {
+  visibility: hidden;
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #footer .titleblock__rule--sheet {
+    visibility: visible;
+  }
+
+  #footer .titleblock__rule--rows {
+    visibility: hidden;
+  }
+}
+
+/* ---------- Disclaimer, docs, sources and the closing line (act III, footer 2D layer) ---------- */
+
+/* Disclaimer: 19 px (sp-4) below the title block. */
+#footer .footer__disclaimer {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-2);
+}
+
+/* Docs and sources: 31 px (sp-5) below the block above them. */
+#footer .footer__docs,
+#footer .footer__sources {
+  margin-top: var(--sp-5);
+}
+
+#footer .footer__heading {
+  margin: 0 0 var(--sp-2);
+}
+
+#footer .footer__docs-list {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Sources: the URL is the link text, in small type, 7 px (sp-2) between items. Markers are set in label type. */
+#footer .footer__sources-list {
+  margin: 0;
+  padding-inline-start: 2.25em;
+}
+
+#footer .footer__sources-list li + li {
+  margin-top: var(--sp-2);
+}
+
+#footer .footer__sources-list li::marker {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  color: var(--text-3);
+}
+
+#footer .footer__sources-list a {
+  overflow-wrap: anywhere;
+}
+
+/* Back to top and the credit line: 31 px (sp-5) below the sources. Landscape places the link in columns 1 to 2 and the
+   credit from column 3, on the same line. */
+#footer .footer__end {
+  display: grid;
+  justify-items: start;
+  row-gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}
+
+#footer .footer__credit {
+  margin: 0;
+  color: var(--text-2);
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  #footer .footer__end {
+    grid-template-columns: calc((100% - 3 * var(--gutter)) / 4) minmax(0, 1fr);
+    column-gap: var(--gutter);
+    row-gap: 0;
+    align-items: baseline;
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) and (max-width: 1023px) {
+  #footer .footer__end {
+    grid-template-columns: calc((200% - 7 * var(--gutter)) / 9) minmax(0, 1fr);
+    column-gap: var(--gutter);
+    row-gap: 0;
+    align-items: baseline;
+  }
+}
+
+/* ---------- Links (direction.md heading 13, D2.1; act III, footer pointer) ---------- */
+
+/* The rest underline and the direction-aware hover line come from base.css. The text colour also moves to seal-text
+   over T.micro with press, as act III footer specifies. Reduced motion makes the change instant (base.css). */
+#footer a {
+  color: var(--text-1);
+  transition: color var(--t-micro) var(--ease-press);
+}
+
+#footer a:hover {
+  color: var(--seal-text);
+}

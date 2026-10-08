@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Harness: closing section</title>
+    <link rel="stylesheet" href="/src/styles/fonts.css" />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <!-- In the production build Vite links the entry CSS from the head, so the section styles also apply without JavaScript.
+         The dev server injects closing.css from the script instead, so the harness links it here for the no-JS run. -->
+    <link rel="stylesheet" href="/src/sections/closing/closing.css" />
+  </head>
+  <body>
+    <div class="harness-spacer" style="height: 100vh" aria-hidden="true"></div>
+    <main id="main" tabindex="-1">
+      <!-- @include src/sections/closing/closing.html -->
+    </main>
+    <div class="harness-spacer" style="height: 100vh">
+      <!-- Stand-in for the footer's sources list, so that the secondary link has a target in this harness. -->
+      <ol id="sources" class="sr-only">
+        <li>Harness stand-in for the footer sources list.</li>
+      </ol>
+    </div>
+    <script type="module" src="/harness/section-closing.ts"></script>
+  </body>
+</html>

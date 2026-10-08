@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>closing gl harness</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #f1ece0;
+      }
+      /* Layering as index.html (architecture section 7): the canvas behind main, the sections transparent. */
+      #gl {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 0;
+        pointer-events: none;
+      }
+      main {
+        position: relative;
+        z-index: 1;
+      }
+      /* Heights as architecture section 4 (pricing 1.5 vh, closing 2.5 vh, footer 1 vh). The spacer gives scroll room above pricing. */
+      #spacer {
+        height: 100vh;
+      }
+      #pricing {
+        height: 150vh;
+      }
+      #closing {
+        height: 250vh;
+      }
+      #footer {
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <main>
+      <div id="spacer"></div>
+      <section id="pricing"></section>
+      <section id="closing"></section>
+      <section id="footer"></section>
+    </main>
+    <script type="module" src="/harness/gl-closing.ts"></script>
+  </body>
+</html>

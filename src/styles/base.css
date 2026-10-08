@@ -1,0 +1,600 @@
+/*
+ * Base stylesheet. Owner: motion-2d.
+ * Source: design/direction.md headings 4, 5, 7, 8 and 13; design/architecture.md sections 7 and 8;
+ * design/drafts/director-decisions.md D2.1 and D18.
+ *
+ * Plain CSS with no @import. main.ts imports it after tokens.css, so every value here is a token.
+ * The only literal values are the reset values, the zero durations that reduced motion requires,
+ * and the print palette.
+ */
+
+/* ---------- Reset ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+html {
+  font-optical-sizing: auto;
+  hyphens: manual;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: auto;
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  font-weight: var(--fw-body);
+  font-kerning: normal;
+  font-feature-settings: "kern" 1, "liga" 1, "pnum" 1;
+  overflow-x: clip;
+}
+
+/* ---------- Type styles, direction.md heading 4 ---------- */
+
+.t-display-xxl {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display-xxl);
+  line-height: var(--lh-display-xxl);
+  letter-spacing: var(--ls-display-xxl);
+  font-weight: var(--fw-display-xxl);
+  text-wrap: balance;
+}
+
+.t-display-xl {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display-xl);
+  line-height: var(--lh-display-xl);
+  letter-spacing: var(--ls-display-xl);
+  font-weight: var(--fw-display-xl);
+  max-width: 14ch;
+  text-wrap: balance;
+}
+
+.t-display-l {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display-l);
+  line-height: var(--lh-display-l);
+  letter-spacing: var(--ls-display-l);
+  font-weight: var(--fw-display-l);
+  text-wrap: balance;
+}
+
+.t-heading {
+  font-family: var(--font-serif);
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-heading);
+  font-weight: var(--fw-heading);
+  text-wrap: balance;
+}
+
+.t-lede {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lede);
+  line-height: var(--lh-lede);
+  letter-spacing: var(--ls-lede);
+  font-weight: var(--fw-lede);
+  max-width: 36ch;
+  color: var(--text-2);
+  text-wrap: pretty;
+  hanging-punctuation: first last;
+}
+
+.t-body {
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  font-weight: var(--fw-body);
+  max-width: 62ch;
+  text-wrap: pretty;
+  hanging-punctuation: first last;
+}
+
+.t-small {
+  font-family: var(--font-serif);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  letter-spacing: var(--ls-small);
+  font-weight: var(--fw-small);
+  max-width: 60ch;
+}
+
+/* Labels: Geist Mono, uppercase, one line. No ligatures and no kerning in mono. */
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  letter-spacing: var(--ls-label);
+  font-weight: var(--fw-label);
+  color: var(--text-3);
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-feature-settings: normal;
+  font-variant-ligatures: none;
+  font-kerning: none;
+}
+
+/* Code: Geist Mono, ligatures off, tab size 2. Never wraps; scrolls sideways inside its box. */
+.t-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+  line-height: var(--lh-code);
+  letter-spacing: var(--ls-code);
+  font-weight: var(--fw-code);
+  font-feature-settings: normal;
+  font-variant-ligatures: none;
+  font-kerning: none;
+  tab-size: 2;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Tabular figures. Named features are listed in full so pnum is switched off for this element. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "kern" 1, "liga" 1, "pnum" 0, "tnum" 1;
+}
+
+/* Hanging punctuation for browsers without hanging-punctuation (heading 4). */
+.hang {
+  margin-inline-start: -0.4em;
+}
+
+/* ---------- Grid, direction.md heading 5 ---------- */
+
+.wrap {
+  max-inline-size: var(--wrap-max);
+  margin-inline: auto;
+  padding-inline: var(--margin);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--gutter);
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  }
+}
+
+/* Column placement from custom properties. --from and --to are 1-based track lines, 1 to 17.
+   Below 768 px the item takes the full single column (written mobile first, same result). */
+.col {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .col {
+    grid-column: var(--from, 1) / calc(var(--to, 17) + 1);
+  }
+}
+
+/* Group helpers: columns 1 to 5, 6 to 12 and 13 to 17 from 1024 px. Full width below. */
+.g-a,
+.g-b,
+.g-c {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1024px) {
+  .g-a {
+    grid-column: 1 / 6;
+  }
+
+  .g-b {
+    grid-column: 6 / 13;
+  }
+
+  .g-c {
+    grid-column: 13 / 18;
+  }
+}
+
+/* ---------- Sections and themes, heading 3, heading 5 and D18 ---------- */
+
+/* Section padding-block: 50px below 768 px, 81px from 768 px, 131px from 1024 px. */
+.section {
+  position: relative;
+  background: var(--bg);
+  padding-block: var(--sp-6);
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-block: var(--sp-7);
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding-block: var(--sp-8);
+  }
+}
+
+/* Each section sets data-theme; tokens.css redefines the colour tokens under [data-theme="ink"]. */
+[data-theme] {
+  color: var(--text-1);
+}
+
+/* Once the GL boot has drawn its first frame, the shader paints the ground (D18). */
+html.gl-ready .section {
+  background: transparent;
+}
+
+/* ---------- Layers, architecture.md section 7 ---------- */
+
+canvas#gl {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-canvas);
+  pointer-events: none;
+  display: block;
+}
+
+html.no-gl canvas#gl {
+  display: none;
+}
+
+main,
+footer {
+  position: relative;
+  z-index: var(--z-main);
+}
+
+.cursor-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cursor);
+  pointer-events: none;
+}
+
+/* The static version of each 3D moment, shown only without WebGL (architecture section 8). */
+.gl-fallback {
+  display: none;
+}
+
+html.no-gl .gl-fallback {
+  display: block;
+}
+
+/* ---------- Skip link and visually hidden text ---------- */
+
+/* Hidden until it takes focus. Focused, it is a visible tab in the top-left corner. */
+.skip-link {
+  position: fixed;
+  inset-block-start: var(--sp-3);
+  inset-inline-start: var(--sp-3);
+  z-index: var(--z-skip);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--sp-4);
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-serif);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  letter-spacing: var(--ls-small);
+  text-decoration: none;
+}
+
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link::before,
+.skip-link::after {
+  content: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Text links, heading 13 ---------- */
+
+a {
+  /* Descent of Bodoni Moda (800 / 2000 units). An inline box ends at the descent, not the baseline. */
+  --link-descent: 0.4em;
+  position: relative;
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+/* Both lines sit 0.18em below the baseline. */
+a::before,
+a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--link-descent) - 0.18em);
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Rest underline. */
+a::before {
+  background: var(--rule-strong);
+}
+
+/* Hover line, drawn from the side the pointer entered. */
+a::after {
+  background: var(--seal-text);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--t-micro) var(--ease-press);
+}
+
+[data-enter="left"]::after {
+  transform-origin: left center;
+}
+
+[data-enter="right"]::after {
+  transform-origin: right center;
+}
+
+a:hover::after,
+a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Links inside a label, or in a button, opt out of the underline system. */
+.link-plain {
+  color: inherit;
+}
+
+.link-plain::before,
+.link-plain::after {
+  content: none;
+}
+
+/* ---------- Buttons, heading 13 ---------- */
+
+.btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0;
+  padding-inline: var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-1);
+  appearance: none;
+  box-shadow: none;
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  font-weight: var(--fw-body);
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The link underline never applies to a button. Variants set their own layers. */
+.btn::before,
+.btn::after {
+  content: none;
+}
+
+/* Primary: fill text-1, label bg. The hover layer is one pixel larger than the box, so it covers
+   the border as well and no dark edge shows around it. */
+.btn--primary {
+  background: var(--text-1);
+  border-color: var(--text-1);
+  color: var(--bg);
+}
+
+.btn--primary::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: var(--seal-text);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--t-micro) var(--ease-press);
+}
+
+.btn--primary[data-enter="left"]::before {
+  transform-origin: left center;
+}
+
+.btn--primary[data-enter="right"]::before {
+  transform-origin: right center;
+}
+
+.btn--primary:hover::before,
+.btn--primary:focus-visible::before,
+.btn--primary:active::before {
+  transform: scaleX(1);
+}
+
+/* Secondary: transparent, 1px rule-strong border. The border moves to seal-text on hover. */
+.btn--secondary {
+  border-color: var(--rule-strong);
+  transition: border-color var(--t-micro) var(--ease-press);
+}
+
+.btn--secondary:hover,
+.btn--secondary:focus-visible,
+.btn--secondary:active {
+  border-color: var(--seal-text);
+}
+
+/* ---------- Table and panel rows, heading 13 ---------- */
+
+/* The row layer is a full-height bg-raised fill that draws from the side the pointer entered.
+   Put data-hover on the row so that data-enter is set. */
+.row-hover {
+  position: relative;
+  isolation: isolate;
+}
+
+.row-hover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-raised);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--t-micro) var(--ease-press);
+}
+
+.row-hover[data-enter="left"]::before {
+  transform-origin: left center;
+}
+
+.row-hover[data-enter="right"]::before {
+  transform-origin: right center;
+}
+
+.row-hover:hover::before {
+  transform: scaleX(1);
+}
+
+/* ---------- Selection, heading 13 (pairs P19 and I19) ---------- */
+
+::selection {
+  background: var(--seal-text);
+  color: var(--bg);
+}
+
+[data-theme="ink"]::selection,
+[data-theme="ink"] ::selection {
+  background: var(--text-1);
+  color: var(--bg);
+}
+
+/* ---------- Focus, heading 13 ---------- */
+
+/* The ring appears at once and is never transitioned. Written after the button rules, so this
+   transition: none wins on a focused element. Pseudo-element layers keep their own transitions. */
+:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+  transition: none;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Programmatic focus on sections and main shows no ring. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ---------- Reduced motion, heading 13 and architecture section 8 ---------- */
+
+/* Every transition and animation lasts 0s on elements and pseudo-elements, hover layers included.
+   Hover and press changes are then instant, and hover lines show at full width with no motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}
+
+html.reduced-motion,
+html.reduced-motion *,
+html.reduced-motion *::before,
+html.reduced-motion *::after {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+}
+
+/* ---------- Print: black on white, no canvas, no cursor layer, no fallback ---------- */
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    color: #000 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  a::before {
+    background: #000 !important;
+  }
+
+  a::after,
+  .btn::before,
+  .row-hover::before,
+  .skip-link {
+    display: none !important;
+  }
+
+  canvas#gl,
+  .cursor-layer,
+  .gl-fallback {
+    display: none !important;
+  }
+}

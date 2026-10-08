@@ -1,0 +1,405 @@
+/*
+ * Capabilities section, 2D layer (design/direction-act2.md, capabilities; rules C1 to C16; decisions D6, D16.3).
+ * Scoped under #capabilities. Colours, type, spacing, curves and durations come from the tokens only.
+ *
+ * Structure: three slots, each exactly 1 svh high, stacked from the section top, so the section is 3 svh. The
+ * title and the intro sit in slot 1. Each card is centred in its slot on wide layouts (C2 and C4) and sits at 52 per
+ * cent of its slot on narrow layouts (C5). Positions that follow the 3D blocks (the no-WebGL elevation, and the
+ * intro under the stanza on wide layouts) are set from src/core/projection.ts by capabilities.ts, as custom properties.
+ */
+
+#capabilities {
+  /* One 17-column track at the current margin and gutter (direction.md heading 5). */
+  --cap-col: calc((100% - 2 * var(--margin) - 16 * var(--gutter)) / 17);
+  /* Set by cap-layout.ts from the projection of the capability formations: the block centre, the px per bu and the
+     lowest px of the three formations. These defaults are the 1440 by 900 values, used until the first measurement. */
+  --cap-fx: 50%;
+  --cap-fy: 50svh;
+  --cap-fk: 0px;
+  --cap-bottom: calc(50svh + 153px);
+  --cap-gap: 24px;
+  padding-block: 0;
+}
+
+#capabilities .cap-slot {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+}
+
+/* ---------- Title block (slot 1) ---------- */
+
+#capabilities .cap__text {
+  position: absolute;
+  top: 8vh;
+  top: 8svh;
+  left: calc(var(--margin) + 9 * (var(--cap-col) + var(--gutter)));
+  width: calc(8 * var(--cap-col) + 7 * var(--gutter));
+}
+
+#capabilities .cap__kicker {
+  margin: 0 0 var(--sp-3);
+  color: var(--seal-text);
+}
+
+#capabilities .cap__title {
+  margin: 0;
+}
+
+#capabilities .cap__intro {
+  margin: 0;
+}
+
+/* ---------- Card box (C7, direction.md heading 13) ---------- */
+
+#capabilities .cap-card {
+  position: absolute;
+  top: 50%;
+  left: var(--margin);
+  transform: translateY(-50%);
+  width: calc(6 * var(--cap-col) + 5 * var(--gutter));
+  padding: var(--sp-5);
+  background: var(--bg-raised);
+  border: 1px solid var(--rule-hair);
+  transition: border-color var(--t-micro) var(--ease-press);
+}
+
+#capabilities .cap-card.is-active {
+  border-color: var(--rule-strong);
+  /* The card's mark leads (T.micro), and the border settles after it. */
+  transition: border-color var(--t-beat5) var(--ease-settle) var(--t-micro);
+}
+
+#capabilities .cap-card__label {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-3);
+}
+
+#capabilities .cap-card__heading {
+  margin: 0 0 var(--sp-3);
+}
+
+#capabilities .cap-card__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The mark: a 7 px square, a seal outline when the card is not active and a seal fill when it is (C4 of the
+   capability card, cut over T.micro). */
+#capabilities .cap-card__mark {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--seal);
+  background: transparent;
+  transition: background-color var(--t-micro) var(--ease-cut);
+}
+
+#capabilities .cap-card.is-active .cap-card__mark {
+  background: var(--seal);
+}
+
+#capabilities .cap-card__name {
+  color: var(--text-3);
+  transition: color var(--t-micro) var(--ease-press);
+}
+
+#capabilities .cap-card.is-active .cap-card__name {
+  color: var(--text-1);
+  transition: color var(--t-beat5) var(--ease-settle) var(--t-micro);
+}
+
+#capabilities .cap-card__text {
+  margin: 0;
+  color: var(--text-3);
+  transition: color var(--t-micro) var(--ease-press);
+}
+
+#capabilities .cap-card.is-active .cap-card__text {
+  color: var(--text-2);
+  transition: color var(--t-beat5) var(--ease-settle) var(--t-micro);
+}
+
+#capabilities .cap-card__figure {
+  margin: var(--sp-4) 0 0;
+}
+
+#capabilities .cap-card__caption {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-3);
+}
+
+#capabilities .cap-card__note {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-3);
+}
+
+/* ---------- Card graphics (C13): hand-built SVG, HTML labels in percentages of the box ---------- */
+
+#capabilities .cap-art {
+  position: relative;
+  width: min(100%, 400px);
+  aspect-ratio: 400 / 160;
+}
+
+#capabilities .cap-art__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#capabilities .cap-art__label {
+  position: absolute;
+  white-space: nowrap;
+}
+
+#capabilities .cap-art__label.is-strong {
+  color: var(--text-1);
+}
+
+/* cap-0: fields, carets, cursor and the OSWorld bars. */
+#capabilities .cap0__frame {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+}
+
+#capabilities .cap0__field {
+  fill: none;
+  stroke: var(--text-1);
+  stroke-width: 1;
+}
+
+#capabilities .cap0__field.is-bar {
+  fill: var(--text-2);
+  stroke: none;
+}
+
+#capabilities .cap0__cursor {
+  fill: none;
+  stroke: var(--text-1);
+  stroke-width: 1;
+}
+
+#capabilities .cap0__axis {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+}
+
+#capabilities .cap0__bar-a {
+  fill: none;
+  stroke: var(--text-1);
+  stroke-width: 14;
+  stroke-linecap: butt;
+}
+
+#capabilities .cap0__bar-b {
+  fill: none;
+  stroke: var(--text-3);
+  stroke-width: 14;
+  stroke-linecap: butt;
+}
+
+/* cap-1: the conveyor. The label column is 136 px; the lane drawing takes the rest of the inner width less 148 px. */
+#capabilities .cap-art--1 {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-3);
+  width: 100%;
+  aspect-ratio: auto;
+}
+
+#capabilities .cap1__labels {
+  position: relative;
+  flex: 0 0 136px;
+}
+
+#capabilities .cap1__lane {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+  color: var(--text-2);
+}
+
+#capabilities .cap1__svg {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 252 / 160;
+  overflow: hidden;
+}
+
+#capabilities .cap1__line {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+}
+
+#capabilities .cap1__bin {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+}
+
+#capabilities .cap1__item {
+  fill: var(--text-2);
+}
+
+/* cap-2: the effort stair. Fills change at the stair's threshold with no transition, because the stair is driven by
+   scroll (C13 and the Sequence of capabilities). */
+#capabilities .cap2__step {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+}
+
+#capabilities .cap2__step.is-on {
+  fill: var(--seal);
+  stroke: none;
+}
+
+#capabilities .cap2__scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(100%, 400px);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: center;
+}
+
+#capabilities .cap2__label {
+  color: var(--text-3);
+}
+
+#capabilities .cap2__label.is-on {
+  color: var(--text-1);
+}
+
+/* ---------- No-WebGL elevation (shown only under html.no-gl; placed by cap-layout.ts from the projection) ---------- */
+
+#capabilities .cap__fallback {
+  position: absolute;
+  left: calc(var(--cap-fx) - 3 * var(--cap-fk));
+  top: calc(var(--cap-fy) - 1.4 * var(--cap-fk));
+  width: calc(6 * var(--cap-fk));
+  height: calc(2.8 * var(--cap-fk));
+  pointer-events: none;
+}
+
+#capabilities .cap__svg {
+  width: 100%;
+  height: 100%;
+}
+
+#capabilities .cap__blk {
+  fill: var(--rule-hair);
+}
+
+#capabilities .cap__blk.is-on {
+  fill: var(--text-1);
+}
+
+#capabilities .cap__blk.is-kireji {
+  fill: var(--seal);
+}
+
+/* ---------- Wide layout: aspect 1 or wider (C3, C4) ---------- */
+
+@media (orientation: landscape) {
+  #capabilities .cap-card__text--narrow {
+    display: none;
+  }
+
+  #capabilities .cap__intro {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--cap-bottom) + var(--cap-gap) - 8svh);
+  }
+}
+
+@media (orientation: landscape) and (min-width: 768px) {
+  #capabilities .cap-card {
+    width: calc(6 * var(--cap-col) + 5 * var(--gutter));
+  }
+}
+
+/* 768 to 1023 px: the cards take columns 1 to 9 (C4). */
+@media (orientation: landscape) and (min-width: 768px) and (max-width: 1023.98px) {
+  #capabilities .cap-card {
+    width: calc(9 * var(--cap-col) + 8 * var(--gutter));
+  }
+}
+
+/* Phone landscape (C3): the wide placement, with the 1024 px column edges as percentages. */
+@media (orientation: landscape) and (max-width: 767.98px) {
+  #capabilities .cap-card {
+    width: calc(35.8% - var(--margin));
+  }
+
+  #capabilities .cap__text {
+    left: 53.1%;
+    right: var(--margin);
+    width: auto;
+  }
+}
+
+/* ---------- Narrow layout: aspect below 1 (C5) ---------- */
+
+/* The stanza sits in the upper middle of a portrait viewport (the phone key sets the camera at y -1.10), so the
+   title sits above it, and the intro and the cards sit below its measured bottom edge, 24 px clear. Card 1 also
+   clears the intro, whose height cap-layout.ts measures. */
+@media (orientation: portrait) {
+  #capabilities .cap__text {
+    top: 6vh;
+    top: 6svh;
+    left: var(--margin);
+    right: var(--margin);
+    width: auto;
+  }
+
+  #capabilities .cap__intro {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--cap-bottom) + var(--cap-gap) - 6svh);
+    max-width: none;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    letter-spacing: var(--ls-small);
+  }
+
+  #capabilities .cap-card {
+    top: calc(var(--cap-bottom) + var(--cap-gap));
+    left: var(--margin);
+    right: var(--margin);
+    width: auto;
+    transform: none;
+    padding: var(--sp-4);
+  }
+
+  #capabilities .cap-slot[data-slot="1"] .cap-card {
+    top: calc(var(--cap-bottom) + var(--cap-gap) + var(--cap-intro-h, 0px) + var(--sp-4));
+  }
+
+  #capabilities .cap-card__text--wide {
+    display: none;
+  }
+}

@@ -1,9 +1,10 @@
 // The preloader section's 3D layer (design/direction-act1.md, preloader; design/direction-3d.md sections 10.6 and 11.2).
-// The section has height 0 and is never current, so its handle has no per-frame work of its own. Its job is the
-// handoff. Until loader:done the 17 blocks of the stanza stand at scale 0 (entrance 0). At loader:done the kireji
-// grows first (ef.cut over T.beat5), and each follower grows (ef.settle over T.half) after T.micro plus its
-// HAIKU_OFFSETS entry. The clock is the page clock, read on the first tick after loader:done. There are no timers.
-// The camera holds the hero keyframe until the handoff ends, because the 2D footprints are placed with that key.
+// The section has height 0 and is never current, so update() and setActive() do nothing. Its job is the handoff,
+// which runs on a tick of its own. Until loader:done the 17 blocks of the stanza stand at scale 0 (entrance 0).
+// At loader:done the kireji grows first (ef.cut over T.beat5), and each follower grows (ef.settle over T.half)
+// after T.micro plus its HAIKU_OFFSETS entry. The clock is the page clock, read on the first tick after
+// loader:done. There are no timers. The camera holds the hero keyframe until the handoff ends, because the 2D
+// footprints are placed with that key.
 import { bus } from '../../core/bus';
 import { ef } from '../../core/ease';
 import { env } from '../../core/env';
@@ -115,7 +116,7 @@ function setup(world: GLWorld): SectionGLHandle {
         releaseCanvas();
         finish();
       } else {
-        canvas.style.opacity = String(ef.fade(clamp01(elapsed / T.half)));
+        canvas.style.opacity = ef.fade(clamp01(elapsed / T.half)).toFixed(4);
       }
       return;
     }

@@ -25,5 +25,6 @@ You make the page respond to people.
 - TypeScript is strict. Do not use `any` unless the brief allows it. Do not add npm dependencies unless the brief says so.
 - Do not run git commit, git push, git reset, git checkout or git stash. The director handles version control.
 - If you start a dev or preview server, use only the port your brief assigns, and kill it before you finish.
+- Never kill, signal or stop a process you did not start yourself. Record the PID of every process you start and stop only those PIDs. Other agents run Vite servers, Chromium and scripts at the same time in the same machine; a broad pkill or a pattern match can destroy their work.
 - Verify your own work before reporting, exactly as the brief asks (typecheck, build, Playwright check, screenshot). If you could not verify something, say so plainly.
 - Your final message is your report and is read by the director, not a human. Keep it factual: files changed, what you built, how you verified it (with command output summaries), and anything unresolved.

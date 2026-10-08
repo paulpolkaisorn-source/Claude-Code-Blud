@@ -1,0 +1,454 @@
+// Harness for the family section's 3D layer (src/sections/family/gl.ts; architecture section 10a). The world is
+// the page's own (createWorld from src/gl/boot.ts: stage, lighting, background, post, rig, block material). The
+// family handle is driven the way the choreography will drive it: a tick at PRIORITY.scroll calls
+// update(p, tick, ctx) with p from window.__family.set, and the previous section is the code SectionGL literal
+// (formation recede, key hero). The checks below run first, timed where the hover tweens and the dash need real
+// time. The verdict goes to document.documentElement.dataset.harness. Playwright then drives the screenshot states
+// through window.__family.
+import * as THREE from 'three';
+import { familyGL } from '../src/sections/family/gl';
+import { createWorld } from '../src/gl/boot';
+import { env } from '../src/core/env';
+import { PRIORITY, addTick, initTicker, type Tick } from '../src/core/ticker';
+import { cameraKey } from '../src/gl/rig';
+import { initChoreo } from '../src/choreo/timeline';
+import { BLOCK_COUNT, PORTRAIT_TURN, formationFor } from '../src/gl/blocks/formations';
+import type { FormationId } from '../src/core/types';
+import type { CameraKey, SectionGL, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
+
+interface Report {
+  passes: string[];
+  failures: string[];
+  diagnostics: string[];
+}
+
+interface FamilyControls {
+  set(s: number): void;
+  hover(station: number | null, toggle?: boolean): void;
+}
+
+interface FamilyWindow extends Window {
+  __family?: FamilyControls;
+  __familyReport?: Report;
+}
+
+// SwiftShader notices that are environment noise, not defects: the GPU stall on ReadPixels, and the missing
+// KHR_parallel_shader_compile extension that WebGLRenderer.compileAsync reports.
+const ENVIRONMENT_NOTICES = ['GPU stall due to ReadPixels', 'KHR_parallel_shader_compile extension not supported'];
+const PERIOD = 0.24;
+const LIFT = 0.15;
+const CAMERA_TOL = 1e-3;
+const root = document.documentElement;
+const report: Report = { passes: [], failures: [], diagnostics: [] };
+
+function check(name: string, ok: boolean, detail = ''): void {
+  const suffix = detail === '' ? '' : ` :: ${detail}`;
+  if (ok) {
+    report.passes.push(name);
+    console.log(`PASS ${name}${suffix}`);
+  } else {
+    report.failures.push(`${name}${suffix}`);
+    console.log(`FAIL ${name}${suffix}`);
+  }
+}
+
+// Errors and warnings are recorded as well as shown, so the verdict counts them. The GPU stall notice is
+// SwiftShader noise and is not counted.
+for (const level of ['error', 'warn'] as const) {
+  const original = console[level].bind(console);
+  console[level] = (...args: unknown[]): void => {
+    const text = args.map((a) => String(a)).join(' ');
+    if (!ENVIRONMENT_NOTICES.some((n) => text.includes(n))) report.diagnostics.push(`${level}: ${text}`);
+    original(...args);
+  };
+}
+window.addEventListener('error', (e: ErrorEvent) => {
+  report.diagnostics.push(`uncaught: ${e.message}`);
+});
+
+function clamp01(v: number): number {
+  return Number.isNaN(v) ? 0 : Math.min(1, Math.max(0, v));
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+/** Resolves after n page-clock ticks, once the frame for each has been drawn (after PRIORITY.glRender). */
+function frames(n: number): Promise<void> {
+  return new Promise((resolve) => {
+    let seen = 0;
+    const remove = addTick(() => {
+      seen += 1;
+      if (seen >= n) {
+        remove();
+        resolve();
+      }
+    }, PRIORITY.glRender + 2);
+  });
+}
+
+async function main(): Promise<void> {
+  const canvas = document.getElementById('gl');
+  if (!(canvas instanceof HTMLCanvasElement)) throw new Error('canvas#gl is missing');
+  initTicker();
+  const boot = createWorld(canvas);
+  const world = boot.world;
+  // The page choreography (src/choreo/timeline.ts) is live inside boot and would drive its own handles. This harness
+  // drives the family handle itself, so it replaces that choreography with an empty section list, then disposes it.
+  initChoreo(world, []).dispose();
+  const { stage, blocks, lighting, background, post } = world;
+  const camera = stage.camera;
+  const scene = stage.scene;
+
+  // The code section's exit, as a SectionGL literal (code has no gl.ts yet): recede formation, hero key.
+  const CODE: SectionGL = {
+    id: 'code',
+    formation: 'recede',
+    key: 'hero',
+    ink: 1,
+    dof: { focus: 21.15, bokeh: 2 },
+    breath: { amplitude: 0.012, phase: 'rows' },
+  };
+  const drive = { s: 0, on: false };
+  const size = (): { width: number; height: number } => ({ width: stage.size.width, height: stage.size.height });
+  const ctxNow = (): SectionGLContext => {
+    const s = size();
+    return { prev: CODE, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s };
+  };
+
+  const setup = familyGL.setup;
+  if (setup === undefined) throw new Error('familyGL has no setup');
+  const handle: SectionGLHandle = setup(world);
+  addTick((tick: Tick) => {
+    if (drive.on) handle.update(drive.s, tick, ctxNow());
+  }, PRIORITY.scroll);
+
+  // The ink state the choreography sets for an ink section.
+  blocks.setMix(1);
+  lighting.setMix(1);
+  post.setMix(1);
+  background.setTheme('ink');
+  post.setDof(null);
+
+  drive.on = true;
+  handle.setActive(true, ctxNow());
+  await boot.compile();
+
+  const portrait = stage.size.width < stage.size.height;
+  const rm = env.reducedMotion;
+  const tol = rm ? 1e-3 : 0.0125;
+  const scratch = new THREE.Matrix4();
+  const aAxis = portrait ? 0 : 1;
+
+  function blockPos(i: number): [number, number, number] {
+    blocks.mesh.getMatrixAt(i, scratch);
+    const e = scratch.elements;
+    return [e[12], e[13], e[14]];
+  }
+
+  function formationError(id: FormationId): number {
+    const target = formationFor(id, portrait);
+    let worst = 0;
+    for (let i = 0; i < BLOCK_COUNT; i += 1) {
+      const got = blockPos(i);
+      const want = target[i].p;
+      for (let c = 0; c < 3; c += 1) worst = Math.max(worst, Math.abs(got[c] - want[c]));
+    }
+    return worst;
+  }
+
+  function expectedKey(name: 'hero' | 'family'): CameraKey {
+    return cameraKey(name, size());
+  }
+
+  function groupsNamed(name: string): number {
+    return scene.children.filter((o) => o.name === name).length;
+  }
+
+  const line = scene.getObjectByName('family-phantoms');
+  const group = scene.getObjectByName('family-phantom-group');
+  check('one phantom group is in the scene (no other choreography builds handles)', groupsNamed('family-phantom-group') === 1, `groups=${groupsNamed('family-phantom-group')}`);
+  const phantoms = line instanceof THREE.LineSegments ? line : null;
+  const distAttr = phantoms?.geometry.getAttribute('lineDistance');
+  const distance = distAttr instanceof THREE.BufferAttribute ? (distAttr.array as Float32Array) : null;
+  const positions = phantoms?.geometry.getAttribute('position');
+  const material = phantoms?.material;
+
+  check('boot collects the family SectionGL object', boot.sections.includes(familyGL));
+  check('one group in the scene holds the phantom outlines', group !== undefined && phantoms !== null);
+  if (phantoms === null || group === undefined || distance === null || positions === undefined) {
+    check('the phantom outlines exist to be checked', false);
+  } else {
+    // Snapshot before any run: the offset is zero until a hover starts one.
+    const base = Float32Array.from(distance);
+    const verts = 72;
+
+    check('the phantoms are one LineSegments with 216 vertices (36 segments per outline)', positions.count === 216, `count=${positions.count}`);
+    check('the lineDistance attribute matches the vertex count', distance.length === 216, `length=${distance.length}`);
+    check(
+      'the material is a LineDashedMaterial, dash 0.17 and gap 0.07, opaque, no depth write',
+      material instanceof THREE.LineDashedMaterial &&
+        Math.abs(material.dashSize - 0.17) < 1e-9 &&
+        Math.abs(material.gapSize - 0.07) < 1e-9 &&
+        material.transparent === false &&
+        material.depthWrite === false,
+    );
+    check(
+      'the phantom colour is #75705F',
+      material instanceof THREE.LineDashedMaterial && material.color.getHex() === 0x75705f,
+      material instanceof THREE.LineDashedMaterial ? `hex=${material.color.getHexString()}` : 'no dashed material',
+    );
+
+    // Outline 0 (Slower, x -10.5) spans x -13.46 to -7.54; outline 2 (Fast, x +3.5) spans 0.54 to 6.46.
+    const bounds = (first: number): number[] => {
+      const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+      for (let v = first; v < first + verts; v += 1) {
+        for (let c = 0; c < 3; c += 1) {
+          const value = positions.getComponent(v, c);
+          b[c] = Math.min(b[c], value);
+          b[c + 3] = Math.max(b[c + 3], value);
+        }
+      }
+      return b;
+    };
+    const b0 = bounds(0);
+    const b2 = bounds(2 * verts);
+    const nearly = (a: number, b: number): boolean => Math.abs(a - b) < 1e-4;
+    check(
+      'outline 0 spans x -13.46 to -7.54, y +-1.40, z +-0.23',
+      nearly(b0[0], -13.46) && nearly(b0[3], -7.54) && nearly(b0[1], -1.4) && nearly(b0[4], 1.4) && nearly(b0[2], -0.23) && nearly(b0[5], 0.23),
+      `bounds=${b0.map((v) => v.toFixed(4)).join(',')}`,
+    );
+    check(
+      'outline 2 spans x 0.54 to 6.46',
+      nearly(b2[0], 0.54) && nearly(b2[3], 6.46),
+      `bounds=${b2.map((v) => v.toFixed(4)).join(',')}`,
+    );
+
+    // The front loop is one chain: each segment starts where the previous one ended, and the loop is ~17.377 bu.
+    let chained = true;
+    for (let k = 1; k < 16; k += 1) {
+      if (distance[2 * k] !== distance[2 * k - 1]) chained = false;
+    }
+    check('the front loop lineDistance runs continuously along its 16 segments', chained);
+    check(
+      'the front loop length is the outline perimeter (17.377 bu)',
+      Math.abs(distance[31] - 17.377) < 0.01,
+      `length=${distance[31].toFixed(4)}`,
+    );
+
+    // Entry start: p 0 is the recede formation and the hero key, and the phantom group stays hidden.
+    drive.s = 0;
+    await frames(4);
+    // Under reduced motion every entry is complete at once (C14), so p 0 already holds the family formation and key.
+    const startId: FormationId = rm ? 'family' : 'recede';
+    const startError = formationError(startId);
+    check(
+      rm ? 'reduced motion: p 0 already holds the family formation' : 'p 0 holds the recede formation',
+      startError <= tol,
+      `maxError=${startError.toFixed(5)}`,
+    );
+    const startCam = expectedKey(rm ? 'family' : 'hero');
+    const cam0 = camera.position;
+    check(
+      rm ? 'reduced motion: p 0 already holds the family camera key' : 'p 0 holds the hero camera key',
+      Math.abs(cam0.x - startCam.position[0]) < CAMERA_TOL &&
+        Math.abs(cam0.y - startCam.position[1]) < CAMERA_TOL &&
+        Math.abs(cam0.z - startCam.position[2]) < CAMERA_TOL,
+      `camera=${cam0.x.toFixed(3)},${cam0.y.toFixed(3)},${cam0.z.toFixed(3)}`,
+    );
+    check(
+      rm ? 'reduced motion shows the phantoms at p 0 (static, section current)' : 'the phantoms are hidden at p 0',
+      group.visible === rm,
+      `visible=${group.visible}`,
+    );
+
+    // Mid-entry: the kireji leads, so its share of the way is larger than block 0's (its stagger position is 0).
+    drive.s = 0.25;
+    await frames(4);
+    const recede = formationFor('recede', portrait);
+    const family = formationFor('family', portrait);
+    const share = (i: number): number => {
+      const got = blockPos(i);
+      const from = recede[i].p;
+      const to = family[i].p;
+      const span = Math.hypot(to[0] - from[0], to[1] - from[1], to[2] - from[2]);
+      const moved = Math.hypot(got[0] - from[0], got[1] - from[1], got[2] - from[2]);
+      return span === 0 ? 1 : moved / span;
+    };
+    const kireji = share(4);
+    const outer = share(0);
+    if (!rm) {
+      check('mid-entry: the kireji (block 4) leads block 0', kireji > outer, `kireji=${kireji.toFixed(3)} block0=${outer.toFixed(3)}`);
+    } else {
+      check('reduced motion: mid-entry is already at rest', formationError('family') <= 1e-3);
+    }
+    check(
+      'mid-entry: the group is visible',
+      group.visible === true,
+      `visible=${group.visible}`,
+    );
+
+    // Rest: p 0.5 holds the family formation and the family camera key (phone x at +0.28 W(z)).
+    drive.s = 0.5;
+    await frames(6);
+    const restError = formationError('family');
+    check('p 0.5 holds the family formation', restError <= tol, `maxError=${restError.toFixed(5)}`);
+    const famCam = expectedKey('family');
+    const cam = camera.position;
+    // Decision D19.2 (act C6, A4), checked against the formula rather than the rig: x 0.28 of the visible width on a phone.
+    const specX = portrait ? 0.28 * 2 * cam.z * Math.tan((11 * Math.PI) / 180) * (stage.size.width / stage.size.height) : 0;
+    check(
+      'p 0.5: camera x is 0 on desktop and 0.28 of the visible width on a phone (D19.2)',
+      Math.abs(cam.x - specX) < CAMERA_TOL,
+      `x=${cam.x.toFixed(4)} want=${specX.toFixed(4)}`,
+    );
+    check(
+      'p 0.5 holds the family camera key',
+      Math.abs(cam.x - famCam.position[0]) < CAMERA_TOL &&
+        Math.abs(cam.y - famCam.position[1]) < CAMERA_TOL &&
+        Math.abs(cam.z - famCam.position[2]) < CAMERA_TOL,
+      `camera=${cam.x.toFixed(3)},${cam.y.toFixed(3)},${cam.z.toFixed(3)} want=${famCam.position.map((v) => v.toFixed(3)).join(',')}`,
+    );
+    check(
+      'the phantom group is visible at rest',
+      group.visible === true && Math.abs(group.rotation.z - (portrait ? PORTRAIT_TURN : 0)) < 1e-9,
+      `rotZ=${group.rotation.z.toFixed(4)}`,
+    );
+
+    // Portrait: far 120 while the family is current; desktop keeps 80.
+    const farNow = camera.far;
+    check(
+      portrait ? 'phone: the far plane is 120 while the family is current' : 'desktop: the far plane stays 80',
+      farNow === (portrait ? 120 : 80),
+      `far=${farNow}`,
+    );
+
+    // Breath (not reduced motion): block 0 moves on y once the hold has passed; reduced motion holds still.
+    const samples: number[] = [];
+    const remove = addTick(() => {
+      // The breath moves world y in every layout (the blocks API), so the sample is y even on a phone.
+      samples.push(blockPos(0)[1]);
+    }, PRIORITY.glRender + 2);
+    await frames(14);
+    remove();
+    const lo = Math.min(...samples);
+    const hi = Math.max(...samples);
+    if (rm) {
+      check('reduced motion: no breath, block 0 holds still', hi - lo < 1e-6, `range=${(hi - lo).toExponential(2)}`);
+    } else {
+      check('the rows breathe once at rest (block 0 moves)', hi - lo > 0.008, `range=${(hi - lo).toFixed(4)} n=${samples.length}`);
+    }
+
+    // Haiku lift (fine pointer, and tap with toggle): the stanza moves 0.15 bu up its own axis, then back.
+    const rest0 = blockPos(0)[aAxis];
+    document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station: 3, toggle: false } }));
+    await frames(6);
+    const lifted = blockPos(0)[aAxis];
+    if (rm) {
+      check('reduced motion: station 3 does not lift', Math.abs(lifted - rest0) < 1e-6, `delta=${(lifted - rest0).toFixed(5)}`);
+    } else {
+      check(
+        'station 3 lifts the stanza 0.15 bu along its up axis',
+        Math.abs(lifted - rest0 - LIFT) < 0.03,
+        `delta=${(lifted - rest0).toFixed(4)}`,
+      );
+    }
+    document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station: null } }));
+    await frames(6);
+    const back = blockPos(0)[aAxis];
+    check(
+      'a null event returns the lift to rest',
+      Math.abs(back - rest0) < 0.03,
+      `delta=${(back - rest0).toFixed(4)}`,
+    );
+
+    // Dash run (fine pointer): station 0 runs outline 0 only, and stopping holds the offset.
+    document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station: 0 } }));
+    await frames(8);
+    const running = Float32Array.from(distance);
+    const offsetOf = (first: number): number => running[first] - base[first];
+    if (rm) {
+      check('reduced motion: station 0 runs no dash', running.every((v, i) => Math.abs(v - base[i]) < 1e-7));
+    } else {
+      const off0 = offsetOf(0);
+      let uniform = true;
+      for (let v = 0; v < verts; v += 1) {
+        if (Math.abs(offsetOf(v) - off0) > 1e-5) uniform = false;
+      }
+      check('station 0 runs outline 0 (its vertices move together)', off0 > 1e-3 && uniform, `offset=${off0.toFixed(4)}`);
+      check('the run offset stays within one dash period', off0 >= 0 && off0 < PERIOD, `offset=${off0.toFixed(4)}`);
+      let others = true;
+      for (let v = verts; v < 3 * verts; v += 1) {
+        if (Math.abs(running[v] - base[v]) > 1e-7) others = false;
+      }
+      check('station 0 leaves outlines 1 and 2 still', others);
+    }
+    document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station: null } }));
+    await frames(2);
+    const held = Float32Array.from(distance);
+    await frames(3);
+    const held2 = Float32Array.from(distance);
+    let same = true;
+    for (let v = 0; v < held.length; v += 1) {
+      if (Math.abs(held[v] - held2[v]) > 1e-7) same = false;
+    }
+    check('a null event stops the run and the offset holds', same);
+
+    // Events after the section leaves are ignored, and setActive(false) tidies the world.
+    handle.setActive(false, ctxNow());
+    drive.on = false;
+    await wait(50);
+    check('setActive(false) hides the phantoms', group.visible === false);
+    check('setActive(false) restores the default far plane', camera.far === 80, `far=${camera.far}`);
+    drive.on = true;
+    handle.setActive(true, ctxNow());
+    drive.s = 0.5;
+    await frames(4);
+    check('setActive(true) again shows the phantoms at rest', group.visible === true);
+    check(
+      portrait ? 'phone: the far plane returns to 120' : 'desktop: the far plane is 80',
+      camera.far === (portrait ? 120 : 80),
+      `far=${camera.far}`,
+    );
+  }
+
+  // Dispose: a second handle adds its own group, and dispose removes exactly that group and its listener.
+  const extra = setup(world);
+  check('a second handle adds one more phantom group', groupsNamed('family-phantom-group') === 2, `groups=${groupsNamed('family-phantom-group')}`);
+  extra.dispose();
+  check('dispose removes its group and leaves the first', groupsNamed('family-phantom-group') === 1, `groups=${groupsNamed('family-phantom-group')}`);
+  document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station: 3 } }));
+  extra.update(0.5, { time: 0, dt: 0.016, frame: 0 }, ctxNow());
+  check('a disposed handle ignores update and events', groupsNamed('family-phantom-group') === 1);
+
+  const win = window as FamilyWindow;
+  win.__family = {
+    set(s: number): void {
+      drive.s = clamp01(s);
+    },
+    hover(station: number | null, toggle = false): void {
+      document.dispatchEvent(new CustomEvent('hk:family-hover', { detail: { station, toggle } }));
+    },
+  };
+  win.__familyReport = report;
+  drive.s = 0.5;
+  drive.on = true;
+  handle.setActive(true, ctxNow());
+  await frames(2);
+}
+
+main()
+  .catch((err: unknown) => {
+    const reason = err instanceof Error ? err.message : String(err);
+    report.failures.push(`harness: ${reason}`);
+    console.log(`FAIL harness :: ${reason}`);
+  })
+  .finally(() => {
+    const problems = [...report.failures, ...report.diagnostics];
+    root.dataset.harness = problems.length === 0 ? 'pass' : `fail:${problems.join('; ')}`;
+    console.log(`verdict ${root.dataset.harness.slice(0, 200)}`);
+  });

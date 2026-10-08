@@ -77,9 +77,13 @@ export const HAIKU_OFFSETS: readonly number[] = Object.freeze(
 );
 
 /**
- * Scrubbed stagger for scroll-driven transitions. Item i of count at global progress t in [0, 1]:
- * offset o_i = total * sqrt(i / (count - 1)) (item 0 at 0, items 1.. shifted by lead, never beyond
- * total + lead). Local progress = clamp((t - o_i) / (1 - o_max), 0, 1), so every item is exactly 1 at t = 1.
+ * Scrubbed stagger (direction.md heading 7). Local progress q in [0, 1] of position i in a scrubbed
+ * formation, for the normalised transition progress t in [0, 1]. The caller applies the named curve to q:
+ * settle for followers, anticipate for the kireji.
+ *   Position 0 is the lead: q = t / lead, clamped. It completes within the first lead of the transition.
+ *   A follower i >= 1 starts at o(i) = lead + total * sqrt((i - 1) / (count - 2)) and runs to t = 1:
+ *   q = (t - o(i)) / (1 - o(i)), clamped. With count 2, o = lead. With count 1, q = t.
+ * Every item is 0 at t = 0 and 1 at t = 1.
  */
 export function scrubLocal(
   i: number,
@@ -89,16 +93,16 @@ export function scrubLocal(
 ): number {
   const total = opts?.total ?? 0.35;
   const lead = opts?.lead ?? 0.1;
-  const offsetOf = (k: number): number => {
-    if (k <= 0 || count <= 1) return 0;
-    return Math.min(total * Math.sqrt(k / (count - 1)) + lead, total + lead);
-  };
-  let oMax = 0;
-  for (let k = 1; k < count; k++) oMax = Math.max(oMax, offsetOf(k));
-  const o = offsetOf(i);
-  const span = 1 - oMax;
-  if (span <= 0) return t >= o ? 1 : 0;
-  return Math.min(1, Math.max(0, (t - o) / span));
+  const clamp = (v: number): number => Math.min(1, Math.max(0, v));
+  if (count <= 1) return clamp(t);
+  if (i <= 0) {
+    if (lead <= 0) return t > 0 ? 1 : 0;
+    return clamp(t / lead);
+  }
+  const start = count === 2 ? lead : lead + total * Math.sqrt((i - 1) / (count - 2));
+  const span = 1 - start;
+  if (span <= 0) return t >= 1 ? 1 : 0;
+  return clamp((t - start) / span);
 }
 
 /** For QA: 1 - gap / duration for each consecutive pair of offsets (gap = next - previous). */

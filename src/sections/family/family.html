@@ -1,0 +1,92 @@
+<section id="family" class="section section--family" data-theme="ink" data-act="2" data-cursor="datum" aria-labelledby="family-title">
+  <div class="family__stage" data-layout="wide">
+    <div class="gl-fallback family__fallback" aria-hidden="true">
+      <svg class="family__svg" viewBox="-14 -4 28 8" focusable="false">
+        <g class="family__stanzas">
+          <g class="family__phantoms">
+            <rect x="-13.46" y="-1.4" width="5.92" height="2.8" rx="0.035"/>
+            <rect x="-6.46" y="-1.4" width="5.92" height="2.8" rx="0.035"/>
+            <rect x="0.54" y="-1.4" width="5.92" height="2.8" rx="0.035"/>
+          </g>
+          <g class="family__blocks">
+            <rect x="8.41" y="-1.4" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="9.28" y="-1.4" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="10.15" y="-1.4" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="11.02" y="-1.4" width="0.7" height="0.7" rx="0.035"/>
+            <rect class="family__kireji" x="11.89" y="-1.4" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="7.54" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="8.41" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="9.28" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="10.15" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="11.02" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="11.89" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="12.76" y="-0.35" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="8.41" y="0.7" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="9.28" y="0.7" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="10.15" y="0.7" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="11.02" y="0.7" width="0.7" height="0.7" rx="0.035"/>
+            <rect x="11.89" y="0.7" width="0.7" height="0.7" rx="0.035"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="family__head">
+      <p class="t-label family__kicker">Family</p>
+      <h2 class="t-display-xl family__title" id="family-title">Four models, by&nbsp;latency</h2>
+      <p class="t-lede family__intro">The product page says a more intelligent model like Fable or Opus can plan the work and hand off subtasks to Haiku, making it practical to run many agents in parallel.</p>
+    </div>
+
+    <p class="t-label family__axis-title" id="family-axis-title">Comparative latency</p>
+
+    <div class="family__axis" aria-hidden="true">
+      <span class="family__axis-line"></span>
+      <span class="family__tick"></span>
+      <span class="family__tick"></span>
+      <span class="family__tick"></span>
+      <span class="family__tick"></span>
+      <span class="family__tick"></span>
+      <span class="family__tick"></span>
+      <span class="t-label family__axis-label" data-role="sibling">Slower</span>
+      <span class="t-label family__axis-label" data-role="sibling">Moderate</span>
+      <span class="t-label family__axis-label" data-role="sibling">Fast</span>
+      <span class="t-label family__axis-label" data-role="haiku">Fastest</span>
+    </div>
+
+    <ul class="family__stations" aria-labelledby="family-axis-title">
+      <li class="family__station" data-station="0" data-role="sibling">
+        <h3 class="t-heading family__name">Claude&nbsp;Fable&nbsp;5.1</h3>
+        <p class="t-label family__latency">Slower</p>
+        <p class="t-small family__desc">For demanding reasoning and long-horizon agentic work</p>
+        <p class="t-label family__price"><span>$10 / input MTok,</span>
+          <span>$50 / output MTok</span></p>
+      </li>
+      <li class="family__station" data-station="1" data-role="sibling">
+        <h3 class="t-heading family__name">Claude&nbsp;Opus&nbsp;5.5</h3>
+        <p class="t-label family__latency">Moderate</p>
+        <p class="t-small family__desc">For long-running agentic coding and knowledge work</p>
+        <p class="t-label family__price"><span>$4 / input MTok,</span>
+          <span>$20 / output MTok</span></p>
+      </li>
+      <li class="family__station" data-station="2" data-role="sibling">
+        <h3 class="t-heading family__name">Claude&nbsp;Sonnet&nbsp;5.5</h3>
+        <p class="t-label family__latency">Fast</p>
+        <p class="t-small family__desc">The best combination of speed and intelligence</p>
+        <p class="t-label family__price"><span>$2 / input MTok,</span>
+          <span>$10 / output MTok</span></p>
+      </li>
+      <li class="family__station" data-station="3" data-role="haiku">
+        <h3 class="t-heading family__name">Claude&nbsp;Haiku&nbsp;5.5</h3>
+        <p class="t-label family__latency">Fastest</p>
+        <p class="t-small family__desc">For high-volume, latency-sensitive tasks such as classification, extraction, and routing</p>
+        <p class="t-label family__price"><span>From $0.10 / input MTok,</span>
+          <span>From $0.50 / output MTok</span></p>
+      </li>
+    </ul>
+
+    <div class="family__notes">
+      <p class="t-small family__note">Relative to the current lineup. Actual latency depends on prompt length, output length, and thinking effort.</p>
+      <p class="t-small family__note">For prompts up to 100K tokens, it is $0.10 per million input tokens and $0.50 per million output tokens.</p>
+    </div>
+  </div>
+</section>

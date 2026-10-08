@@ -1,13 +1,15 @@
 // Harness for src/gl/rig.ts (direction-3d.md sections 10.6 and 11.2; architecture section 10a).
 // Open /harness/rig.html on the dev server. The verdict lands in dataset.harness: 'pass' or
-// 'fail:<reason>'. The numeric checks cover the 1440 x 900 and 375 x 812 keys whatever the page size.
+// 'fail:<reason>'. The numeric checks cover the 1440 x 900 and 375 x 812 keys and the family station
+// centres (D19.2), whatever the page size.
 // The live scene uses the page's own viewport: the 17 blocks of the stanza formation, drawn as plain
 // boxes at the hero key through the shared ticker, the stage and the rig. window.rigHarness.showBlend(t)
 // blends hero to speed at t and resolves once that frame is drawn, for the second screenshot.
 import * as THREE from 'three';
 import { ef } from '../src/core/ease';
+import { stationCenters } from '../src/core/projection';
 import { addTick, initTicker, PRIORITY, type Tick } from '../src/core/ticker';
-import { BLOCK, BLOCK_COUNT, FORMATIONS } from '../src/gl/blocks/formations';
+import { BLOCK, BLOCK_COUNT, FAMILY_STATION_X, FORMATIONS } from '../src/gl/blocks/formations';
 import { cameraKey, createRig, FIT, type Rig } from '../src/gl/rig';
 import type { CameraKey, KeyName } from '../src/gl/section-gl';
 import { createStage, type Stage } from '../src/gl/stage';
@@ -36,6 +38,7 @@ function check(name: string, ok: boolean, detail = ''): void {
 const KEYS: readonly KeyName[] = ['hero', 'speed', 'pricing', 'closing', 'family'];
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 375, height: 812 };
+const PHONE_390 = { width: 390, height: 844 };
 const TOL = 0.01;
 
 const fmt = (v: number): string => v.toFixed(4);
@@ -46,7 +49,8 @@ interface Expected {
   y: number;
 }
 
-// Values from direction-3d.md section 10.6. The phone speed key is the D15.1 height fit.
+// Values from direction-3d.md section 10.6. The phone speed key is the D15.1 height fit, and the phone
+// family key carries the D19.2 offset of 0.28 W (4.02 bu at 375 x 812).
 const EXPECTED: Readonly<Record<'desktop' | 'phone', Readonly<Record<KeyName, Expected>>>> = {
   desktop: {
     hero: { z: 21.15, x: -2.89, y: 0 },
@@ -60,7 +64,7 @@ const EXPECTED: Readonly<Record<'desktop' | 'phone', Readonly<Record<KeyName, Ex
     speed: { z: 51.12, x: 0, y: 0 },
     pricing: { z: 69.54, x: 0, y: 0 },
     closing: { z: 14.6, x: 0, y: 0 },
-    family: { z: 80.03, x: 0, y: 0 },
+    family: { z: 80.03, x: 4.02, y: 0 },
   },
 };
 
@@ -101,6 +105,51 @@ function checkOffsetFollowsAspect(): void {
       `x ${fmt(k.position[0])} against -0.22 W(z) = ${fmt(-0.22 * visible)}`,
     );
   }
+}
+
+/**
+ * D19.2: the phone family camera moves right by 0.28 of the viewport width, so every station centre sits
+ * that far left of the centre line. A station's height follows the pinhole model at the family distance z,
+ * with a scale of H / (2 tan 11 deg z) px per bu: y = H / 2 + x x scale. The desktop stations stay centred.
+ */
+function checkStations(): void {
+  const tan11 = Math.tan((11 * Math.PI) / 180);
+  for (const size of [PHONE, PHONE_390]) {
+    const { width, height } = size;
+    const zPhone = cameraKey('family', size).position[2];
+    const perBuPhone = height / (2 * tan11 * zPhone);
+    const stations = stationCenters(size);
+    const wantX = width / 2 - 0.28 * width;
+    let worst = 0;
+    stations.forEach((p, i) => {
+      worst = Math.max(worst, Math.abs(p.x - wantX), Math.abs(p.y - (height / 2 + FAMILY_STATION_X[i] * perBuPhone)));
+    });
+    const leftOfCentre = stations.every((p) => p.x < width / 2);
+    check(
+      `stations ${width}x${height} left of centre by 0.28 W`,
+      leftOfCentre && worst <= TOL,
+      `x ${stations.map((p) => fmt(p.x)).join(' ')} (want ${fmt(wantX)} = ${width / 2} - 0.28 x ${width}) ` +
+        `y ${stations.map((p) => fmt(p.y)).join(' ')} (worst error ${worst.toExponential(1)} px)`,
+    );
+  }
+
+  const zDesk = cameraKey('family', DESKTOP).position[2];
+  const perBuDesk = DESKTOP.height / (2 * tan11 * zDesk);
+  const desk = stationCenters(DESKTOP);
+  let deskWorst = 0;
+  desk.forEach((p, i) => {
+    deskWorst = Math.max(
+      deskWorst,
+      Math.abs(p.x - (DESKTOP.width / 2 + FAMILY_STATION_X[i] * perBuDesk)),
+      Math.abs(p.y - DESKTOP.height / 2),
+    );
+  });
+  check(
+    'stations 1440x900 centred, unchanged',
+    deskWorst <= TOL,
+    `x ${desk.map((p) => fmt(p.x)).join(' ')} y ${desk.map((p) => fmt(p.y)).join(' ')} ` +
+      `(worst error ${deskWorst.toExponential(1)} px)`,
+  );
 }
 
 /** The blend and the projection rules, run synchronously so no frame interleaves with the checks. */
@@ -219,6 +268,7 @@ async function main(): Promise<void> {
   checkTable('desktop', DESKTOP);
   checkTable('phone', PHONE);
   checkOffsetFollowsAspect();
+  checkStations();
 
   const stage = createStage(canvas);
   const rig = createRig(stage);

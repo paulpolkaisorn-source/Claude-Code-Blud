@@ -1,0 +1,154 @@
+/*
+ * The custom cursor (src/core/cursor.ts). Owner: interaction.
+ *
+ * The forms are DOM elements in the cursor layer (base.css: fixed, z-index 50, pointer-events none). The tick moves each
+ * one with a transform, and each shows or hides with opacity. Colours and timings are tokens (direction.md headings 3, 7
+ * and 9). Sizes follow the spacing scale where a size is one of its steps: 5 px is sp-1, 7 px sp-2 and 12 px sp-3.
+ */
+
+.cursor-forms {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Every form is hidden until its class is-on is set. A shape change is a cut over T.snap (heading 7). */
+.cursor-form {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-snap) var(--ease-cut);
+}
+
+.cursor-form.is-on {
+  opacity: 1;
+}
+
+/* The datum and the block label swap with a cut over T.flick (heading 7, cursor label swap). */
+.cursor-datum,
+.cursor-block-label,
+.cursor-tap {
+  transition-duration: var(--t-flick);
+}
+
+/* Label style (direction.md heading 4): Geist Mono, uppercase, one line, text-1 here. */
+.cursor-text {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  letter-spacing: var(--ls-label);
+  font-weight: var(--fw-label);
+  font-feature-settings: normal;
+  font-variant-ligatures: none;
+  font-kerning: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-1);
+}
+
+/* Datum: two 1 px lines, each made of two 12 px arms that start 5 px from the pointer, so the centre stays open. */
+.cursor-datum {
+  width: 0;
+  height: 0;
+}
+
+.cursor-arm {
+  position: absolute;
+  background: var(--text-1);
+}
+
+.cursor-arm--h {
+  top: 0;
+  width: var(--sp-3);
+  height: 1px;
+}
+
+.cursor-arm--v {
+  left: 0;
+  width: 1px;
+  height: var(--sp-3);
+}
+
+.cursor-arm--l {
+  left: calc(var(--sp-1) * -1 - var(--sp-3));
+}
+
+.cursor-arm--r {
+  left: var(--sp-1);
+}
+
+.cursor-arm--u {
+  top: calc(var(--sp-1) * -1 - var(--sp-3));
+}
+
+.cursor-arm--d {
+  top: var(--sp-1);
+}
+
+/* Caliper: a 1 px tick, a 1 px dimension line (scaled along x from its left edge) and the value label above it. */
+.cursor-caliper {
+  width: 0;
+  height: 0;
+}
+
+.cursor-caliper-tick,
+.cursor-caliper-dim,
+.cursor-ruler-tick {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--text-1);
+}
+
+.cursor-caliper-tick {
+  width: 1px;
+  height: var(--sp-3);
+}
+
+.cursor-caliper-dim {
+  width: 1px;
+  height: 1px;
+  transform-origin: 0 0;
+}
+
+/* Marker: a 7 px square in seal-ink, centred on the pointer. */
+.cursor-marker {
+  width: var(--sp-2);
+  height: var(--sp-2);
+  background: var(--seal-ink);
+}
+
+/* Ruler: a 1 px tick 12 px wide, and the block number 7 px past its right end. */
+.cursor-ruler {
+  width: 0;
+  height: 0;
+}
+
+.cursor-ruler-tick {
+  width: var(--sp-3);
+  height: 1px;
+}
+
+/*
+ * The owning section hides the system cursor only while a custom form is shown on it (direction.md heading 9).
+ * cursor is inherited, so the interactive descendants of that section set their own pointer. Nothing here touches the
+ * document, and nothing applies while no form is shown.
+ */
+[data-cursor-form] {
+  cursor: none;
+}
+
+[data-cursor-form] :is(a, button, [role="button"]) {
+  cursor: pointer;
+}
+
+[data-cursor-form] :is(input, textarea, pre, code, [data-cursor="native"]) {
+  cursor: auto;
+}

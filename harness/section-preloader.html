@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Harness: section preloader</title>
+    <!-- @include src/partials/head-env.html -->
+    <link rel="stylesheet" href="/src/styles/fonts.css" />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <style>
+      /* Harness only: one viewport of blank page before and after the zero-height section, so that its top can be
+         scrolled to the top, middle and bottom of the viewport. */
+      .harness-spacer {
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="harness-spacer" aria-hidden="true"></div>
+    <!-- @include src/sections/preloader/preloader.html -->
+    <div class="harness-spacer" aria-hidden="true"></div>
+    <script type="module" src="/harness/section-preloader.ts"></script>
+  </body>
+</html>

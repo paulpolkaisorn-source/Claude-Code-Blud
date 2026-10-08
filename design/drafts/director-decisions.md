@@ -121,3 +121,10 @@ The canvas sits behind main (z-index 0), so an opaque CSS section background hid
 2. Phone family camera x is +4.02 bu (0.28 x W(z) at the phone family key), so the station label blocks fit to the right of the vertical axis. Desktop family x stays 0. src/gl/rig.ts cameraKey('family') must return this on phones; src/core/projection.ts stationCenters follows cameraKey automatically.
 3. Act III five-item groups get a lead: the first item starts T.micro before the others and uses cut, the followers settle (direction.md heading 8 rule 1).
 4. D16 wins over direction-act2.md where they differ: the code request is up to 11 lines (D16.1), and the family title is "Four models, by latency" with the kicker "Family" (D16.4).
+
+## D20. 2D labels and 3D objects stay locked together on screen (integration review)
+
+The canvas is fixed and the DOM scrolls. Any 2D element that labels or annotates a 3D object must stay on its object at every scroll position, not only at one rest progress.
+1. Family: DOM-anchored 3D. The family GL handle reads the screen y of the station label row (the 2D layer exposes it as the element [data-anchor="family-stations"]; read its rect once per frame, it is a single getBoundingClientRect on a cached element) and offsets the family group (blocks group and phantom outlines) in world y so the stations sit at their label positions: dy_bu = dy_px / pxPerBu at the family plane (pxPerBu from projection of a 1 bu segment at z 0 with the current camera). The same offset drives the vertical axis on phones (x and y swap per the portrait rotation). The 3D therefore scrolls with the page through the section; the entry move (formation and camera) still follows p.
+2. Hero annotations (05, 07, 05, 17, the dimension line) and the speed race dimension line live in a fixed overlay layer positioned from the projection each frame, or are compensated for scroll, so they never drift off their blocks. Whichever the section uses, verify at s = 0, 0.25, 0.5 and 1.
+3. Chromatic aberration must be exactly 0 px at rest (scroll velocity below 40 px/s, D2.5). Fringes on block or outline edges in a still screenshot are a bug.

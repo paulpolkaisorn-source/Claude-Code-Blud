@@ -1,18 +1,19 @@
 // Harness for src/sections/code/gl.ts (direction-act2.md section 12, code; direction-3d.md sections 10.6,
 // 10.8, 10.12, 10.13 and 11.7). Open /harness/gl-code.html on the dev server.
 //
-// The page builds the GL world with the factories of src/gl/boot.ts, in the same order, and drives the
-// code handle the way the choreography will: while the handle is active, every frame calls
-// update(progress) with the progress the driver has set. The checks run on load and set
-// dataset.harness to 'pass' or 'fail:<check ids>'. window.codeHarness lets the Playwright driver set the
-// progress, read the group offset and count quality steps, and it takes the screenshots.
+// The default page builds the GL world with createWorld from src/gl/boot.ts, so the real boot path (its shared
+// objects, its quality watchdog and its discovery of src/sections/*/gl.ts) is what gets checked. The quality
+// watchdog can take its first step, depth of field off, once the software GL has run for a minute or two, and
+// that step is one-way. The depth-of-field pictures therefore come from ?manual, which builds the same world
+// with the same factories in the same order, without initQuality.
 //
-// Why the default build leaves out the quality watchdog. createWorld starts src/gl/quality.ts, which
-// steps depth of field off (once, and for good) whenever the median frame time is above 18.5 ms. Under
-// the software GL of this environment that happens within seconds, and boot has no switch for it, so
-// the depth-of-field screenshots would lose their pass. The default build is createWorld without
-// initQuality. ?boot runs createWorld itself, so the real boot path is checked too, and the quality
-// steps it takes are reported.
+// In both builds the boot choreography is replaced by one with no sections, because this page has no section
+// elements. The checks drive the code handle directly: each frame, its update(progress) is called with the
+// progress the driver has set, while the handle is active, as the choreography will call it.
+//
+// The checks run on load and set dataset.harness to 'pass' or 'fail:<check ids>'. window.codeHarness lets the
+// Playwright driver set the progress, freeze the composer for a screenshot, read the group offset and count
+// quality steps.
 import * as THREE from 'three';
 import { ef } from '../src/core/ease';
 import { bus } from '../src/core/bus';
@@ -20,21 +21,23 @@ import { env, onReducedMotionChange } from '../src/core/env';
 import { initPointer } from '../src/core/pointer';
 import { addTick, initTicker, PRIORITY, type Tick } from '../src/core/ticker';
 import { T, scrubLocal } from '../src/core/timing';
-import { createBackground } from '../src/gl/background/background';
 import { createWorld } from '../src/gl/boot';
+import { BLOCK_COUNT, FORMATIONS, STAGGER_ORDER, lerpPose, type Pose } from '../src/gl/blocks/formations';
+import { createBackground } from '../src/gl/background/background';
 import { Blocks } from '../src/gl/blocks/blocks';
 import { createBlockMaterial } from '../src/gl/blocks/material';
-import { BLOCK_COUNT, FORMATIONS, STAGGER_ORDER, lerpPose, type Pose } from '../src/gl/blocks/formations';
 import { createLighting } from '../src/gl/lighting';
 import { createPost } from '../src/gl/post';
 import { cameraKey, createRig } from '../src/gl/rig';
-import type { GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
 import { createStage } from '../src/gl/stage';
+import type { GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
+import { initChoreo } from '../src/choreo/timeline';
 import { codeGL } from '../src/sections/code/gl';
 
 interface CodeHarness {
   mode: 'manual' | 'boot';
   set(next: { s?: number; dof?: boolean; active?: boolean }): Promise<void>;
+  freeze(on: boolean): void;
   groupOffset(): number[];
   env(): { finePointer: boolean; touch: boolean; reducedMotion: boolean; tier: string };
   qualitySteps(): number;
@@ -48,7 +51,6 @@ declare global {
 }
 
 const root = document.documentElement;
-const bootMode = new URLSearchParams(window.location.search).has('boot');
 const failed: string[] = [];
 let passed = 0;
 let skipped = 0;
@@ -103,7 +105,7 @@ function frames(n: number): Promise<void> {
   });
 }
 
-/** The GL world the way src/gl/boot.ts builds it, without the quality watchdog (see the header). */
+/** The GL world the way src/gl/boot.ts builds it, with the same factories in the same order and no initQuality. */
 function buildWorld(canvas: HTMLCanvasElement): GLWorld {
   const stage = createStage(canvas);
   const lighting = createLighting(stage);
@@ -226,15 +228,22 @@ async function main(): Promise<void> {
     qualitySteps += 1;
   });
 
+  // boot starts the choreography over the page's sections. This page has none, and the checks below drive
+  // the code handle themselves, so the boot choreography is replaced by one with no sections (a later
+  // initChoreo disposes the earlier one, as its header says).
+  const manual = new URLSearchParams(window.location.search).has('manual');
   let world: GLWorld;
-  if (bootMode) {
-    const boot = createWorld(canvas);
-    world = boot.world;
-    await boot.compile();
-  } else {
+  let discovered = false;
+  if (manual) {
     world = buildWorld(canvas);
     await world.stage.renderer.compileAsync(world.stage.scene, world.stage.camera);
     await frames(1);
+  } else {
+    const boot = createWorld(canvas);
+    world = boot.world;
+    discovered = boot.sections.some((section) => section === codeGL);
+    initChoreo(world, []);
+    await boot.compile();
   }
   const { stage, blocks, post } = world;
 
@@ -268,9 +277,17 @@ async function main(): Promise<void> {
     await frames(2);
   }
 
+  // Screenshots: the composer draw is paused while the driver takes a picture, so the canvas keeps the last
+  // frame drawn in the state the page holds. Software GL frames are slow enough to stall a screenshot otherwise.
+  function freeze(on: boolean): void {
+    if (on) stage.setRenderHook(() => undefined);
+    else stage.setRenderHook(() => post.composer.render(1 / 60));
+  }
+
   window.codeHarness = {
-    mode: bootMode ? 'boot' : 'manual',
+    mode: manual ? 'manual' : 'boot',
     set: setState,
+    freeze,
     groupOffset: () => [blocks.group.position.x, blocks.group.position.y, blocks.group.position.z],
     env: () => ({ finePointer: env.finePointer, touch: env.touch, reducedMotion: env.reducedMotion, tier: env.tier }),
     qualitySteps: () => qualitySteps,
@@ -298,6 +315,9 @@ async function main(): Promise<void> {
       codeGL.exitFormation === undefined &&
       typeof codeGL.setup === 'function',
   );
+
+  if (manual) skip('boot discovers the code layer', 'manual build');
+  else check('boot discovers the code layer from src/sections/code/gl.ts', discovered);
 
   if (env.reducedMotion) {
     // Reduced motion: the recede is complete at once, with no breath, whatever the progress.
@@ -346,9 +366,9 @@ async function main(): Promise<void> {
     // Breath: starts T.hold after the recede arrives, at 0.012 bu, with the row phases. Its gain eases on the
     // clamped tick dt, so the check waits for frames rather than seconds, and keeps the largest offset seen.
     await delay(T.hold + 0.5);
-    await frames(30);
+    await frames(12);
     let breathY = 0;
-    for (let k = 0; k < 20; k += 1) {
+    for (let k = 0; k < 8; k += 1) {
       await frames(1);
       breathY = Math.max(breathY, maxYOffset(blocks, recede));
     }
@@ -388,7 +408,7 @@ async function main(): Promise<void> {
   );
 
   const failures = failed.length === 0 ? 'pass' : `fail:${failed.join(', ')}`;
-  console.log(`harness: ${passed} passed, ${failed.length} failed, ${skipped} skipped (mode ${bootMode ? 'boot' : 'manual'})`);
+  console.log(`harness: ${passed} passed, ${failed.length} failed, ${skipped} skipped (${manual ? 'manual' : 'boot'} build)`);
   root.dataset.harness = failures;
 }
 

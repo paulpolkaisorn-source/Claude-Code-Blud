@@ -1,0 +1,342 @@
+/*
+ * Speed, act I (design/direction-act1.md, speed). Owner: motion-2d. Scoped to #speed.
+ *
+ * The section is 300 svh of scroll (rule A3). Its first 185 svh is a pin: the stage is 100 svh and sticks to the top,
+ * so the copy holds for the first 0.85 vh of scroll while the race forms (0.25 of the section, rule A3), and then it
+ * scrolls away. Nothing is in the last 0.18 vh of the section (heading 8, rule 13). The race, its dimension line and
+ * its 17 label are in the object layer, fixed to the viewport and placed by projection P1 (rule A6), so they stay on
+ * the 3D blocks for the whole section.
+ *
+ * Portrait is the default (aspect below 1). Landscape is min-aspect-ratio 1/1, the same test that src/core/projection.ts
+ * and the GL rig use. Every value is a token, except the block material of the fallback, which is a 3D material value
+ * (direction.md heading 3).
+ */
+
+/* ---------- Section, pin and stage ---------- */
+
+#speed {
+  height: 300vh;
+  height: 300svh;
+  padding: 0;
+}
+
+#speed .speed-pin {
+  position: relative;
+  height: 185vh;
+  height: 185svh;
+}
+
+#speed .speed-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+}
+
+#speed .speed-grid {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  #speed .speed-grid {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+  }
+}
+
+/* No JavaScript: no scroll length and no pin. The copy reads down the page. */
+html:not(.js) #speed {
+  height: auto;
+}
+
+html:not(.js) #speed .speed-pin {
+  height: auto;
+}
+
+html:not(.js) #speed .speed-stage {
+  position: relative;
+  height: auto;
+  padding-block: var(--sp-6);
+}
+
+html:not(.js) #speed .speed-grid {
+  display: block;
+  height: auto;
+}
+
+html:not(.js) #speed .speed-kicker {
+  position: static;
+  margin-bottom: var(--sp-4);
+}
+
+html:not(.js) #speed .speed-head,
+html:not(.js) #speed .speed-panel {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  width: auto;
+  margin-bottom: var(--sp-6);
+}
+
+/* ---------- Placement of the text blocks ---------- */
+
+/* Portrait and phone (aspect below 1): one left band beside the race column and the example panel below it. The
+   head width comes from the column's left edge (speed-layer.ts). The panel is the head width from 600 px, and the full
+   width below that. */
+#speed .speed-head {
+  position: absolute;
+  top: 12vh;
+  top: 12svh;
+  left: var(--margin);
+  width: var(--speed-head-w, 50vw);
+}
+
+#speed .speed-panel {
+  position: absolute;
+  top: 58vh;
+  top: 58svh;
+  left: var(--margin);
+  right: var(--margin);
+  width: var(--speed-panel-w, auto);
+}
+
+/* Landscape (aspect 1 or wider): the head at 18 vh, the panel at 58 vh, and the grid columns from 768 px (A9, A10). */
+@media (min-aspect-ratio: 1/1) {
+  #speed .speed-head {
+    top: 18vh;
+    top: 18svh;
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+
+  #speed .speed-panel {
+    top: 58vh;
+    top: 58svh;
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+}
+
+/* Short landscape (820 px tall or less): the head moves up to 13 vh, so that its support line clears the top of the race
+   (measured at 1366 by 768, where the line touched the blocks at 18 vh). Taller viewports keep 18 vh (A10). */
+@media (min-aspect-ratio: 1/1) and (max-height: 820px) {
+  #speed .speed-head {
+    top: 13vh;
+    top: 13svh;
+  }
+}
+
+/* Tablet landscape: all speed text in columns 1 to 8. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #speed .speed-head,
+  #speed .speed-panel {
+    grid-column: 1 / 9;
+  }
+}
+
+/* Desktop landscape: all speed text in columns 1 to 6 (50.00 to 515.18 px at 1440). */
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  #speed .speed-head,
+  #speed .speed-panel {
+    grid-column: 1 / 7;
+  }
+}
+
+/* Phone landscape: the text in the left 47% of the width (A9). */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  #speed .speed-head {
+    left: var(--margin);
+    width: calc(47vw - var(--margin));
+  }
+
+  #speed .speed-panel {
+    left: var(--margin);
+    width: calc(47vw - var(--margin));
+  }
+}
+
+/* ---------- Copy ---------- */
+
+#speed .speed-kicker {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--sp-4));
+  color: var(--seal-text);
+}
+
+#speed .speed-title {
+  margin: 0;
+  color: var(--text-1);
+}
+
+/* The footnote marker, a superscript after the title, sits outside the split (A12 and A7). */
+#speed .speed-title__marker {
+  color: var(--seal-text);
+  vertical-align: super;
+  margin-inline-start: var(--sp-1);
+}
+
+/* Source note: 12 px (sp-3) below the title. Footnote: 7 px (sp-2) below the source note. Support: 12 px below the
+   footnote. Each settles from text-3 to text-2 (heading 4, entrance colour). */
+#speed .speed-source,
+#speed .speed-footnote,
+#speed .speed-support {
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+#speed .speed-source {
+  margin-top: var(--sp-3);
+}
+
+#speed .speed-footnote {
+  margin-top: var(--sp-2);
+}
+
+#speed .speed-support {
+  margin-top: var(--sp-3);
+}
+
+#speed .speed-footnote__marker {
+  color: var(--seal-text);
+  margin-inline-end: 0;
+}
+
+/* ---------- Example panel ---------- */
+
+#speed .speed-panel {
+  margin-block: 0;
+  margin-inline: 0;
+  padding: var(--sp-5);
+  background: var(--bg-raised);
+  border: 1px solid var(--rule-hair);
+  border-radius: 0;
+}
+
+#speed .speed-panel__label {
+  display: block;
+  margin: 0;
+}
+
+#speed .speed-panel__prompt {
+  margin-top: var(--sp-4);
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+/* The stream is code style, set at 8 lines of code (line-height 1.6) at minimum, and it wraps inside the panel (heading 4,
+   exception 10). The tokens are spans of one word with a trailing space. */
+#speed .speed-stream {
+  margin-top: var(--sp-3);
+  min-height: 12.8em;
+  color: var(--text-1);
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: normal;
+}
+
+/* The caret: 2 px wide, 1 em tall, seal-text, solid (A12). It follows the last token that has entered. */
+#speed .speed-tok.is-caret::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-inline-start: 1px;
+  vertical-align: -0.2em;
+  background: var(--seal-text);
+}
+
+/* ---------- Object layer: the race, its dimension line and label (fixed, placed by P1) ---------- */
+
+#speed .speed-race {
+  margin: 0;
+}
+
+/* The object layer is painted in document order at the base level: the figure comes before the pin, so the copy
+   (its panel and notes) paints over the line and the ticks while the copy scrolls past them. */
+#speed .speed-art {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+#speed .speed-art.is-on {
+  visibility: visible;
+}
+
+#speed .speed-dim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  max-width: none;
+}
+
+#speed .speed-dim line,
+#speed .speed-dim path {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1px;
+}
+
+#speed .speed-dim-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--text-3);
+  visibility: hidden;
+}
+
+#speed .speed-dim-label.is-on {
+  visibility: visible;
+}
+
+/* No-WebGL fallback (architecture section 8, A7 and the speed fallback): the race as a static SVG, shown only under
+   html.no-gl. Portrait shows the vertical race, landscape the horizontal one. */
+#speed .speed-fallback {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#speed .speed-fallback--row,
+#speed .speed-fallback--col {
+  display: none;
+}
+
+html.no-gl #speed .speed-fallback--col {
+  display: block;
+}
+
+#speed .speed-fallback__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Block anodized, the 3D material of the blocks in act I (direction.md heading 3). The kireji is the seal. */
+#speed .speed-fallback .blk {
+  fill: #2B2A26;
+}
+
+#speed .speed-fallback .blk--kireji {
+  fill: var(--seal);
+}
+
+@media (min-aspect-ratio: 1/1) {
+  html.no-gl #speed .speed-fallback--col {
+    display: none;
+  }
+
+  html.no-gl #speed .speed-fallback--row {
+    display: block;
+  }
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- The 5-7-5 stanza of seventeen blocks: row A (blocks 01 to 05), row B (06 to 12), row C (13 to 17). -->
+  <!-- Block 05 is the kireji, drawn in seal red below. Geometry is the object's, scaled to 16 px. -->
+  <g fill="#2B2A26">
+    <rect x="2.91" y="4.59" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="5.03" y="4.59" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="7.15" y="4.59" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="9.27" y="4.59" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="0.79" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="2.91" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="5.03" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="7.15" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="9.27" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="11.39" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="13.51" y="7.15" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="2.91" y="9.71" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="5.03" y="9.71" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="7.15" y="9.71" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="9.27" y="9.71" width="1.7" height="1.7" rx="0.35"/>
+    <rect x="11.39" y="9.71" width="1.7" height="1.7" rx="0.35"/>
+  </g>
+  <rect x="11.39" y="4.59" width="1.7" height="1.7" rx="0.35" fill="#B5312A"/>
+</svg>

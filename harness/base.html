@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harness: base styles</title>
+    <link rel="stylesheet" href="/src/styles/fonts.css" />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <style>
+      /* Harness only. Spacing between demo blocks, the column guide overlay and the stanza fills. */
+      .stack > * + * {
+        margin-top: var(--sp-3);
+      }
+
+      .ctl-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--sp-4);
+      }
+
+      .guide-host {
+        position: relative;
+      }
+
+      .guides {
+        display: none;
+      }
+
+      .guides i {
+        display: block;
+      }
+
+      @media (min-width: 768px) {
+        .guides {
+          position: absolute;
+          inset-block: 0;
+          inset-inline: var(--margin);
+          display: grid;
+          grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+          column-gap: var(--gutter);
+          pointer-events: none;
+        }
+      }
+
+      .pair {
+        display: grid;
+      }
+
+      @media (min-width: 768px) {
+        .pair {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .focus-demo {
+        padding: var(--sp-2) var(--sp-3);
+      }
+
+      .row-demo {
+        padding: var(--sp-3) var(--sp-4);
+        border-block: 1px solid var(--rule-hair);
+      }
+
+      .block {
+        fill: var(--text-1);
+      }
+
+      .block--seal {
+        fill: var(--seal);
+      }
+
+      .stanza {
+        width: min(100%, 480px);
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <main id="main" tabindex="-1">
+      <section class="section" data-theme="paper" id="types">
+        <div class="wrap stack">
+          <h1 class="t-display-xxl">Claude<br />Haiku&nbsp;5.5</h1>
+          <p class="t-display-xl">Narrow tasks, at&nbsp;volume</p>
+          <p class="t-display-l">$0.10 per million</p>
+          <p class="t-heading">Computer use and browser&nbsp;use</p>
+          <p class="t-lede">Anthropic calls it “the cheapest, fastest, and most capable small model we’ve ever released,” designed for high-volume, cost-sensitive tasks.</p>
+          <p class="t-body"><span class="hang">“</span>the cheapest, fastest, and most capable small model we’ve ever released.” Haiku&nbsp;5.5 is a strong computer use agent for repetitive tasks like form filling, data entry, and moving information between apps.</p>
+          <p class="t-small">OSWorld 2.1, offline subset, partial-credit score (%). OSWorld 2.1 measures how well agents can operate a real computer to finish long, multi-step tasks.</p>
+          <p class="t-small tnum">5m cache write: $0.125 up to 100K tokens, $0.625 over 100K tokens. 1h cache write: $0.20 and $1.</p>
+          <p class="t-label">BLOCKS 01 TO 05</p>
+          <pre class="t-code" id="code-sample">import Anthropic from "@anthropic-ai/sdk";
+const client = new Anthropic();
+const ticket = "Charged twice for one seat.";
+
+await client.messages
+  .stream({
+    model: "claude-haiku-5-5", max_tokens: 1024,
+    output_config: { effort: "low" },
+    messages: [{ role: "user", content: ticket }],
+  })
+  .on("text", (t) => process.stdout.write(t));</pre>
+        </div>
+      </section>
+
+      <section class="section" data-theme="paper" id="grid-section">
+        <div class="wrap guide-host">
+          <div class="guides" aria-hidden="true"></div>
+          <div class="grid" id="grid">
+            <div class="g-a stack" id="group-a">
+              <p class="t-label">BLOCKS 01 TO 05</p>
+              <p class="t-heading">Computer use and browser&nbsp;use</p>
+              <p class="t-small">Haiku&nbsp;5.5 is a strong computer use agent for repetitive tasks like form filling, data entry, and moving information between apps.</p>
+            </div>
+            <div class="g-b stack" id="group-b">
+              <p class="t-label">BLOCKS 06 TO 12</p>
+              <p class="t-heading">High-volume&nbsp;work</p>
+              <p class="t-small">It reliably handles quick and repetitive workloads (like summaries, compactions, database queries, and classification requests).</p>
+            </div>
+            <div class="g-c stack" id="group-c">
+              <p class="t-label">BLOCKS 13 TO 17</p>
+              <p class="t-heading">Adjustable&nbsp;effort</p>
+              <p class="t-small">Haiku&nbsp;5.5 is our first Haiku-class model to come with an adjustable effort setting.</p>
+            </div>
+            <div class="col stack" id="col-probe" style="--from: 2; --to: 9">
+              <p class="t-label">COLUMNS 02 TO 09</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-theme="paper" id="controls">
+        <div class="wrap stack">
+          <p class="t-body">Read the <a id="link-1" href="#link-models">Models overview</a>, the <a id="link-2" href="#link-haiku">Haiku&nbsp;5.5 overview</a>, or the <a id="link-3" href="#link-pricing">API pricing</a>.</p>
+          <div class="ctl-row">
+            <button class="btn btn--primary" id="btn-primary" type="button">Haiku&nbsp;5.5 docs</button>
+            <button class="btn btn--secondary" id="btn-secondary" type="button">See speed</button>
+            <div class="focus-demo t-label" id="focus-demo" tabindex="0">Focusable element</div>
+          </div>
+          <p class="t-label"><a class="link-plain" id="link-plain" href="#link-plain">Link in a label, plain</a></p>
+          <div class="row-hover row-demo" data-hover id="row-1"><span class="t-small">Row: hover from either side</span></div>
+        </div>
+      </section>
+
+      <div class="pair">
+        <section class="section" data-theme="paper" id="paper-pair" aria-label="Paper section">
+          <div class="wrap stack">
+            <p class="t-label">Paper section</p>
+            <p class="t-heading">Four models, by&nbsp;latency</p>
+            <p class="t-small">Heading in text-1, small text in text-2 and labels in text-3 on the paper ground.</p>
+          </div>
+        </section>
+        <section class="section" data-theme="ink" id="ink-pair" aria-label="Ink section">
+          <div class="wrap stack">
+            <p class="t-label">Ink section</p>
+            <p class="t-heading">Adjustable&nbsp;effort</p>
+            <p class="t-small">Heading in text-1, small text in text-2 and labels in text-3 on the ink ground.</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="section" data-theme="paper" id="fallback">
+        <div class="wrap stack">
+          <p class="t-small">Static fallback, shown only with html.no-gl. Seventeen blocks, flat ink on paper.</p>
+          <div class="gl-fallback" aria-hidden="true">
+            <svg id="stanza" class="stanza" viewBox="0 0 5.92 2.8" focusable="false"></svg>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/harness/base.ts"></script>
+  </body>
+</html>

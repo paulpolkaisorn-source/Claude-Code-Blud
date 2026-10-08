@@ -1,0 +1,48 @@
+// Harness for the footer section's 2D layer (architecture section 10a). The partial sits between two 100vh spacers, with
+// no WebGL. The boot runs the same order as src/main.ts, then emits loader:done after the first tick, which lets the
+// entrance start. The DOM checks below set document.documentElement.dataset.harness to 'pass' or 'fail:<reason>'.
+import { bus } from '../src/core/bus';
+import { registerEases } from '../src/core/ease';
+import { env } from '../src/core/env';
+import { initHover } from '../src/core/hover';
+import { initScroll } from '../src/core/scroll';
+import { PRIORITY, addTick, initTicker } from '../src/core/ticker';
+import { initFooter } from '../src/sections/footer/footer';
+
+registerEases();
+initTicker();
+initScroll();
+initHover();
+
+const failures: string[] = [];
+const footer = document.getElementById('footer');
+if (footer instanceof HTMLElement) {
+  initFooter({ el: footer, reducedMotion: env.reducedMotion, gl: false });
+
+  const headings = footer.querySelectorAll('h2');
+  if (headings.length !== 1 || headings[0].id !== 'footer-title') failures.push('title-h2');
+  // The title joins its words with no-break spaces (U+00A0), so they are read as plain spaces for the check.
+  if (headings[0]?.textContent?.replace(/\u00a0/g, ' ') !== 'Claude Haiku 5.5') failures.push('title-text');
+
+  const sources = document.querySelectorAll<HTMLAnchorElement>('#sources a');
+  if (sources.length !== 20) failures.push(`sources-count-${sources.length}`);
+  sources.forEach((link) => {
+    if (!link.href.startsWith('https://') || link.textContent !== link.getAttribute('href')) {
+      failures.push('source-link');
+    }
+  });
+
+  const disclaimer = footer.querySelector('.footer__disclaimer');
+  if (disclaimer?.textContent !== 'Unofficial fan and showcase page. Not affiliated with Anthropic.') {
+    failures.push('disclaimer');
+  }
+  if (footer.querySelectorAll('.titleblock__value').length !== 5) failures.push('title-values');
+} else {
+  failures.push('no-footer');
+}
+document.documentElement.dataset.harness = failures.length === 0 ? 'pass' : `fail:${failures.join(',')}`;
+
+const off = addTick(() => {
+  off();
+  bus.emit('loader:done');
+}, PRIORITY.input);

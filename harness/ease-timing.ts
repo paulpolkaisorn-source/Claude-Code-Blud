@@ -270,6 +270,15 @@ function run(): void {
     `n=${ov.length} min=${f4(ovMin)} max=${f4(ovMax)}`,
   );
 
+  // Scrubbed stagger, direction.md heading 7. Count 17: follower 1 starts at t 0.100, follower 8 at 0.339
+  // and follower 16 at 0.450. Every item is 0 at t = 0 and 1 at t = 1.
+  const firstPositive = (i: number, count: number): number => {
+    for (let k = 0; k <= 100000; k++) {
+      const t = k / 100000;
+      if (scrubLocal(i, count, t) > 0) return t;
+    }
+    return NaN;
+  };
   const scrubAt1 = Array.from({ length: 17 }, (_, i) => scrubLocal(i, 17, 1));
   const scrubAt0 = Array.from({ length: 17 }, (_, i) => scrubLocal(i, 17, 0));
   record(
@@ -281,6 +290,33 @@ function run(): void {
     'scrubLocal(i, 17, 0) === 0 for all i',
     scrubAt0.every((v) => v === 0),
     `${scrubAt0.filter((v) => v === 0).length}/17 exactly 0`,
+  );
+  for (const [i, want] of [
+    [1, 0.1],
+    [8, 0.339],
+    [16, 0.45],
+  ] as const) {
+    const got = firstPositive(i, 17);
+    record(
+      `scrubLocal follower ${i} starts at ${want} (count 17)`,
+      near(got, want, 1e-3),
+      `first t with q > 0 = ${f5(got)}`,
+    );
+  }
+  record(
+    'scrubLocal position 0 completes at t = lead',
+    scrubLocal(0, 17, 0.1) === 1 && near(scrubLocal(0, 17, 0.05), 0.5, 1e-9),
+    `q(0.05) = ${f5(scrubLocal(0, 17, 0.05))}, q(0.1) = ${scrubLocal(0, 17, 0.1)}`,
+  );
+  record(
+    'scrubLocal count 2: follower starts at the lead',
+    near(firstPositive(1, 2), 0.1, 1e-3) && scrubLocal(1, 2, 1) === 1,
+    `first t with q > 0 = ${f5(firstPositive(1, 2))}`,
+  );
+  record(
+    'scrubLocal count 1: q = t',
+    near(scrubLocal(0, 1, 0.3), 0.3, 1e-12) && scrubLocal(0, 1, 1) === 1,
+    `q(0.3) = ${f5(scrubLocal(0, 1, 0.3))}`,
   );
   let scrubMonotone = true;
   for (let i = 0; i < 17; i++) {

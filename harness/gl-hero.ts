@@ -5,11 +5,12 @@
 // (direction-3d 11.2 and 11.11, read back from the instance matrices), the sym mapping, the portrait stanza,
 // heroExitPoses, the hero camera (direction-act1 A7), the pointer tilt (fine pointer only, capped, damped), touch,
 // reduced motion, the tidy on setActive(false), and dispose. Then initPointer runs, and window.__heroHarness drives
-// the states that the screenshots show. The driver is scripts kept outside the repository (see the run notes).
+// the states that the screenshots show. The screenshot driver is a Playwright script kept outside the repository.
 import { ef } from '../src/core/ease';
 import { env } from '../src/core/env';
 import { initPointer, pointer } from '../src/core/pointer';
 import { PRIORITY, addTick, initTicker, type Tick } from '../src/core/ticker';
+import { initChoreo } from '../src/choreo/timeline';
 import { createWorld } from '../src/gl/boot';
 import { BLOCK_COUNT, FORMATIONS, formationFor, type Pose } from '../src/gl/blocks/formations';
 import { cameraKey } from '../src/gl/rig';
@@ -24,9 +25,18 @@ interface Report {
   notices: string[];
 }
 
-/** What the screenshot driver calls. progress is the hero's section progress s; frames is how long to wait. */
+/** A driven state: the frame count when it was captured, and the canvas as a PNG data URL. */
+interface HeroShot {
+  frame: number;
+  png: string;
+}
+
+/**
+ * What the screenshot driver calls. progress is the hero's section progress s. drive sets it, waits for frames to
+ * render, and returns the canvas read in the same task as the last of them (the drawing buffer is valid only then).
+ */
 interface HeroDriver {
-  drive(progress: number, opts?: { reduced?: boolean; frames?: number }): Promise<number>;
+  drive(progress: number, opts?: { reduced?: boolean; frames?: number }): Promise<HeroShot>;
   wait(frames: number): Promise<number>;
   frames(): number;
 }
@@ -45,8 +55,8 @@ const EPS = 1e-5;
 const report: Report = { passes: [], failures: [], diagnostics: [], notices: [] };
 
 // Headless Chromium's SwiftShader has no KHR_parallel_shader_compile, so three's WebGLExtensions warns once when
-// compileAsync asks for it. This is a capability notice of the software GL, not a shader message: real GPUs have
-// the extension. It is recorded in report.notices and kept out of the verdict. Every other warning still fails.
+// compileAsync asks for it. This is a capability notice of the software GL, not a shader message: GPU drivers normally
+// expose the extension. It is recorded in report.notices and kept out of the verdict. Every other warning still fails.
 const ENVIRONMENT_NOTICE = /KHR_parallel_shader_compile extension not supported/;
 
 function check(name: string, ok: boolean, detail = ''): void {
@@ -136,10 +146,16 @@ async function main(): Promise<void> {
   const boot = createWorld(canvas);
   await boot.compile();
   const world: GLWorld = boot.world;
+  // The harness drives the hero handle directly, so boot's choreography is replaced by one with no sections (a later
+  // initChoreo disposes the earlier one, as its header allows). Boot's choreography would drive the preloader, whose
+  // blocks stay at scale 0 until loader:done, and this harness never emits it. Its dispose sets the blocks back to
+  // full scale. The loop below also sets every entrance to 1, so the blocks show whatever the order of disposal.
+  initChoreo(world, []);
+  for (let i = 0; i < BLOCK_COUNT; i += 1) world.blocks.setEntrance(i, 1);
 
   const tick: Tick = { time: 0, dt: FRAME, frame: 0 };
   let clock = 0;
-  /** Advances n frames of the synthetic clock. each runs first, as the choreography's update does, then the shared blocks and rig. */
+  /** Advances n frames of the synthetic clock. each runs first, as the update of a choreography does, then the rest. */
   function step(n: number, each?: () => void): void {
     for (let i = 0; i < n; i += 1) {
       clock += FRAME;
@@ -154,9 +170,11 @@ async function main(): Promise<void> {
 
   const prev: SectionGL = { id: 'preloader', formation: 'stanza', key: 'hero', ink: 0, dof: null, breath: null };
   const viewport = (): { width: number; height: number } => ({ width: window.innerWidth, height: window.innerHeight });
+  // The scroll-mapped checks pass reducedMotion false explicitly, so they test the same code path in both runs. The
+  // reduced-motion checks pass true. The reduced-motion run also sets env.reducedMotion, which boot reads.
   function contextFor(over: Partial<SectionGLContext> = {}): SectionGLContext {
     const size = viewport();
-    return { prev, portrait: size.width < size.height, reducedMotion: env.reducedMotion, size, ...over };
+    return { prev, portrait: size.width < size.height, reducedMotion: false, size, ...over };
   }
 
   // The 17 instance matrices, read back as the GPU buffer holds them.
@@ -205,7 +223,9 @@ async function main(): Promise<void> {
   const handle: SectionGLHandle = setup(world);
   check(
     'setup returns a handle with update, setActive and dispose',
-    typeof handle.update === 'function' && typeof handle.setActive === 'function' && typeof handle.dispose === 'function',
+    typeof handle.update === 'function' &&
+      typeof handle.setActive === 'function' &&
+      typeof handle.dispose === 'function',
   );
   check(
     'formationFor keeps the stanza unturned in portrait (the premise of the one modulation)',
@@ -218,14 +238,22 @@ async function main(): Promise<void> {
   handle.update(0, tick, contextFor());
   step(2);
   const restErr = matrixError(stanzaXY(0.87, 1.05));
-  check('update(0) sets the stanza rest pose (11.2) on all 17 blocks', restErr < EPS, `max error ${restErr.toExponential(2)}`);
+  check(
+    'update(0) sets the stanza rest pose (11.2) on all 17 blocks',
+    restErr < EPS,
+    `max error ${restErr.toExponential(2)}`,
+  );
   const formationErr = matrixError(FORMATIONS.stanza.map((q): [number, number] => [q.p[0], q.p[1]]));
   check('update(0) matches FORMATIONS.stanza', formationErr < EPS, `max error ${formationErr.toExponential(2)}`);
 
   handle.update(1, tick, contextFor());
   step(2);
   const openErr = matrixError(stanzaXY(0.95, 1.13));
-  check('update(1) opens to pitch 0.95 and row offsets 1.13 (11.11)', openErr < EPS, `max error ${openErr.toExponential(2)}`);
+  check(
+    'update(1) opens to pitch 0.95 and row offsets 1.13 (11.11)',
+    openErr < EPS,
+    `max error ${openErr.toExponential(2)}`,
+  );
 
   handle.update(0.25, tick, contextFor());
   step(2);
@@ -253,7 +281,10 @@ async function main(): Promise<void> {
   // The exit pose that the speed section starts from.
   const exitOut: Pose[] = [];
   const exitBack = heroExitPoses(false, exitOut);
-  check('heroExitPoses writes into the array it is given, 17 poses', exitBack === exitOut && exitOut.length === BLOCK_COUNT);
+  check(
+    'heroExitPoses writes into the array it is given, 17 poses',
+    exitBack === exitOut && exitOut.length === BLOCK_COUNT,
+  );
   check('heroExitPoses(false) is the s = 1 stanza', poseError(exitOut, stanzaXY(0.95, 1.13)) < EPS);
   const exitPortrait: Pose[] = [];
   heroExitPoses(true, exitPortrait);
@@ -321,15 +352,21 @@ async function main(): Promise<void> {
     `max error ${matrixError(stanzaXY(0.87, 1.05)).toExponential(2)}`,
   );
 
-  // setActive(false) leaves the group tidy for the next section: tilt, group offset and lifts back to rest.
+  // setActive(false) leaves the group tidy for the next section: tilt, group offset and lifts back to rest. Under
+  // reduced motion boot holds the blocks' lifts and offsets at 0, so the control that sets them is skipped there.
   pointer.sx = 1;
   pointer.sy = 1;
   handle.update(0, tick, contextFor());
-  world.blocks.setLift(2, 0.15, 0);
-  world.blocks.setGroupOffset(0.2, 0.1, 0);
-  step(600, () => handle.update(0, tick, contextFor()));
-  const liftedY = matrices()[2 * 16 + 13];
-  check('control: a lift and a group offset from elsewhere are applied', liftedY > 1.05 + 0.1 && world.blocks.group.position.x > 0.15);
+  if (!isReducedRun) {
+    world.blocks.setLift(2, 0.15, 0);
+    world.blocks.setGroupOffset(0.2, 0.1, 0);
+    step(600, () => handle.update(0, tick, contextFor()));
+    const liftedY = matrices()[2 * 16 + 13];
+    check(
+      'control: a lift and a group offset from elsewhere are applied',
+      liftedY > 1.05 + 0.1 && world.blocks.group.position.x > 0.15,
+    );
+  }
   handle.setActive(false, contextFor());
   step(600);
   const restY = matrices()[2 * 16 + 13];
@@ -375,7 +412,7 @@ async function main(): Promise<void> {
   let progress = 0;
   let reduced = env.reducedMotion;
   let frameCount = 0;
-  const waiters: { until: number; resolve: (n: number) => void }[] = [];
+  const waiters: { until: number; snap: boolean; resolve: (shot: HeroShot) => void }[] = [];
   addTick((t) => {
     const now = viewport();
     live.size = now;
@@ -385,24 +422,30 @@ async function main(): Promise<void> {
   }, PRIORITY.scroll);
   addTick(() => {
     frameCount += 1;
+    // This runs in the task that rendered the frame, so the canvas is read while its drawing buffer still holds it.
+    let png: string | null = null;
     for (let i = waiters.length - 1; i >= 0; i -= 1) {
-      if (waiters[i].until <= frameCount) {
-        const [done] = waiters.splice(i, 1);
-        done.resolve(frameCount);
-      }
+      const waiter = waiters[i];
+      if (waiter.until > frameCount) continue;
+      waiters.splice(i, 1);
+      if (waiter.snap && png === null) png = canvas.toDataURL('image/png');
+      waiter.resolve({ frame: frameCount, png: waiter.snap ? (png ?? '') : '' });
     }
   }, PRIORITY.glRender + 1);
+
+  const waitShot = (n: number, snap: boolean): Promise<HeroShot> =>
+    new Promise<HeroShot>((resolve) => {
+      waiters.push({ until: frameCount + n, snap, resolve });
+    });
 
   const driver: HeroDriver = {
     async drive(p, opts = {}) {
       progress = p;
       reduced = opts.reduced ?? env.reducedMotion;
-      return driver.wait(opts.frames ?? 8);
+      return waitShot(opts.frames ?? 8, true);
     },
-    wait(n) {
-      return new Promise<number>((resolve) => {
-        waiters.push({ until: frameCount + n, resolve });
-      });
+    async wait(n) {
+      return (await waitShot(n, false)).frame;
     },
     frames: () => frameCount,
   };

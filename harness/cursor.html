@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en" class="gl-ready">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harness: custom cursor</title>
+    <link rel="stylesheet" href="/src/styles/fonts.css" />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <style>
+      /* Harness only. The flat stand-in for the 3D layer: the 17 blocks as DOM boxes at their P1 footprints, on the
+         section theme. The real blocks are in the GL canvas, which this page does not load. */
+      #stage {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-canvas);
+        pointer-events: none;
+        background: var(--paper);
+      }
+
+      #stage[data-theme="ink"] {
+        background: var(--ink);
+      }
+
+      #stage i {
+        position: absolute;
+        display: block;
+        background: #2b2a26;
+        border-radius: 2.5px;
+      }
+
+      #stage[data-theme="ink"] i {
+        background: #bdb7a9;
+      }
+
+      #stage i.kireji {
+        background: var(--seal-red);
+      }
+
+      #stage[data-theme="ink"] i.kireji {
+        background: var(--seal-ink);
+      }
+
+      #stage i.is-off {
+        display: none;
+      }
+
+      .harness-copy {
+        max-width: 36ch;
+      }
+
+      .cap-card {
+        max-width: 44ch;
+        margin-top: 15vh;
+        padding: var(--sp-5);
+        background: var(--bg-raised);
+        border: 1px solid var(--rule-hair);
+      }
+
+      .cap-head {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-2);
+        min-height: 44px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--text-1);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .cap-mark {
+        display: inline-block;
+        width: var(--sp-2);
+        height: var(--sp-2);
+        border: 1px solid var(--seal-ink);
+      }
+
+      .cap-card[aria-pressed="true"] .cap-mark,
+      .cap-head[aria-pressed="true"] .cap-mark {
+        background: var(--seal-ink);
+      }
+
+      .harness-pre {
+        max-width: 52ch;
+        padding: var(--sp-4);
+        background: var(--bg-raised);
+        border: 1px solid var(--rule-hair);
+      }
+
+      .station {
+        display: block;
+        margin-top: var(--sp-3);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div id="stage" aria-hidden="true"></div>
+    <div id="cursor" class="cursor-layer" aria-hidden="true"></div>
+
+    <main id="main" tabindex="-1">
+      <section id="hero" class="section" data-theme="paper" style="height: 200vh">
+        <div class="wrap" style="position: sticky; top: 0; height: 100vh; padding-top: 12vh">
+          <h1 class="t-display-xxl">Claude<br />Haiku&nbsp;5.5</h1>
+          <p class="t-lede" style="margin-top: var(--sp-6)">Claude Haiku 5.5 is designed for high-volume, cost-sensitive tasks.</p>
+          <p style="margin-top: var(--sp-5)">
+            <a class="btn btn--primary" id="hero-button" href="#speed">Haiku 5.5 docs</a>
+            <a id="hero-link" href="#speed" style="margin-left: var(--sp-4)">See speed</a>
+          </p>
+        </div>
+      </section>
+
+      <section id="speed" class="section" data-theme="paper" style="height: 300vh">
+        <div class="wrap" style="position: sticky; top: 0; height: 100vh; padding-top: 18vh">
+          <h2 class="t-display-xl">Fastest</h2>
+          <p class="t-small harness-copy" style="margin-top: var(--sp-3)">Comparative latency, relative to the current lineup.</p>
+        </div>
+      </section>
+
+      <section id="capabilities" class="section" data-theme="ink" style="height: 300vh">
+        <div class="wrap">
+          <h2 class="t-display-xl">Narrow tasks, at&nbsp;volume</h2>
+          <div class="cap-card" id="cap-1" data-cursor="marker">
+            <button class="cap-head" id="cap-1-button" type="button" aria-pressed="true">
+              <span class="cap-mark" aria-hidden="true"></span>
+              <span class="t-heading">Computer use and browser&nbsp;use</span>
+            </button>
+            <p class="t-body" id="cap-1-body">Haiku&nbsp;5.5 is a strong computer use agent for repetitive tasks like form filling, data entry, and moving information between apps.</p>
+          </div>
+          <div class="cap-card" id="cap-2" data-cursor="marker" style="margin-top: 60vh">
+            <button class="cap-head" id="cap-2-button" type="button" aria-pressed="false">
+              <span class="cap-mark" aria-hidden="true"></span>
+              <span class="t-heading">High-volume&nbsp;work</span>
+            </button>
+            <p class="t-body">It reliably handles quick and repetitive workloads, like summaries, compactions, database queries, and classification requests.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="code" class="section" data-theme="ink" style="height: 200vh">
+        <div class="wrap" style="padding-top: 6vh">
+          <pre class="t-code harness-pre" id="code-sample">import Anthropic from "@anthropic-ai/sdk";
+const client = new Anthropic();
+await client.messages
+  .stream({
+    model: "claude-haiku-5-5", max_tokens: 1024,
+    output_config: { effort: "low" },
+    messages: [{ role: "user", content: "Hello" }],
+  })
+  .on("text", (t) => process.stdout.write(t));</pre>
+        </div>
+      </section>
+
+      <section id="family" class="section" data-theme="ink" style="height: 200vh">
+        <div class="wrap" style="padding-top: 6vh">
+          <h2 class="t-display-l">Four models, by&nbsp;latency</h2>
+          <p class="t-small harness-copy" style="margin-top: var(--sp-5)">Haiku&nbsp;5.5 is listed as the fastest of the four.</p>
+          <p class="t-label station">Fastest</p>
+        </div>
+      </section>
+
+      <section id="pricing" class="section" data-theme="paper" style="height: 150vh">
+        <div class="wrap" style="padding-top: 12vh">
+          <h2 class="t-display-xl">Pricing</h2>
+          <p class="t-body harness-copy" style="margin-top: var(--sp-5)">$0.10 input and $0.50 output per million tokens, for prompts up to 100K&nbsp;tokens.</p>
+        </div>
+      </section>
+
+      <section id="closing" class="section" data-theme="paper" style="height: 250vh">
+        <div class="wrap" style="position: sticky; top: 0; height: 100vh; padding-top: 12vh">
+          <p class="t-body harness-copy">Closing block, harness stand-in.</p>
+          <p style="margin-top: var(--sp-5)">
+            <a class="btn btn--primary" href="#footer">Read the docs</a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer id="footer" class="section" data-theme="paper" style="height: 100vh">
+      <div class="wrap" style="padding-top: 12vh">
+        <p class="t-small">Unofficial fan and showcase page. Not affiliated with Anthropic.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/harness/cursor.ts"></script>
+  </body>
+</html>

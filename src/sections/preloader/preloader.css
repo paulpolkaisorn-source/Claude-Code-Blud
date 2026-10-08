@@ -1,0 +1,74 @@
+/*
+ * Preloader, act I (design/direction-act1.md, preloader). Owner: motion-2d. Scoped under #preloader.
+ *
+ * The section is 0 px tall in the flow, so the hero starts at the top of the page. The layer is fixed to the
+ * viewport and is shown only once preloader.ts has run (class is-live), so without JavaScript nothing of it is
+ * painted. Colours and timings are tokens. The fill is a CSS transition on the press curve and the snap duration;
+ * everything else moves in preloader.ts with GSAP. base.css sets every transition to 0 s under reduced motion.
+ */
+
+#preloader {
+  height: 0;
+  padding-block: 0;
+  background: transparent;
+}
+
+#preloader .preloader-layer {
+  display: none;
+}
+
+#preloader.is-live .preloader-layer {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-preloader);
+  pointer-events: none;
+}
+
+/* Footprints: 1px hairline outlines, no fill. Each fills with text-1 as the loader reaches it; the kireji fills with seal. */
+#preloader .preloader-fp {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--rule-hair);
+  background-color: transparent;
+  opacity: 0;
+  transition:
+    background-color var(--t-snap) var(--ease-press),
+    border-color var(--t-snap) var(--ease-press);
+}
+
+#preloader .preloader-fp.is-filled {
+  background-color: var(--text-1);
+  border-color: var(--text-1);
+}
+
+#preloader .preloader-fp--kireji.is-filled {
+  background-color: var(--seal);
+  border-color: var(--seal);
+}
+
+/* Row rules: one hairline through each row centre, from the row's first footprint to its last. */
+#preloader .preloader-rule {
+  position: absolute;
+  height: 1px;
+  background-color: var(--rule-hair);
+  opacity: 0;
+}
+
+/* Readout: label style, text-3 (base.css). Its left edge is set on each layout; its top is sp-4 below row C. */
+#preloader .preloader-readout {
+  position: absolute;
+  margin: 0;
+  top: calc(var(--rowc-bottom, 0px) + var(--sp-4));
+}
+
+/* A part that has been removed stays removed, whatever the rules above say. */
+#preloader [hidden] {
+  display: none !important;
+}
+
+@media print {
+  #preloader .preloader-layer {
+    display: none !important;
+  }
+}

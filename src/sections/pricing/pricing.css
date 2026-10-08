@@ -1,0 +1,385 @@
+/*
+ * Pricing section, 2D layer. Owner: motion-2d.
+ * Source: design/direction-act3.md, pricing (2D layer and reduced motion); design/drafts/director-decisions.md
+ * D2.1, D2.3, D2.6, D18 and D19; design/direction.md headings 3 to 5, 8 and 13; content/copy.md ## pricing.
+ * Every rule is scoped under #pricing. Colours are tokens, durations come from tokens, and the mix values below
+ * are written by GSAP (--mix runs from 0 to 1), so the page without JavaScript shows the final colours.
+ */
+
+/* ---------- Section height (act III C3: H 1.5 on desktop and tablet landscape) ---------- */
+
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #pricing {
+    min-height: 150vh;
+    min-height: 150svh;
+  }
+}
+
+/* ---------- Grid placement (base.css grid: 17 columns from 768 px) ---------- */
+
+/* Portrait and phone: one column. The head is as tall as 60svh, so the table panel starts at 60svh (C2, act III). */
+#pricing .pricing__grid {
+  align-items: start;
+}
+
+#pricing .pricing__head {
+  position: relative;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-height: calc(60svh - var(--sp-6));
+}
+
+#pricing .pricing__table-panel {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  padding: var(--sp-4);
+  background: var(--bg);
+  border: 1px solid var(--rule-hair);
+}
+
+#pricing .pricing__avail {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  background: var(--bg-raised);
+}
+
+@media (min-width: 768px) {
+  #pricing .pricing__head {
+    min-height: calc(60svh - var(--sp-7));
+  }
+}
+
+/* Tablet landscape (768 to 1023 px): title and table span the track, availability takes columns 1 to 9. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #pricing .pricing__head {
+    min-height: 0;
+  }
+
+  #pricing .pricing__table-panel {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: var(--sp-5);
+    padding: var(--sp-5);
+  }
+
+  #pricing .pricing__avail {
+    grid-column: 1 / 10;
+    grid-row: 3;
+  }
+}
+
+/* Desktop landscape (1024 px and wider): title and availability in columns 1 to 5, table in columns 6 to 17. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  #pricing .pricing__head {
+    grid-column: 1 / 6;
+    grid-row: 1;
+  }
+
+  #pricing .pricing__table-panel {
+    grid-column: 6 / -1;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+    padding: var(--sp-5);
+  }
+
+  #pricing .pricing__avail {
+    grid-column: 1 / 6;
+    grid-row: 2;
+  }
+
+  #pricing .pricing__kicker {
+    position: absolute;
+    top: calc(var(--sp-7) - var(--sp-8));
+    left: 0;
+    margin: 0;
+  }
+}
+
+/* Phone landscape (below 768 px, width at least height): title left 6%, table left 47% and 47% wide. */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  #pricing .pricing__grid {
+    grid-template-columns: 6% minmax(0, 35%) 6% minmax(0, 47%);
+    column-gap: 0;
+    margin-inline: calc(-1 * var(--margin));
+  }
+
+  #pricing .pricing__head {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+    margin-top: var(--sp-5);
+  }
+
+  #pricing .pricing__kicker {
+    position: absolute;
+    top: calc(-1 * var(--sp-5));
+    left: 0;
+    margin: 0;
+  }
+
+  #pricing .pricing__table-panel {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+    margin-top: var(--sp-7);
+  }
+
+  #pricing .pricing__avail {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+/* ---------- Kicker, title and intro ---------- */
+
+#pricing .pricing__kicker {
+  margin: 0 0 var(--sp-3);
+  color: var(--seal-text);
+}
+
+#pricing .pricing__title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+#pricing .pricing__title-main {
+  display: block;
+}
+
+#pricing .pricing__title-tail {
+  display: block;
+  margin-top: var(--sp-2);
+}
+
+#pricing .pricing__char {
+  display: inline-block;
+}
+
+#pricing .pricing__intro {
+  margin-top: var(--sp-4);
+  color: var(--text-2);
+}
+
+/* ---------- Table panel ---------- */
+
+#pricing .pricing__table-wrap {
+  position: relative;
+}
+
+#pricing .pricing__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+#pricing .pricing__col-1 {
+  width: 40%;
+}
+
+#pricing .pricing__col-2,
+#pricing .pricing__col-3 {
+  width: 30%;
+}
+
+#pricing .pricing__table thead tr,
+#pricing .pricing__table tbody tr {
+  height: 40px;
+}
+
+#pricing .pricing__table th,
+#pricing .pricing__table td {
+  padding: 0;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#pricing .pricing__table thead th {
+  /* Header labels stay on one line while their column is wide enough (1440 px: they do). A narrower landscape
+     viewport (1024 px) wraps them rather than letting one label run into the next column. Heading 4 allows
+     wrapping in header cells on phone; this is the same exception, extended to narrow landscape. */
+  white-space: normal;
+  border-bottom: 2px solid var(--rule-strong);
+}
+
+#pricing .pricing__table tbody th,
+#pricing .pricing__table tbody td {
+  border-bottom: 1px solid var(--rule-hair);
+}
+
+#pricing .pricing__table .pricing__num {
+  text-align: right;
+}
+
+/* Once GSAP draws the rules, the CSS borders step aside so that the drawn rules are the only ones shown. */
+#pricing .pricing__table-wrap.is-drawing thead th,
+#pricing .pricing__table-wrap.is-drawing tbody th,
+#pricing .pricing__table-wrap.is-drawing tbody td {
+  border-bottom-color: transparent;
+}
+
+/* Drawn rules: one SVG per rule, placed on the measured bottom of its row (2 px header, 1 px rows). */
+#pricing .pricing__rule {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+#pricing .pricing__rule--head {
+  height: 2px;
+}
+
+#pricing .pricing__rule path {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+}
+
+#pricing .pricing__rule--head path {
+  stroke: var(--rule-strong);
+  stroke-width: 2;
+}
+
+/* Direction-aware row fill (D2.1). A pseudo-element on a table row would add an anonymous cell, so the fill is the
+   first cell's pseudo-element. Its containing block is the positioned row (base.css .row-hover), so it spans the row. */
+#pricing .pricing__table tbody tr.row-hover::before {
+  content: none;
+}
+
+#pricing .pricing__table tbody tr.row-hover > th::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-raised);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--t-micro) var(--ease-press);
+}
+
+#pricing .pricing__table tbody tr.row-hover[data-enter="left"] > th::before {
+  transform-origin: left center;
+}
+
+#pricing .pricing__table tbody tr.row-hover[data-enter="right"] > th::before {
+  transform-origin: right center;
+}
+
+#pricing .pricing__table tbody tr.row-hover:hover > th::before {
+  transform: scaleX(1);
+}
+
+/* Touch has no hover, so the fill is off there. */
+@media (hover: none) {
+  #pricing .pricing__table tbody tr.row-hover:hover > th::before {
+    transform: scaleX(0);
+  }
+}
+
+/* Statements sit under the table at the act's gaps: 19 px, then 7 px, then 19 px (sp-4, sp-2, sp-4). */
+#pricing .pricing__statements {
+  margin-top: var(--sp-4);
+}
+
+#pricing .pricing__statement {
+  margin: 0;
+}
+
+#pricing .pricing__statement--savings,
+#pricing .pricing__statement--comparison {
+  max-width: none;
+}
+
+#pricing .pricing__statement--comparison {
+  margin-top: var(--sp-2);
+}
+
+#pricing .pricing__statement--context {
+  margin-top: var(--sp-4);
+  color: var(--text-2);
+}
+
+/* ---------- Availability ---------- */
+
+#pricing .pricing__avail-title {
+  margin: 0 0 var(--sp-2);
+}
+
+#pricing .pricing__avail-list {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#pricing .pricing__avail-item {
+  margin: 0;
+  max-width: none;
+}
+
+/* ---------- Colour settle (heading 8 rule 6): text-3 to its token colour, driven by --mix ---------- */
+
+#pricing .pricing__char,
+#pricing .pricing__title-tail,
+#pricing .pricing__statement--savings,
+#pricing .pricing__statement--comparison,
+#pricing .pricing__price,
+#pricing .pricing__avail-item {
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-1));
+}
+
+#pricing .pricing__statement--context {
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-2));
+}
+
+/* Landscape from 768 px: the desktop table proportions (38, 31, 31) and labels that never wrap (heading 4).
+   Written last, so that these values win over the portrait defaults above. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #pricing .pricing__col-1 {
+    width: 38%;
+  }
+
+  #pricing .pricing__col-2,
+  #pricing .pricing__col-3 {
+    width: 31%;
+  }
+
+}
+
+/* ---------- No-WebGL fallback (direction-act3, pricing; architecture section 8) ---------- */
+
+/* The band is the rest formation's P1 rectangle (projection.ts). It is sticky inside this layer, so it holds the
+   3D position while the section is in view, under the panels, and scrolls away with the section. */
+#pricing .gl-fallback {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#pricing .gl-fallback__band {
+  position: sticky;
+  top: 0;
+  display: block;
+  overflow: visible;
+}
+
+/* Block material #2B2A26 is a 3D material value (direction.md heading 3), so it is not a token; the kireji is --seal. */
+#pricing .gl-fallback__band rect {
+  fill: #2B2A26;
+}
+
+#pricing .gl-fallback__band .is-kireji {
+  fill: var(--seal);
+}

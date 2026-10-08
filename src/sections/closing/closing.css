@@ -1,0 +1,291 @@
+/*
+ * Closing section, 2D layer. Owner: motion-2d.
+ * Source: design/direction-act3.md, closing (2D layer, reduced motion, no-WebGL fallback) and C15; design/drafts/
+ * director-decisions.md D7; design/direction.md headings 3 to 5, 7, 8 and 13; content/copy.md ## closing.
+ * Every rule is scoped under #closing. Colours are tokens. The haiku colour turn-on is driven by --mix
+ * (0 to 1), which GSAP writes; the default of 1 gives the final colour, so the page without JavaScript reads correctly.
+ */
+
+/* ---------- Section height (act III C3, H 2.5) ----------
+   With JavaScript and WebGL the section is its scroll length, and its text layer is fixed over the viewport.
+   Otherwise the section is as tall as its content. */
+html.js:not(.no-gl) #closing {
+  min-height: 250vh;
+  min-height: 250svh;
+}
+
+/* ---------- Text layer in flow (no JavaScript, or the no-WebGL fallback) ---------- */
+
+#closing .closing__layer {
+  /* Written by closing.ts from formationRects('column', 'closing'), in CSS px, viewport coordinates. */
+  --col-left: 0px;
+  --col-right: 0px;
+  --col-top: 0px;
+  --col-height: 0px;
+  --col-mid: 0px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#closing .closing__haiku {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  max-width: none;
+  margin: 0;
+  color: var(--text-1);
+}
+
+#closing .closing__cta {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-top: var(--sp-5);
+}
+
+#closing .closing__cta .btn {
+  min-height: var(--sp-6);
+  height: var(--sp-6);
+  white-space: nowrap;
+}
+
+#closing .closing__source {
+  max-width: none;
+  white-space: nowrap;
+}
+
+#closing .closing__dim {
+  display: none;
+}
+
+/* The no-WebGL column is 80svh tall on desktop and 60svh on phone. Its box has the viewBox aspect (0.22 by 4.54 bu),
+   so one bu is the box height over 4.54. */
+#closing .closing__column {
+  --column-h: 60svh;
+  position: relative;
+  width: calc(var(--column-h) * 0.22 / 4.54);
+  height: var(--column-h);
+  margin-inline: auto;
+}
+
+#closing .closing__column-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Block material #2B2A26 is a 3D material value (direction.md heading 3), so it is not a token. The kireji is --seal. */
+#closing .closing__column-svg rect {
+  fill: #2B2A26;
+}
+
+#closing .closing__column-svg .is-kireji {
+  fill: var(--seal);
+}
+
+#closing .closing__column-dim {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The dimension line sits at x 0.229 bu, 154.09% of the box width from its left edge (act III, no-WebGL fallback). */
+#closing .closing__column-label {
+  position: absolute;
+  top: 50%;
+  left: calc(154.09% + var(--sp-2));
+  transform: translateY(-50%);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+/* Desktop and tablet landscape, in flow: the haiku in columns 9 to 11 with its CTA beneath, and the column in 12 to 13. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #closing .closing__layer {
+    display: grid;
+    align-items: start;
+    align-content: start;
+  }
+
+  #closing .closing__haiku {
+    grid-column: 9 / 12;
+    grid-row: 1;
+    justify-self: end;
+    margin-top: 20svh;
+  }
+
+  #closing .closing__cta {
+    grid-column: 9 / 12;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  #closing .closing__fallback {
+    grid-column: 12 / 14;
+    grid-row: 1 / 3;
+    justify-self: center;
+    margin-top: 20svh;
+  }
+
+  #closing .closing__column {
+    --column-h: 80svh;
+  }
+}
+
+/* ---------- Text layer fixed (WebGL and JavaScript, act III C15) ----------
+   The layer covers the viewport with no z-index. It is visible only while the section thresholds hold, as a hard cut
+   (heading 8, rule 6: text never fades). Pointer events pass through the layer, except on the links. */
+html.js:not(.no-gl) #closing .closing__layer {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  align-content: start;
+  align-items: start;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.js:not(.no-gl) #closing .closing__layer.is-on {
+  visibility: visible;
+}
+
+html.js:not(.no-gl) #closing .closing__cta a {
+  pointer-events: auto;
+}
+
+html.js:not(.no-gl) #closing .closing__fallback {
+  display: none;
+}
+
+html.js:not(.no-gl) #closing .closing__dim {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Desktop-landscape (1024 px and wider): the haiku in columns 11 and 12, right-aligned, its CTA row beneath. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  html.js:not(.no-gl) #closing .closing__haiku {
+    grid-column: 11 / 13;
+    grid-row: 1;
+    justify-self: end;
+    margin-top: 20svh;
+  }
+
+  html.js:not(.no-gl) #closing .closing__cta {
+    grid-column: 11 / 13;
+    grid-row: 2;
+    justify-self: end;
+    margin-top: var(--sp-5);
+  }
+}
+
+/* Tablet-landscape (768 to 1023 px): the haiku's right edge is the right edge of column 9. */
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) and (max-width: 1023px) {
+  html.js:not(.no-gl) #closing .closing__haiku {
+    grid-column: 1 / 10;
+    grid-row: 1;
+    justify-self: end;
+    margin-top: 20svh;
+  }
+
+  html.js:not(.no-gl) #closing .closing__cta {
+    grid-column: 1 / 10;
+    grid-row: 2;
+    justify-self: end;
+    margin-top: var(--sp-5);
+  }
+}
+
+/* Phone-landscape (below 768 px, with a of 1.0 or more): the haiku's right edge is 19 px (sp-4) left of the column's
+   left edge, and the CTA row is right-aligned beneath it. The padding carries that edge (projection P1). */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  html.js:not(.no-gl) #closing .closing__layer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-block-start: 20svh;
+    padding-inline-start: 0;
+    padding-inline-end: calc(100% - var(--col-left) + var(--sp-4));
+  }
+
+  html.js:not(.no-gl) #closing .closing__cta {
+    margin-top: var(--sp-5);
+  }
+}
+
+/* Short phone-landscape viewports (height 500 px or less): the haiku starts at sp-6 instead of 20svh, so that the CTA
+   row stays inside the viewport. This is a recorded deviation from act III (direction-act3 closing, phone-landscape). */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) and (max-height: 500px) {
+  html.js:not(.no-gl) #closing .closing__layer {
+    padding-block-start: var(--sp-6);
+  }
+}
+
+/* Portrait and phone (a below 1.0): the haiku is placed as in phone-landscape, and the CTA row sits fixed at 19 px
+   from the bottom and 19 px from the left edge, clear of the column. */
+@media not all and (min-aspect-ratio: 1/1) {
+  html.js:not(.no-gl) #closing .closing__layer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-block-start: 20svh;
+    padding-inline-start: 0;
+    padding-inline-end: calc(100% - var(--col-left) + var(--sp-4));
+  }
+
+  html.js:not(.no-gl) #closing .closing__cta {
+    position: absolute;
+    inset-inline-start: var(--sp-4);
+    inset-block-end: var(--sp-4);
+    margin-top: 0;
+  }
+}
+
+/* ---------- Dimension line and label (act III closing, 2D layer) ----------
+   The column's bounds come from projection P1 (closing.ts). The line is 19 px (sp-4) right of the column's right
+   edge and runs from the top edge of block 00 to the bottom edge of block 16. Its end ticks are 5 px (sp-1) long,
+   centred on the line. The label starts 7 px (sp-2) right of the line, centred on the line's midpoint. */
+#closing .closing__dim-line {
+  position: absolute;
+  left: calc(var(--col-right) + var(--sp-4));
+  top: var(--col-top);
+  width: 1px;
+  height: var(--col-height);
+  background: var(--rule-hair);
+  transform-origin: 50% 0;
+}
+
+#closing .closing__dim-tick {
+  position: absolute;
+  left: calc(var(--col-right) + var(--sp-4) - var(--sp-1) / 2);
+  width: var(--sp-1);
+  height: 1px;
+  background: var(--rule-hair);
+}
+
+#closing .closing__dim-tick--top {
+  top: calc(var(--col-top) - 0.5px);
+}
+
+#closing .closing__dim-tick--bottom {
+  top: calc(var(--col-top) + var(--col-height) - 0.5px);
+}
+
+#closing .closing__dim-label {
+  position: absolute;
+  left: calc(var(--col-right) + var(--sp-4) + var(--sp-2));
+  top: var(--col-mid);
+  transform: translateY(-50%);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+/* ---------- Haiku colour turn-on (act III closing, sequence 5) ----------
+   Each character mixes from text-3 (--mix 0) to text-1 (--mix 1). The mix is written by GSAP, and it is 1 without it. */
+#closing .closing__char {
+  color: color-mix(in srgb, var(--text-3) calc((1 - var(--mix, 1)) * 100%), var(--text-1));
+}

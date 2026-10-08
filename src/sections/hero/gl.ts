@@ -1,8 +1,8 @@
 // The hero's 3D layer (design/direction-act1.md, hero, 3D layer; direction-3d.md sections 10.13 and 11.11).
 // The stanza of 17 blocks opens while the hero scrolls, the camera holds the hero keyframe, and on a fine
-// pointer the stanza tilts with the pointer. The choreography applies the rest of heroGL from its fields:
-// the breath (breath), the depth of field (dof, null here) and the ink (ink, paper). This file imports from
-// src/gl and the core modules only (architecture section 6b). No 2D code imports it.
+// pointer the stanza tilts with the pointer. The choreography applies the breath (heroGL.breath) and the depth
+// of field (heroGL.dof, null here) when the hero becomes current (src/choreo/timeline.ts, commit). This file
+// imports from src/gl and the core modules only (architecture section 6b). No 2D code imports it.
 import { ef } from '../../core/ease';
 import { env } from '../../core/env';
 import { pointer } from '../../core/pointer';
@@ -17,7 +17,7 @@ import type { CameraKey, GLWorld, SectionGL, SectionGLHandle } from '../../gl/se
  */
 function openPoses(portrait: boolean, k: number, out: Pose[]): Pose[] {
   if (formationFor('stanza', portrait) !== FORMATIONS.stanza) {
-    throw new RangeError('hero: formationFor turns the stanza, so the modulation of direction-3d 11.11 needs a rework');
+    throw new RangeError('hero: the stanza is turned in portrait, so the 11.11 modulation needs a rework');
   }
   return stanzaOpen(k, out);
 }

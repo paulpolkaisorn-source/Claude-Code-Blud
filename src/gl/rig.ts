@@ -24,6 +24,12 @@ export const FIT = {
   /** Phone camera y for the hero key, which capabilities and code share. It places the stanza in the upper half. */
   phoneHeroY: -1.1,
   /**
+   * Phone family camera x as a multiple of the visible width at the family key (D19.2). The camera moves
+   * right, so each station centre sits 0.28 of the viewport width left of centre and the station labels fit
+   * to the right of the vertical axis. Desktop family keeps x 0.
+   */
+  phoneFamilyOffsetX: 0.28,
+  /**
    * Extents of the fitted formations. stanza is 6 x 0.87 + 0.70 wide, race 16 x 0.95 + 0.70 wide,
    * rest 16 x 0.52 + 0.42 wide, column 16 x 0.27 + 0.22 tall, and axis is the family axis with margins.
    */
@@ -52,7 +58,8 @@ function heightFit(h: number, f: number): number {
 
 /**
  * The camera keyframe for name in a viewport of size CSS px (direction-3d.md section 10.6). Desktop is
- * an aspect of 1 or wider. Phone is below 1, where the race turns vertical and fits by height (D15.1).
+ * an aspect of 1 or wider. Phone is below 1, where the race turns vertical and fits by height (D15.1). On a
+ * phone the family key also moves right (D19.2).
  * The target is (x, y, 0) and the fov is always FIT.fovDeg. Pass out to write into an existing object
  * and allocate nothing.
  */
@@ -87,7 +94,12 @@ export function cameraKey(name: KeyName, size: { width: number; height: number }
       if (!phone) x = FIT.desktopOffsetX * visibleWidth(z, aspect);
       break;
     case 'family':
-      z = phone ? heightFit(FIT.extent.axis, FIT.fill.family) : widthFit(FIT.extent.axis, FIT.fill.family, aspect);
+      if (phone) {
+        z = heightFit(FIT.extent.axis, FIT.fill.family);
+        x = FIT.phoneFamilyOffsetX * visibleWidth(z, aspect);
+      } else {
+        z = widthFit(FIT.extent.axis, FIT.fill.family, aspect);
+      }
       break;
     default:
       throw new RangeError(`cameraKey: unknown keyframe ${String(name)}`);

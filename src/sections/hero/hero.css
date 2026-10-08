@@ -1,0 +1,295 @@
+/*
+ * Hero, act I (design/direction-act1.md, hero). Owner: motion-2d. Scoped to #hero.
+ *
+ * The section is 200 svh, the 2 vh scroll length that the choreography reads as the hero progress (rule A3). Its
+ * one 100 svh stage is sticky, so the copy holds while the stanza opens and then leaves with the section. The
+ * object layer (the annotations, and the no-WebGL stanza) is fixed to the viewport and placed by projection P1
+ * (rule A6), so it stays over the 3D blocks. Every value is a token, except the block material of the fallback,
+ * which is a 3D material value (direction.md heading 3).
+ *
+ * Portrait and phone: the h1 starts at 56 svh (A9), or lower when the dimension label of the object would touch it
+ * (--hero-clear, set by hero.ts from the rest pose). On short portrait screens the lede is 19 px above the button,
+ * so that the stack ends inside the viewport (see the report for the deviation).
+ */
+
+/* ---------- Section and stage ---------- */
+
+#hero {
+  height: 200vh;
+  height: 200svh;
+  padding: 0;
+}
+
+#hero .hero-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+}
+
+/* No JavaScript: no scroll length and no pin, so the copy reads down the page. */
+html:not(.js) #hero {
+  height: auto;
+}
+
+/* Without JavaScript the copy reads in flow: the kicker is the first line, above the h1, with the stage's top offset. */
+html:not(.js) #hero .hero-stage {
+  position: relative;
+  height: auto;
+  padding-block: var(--sp-8);
+}
+
+html:not(.js) #hero .hero-kicker {
+  position: static;
+  grid-column: 1 / -1;
+  margin-bottom: var(--sp-4);
+}
+
+html:not(.js) #hero .hero-title {
+  margin-top: 0;
+}
+
+/* ---------- Grid: one column on phones, the 17-column track from 768 px (direction.md heading 5) ---------- */
+
+#hero .hero-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  #hero .hero-grid {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+  }
+}
+
+/* The kicker is set above the h1 on landscape, and at the top of the stage on portrait, clear of the object. */
+#hero .hero-kicker {
+  position: absolute;
+  left: var(--margin);
+  top: 12vh;
+  top: 12svh;
+  color: var(--seal-text);
+}
+
+/* Portrait and phone (aspect below 1, A9): the object is above, the text below and full width. */
+#hero .hero-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  margin-top: 56vh;
+  margin-top: max(56svh, var(--hero-clear, 0px));
+  color: var(--text-1);
+}
+
+#hero .hero-lede {
+  grid-column: 1 / -1;
+  margin-top: var(--sp-5);
+}
+
+#hero .hero-actions {
+  grid-column: 1 / -1;
+  margin-top: var(--sp-5);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#hero .hero-cta {
+  height: var(--sp-6);
+  white-space: nowrap;
+}
+
+#hero .hero-link {
+  justify-self: start;
+  margin-top: var(--sp-4);
+}
+
+/* Short portrait screens: the lede sits 19 px (sp-4) above the button, so that the stack fits the viewport. */
+@media (orientation: portrait) and (max-height: 900px) {
+  #hero .hero-actions {
+    margin-top: var(--sp-4);
+  }
+}
+
+/* Landscape (aspect 1 or wider), tablet from 768 px: the text sits at the top, the stanza to its right (A9). */
+@media (min-aspect-ratio: 1/1) {
+  #hero .hero-kicker {
+    top: calc(12svh - var(--sp-4) - var(--lh-label) * var(--fs-label));
+  }
+
+  #hero .hero-title {
+    margin-top: 12vh;
+    margin-top: 12svh;
+  }
+
+  #hero .hero-lede {
+    margin-top: var(--sp-6);
+  }
+
+  #hero .hero-actions {
+    margin-top: var(--sp-5);
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (min-width: 768px) {
+  #hero .hero-lede {
+    grid-column: 1 / 9;
+  }
+
+  #hero .hero-actions {
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: center;
+  }
+
+  #hero .hero-cta {
+    grid-column: 1 / 5;
+  }
+
+  #hero .hero-link {
+    grid-column: 5 / 9;
+    margin-top: 0;
+  }
+}
+
+/* Desktop from 1024 px: the h1 spans columns 1 to 8, the lede 1 to 5, the button 1 to 3 and the link 4 to 5. */
+@media (min-aspect-ratio: 1/1) and (min-width: 1024px) {
+  #hero .hero-title {
+    grid-column: 1 / 9;
+  }
+
+  #hero .hero-lede {
+    grid-column: 1 / 6;
+  }
+
+  #hero .hero-cta {
+    grid-column: 1 / 4;
+  }
+
+  #hero .hero-link {
+    grid-column: 4 / 6;
+  }
+}
+
+/* Phone landscape (aspect 1 or wider, below 768 px): the text is held in the left 47% (A9). The object is in the right
+   half (its row B starts at 49.49% of the width), so the copy does not need the pin: the section is as tall as its copy,
+   the copy scrolls in the left column, and the object layer stays fixed on the right until the section has passed. */
+@media (min-aspect-ratio: 1/1) and (max-width: 767px) {
+  #hero {
+    height: auto;
+  }
+
+  #hero .hero-stage {
+    position: relative;
+    height: auto;
+    padding-bottom: var(--sp-6);
+  }
+
+  #hero .hero-title {
+    width: 47vw;
+    font-size: min(var(--fs-display-xxl), 10.7vw);
+  }
+
+  #hero .hero-lede {
+    width: 31vw;
+  }
+
+  #hero .hero-actions {
+    width: 47vw;
+  }
+}
+
+/* ---------- Copy ---------- */
+
+/* Before the first settle the h1 starts at +0.02em and the lede at text-3 (direction-act1 hero). Reduced motion
+   and no JavaScript show the token values at once. */
+html.js:not(.reduced-motion) #hero .hero-title {
+  letter-spacing: 0.02em;
+}
+
+#hero .hero-lede {
+  color: var(--text-2);
+}
+
+html.js:not(.reduced-motion) #hero .hero-lede {
+  color: var(--text-3);
+}
+
+#hero .hero-link {
+  color: var(--text-1);
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  white-space: nowrap;
+}
+
+/* ---------- Object layer: fixed to the viewport, placed by P1 ---------- */
+
+#hero .hero-object {
+  margin: 0;
+}
+
+#hero .hero-art {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-main);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+#hero .hero-art.is-on {
+  visibility: visible;
+}
+
+#hero .hero-fallback {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#hero .hero-fallback svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Block anodized, the 3D material of the blocks in act I (direction.md heading 3). The kireji is the seal. */
+#hero .hero-fallback .blk {
+  fill: #2B2A26;
+}
+
+#hero .hero-fallback .blk--kireji {
+  fill: var(--seal);
+}
+
+#hero .hero-count,
+#hero .hero-dim-label,
+#hero .hero-tap {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+#hero .hero-dim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  max-width: none;
+}
+
+#hero .hero-dim path {
+  fill: none;
+  stroke: var(--rule-hair);
+  stroke-width: 1px;
+}
+
+#hero .hero-tap {
+  color: var(--text-1);
+  visibility: hidden;
+}
+
+#hero .hero-tap.is-on {
+  visibility: visible;
+}

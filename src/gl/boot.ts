@@ -122,7 +122,13 @@ export function createWorld(canvas: HTMLCanvasElement): GLBoot {
     sections,
     async compile() {
       const { renderer, scene, camera } = stage;
-      await renderer.compileAsync(scene, camera);
+      // compileAsync needs KHR_parallel_shader_compile; without it three.js warns and falls back to a
+      // blocking compile anyway, so take the blocking path directly and keep the console clean.
+      if (renderer.extensions.has('KHR_parallel_shader_compile')) {
+        await renderer.compileAsync(scene, camera);
+      } else {
+        renderer.compile(scene, camera);
+      }
       // One rendered frame with every program ready, then the CSS backgrounds hand over (D18).
       // Waits on the page clock (after glRender) rather than a separate requestAnimationFrame.
       await new Promise<void>((resolve) => {

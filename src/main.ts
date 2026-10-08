@@ -8,6 +8,8 @@ import { registerEases } from './core/ease';
 import { initTicker } from './core/ticker';
 import { initScroll } from './core/scroll';
 import { initPointer } from './core/pointer';
+import { initHover } from './core/hover';
+import { initCursor } from './core/cursor';
 import { fontsTask, registerTask, startLoading } from './core/loader';
 import type { SectionId } from './core/types';
 
@@ -52,6 +54,7 @@ function boot(): void {
   initTicker();
   initScroll();
   initPointer();
+  initHover();
 
   // Loader tasks (act I preloader weights: fonts 2, GL chunk 5, shader compile 2, environment 1).
   registerTask('fonts', 2, fontsTask(['Bodoni Moda Variable', 'Geist Mono Variable']));
@@ -92,6 +95,7 @@ function boot(): void {
     if (el && init) init({ el, reducedMotion: env.reducedMotion, gl: env.gl });
   }
 
+  initCursor();
   void startLoading();
   document.documentElement.dataset.boot = 'ok';
 }
