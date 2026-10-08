@@ -1,0 +1,464 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Input harness</title>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+  <style>
+    html,body{margin:0;height:100%;background:#123;overflow:hidden}
+    #c{position:fixed;left:0;top:0;width:100vw;height:100vh;display:block;background:#234}
+    #root{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none}
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="root"></div>
+  <script type="module">
+    import { test, assert, run, wait } from './harness.js';
+    import { bus, EV, makeInput, isMobile } from '../../src/contracts.js';
+    import { createInput } from '../../src/input/input.js';
+    import { JOY_RADIUS, TAP_MS } from '../../src/input/touch.js';
+
+    const mobile = isMobile();
+    const canvas = document.getElementById('c');
+    const root = document.getElementById('root');
+
+    // Stub ground mapping: canvas px -> world (x = 0.02 sx, z = 0.02 sy). Tests can swap it to model a camera move.
+    const defaultMap = (sx, sy, o) => { o.x = sx * 0.02; o.z = sy * 0.02; };
+    let mapFn = defaultMap;
+    const screenToGround = (sx, sy, out) => mapFn(sx, sy, out);
+
+    const eq = (a, b, msg) => assert(Math.abs(a - b) < 1e-3, `${msg}: expected ${b}, got ${a}`);
+    const make = () => {
+      const player = { x: 0, z: 0, brawlerId: 'rivet', input: makeInput() };
+      const inp = createInput({ canvas, root, bus, mobile, screenToGround });
+      return { player, inp };
+    };
+    const tick = (inp, player) => { inp.update(player); return player.input; };
+    const kd = (code, o = {}) => window.dispatchEvent(new KeyboardEvent('keydown', { code, key: o.key ?? code, repeat: !!o.repeat, bubbles: true }));
+    const ku = (code, o = {}) => window.dispatchEvent(new KeyboardEvent('keyup', { code, key: o.key ?? code, bubbles: true }));
+    const ptr = (type, target, x, y, o = {}) => target.dispatchEvent(new PointerEvent(type, {
+      clientX: x, clientY: y, button: o.button ?? 0, buttons: o.buttons ?? 0, pointerId: o.id ?? 1,
+      pointerType: o.type ?? 'mouse', isPrimary: true, bubbles: true, cancelable: true,
+    }));
+    const center = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+
+    // ---- shared (desktop and mobile) ----
+    test('keys: WASD/arrows move on the screen axes (up = -z, right = +x); diagonals normalize', () => {
+      const { inp, player } = make();
+      try {
+        kd('KeyW');
+        let i = tick(inp, player);
+        eq(i.moveX, 0, 'W x'); eq(i.moveZ, -1, 'W is up (-z)');
+        ku('KeyW');
+        kd('ArrowRight');
+        i = tick(inp, player);
+        eq(i.moveX, 1, 'right x'); eq(i.moveZ, 0, 'right z');
+        kd('KeyS');
+        i = tick(inp, player);
+        eq(i.moveX, Math.SQRT1_2, 'right+down x'); eq(i.moveZ, Math.SQRT1_2, 'right+down z');
+        ku('ArrowRight'); ku('KeyS');
+        i = tick(inp, player);
+        eq(i.moveX, 0, 'released x'); eq(i.moveZ, 0, 'released z');
+      } finally { inp.dispose(); }
+    });
+
+    test('keys: Q/Space autoFire, F autoSuper, E superFire (E held = superAiming); edges consumed once', () => {
+      const { inp, player } = make();
+      try {
+        kd('KeyQ');
+        let i = tick(inp, player);
+        assert(i.autoFire === true, 'Q -> autoFire');
+        i.autoFire = false;                       // the game clears edges after use
+        i = tick(inp, player);
+        assert(i.autoFire === false, 'edge is not re-raised');
+        ku('KeyQ');
+        kd('Space', { key: ' ' });
+        i = tick(inp, player);
+        assert(i.autoFire === true, 'Space -> autoFire');
+        i.autoFire = false;
+        ku('Space', { key: ' ' });
+        kd('KeyF');
+        i = tick(inp, player);
+        assert(i.autoSuper === true, 'F -> autoSuper');
+        i.autoSuper = false;
+        ku('KeyF');
+        kd('KeyE');
+        i = tick(inp, player);
+        assert(i.superFire === true && i.superAiming === true, 'E -> superFire while held');
+        i.superFire = false;
+        kd('KeyE', { repeat: true });
+        i = tick(inp, player);
+        assert(i.superFire === false, 'E auto-repeat does not re-fire');
+        ku('KeyE');
+        i = tick(inp, player);
+        assert(i.superAiming === false, 'E released -> not superAiming');
+        assert(i.fire === false && i.autoFire === false && i.autoSuper === false, 'no stray edges');
+      } finally { inp.dispose(); }
+    });
+
+    test('Esc and P emit EV.UI_PAUSE once per press (auto-repeat ignored)', () => {
+      const { inp } = make();
+      let n = 0;
+      const off = bus.on(EV.UI_PAUSE, () => { n++; });
+      try {
+        kd('Escape');
+        kd('Escape', { repeat: true });
+        kd('KeyP');
+        eq(n, 2, 'pause events');
+      } finally { off(); inp.dispose(); }
+    });
+
+    test('setEnabled(false) zeroes move and drops keys and edges; Esc still toggles pause', () => {
+      const { inp, player } = make();
+      let n = 0;
+      const off = bus.on(EV.UI_PAUSE, () => { n++; });
+      try {
+        kd('KeyW');
+        eq(tick(inp, player).moveZ, -1, 'enabled: move');
+        inp.setEnabled(false);
+        let i = tick(inp, player);
+        eq(i.moveZ, 0, 'disabled: move zeroed');
+        kd('KeyD'); kd('KeyQ'); kd('Escape');
+        i = tick(inp, player);
+        eq(i.moveX, 0, 'disabled: D ignored');
+        assert(i.autoFire === false, 'disabled: Q ignored');
+        eq(n, 1, 'disabled: Esc still emits UI_PAUSE (game toggles pause/resume)');
+        ku('KeyW');
+        inp.setEnabled(true);
+        kd('KeyA');
+        i = tick(inp, player);
+        eq(i.moveX, -1, 'enabled again: A works');
+        ku('KeyA');
+      } finally { off(); inp.dispose(); }
+    });
+
+    test('blur releases held move keys and the super key', () => {
+      const { inp, player } = make();
+      try {
+        kd('KeyD'); kd('KeyE');
+        let i = tick(inp, player);
+        eq(i.moveX, 1, 'D held');
+        assert(i.superAiming === true, 'E held -> superAiming');
+        window.dispatchEvent(new Event('blur'));
+        i = tick(inp, player);
+        eq(i.moveX, 0, 'blur clears move');
+        assert(i.superAiming === false, 'blur clears superAiming');
+      } finally { inp.dispose(); }
+    });
+
+    test('contextmenu is blocked over the game', () => {
+      const { inp } = make();
+      try {
+        const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        canvas.dispatchEvent(ev);
+        assert(ev.defaultPrevented, 'contextmenu prevented');
+      } finally { inp.dispose(); }
+    });
+
+    test('dispose removes listeners and the touch overlay', () => {
+      const { inp, player } = make();
+      inp.dispose();
+      let n = 0;
+      const off = bus.on(EV.UI_PAUSE, () => { n++; });
+      try {
+        kd('Escape');
+        tick(inp, player);
+        eq(n, 0, 'no pause after dispose');
+        assert(root.querySelector('.bi-touch') === null, 'overlay removed');
+      } finally { off(); }
+    });
+
+    // ---- desktop ----
+    if (!mobile) {
+      test('mouse: LMB fires once, aimed at the cursor ground point (stub)', () => {
+        const { inp, player } = make();
+        try {
+          // canvas (60, 80) -> ground (1.2, 1.6): distance 2, direction (0.6, 0.8), rivet attack.range 5 -> aimLen 0.4
+          ptr('pointerdown', canvas, 60, 80, { button: 0 });
+          let i = tick(inp, player);
+          assert(i.fire === true, 'LMB fire edge');
+          eq(i.aimX, 0.6, 'aimX toward cursor');
+          eq(i.aimZ, 0.8, 'aimZ toward cursor');
+          eq(i.aimLen, 0.4, 'aimLen = dist / attack.range');
+          assert(i.aiming === true, 'aiming while cursor over canvas');
+          assert(i.superFire === false && i.autoFire === false, 'LMB sends no other edge');
+          i.fire = false;                         // game consumes the edge
+          i = tick(inp, player);
+          assert(i.fire === false, 'edge is not re-raised');
+        } finally { inp.dispose(); }
+      });
+
+      test('mouse: aim follows the ground under a still cursor every frame', () => {
+        const { inp, player } = make();
+        try {
+          ptr('pointermove', canvas, 60, 80);
+          let i = tick(inp, player);
+          eq(i.aimX, 0.6, 'initial aimX');
+          mapFn = (sx, sy, o) => { o.x = -sx * 0.02; o.z = sy * 0.02; };   // camera moved, cursor unchanged
+          i = tick(inp, player);
+          eq(i.aimX, -0.6, 'aimX follows the new ground point');
+          eq(i.aimZ, 0.8, 'aimZ follows the new ground point');
+          assert(i.fire === false, 'a move never fires');
+        } finally { mapFn = defaultMap; inp.dispose(); }
+      });
+
+      test('mouse: aiming is true only while the cursor is over the canvas', () => {
+        const { inp, player } = make();
+        try {
+          ptr('pointerenter', canvas, 60, 80);
+          assert(tick(inp, player).aiming === true, 'aiming inside canvas');
+          ptr('pointerleave', canvas, 60, 80);
+          assert(tick(inp, player).aiming === false, 'not aiming outside canvas');
+        } finally { inp.dispose(); }
+      });
+
+      test('mouse: RMB superFire, superAiming uses super.range, released on pointerup', () => {
+        const { inp, player } = make();
+        try {
+          // ground distance 2; rivet super.range 6 -> aimLen 1/3
+          ptr('pointerdown', canvas, 60, 80, { button: 2, buttons: 2 });
+          let i = tick(inp, player);
+          assert(i.superFire === true, 'RMB superFire edge');
+          assert(i.superAiming === true, 'superAiming while RMB held');
+          assert(i.fire === false, 'RMB is not LMB');
+          eq(i.aimLen, 2 / 6, 'aimLen uses super.range');
+          i.superFire = false;
+          ptr('pointerup', window, 60, 80, { button: 2 });
+          i = tick(inp, player);
+          assert(i.superAiming === false, 'superAiming cleared on release');
+        } finally { inp.dispose(); }
+      });
+
+      test('mouse: clicks are ignored while disabled', () => {
+        const { inp, player } = make();
+        try {
+          inp.setEnabled(false);
+          ptr('pointerdown', canvas, 60, 80, { button: 0 });
+          ptr('pointerdown', canvas, 60, 80, { button: 2 });
+          const i = tick(inp, player);
+          assert(i.fire === false && i.superFire === false, 'no edges while disabled');
+          inp.setEnabled(true);
+          assert(tick(inp, player).fire === false, 'no stale click after re-enable');
+        } finally { inp.dispose(); }
+      });
+    }
+
+    // ---- mobile ----
+    if (mobile) {
+      test('touch: overlay hidden by default; shown pads and zone fit the 390x844 viewport', () => {
+        const { inp } = make();
+        try {
+          const layer = root.querySelector('.bi-touch');
+          assert(layer !== null, 'overlay injected into root');
+          assert(getComputedStyle(layer).display === 'none', 'hidden by default');
+          inp.setTouchVisible(true);
+          assert(getComputedStyle(layer).display !== 'none', 'shown');
+          const W = window.innerWidth, H = window.innerHeight;
+          for (const sel of ['.bi-move', '.bi-atk', '.bi-sup']) {
+            const r = root.querySelector(sel).getBoundingClientRect();
+            assert(r.left >= 0 && r.top >= 0 && r.right <= W && r.bottom <= H, `${sel} inside ${W}x${H}`);
+          }
+          for (const sel of ['.bi-atk', '.bi-sup']) {
+            const r = root.querySelector(sel).getBoundingClientRect();
+            assert(r.width >= 64 && r.height >= 64, `${sel} is thumb-sized`);
+          }
+          const atkR = root.querySelector('.bi-atk').getBoundingClientRect();
+          const supR = root.querySelector('.bi-sup').getBoundingClientRect();
+          assert(supR.bottom <= atkR.top, 'super pad sits above the attack pad');
+          inp.setTouchVisible(false);
+          assert(getComputedStyle(layer).display === 'none', 'hidden again');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: canvas taps do not fire (the overlay owns aiming on mobile)', () => {
+        const { inp, player } = make();
+        try {
+          ptr('pointerdown', canvas, 60, 80, { button: 0 });
+          ptr('pointerdown', canvas, 60, 80, { button: 2 });
+          const i = tick(inp, player);
+          assert(i.fire === false && i.superFire === false, 'no canvas-driven edges');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: floating move stick is proportional, clamped, and zeroes on release', () => {
+        const { inp, player } = make();
+        inp.setTouchVisible(true);
+        const zone = root.querySelector('.bi-move');
+        try {
+          ptr('pointerdown', zone, 100, 600, { id: 1, type: 'touch' });
+          ptr('pointermove', zone, 100 + JOY_RADIUS / 2, 600, { id: 1, type: 'touch' });
+          let i = tick(inp, player);
+          eq(i.moveX, 0.5, 'half deflection x');
+          eq(i.moveZ, 0, 'half deflection z');
+          ptr('pointermove', zone, 100, 600 + 300, { id: 1, type: 'touch' });
+          i = tick(inp, player);
+          eq(i.moveX, 0, 'far drag x');
+          eq(i.moveZ, 1, 'far drag clamped to unit length, down = +z');
+          ptr('pointermove', zone, 100 - 30, 600 + 40, { id: 1, type: 'touch' });
+          i = tick(inp, player);
+          eq(i.moveX, -30 / JOY_RADIUS, 'diagonal drag magnitude < 1 (x)');
+          eq(i.moveZ, 40 / JOY_RADIUS, 'diagonal drag magnitude < 1 (z)');
+          assert(Math.hypot(i.moveX, i.moveZ) <= 1 + 1e-6, 'diagonal stays within unit length');
+          ptr('pointerup', zone, 70, 640, { id: 1, type: 'touch' });
+          i = tick(inp, player);
+          eq(i.moveX, 0, 'released x');
+          eq(i.moveZ, 0, 'released z');
+          assert(i.fire === false && i.autoFire === false, 'move never fires');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: attack drag aims along the drag; release fires with that aim', () => {
+        const { inp, player } = make();
+        inp.setTouchVisible(true);
+        const atk = root.querySelector('.bi-atk');
+        try {
+          const c = center(atk);
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          let i = tick(inp, player);
+          assert(i.fire === false && i.aiming === false, 'no aim before the drag passes the deadzone');
+          ptr('pointermove', atk, c.x, c.y - 40, { id: 2, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.aiming === true, 'aiming while dragging');
+          eq(i.aimX, 0, 'aimX up');
+          eq(i.aimZ, -1, 'aimZ up (-z)');
+          eq(i.aimLen, 40 / JOY_RADIUS, 'aimLen = drag / JOY_RADIUS');
+          assert(i.fire === false, 'no fire until release');
+          ptr('pointerup', atk, c.x, c.y - 40, { id: 2, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.fire === true, 'release fires');
+          eq(i.aimZ, -1, 'release keeps the drag aim');
+          eq(i.aimLen, 40 / JOY_RADIUS, 'release keeps the drag length');
+          assert(i.aiming === false, 'no longer aiming after release');
+          assert(i.autoFire === false, 'a drag is not a tap');
+          i.fire = false;
+          assert(tick(inp, player).fire === false, 'edge consumed');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: quick tap = autoFire; tiny drag still a tap; long still press does nothing', async () => {
+        const { inp, player } = make();
+        inp.setTouchVisible(true);
+        const atk = root.querySelector('.bi-atk');
+        const c = center(atk);
+        try {
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          await wait(60);
+          ptr('pointerup', atk, c.x, c.y, { id: 2, type: 'touch' });
+          let i = tick(inp, player);
+          assert(i.autoFire === true, 'quick tap -> autoFire');
+          assert(i.fire === false, 'tap is not a manual fire');
+          i.autoFire = false;
+
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          ptr('pointermove', atk, c.x + 4, c.y, { id: 2, type: 'touch' });
+          await wait(60);
+          ptr('pointerup', atk, c.x + 4, c.y, { id: 2, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.autoFire === true, 'tiny drag still a tap');
+          assert(i.fire === false, 'tiny drag is not a manual fire');
+          i.autoFire = false;
+
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          await wait(TAP_MS + 60);
+          ptr('pointerup', atk, c.x, c.y, { id: 2, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.autoFire === false && i.fire === false, 'long still press is not a tap');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: super drag = superFire with superAiming; super tap = autoSuper', async () => {
+        const { inp, player } = make();
+        inp.setTouchVisible(true);
+        const sup = root.querySelector('.bi-sup');
+        const c = center(sup);
+        try {
+          ptr('pointerdown', sup, c.x, c.y, { id: 3, type: 'touch' });
+          ptr('pointermove', sup, c.x, c.y - 50, { id: 3, type: 'touch' });
+          let i = tick(inp, player);
+          assert(i.superAiming === true, 'superAiming while dragging');
+          eq(i.aimZ, -1, 'super aim up');
+          eq(i.aimLen, 50 / JOY_RADIUS, 'super aimLen = drag / JOY_RADIUS');
+          assert(i.fire === false && i.superFire === false, 'no fire mid-drag');
+          ptr('pointerup', sup, c.x, c.y - 50, { id: 3, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.superFire === true, 'release -> superFire');
+          assert(i.superAiming === false, 'superAiming cleared on release');
+          assert(i.autoSuper === false, 'a drag is not a tap');
+          i.superFire = false;
+
+          ptr('pointerdown', sup, c.x, c.y, { id: 3, type: 'touch' });
+          await wait(60);
+          ptr('pointerup', sup, c.x, c.y, { id: 3, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.autoSuper === true, 'super tap -> autoSuper');
+          assert(i.superFire === false, 'super tap is not a manual super');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: move stick and attack pad work together on separate fingers', () => {
+        const { inp, player } = make();
+        inp.setTouchVisible(true);
+        const zone = root.querySelector('.bi-move');
+        const atk = root.querySelector('.bi-atk');
+        const c = center(atk);
+        try {
+          ptr('pointerdown', zone, 100, 600, { id: 1, type: 'touch' });
+          ptr('pointermove', zone, 100 + JOY_RADIUS / 2, 600, { id: 1, type: 'touch' });
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          ptr('pointermove', atk, c.x - 30, c.y, { id: 2, type: 'touch' });
+          let i = tick(inp, player);
+          eq(i.moveX, 0.5, 'move from finger 1');
+          eq(i.aimX, -1, 'aim from finger 2');
+          assert(i.aiming === true, 'aiming with finger 2');
+          ptr('pointerup', atk, c.x - 30, c.y, { id: 2, type: 'touch' });
+          i = tick(inp, player);
+          assert(i.fire === true, 'attack release fires');
+          eq(i.moveX, 0.5, 'move unaffected by attack release');
+          i.fire = false;
+          ptr('pointerup', zone, 100 + JOY_RADIUS / 2, 600, { id: 1, type: 'touch' });
+          i = tick(inp, player);
+          eq(i.moveX, 0, 'move stops on its own release');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: setSuperReady toggles the ready glow and the dim state', () => {
+        const { inp } = make();
+        const sup = root.querySelector('.bi-sup');
+        try {
+          assert(sup.classList.contains('bi-dim') && !sup.classList.contains('bi-ready'), 'dim by default');
+          inp.setSuperReady(true);
+          assert(sup.classList.contains('bi-ready') && !sup.classList.contains('bi-dim'), 'ready glow');
+          inp.setSuperReady(false);
+          assert(sup.classList.contains('bi-dim') && !sup.classList.contains('bi-ready'), 'dim again');
+        } finally { inp.dispose(); }
+      });
+
+      test('touch: pointercancel and disabling mid-drag end the drag without firing', () => {
+        const { inp, player } = make();
+        inp.setTouchVisible(true);
+        const atk = root.querySelector('.bi-atk');
+        const c = center(atk);
+        try {
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          ptr('pointermove', atk, c.x, c.y - 40, { id: 2, type: 'touch' });
+          ptr('pointercancel', atk, c.x, c.y - 40, { id: 2, type: 'touch' });
+          let i = tick(inp, player);
+          assert(i.fire === false && i.aiming === false, 'cancel: no fire, not aiming');
+
+          ptr('pointerdown', atk, c.x, c.y, { id: 2, type: 'touch' });
+          ptr('pointermove', atk, c.x, c.y - 40, { id: 2, type: 'touch' });
+          inp.setEnabled(false);
+          ptr('pointerup', atk, c.x, c.y - 40, { id: 2, type: 'touch' });
+          inp.setEnabled(true);
+          i = tick(inp, player);
+          assert(i.fire === false, 'disabled mid-drag: no fire on release');
+        } finally { inp.dispose(); }
+      });
+    }
+
+    await run();
+  </script>
+</body>
+</html>
