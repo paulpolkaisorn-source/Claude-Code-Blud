@@ -16,7 +16,7 @@ const MM_TICK_MS = 50;   // matchmaking is UI timing, so it ticks on timers, not
 const clamp01 = (v) => (v > 0 ? (v < 1 ? v : 1) : 0);
 
 function ensureCss() {
-  if (document.querySelector('link[href$="styles/ui.css"]')) return;
+  if (document.querySelector('link[href$="styles/ui.css"], style[data-ui-css]')) return;   // linked, or inlined by the standalone build
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = new URL('../../styles/ui.css', import.meta.url).href;

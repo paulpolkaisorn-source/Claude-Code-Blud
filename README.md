@@ -13,6 +13,9 @@ npx serve .            # or: python3 -m http.server 8000
 The page loads Three.js from jsDelivr through an import map, so the first load needs internet access.
 Requires a WebGL2 browser (any current desktop or mobile browser).
 
+**Single-file version:** `dist/brawl-arena-3d.html` bundles Three.js, every module and the CSS into one ~660 KB file
+that runs offline straight from disk (double-click it, no server). Rebuild it with `npm install && npm run build:standalone`.
+
 ## Modes
 
 - **Crystal Rush (3v3)**: crystals pop out of the center mine every 6 s. Hold **10+** crystals as a team (and more than the
