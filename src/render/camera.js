@@ -18,6 +18,10 @@ export function createCameraRig(camera) {
   let tx = cols / 2, tz = rows / 2;   // look-at point on the ground (y = 0), damped toward the follow target
   let dist = 12;                      // camera-to-look-at distance, fitted to aspect
   let trauma = 0, decay = 1, time = 0;
+  let halfW = 6.5;                    // half the visible width (tiles) at the look-at point
+  // Keep the view mostly on the arena: x stays a visible half-width (minus a 1-tile rim) from the side walls.
+  const cx = (x) => (cols > 2 * halfW - 2 ? clamp(x, halfW - 1, cols - halfW + 1) : cols / 2);
+  const cz = (z) => clamp(z, 6, rows - 4);     // asymmetric: the 55° view reaches farther above the look-at point
 
   function apply() {
     const a = trauma * trauma * MAX_SHAKE;
@@ -35,28 +39,30 @@ export function createCameraRig(camera) {
     setBounds(c, r) {
       cols = c;
       rows = r;
-      tx = clamp(tx, 0, cols);
-      tz = clamp(tz, 0, rows);
+      tx = cx(tx);
+      tz = cz(tz);
       apply();
     },
-    // ~13 tiles across the look-at point in landscape, ~11 in portrait, blended between aspect 0.75 and 1.25.
+    // ~15.5 tiles across the look-at point in landscape, ~12 in portrait, blended between aspect 0.75 and 1.25.
     setAspect(aspect) {
       const t = clamp((aspect - 0.75) / 0.5, 0, 1);
-      dist = (11 + 2 * t) / (2 * TAN_HALF_V * aspect);
+      dist = (12 + 3.5 * t) / (2 * TAN_HALF_V * aspect);
+      halfW = (12 + 3.5 * t) / 2;
+      tx = cx(tx);
       apply();
       return dist;
     },
     snap(x, z) {
       if (!Number.isFinite(x) || !Number.isFinite(z)) return;
-      tx = clamp(x, 0, cols);
-      tz = clamp(z, 0, rows);
+      tx = cx(x);
+      tz = cz(z);
       apply();
     },
     follow(x, z, dt) {
       if (!Number.isFinite(x) || !Number.isFinite(z)) return;
       const k = 1 - Math.exp(-FOLLOW_RATE * (dt > 0 ? dt : 1 / 60));
-      tx += (clamp(x, 0, cols) - tx) * k;
-      tz += (clamp(z, 0, rows) - tz) * k;
+      tx += (cx(x) - tx) * k;
+      tz += (cz(z) - tz) * k;
       apply();
     },
     // Trauma adds up (capped at 1) and decays linearly to zero over `duration` seconds.

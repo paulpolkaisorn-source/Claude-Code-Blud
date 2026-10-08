@@ -19,7 +19,7 @@ Visibility (game.js): `b.visibleTo[t]` false when `b.inBush` && `revealTimer<=0`
 ### render — `src/render/renderer.js` (+ camera.js, post.js, quality.js)
 `createRenderer(canvas, { mobile }) -> R`: `R.renderer, R.scene, R.camera`;
 `R.setArenaBounds(cols, rows)` fit sun shadow frustum (2048 map, PCFSoft) to the arena;
-`R.follow(x, z, dt)` damped follow (camera tilt ~55°, looks toward -z, ~13 tiles wide landscape / ~11 portrait);
+`R.follow(x, z, dt)` damped follow (camera tilt ~55°, looks toward -z, ~15.5 tiles wide landscape / ~12 portrait);
 `R.snap(x, z)`; `R.shake(intensity, duration)` (also on `EV.SCREEN_SHAKE`);
 `R.render(dt)` composer (RenderPass→UnrealBloomPass→OutputPass) or plain when bloom off;
 `R.setQuality('high'|'low')` (low = no shadows, no bloom, pixelRatio 1); `R.autoQuality(on)` fps<45 for 3 s →

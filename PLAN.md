@@ -12,18 +12,25 @@ Workers: Haiku subagents only (`.claude/agents/*.md`, `model: haiku`, `effort: m
 ## Subagent ledger
 | # | worker | model | effort requested | effort applied | status |
 |---|--------|-------|------------------|----------------|--------|
-| 1 | render | haiku | max | pending | pending |
-| 2 | world | haiku | max | pending | pending |
-| 3 | models | haiku | max | pending | pending |
-| 4 | combat | haiku | max | pending | pending |
-| 5 | ai | haiku | max | pending | pending |
-| 6 | input | haiku | max | pending | pending |
-| 7 | ui | haiku | max | pending | pending |
-| 8 | fx | haiku | max | pending | pending |
-| 9 | audio | haiku | max | pending | pending |
+| 1 | render | haiku | max | max | DONE |
+| 2 | world | haiku | max | max | DONE |
+| 3 | models | haiku | max | max | DONE |
+| 4 | combat | haiku | max | max | DONE |
+| 5 | ai | haiku | max | max | DONE |
+| 6 | input | haiku | max | max | DONE |
+| 7 | ui | haiku | max | max | DONE |
+| 8 | fx | haiku | max | max | DONE |
+| 9 | audio | haiku | max | max | DONE |
 | 10 | qa | haiku | max | pending | pending |
 
-Spawned so far: **0 / 10**.
+Spawned so far: **9 / 10** (workers 1–9 via Workflow `wf_ecbece45-394`, 2 concurrent on 4 CPUs).
+
+Model/effort verification: every worker transcript records `"model":"claude-haiku-5-5"` and `"effort":"max"`.
+Note: the workflow first tried `agentType: <name>` (the `.claude/agents/*.md` definitions). Those types were not yet
+registered in the running session, so each lookup failed before any model ran (journal `agentId: ""`, 0 tokens);
+the script then spawned the default workflow subagent pinned to `model: haiku`, `effort: max`. The UI lists those
+9 failed lookups as "Error" rows — they are not subagents and consumed no tokens. The custom types registered later
+in the session, so worker 10 (QA) uses `subagent_type: qa` directly.
 
 ## Notes
 - Three.js pinned to 0.170.0 (r170) on jsDelivr; verified URLs return 200 (build + addons).
