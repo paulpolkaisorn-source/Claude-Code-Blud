@@ -9,7 +9,8 @@
 // focus hides the forms until the next pointermove. While the preloader layer is up, the pointer is native.
 //
 // The section that owns a shown form gets data-cursor-form, and cursor.css sets cursor: none on that section only.
-// Interactive descendants keep their own pointer.
+// Interactive descendants keep their own pointer. The layer sits outside the sections, so it takes the owner's
+// data-theme: each label's knockout (var(--bg), D22.6) is then the background of the section the label belongs to.
 //
 // Geometry is projection P1 (src/core/projection.ts): arithmetic, no raycast, and no layout read in the tick. The
 // section tops are measured on resize and font load. The race's block 01 edge and the column centres depend only on the
@@ -128,6 +129,8 @@ interface Refs {
   readonly caliperTick: Placed;
   readonly caliperDim: Placed;
   readonly caliperValue: Placed;
+  /** The number of the caliper value. Only this text changes; the unit is its own span. */
+  readonly caliperNumber: Text;
   readonly marker: Placed;
   readonly rulerTick: Placed;
   readonly rulerLabel: Placed;
@@ -145,6 +148,11 @@ function buildForms(layer: HTMLElement): Refs {
   const caliperTick = make('i', 'cursor-caliper-tick');
   const caliperDim = make('i', 'cursor-caliper-dim');
   const caliperValue = make('span', 'cursor-text cursor-caliper-value');
+  // The unit keeps its case: the label style is uppercase, and 'bu' is written lowercase (D22.6).
+  const caliperNumber = document.createTextNode('0.00');
+  const caliperUnit = make('span', 'cursor-unit');
+  caliperUnit.textContent = 'bu';
+  caliperValue.append(caliperNumber, ' ', caliperUnit);
   caliper.append(caliperTick, caliperDim, caliperValue);
 
   const marker = make('div', 'cursor-form cursor-marker');
@@ -165,6 +173,7 @@ function buildForms(layer: HTMLElement): Refs {
     caliperTick: placed(caliperTick),
     caliperDim: placed(caliperDim, 'scaleX'),
     caliperValue: placed(caliperValue, 'caliper'),
+    caliperNumber,
     marker: placed(marker),
     rulerTick: placed(rulerTick),
     rulerLabel: placed(rulerLabel, 'halfY'),
@@ -173,6 +182,14 @@ function buildForms(layer: HTMLElement): Refs {
 
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
+}
+
+/**
+ * The data-theme of the layer for a section. The layer sits outside the sections, so the knockout under each label
+ * (var(--bg), D22.6) takes its colours from this value, which tokens.css defines by [data-theme].
+ */
+function themeOf(el: HTMLElement | null): 'ink' | 'paper' {
+  return el?.dataset.theme === 'ink' ? 'ink' : 'paper';
 }
 
 /** True when the element is a keyboard-visible focus target. Read defensively: an old browser has no :focus-visible. */
@@ -352,13 +369,16 @@ function start(): () => void {
     overMarker = el !== null && el.closest(MARKER_TARGET) !== null;
   }
 
-  /** Owner and theme. The section that shows a form carries data-cursor-form and sets the layer's theme. */
+  /**
+   * Owner and theme. The section that shows a form carries data-cursor-form, and the layer takes that section's theme,
+   * so the knockout of each label is the background of the section the label belongs to (D22.6).
+   */
   function applyOwner(el: HTMLElement | null, next: Form): void {
     if (el !== owner) {
       owner?.removeAttribute(OWNER_ATTR);
       owner = el;
       ownerForm = 'none';
-      if (el !== null) layer.dataset.theme = el.dataset.theme === 'ink' ? 'ink' : 'paper';
+      if (el !== null) layer.dataset.theme = themeOf(el);
     }
     if (owner !== null && next !== ownerForm) {
       ownerForm = next;
@@ -387,6 +407,9 @@ function start(): () => void {
 
   /** The label of a touch tap: shown at the tap point for T.breath. Its removal waits for the cut out. */
   function showTap(block: number, x: number, y: number, now: number): void {
+    // The tap label belongs to the hero, so its knockout takes the hero's theme (D22.6). Touch never runs applyOwner,
+    // so the layer may still hold the theme of an earlier custom form. This sets it for the tap.
+    layer.dataset.theme = themeOf(sectionEls[HERO_INDEX]);
     if (tapEl === null || tapPlaced === null) {
       tapEl = make('div', 'cursor-form cursor-text cursor-tap');
       tapPlaced = placed(tapEl);
@@ -547,7 +570,7 @@ function start(): () => void {
         moveTo(current.caliperValue, Math.round((x0 + cx) / 2), iy);
         if (hundredths !== caliperShown) {
           caliperShown = hundredths;
-          current.caliperValue.el.textContent = `${(hundredths / 100).toFixed(2)} bu`;
+          current.caliperNumber.data = (hundredths / 100).toFixed(2);
         }
         break;
       }

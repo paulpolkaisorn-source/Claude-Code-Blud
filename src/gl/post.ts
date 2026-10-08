@@ -33,8 +33,13 @@ import type { Stage } from './stage';
 export interface Post {
   /** The composer. Its passes, in render order, are the chain described above. */
   readonly composer: EffectComposer;
-  /** Scroll velocity in px/s, signed. The aberration uses its absolute value, damped with T.micro. */
+  /**
+   * Scroll velocity in px/s, signed. The aberration uses its absolute value, damped with T.micro on the
+   * wall clock. Below 40 px/s the aberration is exactly (0, 0).
+   */
   setVelocity(pxPerSecond: number): void;
+  /** The damped speed in px/s that sets the aberration. Read-only; the harness logs it. */
+  readonly dampedSpeed: number;
   /** Block mix m in [0, 1]. Sets the grain amplitude: 0.028 at m = 0, 0.040 at m = 1. */
   setMix(m: number): void;
   /** Depth of field with a world focus distance in bu and a bokeh scale, or null to remove its pass. */
@@ -56,10 +61,15 @@ const BLOOM_OPTIONS = {
   mipmapBlur: true,
 };
 
-/** Chromatic aberration: 0.8 px at or above 3000 px/s, 0 px at or below 40 px/s, linear between. */
+/**
+ * Chromatic aberration: 0.8 px at or above 3000 px/s, exactly 0 px below 40 px/s, linear between. Below
+ * 40 px/s the offset is written as exactly (0, 0), which takes the pass's identity path (see writeAberration).
+ */
 const ABERRATION_MAX_PX = 0.8;
 const ABERRATION_FROM = 40;
 const ABERRATION_SPAN = 2960;
+/** A damped speed under this many px/s is set to exactly 0, so no exponential tail survives at rest. */
+const SPEED_SNAP = 0.5;
 
 /** Focus range of the depth of field in bu. Section 10.8 gives no range, so the library default of 2 bu is used. */
 const DOF_FOCUS_RANGE = 2;
@@ -71,9 +81,23 @@ function clamp01(v: number): number {
   return Number.isNaN(v) ? 0 : Math.min(1, Math.max(0, v));
 }
 
-/** Chromatic aberration offset in px for a damped speed in px/s (section 10.8). */
+/**
+ * Chromatic aberration offset in px for a damped speed in px/s (section 10.8). Exactly 0 at or below
+ * 40 px/s, and for NaN.
+ */
 export function aberrationPx(speed: number): number {
+  if (!(speed > ABERRATION_FROM)) return 0;
   return ABERRATION_MAX_PX * clamp01((speed - ABERRATION_FROM) / ABERRATION_SPAN);
+}
+
+/**
+ * One damping step of the aberration speed: an exponential approach to the requested speed with time
+ * constant T.micro, over dtWall seconds of wall-clock time. A result under SPEED_SNAP is exactly 0.
+ */
+export function dampSpeed(current: number, target: number, dtWall: number): number {
+  if (!(dtWall > 0)) return current;
+  const next = current + (target - current) * (1 - Math.exp(-dtWall / T.micro));
+  return next < SPEED_SNAP ? 0 : next;
 }
 
 /** Grain amplitude in display units for the block mix m (section 10.8). */
@@ -108,7 +132,8 @@ export function createPost(stage: Stage): Post {
   let disposed = false;
   let mix = 0;
   let requested = 0; // |v| as last set, px/s
-  let damped = 0; // |v| damped with T.micro, px/s
+  let damped = 0; // |v| damped with T.micro on the wall clock, px/s
+  let lastWallMs = -1; // performance.now() at the last damping step, or -1 before the first
   let frameDt = 0; // seconds, from the last tick
   let seed = 0; // per-frame counter, 1 to SEED_CYCLE
   let dofRequest: { focus: number; bokeh: number } | null = null;
@@ -135,10 +160,19 @@ export function createPost(stage: Stage): Post {
     return reduced || seed === 0 ? GRAIN_SEED_STATIC : seed;
   }
 
-  /** Writes the aberration offset in uv: the px value divided by the drawing-buffer width. */
+  /**
+   * Writes the aberration offset in uv: the px value divided by the drawing-buffer width. Below 40 px/s the
+   * offset is exactly (0, 0). The shader then skips its shifted samples (vActive is 0), so red, green and
+   * blue all come from the one sample at the pixel's own uv.
+   */
   function writeAberration(c: Chain): void {
+    const px = aberrationPx(damped);
+    if (px === 0) {
+      c.aberration.offset.set(0, 0);
+      return;
+    }
     const width = Math.max(1, renderer.getDrawingBufferSize(drawingSize).x);
-    c.aberration.offset.set(aberrationPx(damped) / width, 0);
+    c.aberration.offset.set(px / width, 0);
   }
 
   function applyChainState(c: Chain): void {
@@ -175,11 +209,15 @@ export function createPost(stage: Stage): Post {
   }
 
   // Runs once per frame at glUpdate, before the stage draws the composer at glRender. It damps the
-  // speed for the aberration and advances the grain seed.
+  // speed for the aberration and advances the grain seed. The damping runs on the wall clock, not on
+  // t.dt: the page clock clamps dt to 50 ms, so with slow frames it runs slower than real time and a
+  // speed would linger on screen after the scroll has stopped.
   const removeTick = addTick((t: Tick) => {
     frameDt = t.dt;
-    if (reduced) damped = 0;
-    else damped += (requested - damped) * (1 - Math.exp(-t.dt / T.micro));
+    const nowMs = performance.now();
+    const dtWall = lastWallMs < 0 ? 0 : (nowMs - lastWallMs) / 1000;
+    lastWallMs = nowMs;
+    damped = reduced ? 0 : dampSpeed(damped, requested, dtWall);
     seed = (seed % SEED_CYCLE) + 1;
     chain.grain.setSeed(currentSeed());
     writeAberration(chain);
@@ -195,6 +233,10 @@ export function createPost(stage: Stage): Post {
 
   return {
     composer,
+
+    get dampedSpeed(): number {
+      return damped;
+    },
 
     setVelocity(pxPerSecond: number): void {
       if (disposed) return;

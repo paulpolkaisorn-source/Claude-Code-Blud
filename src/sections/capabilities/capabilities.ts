@@ -14,7 +14,7 @@ import './capabilities.css';
 import type { SectionContext } from '../../main';
 import { bus } from '../../core/bus';
 import { env, onReducedMotionChange } from '../../core/env';
-import { getLenis, scrollToTarget } from '../../core/scroll';
+import { scrollToTarget } from '../../core/scroll';
 import { PRIORITY, addTick } from '../../core/ticker';
 import { applyStair, createCap0, createCap1, stairStep } from './cap-graphics';
 import { applyStage } from './cap-layout';
@@ -144,13 +144,10 @@ export function initCapabilities(ctx: SectionContext): void {
       setActive(index);
       dispatch(ACTIVATE_EVENT, { index, source });
     }
+    // The offset puts the slot's top on the viewport's top edge. scrollToTarget resyncs Lenis to the native scroll
+    // position before it aims (D21.6), so the offset is measured from the page as it is and needs no correction.
     const button = buttons[index];
-    // scrollToTarget aims at an element from Lenis's own position (animatedScroll). When the page has moved without
-    // Lenis (a click that scrolls the card into view, a scrollbar drag), that position is stale, and the landing would be
-    // out by the difference. The difference is added to the offset, so the slot lands where it was measured.
-    const lenis = getLenis();
-    const stale = lenis === null ? 0 : window.scrollY - lenis.animatedScroll;
-    const offset = slots[index].getBoundingClientRect().top - button.getBoundingClientRect().top + stale;
+    const offset = slots[index].getBoundingClientRect().top - button.getBoundingClientRect().top;
     scrollToTarget(button, { offset });
   };
 

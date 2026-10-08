@@ -8,14 +8,20 @@
 //      stage resize, when the fonts are ready, and when the document scroll height changes. No other
 //      frame reads layout.
 //   2. Ink bleed (D10, direction-3d 10.10). Each boundary's raw position is eased with sym and smoothed
-//      with T.beat7. The bleed, the block mix m and the theme follow from the two values.
+//      with T.beat7. The eased values go into ctx.bleed before any handle call (D22.8). The bleed, the block
+//      mix m and the theme follow from the two values.
 //   3. Current section: the last section in page order with a height whose top has passed the scroll
 //      position. A change applies at once, except under reduced motion, where it runs as a canvas switch
-//      (direction-act1 A5): fade out over T.half, change at opacity 0, fade in over T.half.
-//   4. Handles. The current section's handle gets its progress every frame. Another section's handle gets
-//      it when that progress changes, because some entrances start before their section is current (pricing
-//      and closing enter from the bottom of the viewport). A section without a handle gets its formation and
-//      camera key set directly while it is current.
+//      (direction-act1 A5): fade out over T.half, change at opacity 0, fade in over T.half. The depth of
+//      field of the current section is set when it becomes current, and again on a resize while it is
+//      current (D22.2).
+//   4. Handles, in this order (D22.1, D22.11). (a) The current section's update(progress) every frame, with
+//      no skip on unchanged progress. (c) The section that was entering on the last frame, if its progress is
+//      now 0 and it is not current: one update(0), so its last write is its entry pose. (b) The next section in
+//      page order, if its own progress is above 0 (it is entering): update(progress). Its write is the last of
+//      the frame, so a current section never overwrites an entering one. (c) runs before (b), and the two never
+//      name the same section in one frame. A section without a handle gets its formation and camera key set
+//      directly while it is current.
 //   5. Smear from the scroll velocity (direction-3d 10.11), and the post velocity (direction-3d 10.8).
 //
 // Progress. A handle receives the value its act file defines for its section. Hero and speed use the
@@ -42,6 +48,8 @@ export interface ChoreoSnapshot {
   current: SectionId | null;
   /** The progress passed to the current section on the last frame (see the header). */
   progress: number;
+  /** The section that got the entering update on the last frame (the next section, while its progress is above 0), or null. */
+  entering: SectionId | null;
   /** Raw boundary positions in [0, 1], before easing. */
   raw1: number;
   raw2: number;
@@ -118,8 +126,6 @@ interface Slot {
   readonly geo: Geo;
   readonly rule: ProgressRule;
   handle: SectionGLHandle | null;
-  /** The progress last passed to the handle while the section was not current. */
-  sent: number;
 }
 
 function clamp01(v: number): number {
@@ -196,8 +202,9 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     geo: geoOf(section.id),
     rule: RULE[section.id],
     handle: null,
-    sent: 0,
   }));
+  /** Each section's progress on the current frame, by index. Allocated once. */
+  const progressAt = new Float64Array(slots.length);
   const boundary1 = geoOf(BOUNDARY_1);
   const boundary2 = geoOf(BOUNDARY_2);
   for (const slot of slots) {
@@ -231,6 +238,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     portrait: false,
     reducedMotion: env.reducedMotion,
     size: { width: 1, height: 1 },
+    bleed: { p1: 0, p2: 0 },
   };
   let reduced = env.reducedMotion;
   let disposed = false;
@@ -259,8 +267,41 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   let directH = 0;
   const directKey: CameraKey = { position: [0, 0, 0], target: [0, 0, 0], fov: 22 };
 
+  // Depth of field (D22.2). The section whose value is set (-1 for none) and the size it was set at. The key and the
+  // arguments are reused: post copies the arguments, so one object serves every call.
+  const dofKey: CameraKey = { position: [0, 0, 0], target: [0, 0, 0], fov: 22 };
+  const dofArg = { focus: 1, bokeh: 0 };
+  let dofIndex = -1;
+  let dofW = 0;
+  let dofH = 0;
+
   function setSwitchOpacity(value: number): void {
     canvas.style.opacity = value >= 1 ? '' : value.toFixed(4);
+  }
+
+  /**
+   * Sets the depth of field of section index (D22.2). Focus is the distance from the camera to the z = 0 plane at the
+   * section's key and the current size, in bu, which is the unit setDof takes (post.ts). Bokeh is the section's value.
+   * A section without depth of field, or no section, removes the pass. Nothing allocates here.
+   */
+  function applyDof(index: number): void {
+    const section = index >= 0 ? slots[index].section : null;
+    const dof = section?.dof ?? null;
+    if (section === null || dof === null) {
+      world.post.setDof(null);
+      dofIndex = -1;
+      return;
+    }
+    const w = ctx.size.width;
+    const h = ctx.size.height;
+    if (!(w > 0 && h > 0)) return;
+    cameraKey(section.key, ctx.size, dofKey);
+    dofArg.focus = dofKey.position[2];
+    dofArg.bokeh = dof.bokeh;
+    world.post.setDof(dofArg);
+    dofIndex = index;
+    dofW = w;
+    dofH = h;
   }
 
   function commit(next: number): void {
@@ -271,7 +312,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     shown = next;
     const newHandle = incoming?.handle ?? null;
     if (incoming !== null && newHandle !== null) newHandle.setActive(true, fillCtx(incoming.index));
-    world.post.setDof(incoming?.section.dof ?? null);
+    applyDof(next);
     world.blocks.setBreath(incoming?.section.breath ?? null);
     world.blocks.setActiveGroup(null);
     if (old !== null) bus.emit('section:leave', old.section.id);
@@ -346,6 +387,8 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   let bgTheme: Theme | null = null; // last theme set on the background
   let eventTheme: Theme | null = null; // last theme emitted on the bus
   let smear = 0;
+  /** The index of the section that got the entering update on the last frame, or -1. */
+  let enteredIndex = -1;
 
   // Values of the last frame, for the snapshot.
   let lastProgress = 0;
@@ -370,6 +413,9 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     const k = 1 - Math.exp(-t.dt / T.beat7);
     p1 = easeBoundary(p1, raw1, k, fresh, reduced);
     p2 = easeBoundary(p2, raw2, k, fresh, reduced);
+    // The eased values are the bleed every handle receives this frame (D22.8). They are written before any handle call.
+    ctx.bleed.p1 = p1;
+    ctx.bleed.p2 = p2;
 
     // The bleed: the boundary whose window holds the scroll position, else one whose front is still moving on screen.
     let board: 0 | 1 | 2 = 0;
@@ -412,27 +458,45 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       world.post.setMix(m);
     }
 
-    // Current section, then the handles. The current section's handle gets its progress every frame.
-    // Another section's handle gets it only when the progress changes. That drives the entrances that
-    // begin before a section is current: pricing (w_p) and closing (w_c) from the bottom of the
-    // viewport, and capabilities (its centre-line progress) while speed is current.
+    // Current section, then the handles (D22.1, D22.11). The current section is updated every frame. A section that
+    // was entering on the last frame gets one update(0) once its progress is back at 0. The next section in page order
+    // gets update(progress) every frame while its progress is above 0, so its write is the last of the frame. That
+    // covers the entrances that begin before a section is current: capabilities while speed is current, pricing (w_p)
+    // and closing (w_c) from the bottom of the viewport.
     syncCurrent(indexAt(y), t.time);
-    let progress = 0;
+    const cur = shown;
+    if (
+      cur >= 0 &&
+      slots[cur].section.dof !== null &&
+      (dofIndex !== cur || dofW !== ctx.size.width || dofH !== ctx.size.height)
+    ) {
+      applyDof(cur);
+    }
     for (let i = 0; i < slots.length; i += 1) {
-      const slot = slots[i];
-      const pr = progressOf(slot.rule, (slot.geo.top - y) / vh, slot.geo.height / vh);
-      if (i === shown) {
-        progress = pr;
-        slot.sent = pr;
-        if (slot.handle !== null) {
-          slot.handle.update(pr, t, fillCtx(i));
-        } else if (directIndex !== i || directW !== ctx.size.width || directH !== ctx.size.height) {
-          if (ctx.size.width > 0 && ctx.size.height > 0) applyDirect(i, ctx.size.width, ctx.size.height);
-        }
-      } else if (slot.handle !== null && pr !== slot.sent) {
-        slot.sent = pr;
-        slot.handle.update(pr, t, fillCtx(i));
+      progressAt[i] = progressOf(slots[i].rule, (slots[i].geo.top - y) / vh, slots[i].geo.height / vh);
+    }
+
+    let progress = 0;
+    if (cur >= 0) {
+      progress = progressAt[cur];
+      const slot = slots[cur];
+      if (slot.handle !== null) {
+        slot.handle.update(progress, t, fillCtx(cur));
+      } else if (directIndex !== cur || directW !== ctx.size.width || directH !== ctx.size.height) {
+        if (ctx.size.width > 0 && ctx.size.height > 0) applyDirect(cur, ctx.size.width, ctx.size.height);
       }
+    }
+
+    // (c) before (b): a section that was entering on the last frame, now at 0 and not current, gets one update(0).
+    const left = enteredIndex >= 0 && enteredIndex !== cur && progressAt[enteredIndex] === 0 ? enteredIndex : -1;
+    if (left >= 0) slots[left].handle?.update(0, t, fillCtx(left));
+
+    // (b) the next section in page order, while its own progress is above 0. Its write is the last of the frame.
+    enteredIndex = -1;
+    const next = cur + 1;
+    if (next < slots.length && progressAt[next] > 0) {
+      enteredIndex = next;
+      slots[next].handle?.update(progressAt[next], t, fillCtx(next));
     }
 
     // Smear from the scroll velocity, on the speed section only (direction-3d 10.11).
@@ -454,6 +518,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     return {
       current: shown >= 0 ? slots[shown].section.id : null,
       progress: lastProgress,
+      entering: enteredIndex >= 0 ? slots[enteredIndex].section.id : null,
       raw1: lastRaw1,
       raw2: lastRaw2,
       p1,
@@ -511,6 +576,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     setSwitchOpacity(1);
     world.background.setBleed(null);
     world.post.setDof(null);
+    dofIndex = -1;
     world.blocks.setBreath(null);
     world.blocks.setActiveGroup(null);
     world.blocks.setSmear(0);

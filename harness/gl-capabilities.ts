@@ -2,27 +2,33 @@
 // has three sections in order (speed, capabilities, pricing) with the real heights of act II, and the real choreography
 // (src/choreo/timeline.ts) runs over the speed and capabilities layers. Scroll is set through scrollState, so the
 // choreography computes the progress it passes to each handle, exactly as on the page: the centre-line progress of
-// act rule C2 for capabilities (p = (Y / vh - 2.5) / 3 with Y the scroll position in viewport heights).
-// Checks, each against the formulas of direction-act2 section 12 and direction-3d 10.6 and 11.4 to 11.6:
-//   desktop (1440 by 900) and phone (375 by 812): the entry from the race at p 0, its midpoint and its end; the card
-//   rests at p 0.2, 0.5 and 0.9 with their groups; the blend band at p 1/3; the hover lift; the keyboard or tap activation
-//   as a timed move that lands on cap-2 and is held; a wheel input that ends the hold; the activating key input that
-//   does not end it; the release by landing; the phone camera.
+// act rule C2 for capabilities, and the ink-bleed progress p1 that it passes in ctx.bleed (D22.8).
+// Checks:
+//   unit (desktop and phone, the choreography disposed): the handle alone, with ctx.bleed.p1 = 0, 0.2, 0.5 and 1. The camera
+//   is linear in p1 from the speed key to the hero key, within 0.01 bu (D22.8); the blocks are the race scrubbed to cap-0 at
+//   t = p1. At 1440 by 900 the camera also matches act II line 37 (z 31.95 + (21.15 - 31.95) p1, x -2.894 p1).
+//   choreography (desktop and phone): the entry at top 0.3 vh, card 1 settled on cap-0 and the hero key, the card rests at
+//   p 0.5 and 0.9 with their groups; the blend band at p 1/3; the hover lift; the keyboard or tap activation as a timed move
+//   that lands on cap-2 and is held; a wheel input that ends the hold; the activating key input that does not end it; the
+//   release by landing; the phone camera.
+//   [timeline gate], desktop and phone: at top 0.6 vh the bleed p1 is about 0.35 but the centre-line progress is 0. The
+//   choreography does not call an entering section at progress 0, so the camera does not follow p1 here. This check fails
+//   until src/choreo/timeline.ts calls the entering section while its bleed is above 0 (see the report).
 //   reduced motion: no entry blend, discrete card changes with the canvas crossfade of C14, no hover lift, the hold.
 // The verdict is document.documentElement.dataset.harness: 'pass' or 'fail:<reason>'. window.__capHarness drives the
 // states that the screenshot driver (a Playwright script kept outside the repository) captures.
 import { gsap } from 'gsap';
+import { choreoSnapshot, initChoreo } from '../src/choreo/timeline';
 import { ef } from '../src/core/ease';
 import { env } from '../src/core/env';
-import { initChoreo } from '../src/choreo/timeline';
 import type { FormationId } from '../src/core/types';
 import { scrollState } from '../src/core/scroll';
-import { initTicker } from '../src/core/ticker';
+import { initTicker, type Tick } from '../src/core/ticker';
 import { scrubLocal } from '../src/core/timing';
 import { createWorld } from '../src/gl/boot';
 import { BLOCK_COUNT, KIREJI, formationFor, staggerPosition, type Pose } from '../src/gl/blocks/formations';
 import { cameraKey } from '../src/gl/rig';
-import type { CameraKey, GLWorld, KeyName } from '../src/gl/section-gl';
+import type { CameraKey, GLWorld, KeyName, SectionGLContext } from '../src/gl/section-gl';
 import { capabilitiesGL } from '../src/sections/capabilities/gl';
 import { speedGL } from '../src/sections/speed/gl';
 
@@ -68,6 +74,8 @@ const root = document.documentElement;
 /** Poses are direct functions of p, so a few frames show them. Lifts and breath damp with T.half, so they take longer. */
 const POSE_FRAMES = 14;
 const LIFT_FRAMES = 150;
+/** The bleed settles on its own smoothing (T.beat7 to within 1e-3 in about 5 s at 60 fps); the wait covers it. */
+const SETTLE_MS = 7000;
 /** The most a block may sit from its expected x or z, in bu, and from its expected y (the breath is 0.012 bu). */
 const TOL_XZ = 0.002;
 const TOL_Y = 0.0125;
@@ -134,7 +142,7 @@ function formationXYZ(id: FormationId, portrait: boolean): V3[] {
   return formationFor(id, portrait).map((q: Pose): V3 => [q.p[0], q.p[1], q.p[2]]);
 }
 
-/** The scrubbed blend between two sets of block positions at transition progress t (Sequence). */
+/** The scrubbed blend between two sets of block positions at transition t (Sequence). t is used as given. */
 function blendXYZ(from: readonly V3[], to: readonly V3[], t: number, toId: FormationId): V3[] {
   const order = staggerPosition(toId);
   return from.map((a, i): V3 => {
@@ -150,12 +158,9 @@ function keyXYZ(name: KeyName, size: { width: number; height: number }): V3 {
   return [key.position[0], key.position[1], key.position[2]];
 }
 
-/** The camera at rig.blend(from, to, u): ef.sym is applied by the rig. */
-function blendCam(from: KeyName, to: KeyName, u: number, size: { width: number; height: number }): V3 {
-  const a = keyXYZ(from, size);
-  const b = keyXYZ(to, size);
-  const k = ef.sym(u);
-  return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+/** The camera on the straight line from a to b at p1 (D22.8: linear in the already eased bleed progress). */
+function lerpCam(a: V3, b: V3, p1: number): V3 {
+  return [a[0] + (b[0] - a[0]) * p1, a[1] + (b[1] - a[1]) * p1, a[2] + (b[2] - a[2]) * p1];
 }
 
 /** The largest deviation between blocks and their expected positions, and whether each is inside its tolerance. */
@@ -218,12 +223,12 @@ async function main(): Promise<void> {
   };
   setRender(false);
 
-  // The real choreography over the speed and capabilities layers. Its dispose stops the page's own choreography, which
-  // boot started over every section layer.
-  const choreo = initChoreo(world, [speedGL, capabilitiesGL]);
-
   const portrait = window.innerWidth < window.innerHeight;
   const reduced = env.reducedMotion;
+  const size = viewport();
+  const label = `${portrait ? 'phone' : 'desktop'}${reduced ? ' reduced' : ''}`;
+  const speedXYZ = keyXYZ('speed', size);
+  const heroXYZ = keyXYZ('hero', size);
 
   async function frames(n: number): Promise<void> {
     for (let i = 0; i < n; i += 1) {
@@ -273,6 +278,10 @@ async function main(): Promise<void> {
     window.dispatchEvent(new Event('wheel'));
   }
 
+  // The real choreography over the speed and capabilities layers. Its start replaces the page's own choreography, which
+  // boot started over every section (a later initChoreo disposes the earlier one). The unit checks dispose it again.
+  let choreo = initChoreo(world, [speedGL, capabilitiesGL]);
+
   const api: CapHarness = {
     goto,
     frames,
@@ -290,83 +299,163 @@ async function main(): Promise<void> {
   };
   (window as HarnessWindow).__capHarness = api;
 
-  const size = viewport();
-  const label = `${portrait ? 'phone' : 'desktop'}${reduced ? ' reduced' : ''}`;
+  /**
+   * The handle alone, with the choreography disposed: ctx.bleed.p1 at 0, 0.2, 0.5 and 1 (D22.8). The camera must be on
+   * the straight line from the speed key to the hero key at p1, and the blocks must be the race scrubbed to cap-0 at
+   * t = p1. The 0.2 point is the one that checks the inversion of ef.sym, since sym(0.5) = 0.5.
+   */
+  async function unitEntry(): Promise<void> {
+    const setup = capabilitiesGL.setup;
+    if (setup === undefined) throw new Error('capabilities has no setup');
+    const handle = setup(world);
+    const tick: Tick = { time: 0, dt: 1 / 60, frame: 0 };
+    const ctxAt = (p1: number): SectionGLContext => ({
+      prev: speedGL,
+      portrait,
+      reducedMotion: false,
+      size: { width: size.width, height: size.height },
+      bleed: { p1, p2: 0 },
+    });
+    handle.setActive(false, ctxAt(0));
+    const literal = !portrait && size.width === 1440 && size.height === 900;
+    for (const p1 of [0, 0.2, 0.5, 1]) {
+      handle.update(0, tick, ctxAt(p1));
+      await frames(3);
+      const s = snapshot();
+      const cd = camDeviation(s.camera, lerpCam(speedXYZ, heroXYZ, p1));
+      const bd = blockDeviation(s.blocks, blendXYZ(expectRace(portrait), formationXYZ('cap-0', portrait), p1, 'cap-0'));
+      check(
+        `${label}: unit entry at p1 ${p1}, camera linear in p1 and blocks at t = p1`,
+        cd.ok && bd.ok,
+        `camera ${fmt(cd.worst)} block ${fmt(bd.worst)} camera ${s.camera.map(fmt).join(', ')}`,
+      );
+      if (literal) {
+        // Act II line 37 at 1440 by 900: z = 31.95 + (21.15 - 31.95) p1 and x = -2.894 p1 (tolerance 0.01 bu).
+        const zLit = 31.95 + (21.15 - 31.95) * p1;
+        const xLit = -2.894 * p1;
+        check(
+          `${label}: unit entry at p1 ${p1} matches act II line 37`,
+          Math.abs(s.camera[2] - zLit) <= 0.01 && Math.abs(s.camera[0] - xLit) <= 0.01 && Math.abs(s.camera[1]) <= 1e-6,
+          `z ${fmt(s.camera[2])} (want ${fmt(zLit)}) x ${fmt(s.camera[0])} (want ${fmt(xLit)})`,
+        );
+      }
+    }
+    if (portrait) {
+      // Phone keys (D15.1 and D21.2): the speed key z 51.12 at x -3.30, the hero key z 39.25 at y -1.10.
+      check(
+        `${label}: phone entry keys, speed z 51.12 x -3.30 and hero z 39.25 y -1.10`,
+        Math.abs(speedXYZ[2] - 51.12) <= 0.01 &&
+          Math.abs(speedXYZ[0] + 3.3) <= 0.01 &&
+          Math.abs(heroXYZ[2] - 39.25) <= 0.01 &&
+          Math.abs(heroXYZ[1] + 1.1) <= 0.01,
+        `speed ${speedXYZ.map(fmt).join(', ')} hero ${heroXYZ.map(fmt).join(', ')}`,
+      );
+    }
+    handle.dispose();
+  }
 
-  if (!reduced) {
-    // Registration (once, on the desktop run).
-    const c = capabilitiesGL;
-    check(
-      'export: id, formation, exit, key, ink, dof, breath and setup',
-      c.id === 'capabilities' &&
-        c.formation === 'cap-0' &&
-        c.exitFormation === 'cap-2' &&
-        c.key === 'hero' &&
-        c.ink === 1 &&
-        c.dof === null &&
-        c.breath?.phase === 'rows' &&
-        c.breath.amplitude === 0.012 &&
-        typeof c.setup === 'function',
-    );
+  /** The choreography over speed and capabilities: entry, rests, bands, hover, activation, hold and release. */
+  async function scrollChecks(): Promise<void> {
+    if (reduced) {
+      // Reduced motion: the entry is not drawn (the section is not current), so the speed key holds until the cut.
+      await goto(2.5, 12);
+      const before = snapshot();
+      const cd0 = camDeviation(before.camera, speedXYZ);
+      check(`${label}: entry not drawn before the section is current`, cd0.ok, `camera ${fmt(cd0.worst)}`);
+    }
+    if (!reduced) {
+      // [timeline gate] Top at 0.6 vh: p1 is about 0.35 and the centre-line progress is 0. The camera must already follow p1.
+      await goto(2.4, 12);
+      let cs = choreoSnapshot();
+      let s = snapshot();
+      const gateP1 = cs?.p1 ?? Number.NaN;
+      let cd = camDeviation(s.camera, lerpCam(speedXYZ, heroXYZ, gateP1));
+      check(
+        `${label}: [timeline gate] top 0.6 vh, camera follows p1 before the centre line`,
+        cd.ok,
+        `p1 ${fmt(gateP1)} camera ${fmt(cd.worst)}`,
+      );
 
-    // Entry, p 0 to 1/6 (u = 6p). At p 0 the blocks are on the race and the camera on the speed key.
-    await goto(2.5, 12);
-    let s = snapshot();
-    let bd = blockDeviation(s.blocks, expectRace(portrait));
-    let cd = camDeviation(s.camera, keyXYZ('speed', size));
-    check(`${label}: entry start, race and speed key`, bd.ok && cd.ok, `block ${fmt(bd.worst)} camera ${fmt(cd.worst)}`);
+      // Entry through the choreography, top at 0.3 vh (p 0.067): the handle is called, and the camera and the blocks
+      // are the entry at the current p1.
+      await goto(2.7, 12);
+      cs = choreoSnapshot();
+      s = snapshot();
+      const p1 = cs?.p1 ?? Number.NaN;
+      cd = camDeviation(s.camera, lerpCam(speedXYZ, heroXYZ, p1));
+      const bd = blockDeviation(s.blocks, blendXYZ(expectRace(portrait), formationXYZ('cap-0', portrait), p1, 'cap-0'));
+      check(
+        `${label}: entry at top 0.3 vh, camera and blocks follow p1`,
+        cd.ok && bd.ok,
+        `p1 ${fmt(p1)} camera ${fmt(cd.worst)} block ${fmt(bd.worst)}`,
+      );
+    }
 
-    // Midpoint, p 1/12, u 0.5: the scrubbed entry from the race to cap-0 and the camera half way.
-    await goto(2.75, 12);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, blendXYZ(expectRace(portrait), formationXYZ('cap-0', portrait), ef.sym(0.5), 'cap-0'));
-    cd = camDeviation(s.camera, blendCam('speed', 'hero', 0.5, size));
-    check(`${label}: entry midpoint, scrubbed race to cap-0`, bd.ok && cd.ok, `block ${fmt(bd.worst)} camera ${fmt(cd.worst)}`);
-
-    // Card 1 at rest, p 0.2: cap-0 exactly, the active group is rows 0 to 4, and the hero key.
+    // Card 1 at rest, p 0.2. The bleed settles first, so the camera is on the hero key and the blocks are on cap-0.
     await goto(3.1, POSE_FRAMES);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
-    cd = camDeviation(s.camera, keyXYZ('hero', size));
-    check(
-      `${label}: card 1 rest on cap-0, group 0 to 4, hero key`,
-      bd.ok && cd.ok && sameGroup(s.group, [0, 1, 2, 3, 4]),
-      `block ${fmt(bd.worst)} camera ${fmt(cd.worst)} group ${String(s.group)}`,
-    );
+    await waitMs(reduced ? 900 : SETTLE_MS);
+    let s = snapshot();
+    let bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
+    let cd = camDeviation(s.camera, keyXYZ('hero', size));
+    if (reduced) {
+      check(`${label}: card 1 at once on cap-0, hero key`, bd.ok && cd.ok, `block ${fmt(bd.worst)} camera ${fmt(cd.worst)}`);
+    } else {
+      check(
+        `${label}: card 1 settled on cap-0, hero key, group 0 to 4`,
+        bd.ok && cd.ok && sameGroup(s.group, [0, 1, 2, 3, 4]),
+        `block ${fmt(bd.worst)} camera ${fmt(cd.worst)} group ${String(s.group)}`,
+      );
+    }
 
-    // Blend band at the first boundary, p 1/3: the scrubbed blend from cap-0 to cap-1 at u 0.5.
-    await goto(3.5, POSE_FRAMES);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, blendXYZ(formationXYZ('cap-0', portrait), formationXYZ('cap-1', portrait), ef.sym(0.5), 'cap-1'));
-    check(`${label}: band at p 1/3, blend cap-0 to cap-1`, bd.ok, `block ${fmt(bd.worst)}`);
+    if (!reduced) {
+      // Blend band at the first boundary, p 1/3: the scrubbed blend from cap-0 to cap-1 at u 0.5.
+      await goto(3.5, POSE_FRAMES);
+      s = snapshot();
+      bd = blockDeviation(s.blocks, blendXYZ(formationXYZ('cap-0', portrait), formationXYZ('cap-1', portrait), ef.sym(0.5), 'cap-1'));
+      check(`${label}: band at p 1/3, blend cap-0 to cap-1`, bd.ok, `block ${fmt(bd.worst)}`);
+    } else {
+      // Reduced motion: no blend at the boundary, the card changes after one crossfade.
+      await goto(3.45, POSE_FRAMES);
+      s = snapshot();
+      bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
+      check(`${label}: no blend below the boundary`, bd.ok, `block ${fmt(bd.worst)}`);
+    }
 
-    // Card 2 at rest, p 0.5: cap-1 exactly and group 5 to 11.
+    // Card 2 at rest, p 0.5: cap-1 exactly and group 5 to 11. Under reduced motion the crossfade has to end first.
+    await goto(3.6, 1);
+    await waitMs(reduced ? 150 : 0);
+    if (reduced) {
+      const mid = snapshot();
+      check(`${label}: card change fades the canvas out (C14)`, mid.opacity !== '' && Number(mid.opacity) < 0.95, `opacity '${mid.opacity}'`);
+      await waitMs(900);
+    }
     await goto(4.0, POSE_FRAMES);
+    if (reduced) await waitMs(900);
     s = snapshot();
     bd = blockDeviation(s.blocks, formationXYZ('cap-1', portrait));
-    check(`${label}: card 2 rest on cap-1, group 5 to 11`, bd.ok && sameGroup(s.group, [5, 6, 7, 8, 9, 10, 11]), `block ${fmt(bd.worst)} group ${String(s.group)}`);
+    check(
+      `${label}: card 2 rest on cap-1, group 5 to 11`,
+      bd.ok && sameGroup(s.group, [5, 6, 7, 8, 9, 10, 11]) && (!reduced || s.opacity === ''),
+      `block ${fmt(bd.worst)} group ${String(s.group)} opacity '${s.opacity}'`,
+    );
 
     // Card 3 at rest, p 0.9: cap-2 with its stair, and group 12 to 16.
     await goto(5.2, POSE_FRAMES);
+    if (reduced) await waitMs(900);
     s = snapshot();
     bd = blockDeviation(s.blocks, formationXYZ('cap-2', portrait));
     check(`${label}: card 3 rest on cap-2 with the stair, group 12 to 16`, bd.ok && sameGroup(s.group, [12, 13, 14, 15, 16]), `block ${fmt(bd.worst)} group ${String(s.group)}`);
 
-    if (portrait) {
-      // Phone hero key: x 0, y -1.10, z 39.25 (direction-3d 10.6).
+    if (portrait && !reduced) {
+      // Phone hero key: x 0, y -1.10, z 39.25 (direction-3d 10.6), once the bleed has settled at card 1.
       await goto(3.1, POSE_FRAMES);
+      await waitMs(SETTLE_MS);
       s = snapshot();
-      const phoneKey = keyXYZ('hero', size);
-      cd = camDeviation(s.camera, phoneKey);
+      cd = camDeviation(s.camera, keyXYZ('hero', size));
       check(`${label}: phone camera on the hero key (y -1.10)`, cd.ok && Math.abs(s.camera[1] + 1.1) < 0.01, `camera ${s.camera.map(fmt).join(', ')}`);
-      // Phone entry midpoint: the turned race (D15.1) to cap-0.
-      await goto(2.75, 12);
-      s = snapshot();
-      bd = blockDeviation(s.blocks, blendXYZ(expectRace(true), formationXYZ('cap-0', true), ef.sym(0.5), 'cap-0'));
-      check(`${label}: entry midpoint from the turned race`, bd.ok, `block ${fmt(bd.worst)}`);
     }
 
-    if (!portrait) {
+    if (!portrait && !reduced) {
       // Hover lift: a hovered card's rows move 0.2 bu toward the camera (blocks.setLift), and only those rows.
       await goto(4.0, POSE_FRAMES);
       hover(1);
@@ -436,59 +525,57 @@ async function main(): Promise<void> {
       await waitMs(900);
       await goto(4.0, POSE_FRAMES);
     }
-  } else {
-    // Reduced motion: the entry is not drawn (the section is not current), and each card is a discrete step.
-    await goto(2.5, 12);
-    let s = snapshot();
-    let cd = camDeviation(s.camera, keyXYZ('speed', size));
-    check(`${label}: entry not drawn before the section is current`, cd.ok, `camera ${fmt(cd.worst)}`);
 
-    // Crossing into the section runs the choreography's own canvas crossfade (C14), about 0.7 s, before the commit.
-    await goto(3.1, POSE_FRAMES);
-    await waitMs(900);
-    s = snapshot();
-    let bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
-    cd = camDeviation(s.camera, keyXYZ('hero', size));
-    check(`${label}: card 1 at once on cap-0, hero key`, bd.ok && cd.ok, `block ${fmt(bd.worst)} camera ${fmt(cd.worst)}`);
+    if (reduced) {
+      // Reduced motion: a keyboard or tap activation switches the card and holds it until the page is in its range.
+      // The crossfade is 2 x T.half (0.7 s). The check polls for the switch to land, up to 2.5 s.
+      activate(0, 'key');
+      await until(() => blockDeviation(snapshot().blocks, formationXYZ('cap-0', portrait)).ok, 2500);
+      s = snapshot();
+      bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
+      check(`${label}: activation switches to card 1 and holds`, bd.ok && sameGroup(s.group, [0, 1, 2, 3, 4]), `block ${fmt(bd.worst)}`);
+      await goto(3.1, POSE_FRAMES);
+      await waitMs(900);
+      s = snapshot();
+      bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
+      check(`${label}: landing in card 1 keeps cap-0`, bd.ok, `block ${fmt(bd.worst)}`);
 
-    // No blend at the boundary: at p 0.3167 the card is still 1, and at 0.3667 card 2 appears after one crossfade.
-    await goto(3.45, POSE_FRAMES);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
-    check(`${label}: no blend below the boundary`, bd.ok, `block ${fmt(bd.worst)}`);
-
-    await goto(3.6, 1);
-    await waitMs(150);
-    const mid = snapshot();
-    check(`${label}: card change fades the canvas out (C14)`, mid.opacity !== '' && Number(mid.opacity) < 0.95, `opacity '${mid.opacity}'`);
-    await waitMs(900);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, formationXYZ('cap-1', portrait));
-    check(`${label}: card 2 after one crossfade, canvas back to 1`, bd.ok && s.opacity === '', `block ${fmt(bd.worst)} opacity '${s.opacity}'`);
-
-    // A keyboard or tap activation under reduced motion switches the card and holds it until the page is in its range.
-    // The crossfade is 2 x T.half (0.7 s). The check polls for the switch to land, up to 2.5 s, because frame time varies
-    // with CPU contention (a fixed 0.9 s window missed the landing once under load).
-    activate(0, 'key');
-    await until(() => blockDeviation(snapshot().blocks, formationXYZ('cap-0', portrait)).ok, 2500);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
-    check(`${label}: activation switches to card 1 and holds`, bd.ok && sameGroup(s.group, [0, 1, 2, 3, 4]), `block ${fmt(bd.worst)}`);
-    await goto(3.1, POSE_FRAMES);
-    await waitMs(900);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
-    check(`${label}: landing in card 1 keeps cap-0`, bd.ok, `block ${fmt(bd.worst)}`);
-
-    // Hover lifts are off under reduced motion.
-    await goto(4.0, POSE_FRAMES);
-    hover(1);
-    await frames(LIFT_FRAMES);
-    s = snapshot();
-    bd = blockDeviation(s.blocks, formationXYZ('cap-1', portrait));
-    check(`${label}: no hover lift`, bd.ok, `block ${fmt(bd.worst)}`);
-    hover(null);
+      // Hover lifts are off under reduced motion.
+      await goto(4.0, POSE_FRAMES);
+      hover(1);
+      await frames(LIFT_FRAMES);
+      s = snapshot();
+      bd = blockDeviation(s.blocks, formationXYZ('cap-1', portrait));
+      check(`${label}: no hover lift`, bd.ok, `block ${fmt(bd.worst)}`);
+      hover(null);
+    }
   }
+
+  // Unit checks first, with no choreography running. Then the choreography runs for the scroll checks.
+  if (!reduced) {
+    choreo.dispose();
+    await unitEntry();
+    choreo = initChoreo(world, [speedGL, capabilitiesGL]);
+  }
+
+  // Registration (once, on the desktop run).
+  if (!reduced) {
+    const c = capabilitiesGL;
+    check(
+      'export: id, formation, exit, key, ink, dof, breath and setup',
+      c.id === 'capabilities' &&
+        c.formation === 'cap-0' &&
+        c.exitFormation === 'cap-2' &&
+        c.key === 'hero' &&
+        c.ink === 1 &&
+        c.dof === null &&
+        c.breath?.phase === 'rows' &&
+        c.breath.amplitude === 0.012 &&
+        typeof c.setup === 'function',
+    );
+  }
+
+  await scrollChecks();
 
   // Dispose (checks-only load, ?dispose): the layer stops listening and writes nothing further. The screenshot load
   // keeps the choreography running, so its states are live.

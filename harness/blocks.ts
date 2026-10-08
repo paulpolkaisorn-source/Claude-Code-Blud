@@ -275,6 +275,39 @@ function main(): void {
   blocks.setTilt(0, 0);
   advance(600);
 
+  // Group offset (D22.13): an immediate call sets the current value as well as the target; a plain call damps.
+  blocks.setGroupOffset(0.3, -0.2, 0.05, true);
+  const atOnce = blocks.group.position.x === 0.3 && blocks.group.position.y === -0.2 && blocks.group.position.z === 0.05;
+  check('an immediate group offset moves the group at once, before any update', atOnce, `position ${blocks.group.position.toArray().join(',')}`);
+  advance(1);
+  check(
+    'an immediate group offset holds on the next update (no damping)',
+    blocks.group.position.x === 0.3 && blocks.group.position.y === -0.2 && blocks.group.position.z === 0.05,
+    `position ${blocks.group.position.toArray().join(',')}`,
+  );
+  check(
+    'groupOffset returns the target as a readonly [x, y, z]',
+    blocks.groupOffset.length === 3 && blocks.groupOffset[0] === 0.3 && blocks.groupOffset[1] === -0.2 && blocks.groupOffset[2] === 0.05,
+    `groupOffset ${blocks.groupOffset.join(',')}`,
+  );
+  check('groupOffset returns the same tuple on every read (no allocation)', blocks.groupOffset === blocks.groupOffset);
+  blocks.setGroupOffset(0, 0, 0);
+  check(
+    'a plain call sets the target at once and leaves the current value to damp',
+    blocks.groupOffset[0] === 0 && blocks.group.position.x === 0.3,
+    `target ${blocks.groupOffset[0]}, position x ${blocks.group.position.x}`,
+  );
+  advance(1);
+  const eased = 0.3 * Math.exp(-FRAME / T.half);
+  check(
+    'a plain call eases the group to its target with T.half (one frame: 0.3 e^(-dt/0.35))',
+    Math.abs(blocks.group.position.x - eased) < 1e-9,
+    `x ${blocks.group.position.x.toFixed(9)} (want ${eased.toFixed(9)})`,
+  );
+  blocks.setGroupOffset(0, 0, 0, true);
+  advance(2);
+  check('an immediate return to 0 leaves the group at 0', blocks.group.position.x === 0 && blocks.group.position.y === 0 && blocks.group.position.z === 0);
+
   // Lifts: block 0 lifts 0.2 bu on y and 0.1 on z, damped with T.half. After 1 s the lift is 1 - e^(-1/0.35) short.
   blocks.setLift(0, 0.2, 0.1);
   advance(60);

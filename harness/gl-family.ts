@@ -12,9 +12,11 @@ import { env } from '../src/core/env';
 import { PRIORITY, addTick, initTicker, type Tick } from '../src/core/ticker';
 import { cameraKey } from '../src/gl/rig';
 import { initChoreo } from '../src/choreo/timeline';
-import { BLOCK_COUNT, PORTRAIT_TURN, formationFor } from '../src/gl/blocks/formations';
+import { BLOCK_COUNT, FAMILY_STATION_X, PORTRAIT_TURN, formationFor } from '../src/gl/blocks/formations';
 import type { FormationId } from '../src/core/types';
 import type { CameraKey, SectionGL, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
+import { ef } from '../src/core/ease';
+import { stationCenters } from '../src/core/projection';
 
 interface Report {
   passes: string[];
@@ -37,6 +39,8 @@ interface FamilyWindow extends Window {
 const ENVIRONMENT_NOTICES = ['GPU stall due to ReadPixels', 'KHR_parallel_shader_compile extension not supported'];
 const PERIOD = 0.24;
 const LIFT = 0.15;
+/** Stations 0 to 2 carry a phantom outline; station 3 is the Haiku stanza. */
+const SIBLINGS = 3;
 const CAMERA_TOL = 1e-3;
 const root = document.documentElement;
 const report: Report = { passes: [], failures: [], diagnostics: [] };
@@ -116,14 +120,23 @@ async function main(): Promise<void> {
   const size = (): { width: number; height: number } => ({ width: stage.size.width, height: stage.size.height });
   const ctxNow = (): SectionGLContext => {
     const s = size();
-    return { prev: CODE, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s };
+    return { prev: CODE, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s, bleed: { p1: 1, p2: 0 } };
   };
 
   const setup = familyGL.setup;
   if (setup === undefined) throw new Error('familyGL has no setup');
   const handle: SectionGLHandle = setup(world);
+  // The stand-in for the 2D stage. The page relation of the 'centre' progress is R = 1 - 2 s, where R is the stage top in
+  // viewport heights (the stage sits half a viewport below a 2 vh section top).
+  const anchorEl = document.querySelector<HTMLElement>('[data-anchor="family-stations"]');
+  if (anchorEl === null) throw new Error('harness: the anchor stand-in is missing');
+  const placeAnchor = (): void => {
+    anchorEl.style.top = `${(1 - 2 * drive.s) * window.innerHeight}px`;
+  };
   addTick((tick: Tick) => {
-    if (drive.on) handle.update(drive.s, tick, ctxNow());
+    if (!drive.on) return;
+    placeAnchor();
+    handle.update(drive.s, tick, ctxNow());
   }, PRIORITY.scroll);
 
   // The ink state the choreography sets for an ink section.
@@ -319,6 +332,94 @@ async function main(): Promise<void> {
       `rotZ=${group.rotation.z.toFixed(4)}`,
     );
 
+    // DOM anchor (D20.1, D22.12). The offset is -dy / pxPerBu x e, with dy the stage top as layout reports it (layout
+    // rounds it to 1/64 px, so the check reads it back rather than using (1 - 2 s) H), pxPerBu from the camera the rig
+    // applied, and e the entry completion (1 at every progress under reduced motion).
+    const anchorOffset = (s: number): number => {
+      const top = anchorEl.getBoundingClientRect().top;
+      const e = rm ? 1 : ef.sym(clamp01(s / 0.5));
+      const pxPerBu = window.innerHeight / (2 * camera.position.z * Math.tan((camera.fov * Math.PI) / 360));
+      return (-top * e) / pxPerBu;
+    };
+    for (const [s, label] of [
+      [0, 'p 0'],
+      [0.25, 'p 0.25'],
+      [0.4, 'p 0.4'],
+      [0.5, 'p 0.5'],
+      [0.6, 'p 0.6'],
+    ] as const) {
+      drive.s = s;
+      await frames(4);
+      const want = anchorOffset(s);
+      check(
+        `anchor at ${label}: the phantom group sits at -dy/pxPerBu x e`,
+        Math.abs(group.position.y - want) < 1e-4,
+        `got=${group.position.y.toFixed(5)} want=${want.toFixed(5)}`,
+      );
+      check(
+        `anchor at ${label}: blocks.groupOffset holds the same y`,
+        Math.abs(blocks.groupOffset[1] - want) < 1e-4 && blocks.groupOffset[0] === 0 && blocks.groupOffset[2] === 0,
+        `got=${blocks.groupOffset[1].toFixed(5)} want=${want.toFixed(5)}`,
+      );
+      if (!rm) {
+        check(
+          `anchor at ${label}: the blocks group moves to the same y`,
+          Math.abs(blocks.group.position.y - want) < 1e-4,
+          `got=${blocks.group.position.y.toFixed(5)} want=${want.toFixed(5)}`,
+        );
+      }
+    }
+
+    // Station alignment past the entry (e = 1): each sibling outline centre and the Haiku stanza centre sit on the
+    // station centres of the 2D layer, which are the label anchors (projection.ts stationCenters), shifted by the
+    // stage top. Under reduced motion the blocks are held at 0 by blocks.ts, so only the outlines are checked there.
+    const size2 = size();
+    const pts = stationCenters(size2);
+    const toScreen = (v: THREE.Vector3): { x: number; y: number } => {
+      const p = v.clone().project(camera);
+      return { x: (p.x * 0.5 + 0.5) * size2.width, y: (0.5 - p.y * 0.5) * size2.height };
+    };
+    for (const s of [0.5, 0.6] as const) {
+      drive.s = s;
+      await frames(6);
+      const top = (1 - 2 * s) * size2.height;
+      camera.updateMatrixWorld(true);
+      group.updateMatrixWorld(true);
+      for (let i = 0; i < SIBLINGS; i += 1) {
+        const got = toScreen(new THREE.Vector3(FAMILY_STATION_X[i], 0, 0).applyMatrix4(group.matrixWorld));
+        const dx = got.x - pts[i].x;
+        const dy = got.y - (top + pts[i].y);
+        check(
+          `station ${i} outline centre sits on its label anchor at s ${s}`,
+          Math.hypot(dx, dy) < 0.5,
+          `dx=${dx.toFixed(3)} dy=${dy.toFixed(3)} px`,
+        );
+      }
+      if (!rm) {
+        const rects = new Float32Array(BLOCK_COUNT * 4);
+        blocks.projectRects(camera, size2, rects);
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -Infinity;
+        let y1 = -Infinity;
+        for (let i = 0; i < BLOCK_COUNT; i += 1) {
+          x0 = Math.min(x0, rects[4 * i]);
+          y0 = Math.min(y0, rects[4 * i + 1]);
+          x1 = Math.max(x1, rects[4 * i + 2]);
+          y1 = Math.max(y1, rects[4 * i + 3]);
+        }
+        const dx = (x0 + x1) / 2 - pts[3].x;
+        const dy = (y0 + y1) / 2 - (top + pts[3].y);
+        check(
+          `station 3 stanza centre sits on its label anchor at s ${s}`,
+          Math.hypot(dx, dy) < 1,
+          `dx=${dx.toFixed(3)} dy=${dy.toFixed(3)} px`,
+        );
+      }
+    }
+    drive.s = 0.5;
+    await frames(4);
+
     // Portrait: far 120 while the family is current; desktop keeps 80.
     const farNow = camera.far;
     check(
@@ -400,6 +501,11 @@ async function main(): Promise<void> {
 
     // Events after the section leaves are ignored, and setActive(false) tidies the world.
     handle.setActive(false, ctxNow());
+    check(
+      'setActive(false) zeroes the anchor offset at once (phantoms and blocks target)',
+      group.position.y === 0 && blocks.groupOffset[1] === 0,
+      `group=${group.position.y} target=${blocks.groupOffset[1]}`,
+    );
     drive.on = false;
     await wait(50);
     check('setActive(false) hides the phantoms', group.visible === false);

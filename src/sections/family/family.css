@@ -82,9 +82,26 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* Narrow: the kicker sits at the top right, in the row of the title's first line, so the title can start at the
+   spec's 7 px. Above the title it would push the title 23 px lower, past the clearance above the top station
+   (D22.12, the act II 2D fields). The title's first line ends 250 px from the left margin at 375 px, so the kicker
+   fits to its right. Below 352 px the kicker goes back above the title, and that case is not measured. */
 #family .family__stage[data-layout="narrow"] .family__kicker {
-  position: static;
-  margin-bottom: var(--sp-2);
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-4);
+  left: auto;
+  bottom: auto;
+  margin: 0;
+}
+
+@media (max-width: 351px) {
+  #family .family__stage[data-layout="narrow"] .family__kicker {
+    position: static;
+    top: auto;
+    right: auto;
+    margin-bottom: var(--sp-2);
+  }
 }
 
 #family .family__stage[data-layout="narrow"] .family__title,
@@ -140,9 +157,12 @@
   white-space: nowrap;
 }
 
+/* Narrow: the axis title sits at the right margin, beside the title's last line, in two lines. family.ts sets its top
+   and width, so that it stays clear of the last line and of the axis. Below the axis is the Haiku block, and the
+   row above it has the kicker, so the title's rows are the only free space at the right. */
 #family .family__stage[data-layout="narrow"] .family__axis-title {
-  right: var(--sp-4);
-  top: var(--sp-2);
+  white-space: normal;
+  text-align: right;
 }
 
 #family .family__axis {
@@ -157,10 +177,14 @@
   background: var(--rule-hair);
 }
 
+/* Knockout (D22.6): the label sits on a box of var(--bg), 2 px larger than its text, so it reads over a block or an
+   outline. The translate takes back the 2 px below the text, so the text keeps its place 12 px above the tick. */
 #family .family__axis-label {
   position: absolute;
   color: var(--text-2);
-  transform: translate(-50%, -100%);
+  background: var(--bg);
+  padding: 2px 4px;
+  transform: translate(-50%, calc(-100% + 2px));
   white-space: nowrap;
 }
 
@@ -201,22 +225,41 @@
   color: inherit;
 }
 
+/* The gaps between the lines are the spec's 7, 12 and 12 px. Each line has a 2 px knockout above and below its
+   text (see the knockout rule below), so each margin gives back those 4 px between two lines. */
 #family .family__latency {
-  margin-block-start: var(--sp-2);
+  margin-block-start: calc(var(--sp-2) - 4px);
 }
 
 #family .family__desc {
-  margin-block-start: var(--sp-3);
+  margin-block-start: calc(var(--sp-3) - 4px);
   text-wrap: pretty;
 }
 
 #family .family__price {
-  margin-block-start: var(--sp-3);
+  margin-block-start: calc(var(--sp-3) - 4px);
 }
 
 /* Each price is two lines, so the label style never has to wrap or run past the block. */
 #family .family__price > span {
   display: block;
+}
+
+/* Knockout (D22.6). Each station label is a box of var(--bg), 2 px by 4 px larger than its text, so it reads over a
+   block or an outline. The inline margins of -4 px keep the text column where the layout puts it. Where the 3D
+   crosses the label row (the family entry, p 0 to 0.5), the knockout hides the 3D behind the text. */
+#family .family__name,
+#family .family__latency,
+#family .family__desc,
+#family .family__price {
+  background: var(--bg);
+  padding: 2px 4px;
+  margin-inline: -4px;
+}
+
+/* The name has no gap above it. Its own 2 px knockout is taken back here, so the name's text stays on the block top. */
+#family .family__name {
+  margin-block-start: -2px;
 }
 
 /* ---------- Source notes, in the spacer below the block ---------- */

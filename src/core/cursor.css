@@ -35,11 +35,17 @@
   transition-duration: var(--t-flick);
 }
 
-/* Label style (direction.md heading 4): Geist Mono, uppercase, one line, text-1 here. */
+/*
+ * Label style (direction.md heading 4): Geist Mono, uppercase, one line, text-1 here. Every label sits on a knockout
+ * (D22.6): a box in var(--bg), so it reads over the blocks. The layer takes its data-theme from the section that owns
+ * the form (cursor.ts), so var(--bg) here is that section's background. The padding is the knockout's inset.
+ */
 .cursor-text {
   position: absolute;
   left: 0;
   top: 0;
+  padding: 2px 4px;
+  background: var(--bg);
   font-family: var(--font-mono);
   font-size: var(--fs-label);
   line-height: var(--lh-label);
@@ -51,6 +57,11 @@
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--text-1);
+}
+
+/* The unit stays lowercase, as written. The label style is uppercase (D22.6). */
+.cursor-unit {
+  text-transform: none;
 }
 
 /* Datum: two 1 px lines, each made of two 12 px arms that start 5 px from the pointer, so the centre stays open. */

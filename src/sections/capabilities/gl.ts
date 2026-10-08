@@ -1,20 +1,27 @@
 // The capabilities section's 3D layer (design/direction-act2.md section 12, capabilities: Sequence, 3D layer,
-// Scroll, Pointer, Touch, Keep-alive and Reduced motion; act rules C2, C10, C11, C14 and C15;
-// design/direction-3d.md sections 10.6, 10.12 to 10.14 and 11.4 to 11.6; decisions D6 and D15 in
+// Scroll, Pointer, Touch, Keyboard, Keep-alive and Reduced motion; act rules C2, C10, C11, C14 and C15;
+// design/direction-3d.md sections 10.6, 10.10, 10.12 to 10.14 and 11.4 to 11.6; decisions D6, D15, D21 and D22 in
 // design/drafts/director-decisions.md).
 //
 // Progress. The choreography passes the centre-line progress p of rule C2: p is 0 when the section top is at the
 // vertical centre of the viewport and 1 when its bottom edge is there. Card k (indices 0, 1, 2 here) is active while
-// p is in [k / 3, (k + 1) / 3). The formation follows p (Sequence, scrubbed blends): cap-0 up to p 0.2833, a blend
-// from cap-0 to cap-1 across p 0.2833 to 0.3833, cap-1 up to 0.6167, a blend from cap-1 to cap-2 across 0.6167 to
-// 0.7167, and cap-2 above that. A blend moves each block on its own local progress q = scrubLocal(j, 17, t) with
-// t = sym(u): the kireji takes anticipate on q and the other 16 take settle.
+// p is in [k / 3, (k + 1) / 3). The formation follows p (Sequence): cap-0 up to p 0.2833, a blend from cap-0 to cap-1
+// across p 0.2833 to 0.3833, cap-1 up to 0.6167, a blend from cap-1 to cap-2 across 0.6167 to 0.7167, and cap-2 above
+// that. A blend moves each block on its own local progress q = scrubLocal(j, 17, t) with t = sym(u): the kireji takes
+// anticipate on q and the other 16 take settle.
 //
-// Entry. The section is current once its top reaches the viewport top, which is p = 1/6. Its entry runs over p from 0
-// to 1/6, with u = 6p: the blocks move from the race (the speed section's exit formation) to cap-0, and the camera moves
-// from the speed key to the hero key through rig.blend (which applies sym). Act rule C2 drives this move with the
-// ink-bleed progress p1. The choreography does not pass p1, and p is 0 until the centre line, so the entry starts at
-// p1 = 0.5 instead of 0 (see Decisions). Reduced motion completes the entry when the section becomes current.
+// Entry (act C2 and line 37 of act II; D22.8). The entry is driven by the bleed progress p1 in ctx.bleed. The choreography
+// has already eased p1 with sym and smoothed it with T.beat7, so this handle uses it as given and applies no second sym.
+// The 17 blocks move from the race (the speed section's exit formation) to cap-0, scrubbed by scrubLocal over t = p1. The
+// camera moves from the speed key to the hero key linearly in p1. rig.blend applies ef.sym to the progress it receives,
+// so the handle passes symArg(p1), the argument whose ef.sym is p1. On a phone the speed key is the height fit of D15.1
+// with the sideways offset of D21.2 (z 51.12, x -3.30), so the entry starts there, not at the act's phone z 110.70,
+// which predates D15.1. The entry never passes z 51.12, so the far plane stays at 80.
+//
+// After the section becomes current, the entry keeps running while p1 settles at 1. The bleed smoothing is slower than
+// the scroll, so the camera and the blocks finish with the ink front, and nothing jumps at the activation. A card that
+// is past the first band is drawn from its own formation, and the entry residue is absorbed in that band. Under reduced
+// motion no entry is drawn: the section is set at once (C14).
 //
 // Timed activation (keyboard or tap, hk:cap-active). The formation runs to the card's cap formation in TIMED_TOTAL
 // seconds. Block i starts at its own offset and lasts T.beat7 (the kireji lasts T.micro from offset 0). The kireji
@@ -24,38 +31,37 @@
 // activation does not count. Held, the formation is the timed one and p does not drive it.
 //
 // Hover (hk:cap-hover). A hovered card's rows lift 0.2 bu toward the camera through blocks.setLift (fine pointer, not
-// reduced motion). Touch has no hover lift.
+// reduced motion). Touch has no hover lift. The hover event only records the card (D22.9); update() applies the lift.
 //
 // Breath. Only the active group breathes (blocks.setActiveGroup). The choreography applies the breath of the section
 // (C15) when it commits the section, and resets the active group to null in the same call, so this layer asserts the
 // group again on its first update.
+//
+// Writes. The shared world is written only from update() and setActive() (D22.9). No tick of this layer writes poses or
+// the camera. The choreography calls the current section's update() every frame, so a timed move or a hold advances
+// through the numbers that update() reads; the gsap tweens of this layer change only those numbers.
 //
 // Reduced motion (C14). Every entry and blend is complete. The active card follows p in discrete steps, and each change
 // of card (also a keyboard or tap activation) runs the two-step canvas crossfade of act rule C14 over T.half each step.
 // The hover lift and the timed move are off.
 //
 // Decisions in this file, each reported to the director:
-// - The entry is driven by the centre-line progress p over [0, 1/6] (u = 6p), not by p1 over [0, 1]. Act rule C2 says the
-//   entry follows p1, but no progress value reaches this handle for the first half of the bleed (p is clamped at 0 until
-//   the centre line). The entry therefore starts at the centre line, and it is twice as quick as the bleed.
-// - The speed handle writes the race and the speed key on every frame while it is current, and the choreography calls a
-//   non-current handle only when its progress changes. So the entry is re-applied in a tick at PRIORITY.state + 6, after
-//   the choreography's frame, for as long as the entry is in progress (u above 0 and the section not current).
-// - Writes happen when p, the timed move, the hold fade or the viewport changes, not on every frame. A frame with no
-//   change leaves the blocks as the last writer left them. The next section (code) writes its entry when its progress
-//   changes, and that entry is then not overwritten by this handle.
+// - The blocks take the same p1 as the camera. The earlier entry over p in [0, 1/6] (u = 6p) was chosen only because no
+//   p1 reached this handle; D22.8 supplies it, so that reason is gone.
+// - Open, outside this file: the choreography calls an entering section only while its centre-line progress is above
+//   0 (src/choreo/timeline.ts, step (b)), that is from the centre line (section top at 0.5 vh) on. The bleed from the
+//   bottom edge to the centre line (p1 from 0 to 0.5) therefore reaches this handle only from p1 = 0.5, and the camera
+//   and the blocks start there. The fix belongs to the choreography and is in the report to the director.
 // - The hold ends at the landing rule above, not at "scroll moves into another third". A release at a third's edge
 //   would jump the formation by half a blend, because p at a third's edge is mid-band.
 // - Timed moves run to TIMED_TOTAL = T.micro + HAIKU_OFFSETS[16] + T.beat7 (1.45 s), since each block lasts T.beat7 from its
 //   own offset (act Sequence, step 2), not the whole move over T.beat7.
 // - The hover lift is a blocks.setLift target, which blocks.ts damps with T.half. The act asks for T.beat5 with settle.
-// - On a phone the entry starts from cameraKey('speed'), which is the height fit of D15.1 (z 51.12). The act's phone entry
-//   figures (z 110.70 to 39.25) predate D15.1.
 import { gsap } from 'gsap';
 import { E, ef, registerEases } from '../../core/ease';
 import { env } from '../../core/env';
-import { PRIORITY, addTick, type Tick } from '../../core/ticker';
 import { HAIKU_OFFSETS, T, scrubLocal } from '../../core/timing';
+import type { Tick } from '../../core/ticker';
 import type { FormationId } from '../../core/types';
 import type { BreathMode } from '../../gl/blocks/blocks';
 import { BLOCK_COUNT, KIREJI, formationFor, lerpPose, staggerPosition, type Pose } from '../../gl/blocks/formations';
@@ -82,8 +88,6 @@ const CARD_ROWS: readonly (readonly number[])[] = [
 /** Half of a blend band in p, centred on each card boundary (Sequence). The band is 0.1 wide. */
 const BAND = 0.05;
 const BAND_WIDTH = 2 * BAND;
-/** Progress at which the section becomes current: its top reaches the viewport top (C2). */
-const ENTRY_END = 1 / 6;
 /** Scrub profile of every formation change (direction-3d 11.1, architecture section 6). */
 const SCRUB = { total: 0.35, lead: 0.1 } as const;
 /** Lift of a hovered card's group toward the camera, in bu (Pointer, direction-3d 10.13). */
@@ -93,8 +97,8 @@ const BREATH: BreathMode = { amplitude: 0.012, phase: 'rows' };
 /** Events the 2D layer dispatches on document (the only coupling to 2D code). */
 const ACTIVATE_EVENT = 'hk:cap-active';
 const HOVER_EVENT = 'hk:cap-hover';
-/** The entry re-apply runs after the choreography's frame (PRIORITY.state + 5), so it has the last word over speed. */
-const REAPPLY_PRIORITY = PRIORITY.state + 6;
+/** Bisection steps that invert ef.sym (the bracket halves each step, so 40 steps are below 1e-12). */
+const SYM_ITERATIONS = 40;
 
 /** The timed move of one card: per block, its start offset, its duration and its curve, in seconds. */
 interface TimedPlan {
@@ -177,7 +181,7 @@ function copyPoses(src: readonly Pose[], dst: Pose[]): void {
 /**
  * The scrubbed blend from one formation to another at transition progress t (Sequence). order is the stagger
  * order of the formation being entered: block i has stagger position order[i]. The kireji takes anticipate on its
- * local progress and the others take settle.
+ * local progress and the others take settle. t is used as given; the caller applies any sym.
  */
 function blendInto(from: readonly Pose[], to: readonly Pose[], t: number, order: readonly number[], out: Pose[]): void {
   for (let i = 0; i < BLOCK_COUNT; i += 1) {
@@ -187,9 +191,12 @@ function blendInto(from: readonly Pose[], to: readonly Pose[], t: number, order:
   }
 }
 
-/** The pose of every block at centre-line progress p: the card formations and their scrubbed blend bands. */
-function drivenInto(p: number, portrait: boolean, out: Pose[]): void {
-  const c0 = formationFor('cap-0', portrait);
+/**
+ * The pose of every block at centre-line progress p. Card 1 is taken from c0: the entry pose while the bleed is still
+ * settling, and cap-0 once it has settled. The blend band from card 1 to card 2 starts from the same c0, so the entry
+ * residue is absorbed in that band and not cut.
+ */
+function drivenInto(p: number, c0: readonly Pose[], portrait: boolean, out: Pose[]): void {
   const c1 = formationFor('cap-1', portrait);
   const c2 = formationFor('cap-2', portrait);
   const b1 = 1 / CARDS;
@@ -236,6 +243,23 @@ function readHover(event: Event): number | undefined {
   return typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < CARDS ? index : undefined;
 }
 
+/**
+ * The t for which ef.sym(t) = v (bisection on the monotone curve). rig.blend applies ef.sym to its progress, and the
+ * bleed progress is already eased (D22.8), so the entry passes symArg(p1) and the camera moves linearly in p1.
+ */
+function symArg(v: number): number {
+  if (!(v > 0)) return 0;
+  if (v >= 1) return 1;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < SYM_ITERATIONS; i += 1) {
+    const mid = (lo + hi) / 2;
+    if (ef.sym(mid) < v) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 /** Builds the capabilities handle on the shared world: the entry, the card formations, the timed moves and the hover lift. */
 function setup(world: GLWorld): SectionGLHandle {
   registerEases();
@@ -244,10 +268,11 @@ function setup(world: GLWorld): SectionGLHandle {
 
   /** The poses last written to the blocks. A timed move starts from them. */
   const shown = makePoses();
-  /** The formation poses of p, the timed move and the timed move's starting poses, reused each frame. */
+  /** The formation poses of p, the timed move, the timed move's starting poses and the entry pose, reused each frame. */
   const driven = makePoses();
   const timed = makePoses();
   const timedFrom = makePoses();
+  const entry = makePoses();
   copyPoses(formationFor('cap-0', false), shown);
 
   /** The viewport and the camera keys of it. The keys are built once per size. */
@@ -268,12 +293,10 @@ function setup(world: GLWorld): SectionGLHandle {
 
   let active = false;
   let disposed = false;
-  /** The progress of the last write, and whether the next update must write whatever p is. */
-  let lastP = Number.NaN;
+  /** The bleed progress the entry was last written at, or NaN when it must be written again. */
+  let lastE = Number.NaN;
+  /** True when the next write must happen whatever the state is. */
   let forceWrite = true;
-  let cameraDirty = true;
-  /** The entry progress u = clamp(p / ENTRY_END) while the section is not current. 0 when it is current or idle. */
-  let entryU = 0;
   /** The card whose rows the blocks last treated as the active group, or -1. */
   let groupShown = -1;
   /** The card held by an activation, or -1. */
@@ -287,9 +310,8 @@ function setup(world: GLWorld): SectionGLHandle {
   /** The card whose timed move is in effect, or -1 when none. */
   let timedCard = -1;
   let timedDone = true;
-  /** True while the hold weight fades out after an input release. */
-  let holdFading = false;
-  /** The card whose rows are lifted by the hover, or -1. */
+  /** The card the pointer hovers, as the last hover event reported it, and the card whose lift is applied. */
+  let hoverWant = -1;
   let hoverCard = -1;
   /** Reduced motion: the card on screen, the crossfade phase and its start time (tick time). */
   let shownCard = -1;
@@ -308,7 +330,6 @@ function setup(world: GLWorld): SectionGLHandle {
       size.width = ctx.size.width;
       size.height = ctx.size.height;
       keys.clear();
-      cameraDirty = true;
       forceWrite = true;
     }
     if (ctx.reducedMotion !== reduced) {
@@ -325,11 +346,11 @@ function setup(world: GLWorld): SectionGLHandle {
     hold.w = 0;
     timedCard = -1;
     timedDone = true;
-    holdFading = false;
     if (swPhase !== 'idle') setOpacity(1);
     swPhase = 'idle';
     shownCard = -1;
     groupShown = -1;
+    lastE = Number.NaN;
     forceWrite = true;
   }
 
@@ -346,15 +367,31 @@ function setup(world: GLWorld): SectionGLHandle {
   function clearLifts(): void {
     for (let i = 0; i < BLOCK_COUNT; i += 1) blocks.setLift(i, 0, 0);
     hoverCard = -1;
+    hoverWant = -1;
   }
 
-  /** The entry at u: the blocks from the race (or the previous section's exit) to cap-0, and the camera from its key to hero. */
-  function writeEntry(): void {
+  /** Applies the hover lift to the card the last hover event named. Called from update() only (D22.9). */
+  function applyHover(): void {
+    if (hoverWant === hoverCard) return;
+    if (hoverCard >= 0) setCardLift(hoverCard, 0);
+    hoverCard = hoverWant;
+    if (hoverCard >= 0) setCardLift(hoverCard, LIFT_BU);
+  }
+
+  /** The entry pose at bleed progress e: the race (or the previous section's exit formation) to cap-0, scrubbed with t = e. */
+  function entryInto(e: number, out: Pose[]): void {
     const to = formationFor('cap-0', portrait);
     const from = prev === null ? to : formationFor(prev.exitFormation ?? prev.formation, portrait);
-    blendInto(from, to, ef.sym(entryU), staggerPosition('cap-0'), shown);
-    blocks.setPoses(shown);
-    rig.blend(keyOf(prev === null ? 'hero' : prev.key), keyOf('hero'), entryU);
+    blendInto(from, to, e, staggerPosition('cap-0'), out);
+  }
+
+  /** The camera at bleed progress e: from the previous section's key to the hero key, linear in e (D22.8). */
+  function writeCamera(e: number): void {
+    if (e >= 1) {
+      rig.blend(keyOf('hero'), keyOf('hero'), 1);
+      return;
+    }
+    rig.blend(keyOf(prev === null ? 'hero' : prev.key), keyOf('hero'), symArg(e));
   }
 
   /** The timed move into card c, from the poses on screen now. */
@@ -363,7 +400,6 @@ function setup(world: GLWorld): SectionGLHandle {
     copyPoses(shown, timedFrom);
     held = card;
     hold.w = 1;
-    holdFading = false;
     timedCard = card;
     timedDone = false;
     clock.v = 0;
@@ -389,7 +425,6 @@ function setup(world: GLWorld): SectionGLHandle {
     held = -1;
     gsap.killTweensOf(hold);
     hold.w = 0;
-    holdFading = false;
     timedCard = -1;
     forceWrite = true;
   }
@@ -399,13 +434,11 @@ function setup(world: GLWorld): SectionGLHandle {
     held = -1;
     if (reduced) return;
     gsap.killTweensOf(hold);
-    holdFading = true;
     gsap.to(hold, {
       w: 0,
       duration: T.micro,
       ease: E.settle,
       onComplete: () => {
-        holdFading = false;
         timedCard = -1;
         forceWrite = true;
       },
@@ -413,27 +446,41 @@ function setup(world: GLWorld): SectionGLHandle {
     forceWrite = true;
   }
 
-  /** Active, not reduced motion: the formation from p, the held timed move and the group of the card on screen. */
-  function updateActive(p: number): void {
-    if (held >= 0 && timedDone && p >= PURE[held][0] && p <= PURE[held][1]) releaseAtLanding();
-    setGroup(held >= 0 ? held : cardOf(p));
-    const moving = (timedCard >= 0 && !timedDone) || holdFading;
-    if (forceWrite || moving || p !== lastP) {
-      drivenInto(p, portrait, driven);
-      if (timedCard >= 0 && hold.w > 0) {
-        timedInto(timedFrom, timedCard, clock.v * TIMED_TOTAL, portrait, timed);
-        for (let i = 0; i < BLOCK_COUNT; i += 1) lerpPose(driven[i], timed[i], hold.w, shown[i]);
-      } else {
-        copyPoses(driven, shown);
-      }
+  /** Not current: the entry at the bleed progress p1, written when p1 has moved (D22.8). */
+  function updateEntry(e: number): void {
+    if (forceWrite || e !== lastE) {
+      entryInto(e, shown);
       blocks.setPoses(shown);
-      lastP = p;
+      lastE = e;
       forceWrite = false;
     }
-    if (cameraDirty) {
-      rig.blend(keyOf('hero'), keyOf('hero'), 1);
-      cameraDirty = false;
+    writeCamera(e);
+  }
+
+  /**
+   * Current, not reduced motion: the formation from p, over the entry residue while p1 has not settled, with the held
+   * timed move and the group of the card on screen. Written every frame, because the bleed still moves after the
+   * section becomes current.
+   */
+  function updateActive(p: number, e: number): void {
+    if (held >= 0 && timedDone && p >= PURE[held][0] && p <= PURE[held][1]) releaseAtLanding();
+    setGroup(held >= 0 ? held : cardOf(p));
+    applyHover();
+    let c0: readonly Pose[] = formationFor('cap-0', portrait);
+    if (e < 1) {
+      entryInto(e, entry);
+      c0 = entry;
     }
+    drivenInto(p, c0, portrait, driven);
+    if (timedCard >= 0 && hold.w > 0) {
+      timedInto(timedFrom, timedCard, clock.v * TIMED_TOTAL, portrait, timed);
+      for (let i = 0; i < BLOCK_COUNT; i += 1) lerpPose(driven[i], timed[i], hold.w, shown[i]);
+    } else {
+      copyPoses(driven, shown);
+    }
+    blocks.setPoses(shown);
+    forceWrite = false;
+    writeCamera(e);
   }
 
   /**
@@ -444,10 +491,11 @@ function setup(world: GLWorld): SectionGLHandle {
     if (held >= 0 && cardOf(p) === held) held = -1;
     const desired = held >= 0 ? held : cardOf(p);
     setGroup(desired);
-    if (cameraDirty) {
-      rig.blend(keyOf('hero'), keyOf('hero'), 1);
-      cameraDirty = false;
+    if (hoverCard >= 0) {
+      hoverWant = -1;
+      applyHover();
     }
+    rig.blend(keyOf('hero'), keyOf('hero'), 1);
     if (shownCard < 0) {
       blocks.setPoses(formationFor(CARD_FORMATION[desired], portrait));
       shownCard = desired;
@@ -481,12 +529,6 @@ function setup(world: GLWorld): SectionGLHandle {
     }
   }
 
-  /** Re-applies the entry after the choreography's frame, for as long as the speed handle would overwrite it. */
-  const removeReapply = addTick(() => {
-    if (disposed || active || reduced || entryU <= 0) return;
-    writeEntry();
-  }, REAPPLY_PRIORITY);
-
   function onActivate(event: Event): void {
     const card = readCard(event);
     if (card === null) return;
@@ -500,13 +542,11 @@ function setup(world: GLWorld): SectionGLHandle {
     startTimed(card);
   }
 
+  /** Records the hovered card. The lift itself is applied by update() (D22.9). */
   function onHover(event: Event): void {
     if (disposed || !active || reduced || !env.finePointer) return;
     const card = readHover(event);
-    if (card === undefined || card === hoverCard) return;
-    if (hoverCard >= 0) setCardLift(hoverCard, 0);
-    hoverCard = card;
-    if (card >= 0) setCardLift(card, LIFT_BU);
+    if (card !== undefined) hoverWant = card;
   }
 
   /** Wheel, touch and key input end a hold. Input older than the activation is the one that caused it, so it does not count. */
@@ -518,7 +558,6 @@ function setup(world: GLWorld): SectionGLHandle {
 
   function deactivate(): void {
     active = false;
-    entryU = 0;
     resetState();
     clearLifts();
   }
@@ -534,23 +573,13 @@ function setup(world: GLWorld): SectionGLHandle {
       if (disposed) return;
       remember(ctx);
       const p = clamp01(progress);
-      if (!active) {
-        // Past the entry window the section has ended: its last written formation (cap-2 at its bottom) is the exit
-        // that the next section's entry starts from, so nothing is written here.
-        if (reduced || p >= ENTRY_END) {
-          entryU = 0;
-          return;
-        }
-        entryU = clamp01(p / ENTRY_END);
-        if (forceWrite || p !== lastP) {
-          writeEntry();
-          lastP = p;
-          forceWrite = false;
-        }
+      const e = clamp01(ctx.bleed.p1);
+      if (reduced) {
+        if (active) updateReduced(p, tick.time);
         return;
       }
-      if (reduced) updateReduced(p, tick.time);
-      else updateActive(p);
+      if (active) updateActive(p, e);
+      else updateEntry(e);
     },
 
     setActive(on: boolean, ctx: SectionGLContext): void {
@@ -558,13 +587,10 @@ function setup(world: GLWorld): SectionGLHandle {
       remember(ctx);
       if (on) {
         active = true;
-        entryU = 0;
         resetState();
         clearLifts();
         blocks.setTilt(0, 0);
         blocks.setGroupOffset(0, 0, 0);
-        cameraDirty = true;
-        forceWrite = true;
         return;
       }
       deactivate();
@@ -575,7 +601,6 @@ function setup(world: GLWorld): SectionGLHandle {
       if (active) deactivate();
       resetState();
       disposed = true;
-      removeReapply();
       document.removeEventListener(ACTIVATE_EVENT, onActivate);
       document.removeEventListener(HOVER_EVENT, onHover);
       window.removeEventListener('wheel', onInput);

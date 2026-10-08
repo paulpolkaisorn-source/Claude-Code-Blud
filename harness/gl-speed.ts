@@ -6,6 +6,8 @@
 // the speed key (direction-act1 A7 and D15.1), the depth of field focus, the breath (held off until u = 1, then T.hold
 // later), the hover lift (fine pointer, at rest, footprints without the lift), taps (a tap toggles, a moved tap, a
 // cancelled tap and a tap on a control do nothing), reduced motion, the portrait race, setActive(false) and dispose.
+// The lift runs along y on a landscape viewport and along x on a portrait one (D22.10), and each check reads the lift
+// along its own axis. A tap writes nothing to the shared blocks until update() runs (D22.9).
 // Then initPointer runs and window.__speedHarness drives the states that the screenshots show. The screenshot driver is a
 // Playwright script kept outside the repository.
 import { ef } from '../src/core/ease';
@@ -36,6 +38,11 @@ interface SpeedDriver {
   /** The centre, in CSS px, of block i's race footprint at the current viewport. */
   centre(i: number): { x: number; y: number };
   frames(): number;
+  /**
+   * The drawn screen rectangles of the 17 blocks, as the GPU holds them (Blocks.projectRects): minX, minY, maxX, maxY in
+   * CSS px for block 0, then block 1, and so on. A lift shows here, so the screenshot driver measures it from this.
+   */
+  rects(): number[];
 }
 
 interface HarnessWindow extends Window {
@@ -124,6 +131,16 @@ function expectedSpeedZ(size: Size): number {
   return a >= 1 ? 15.9 / (0.8 * 2 * TAN11 * a) : 15.9 / (0.8 * 2 * TAN11);
 }
 
+/**
+ * The speed key's x (D21.2): on a phone the race column's centre sits at 86% of the viewport width, so the camera moves
+ * left by 0.36 of the visible width at the speed distance. Desktop has no offset.
+ */
+function expectedSpeedX(size: Size): number {
+  const a = size.width / size.height;
+  if (a >= 1) return 0;
+  return -(0.86 - 0.5) * 2 * expectedSpeedZ(size) * TAN11 * a;
+}
+
 /** The hero key's distance and x (direction-3d 10.6): width fit at 0.45 on desktop, 0.84 on a phone; x -0.22 W on desktop. */
 function expectedHeroKey(size: Size): { x: number; y: number; z: number } {
   const a = size.width / size.height;
@@ -166,6 +183,19 @@ async function main(): Promise<void> {
     postSetDof(cfg);
   };
 
+  // Writes to the shared blocks, counted. The handle writes them only from update() and setActive() (D22.9).
+  const blockWrites = { lift: 0, poses: 0 };
+  const realSetLift = world.blocks.setLift.bind(world.blocks);
+  world.blocks.setLift = (i: number, dy: number, dz?: number): void => {
+    blockWrites.lift += 1;
+    realSetLift(i, dy, dz);
+  };
+  const realSetPoses = world.blocks.setPoses.bind(world.blocks);
+  world.blocks.setPoses = (poses): void => {
+    blockWrites.poses += 1;
+    realSetPoses(poses);
+  };
+
   const tick: Tick = { time: 0, dt: FRAME, frame: 0 };
   let clock = 0;
   /** Advances n frames of the synthetic clock. each runs first, as the choreography's update does, then the shared updates. */
@@ -185,7 +215,7 @@ async function main(): Promise<void> {
   const viewport = (): Size => ({ width: window.innerWidth, height: window.innerHeight });
   function contextFor(over: Partial<SectionGLContext> = {}): SectionGLContext {
     const size = viewport();
-    return { prev, portrait: size.width < size.height, reducedMotion: false, size, ...over };
+    return { prev, portrait: size.width < size.height, reducedMotion: false, size, bleed: { p1: 0, p2: 0 }, ...over };
   }
 
   // The 17 instance matrices, read back as the GPU buffer holds them.
@@ -216,6 +246,7 @@ async function main(): Promise<void> {
   }
   /** The y of block i in the instance matrices. */
   const yOf = (i: number): number => matrices()[i * 16 + 13];
+  const xOf = (i: number): number => matrices()[i * 16 + 12];
   const cameraPos = (): { x: number; y: number; z: number } => {
     const p = world.stage.camera.position;
     return { x: p.x, y: p.y, z: p.z };
@@ -296,10 +327,11 @@ async function main(): Promise<void> {
     );
     cam = cameraPos();
     const speedZ = expectedSpeedZ(size);
+    const speedX = expectedSpeedX(size);
     check(
       'camera at u = 0.5 is halfway in ef.sym (sym(0.5) = 0.5) between the hero and speed keys',
-      Math.abs(cam.z - (heroKey.z + speedZ) / 2) < 1e-3,
-      `z ${cam.z.toFixed(4)}, halfway ${((heroKey.z + speedZ) / 2).toFixed(4)}`,
+      Math.abs(cam.z - (heroKey.z + speedZ) / 2) < 1e-3 && Math.abs(cam.x - (heroKey.x + speedX) / 2) < 1e-3,
+      `z ${cam.z.toFixed(4)}, halfway ${((heroKey.z + speedZ) / 2).toFixed(4)}; x ${cam.x.toFixed(4)}, halfway ${((heroKey.x + speedX) / 2).toFixed(4)}`,
     );
 
     // The kireji (stagger position 0) takes anticipate. At u = 0.05 its local progress is 0.5, where anticipate and settle
@@ -324,9 +356,9 @@ async function main(): Promise<void> {
     );
     cam = cameraPos();
     check(
-      'camera at u = 1 is the speed key (desktop z 31.95 at 1440 by 900; phone z 51.12, D15.1)',
-      Math.abs(cam.z - speedZ) < 1e-3 && Math.abs(cam.x) < 1e-3 && Math.abs(cam.y) < 1e-3,
-      `camera (${cam.x.toFixed(4)}, ${cam.y.toFixed(4)}, ${cam.z.toFixed(4)}), speed z ${speedZ.toFixed(4)}`,
+      'camera at u = 1 is the speed key (desktop z 31.95 at 1440 by 900; phone z 51.12, D15.1; phone x offset, D21.2)',
+      Math.abs(cam.z - speedZ) < 1e-3 && Math.abs(cam.x - expectedSpeedX(size)) < 1e-3 && Math.abs(cam.y) < 1e-3,
+      `camera (${cam.x.toFixed(4)}, ${cam.y.toFixed(4)}, ${cam.z.toFixed(4)}), speed (${expectedSpeedX(size).toFixed(4)}, 0, ${speedZ.toFixed(4)})`,
     );
     if (size.width === 1440 && size.height === 900) {
       check('at 1440 by 900 the speed key is z 31.95 (A7)', Math.abs(speedZ - 31.95) < 0.01);
@@ -345,7 +377,11 @@ async function main(): Promise<void> {
     // its offset from its race position is the breath, and lift(i) is block i's own offset with that breath removed.
     const base = raceXY(portrait);
     const restY = (i: number): number => yOf(i) - base[i][1];
-    const lift = (i: number): number => restY(i) - restY(0);
+    const restX = (i: number): number => xOf(i) - base[i][0];
+    /** Block i's lift along the lift axis: x on a portrait viewport (D22.10), y on a landscape one, breath removed. */
+    const lift = (i: number): number => (portrait ? restX(i) : restY(i) - restY(0));
+    /** Block i's offset across the lift axis. A lifted block must not drift there (the breath is shared, so it cancels). */
+    const across = (i: number): number => (portrait ? restY(i) - restY(0) : restX(i));
 
     // Breath: held off for T.hold after u reaches 1, then on.
     step(30, () => handle.update(0.25, tick, contextFor()));
@@ -404,20 +440,46 @@ async function main(): Promise<void> {
     step(240, () => handle.update(0.25, tick, contextFor()));
     check('hover ends when the pointer leaves the page', Math.abs(lift(9)) < 1e-3, `lift 9 ${lift(9).toFixed(5)}`);
 
-    // Touch: a tap toggles the lift of its block. Moved taps, cancelled taps and taps on a control do nothing.
+    // Touch (D22.10): a tap lifts its block, a second tap on the same block lowers it, and a tap on another block moves the
+    // lift there. Moved taps, cancelled taps and taps on a control do nothing.
     const c3 = centreOf(3, size);
+    const writesBefore = blockWrites.lift + blockWrites.poses;
     document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
+    const writesAfterTap = blockWrites.lift + blockWrites.poses;
+    handle.update(0.25, tick, contextFor());
+    const writesAfterUpdate = blockWrites.lift + blockWrites.poses;
+    check(
+      'a tap writes nothing to the shared blocks until update() runs, and update() writes them (D22.9)',
+      writesAfterTap === writesBefore && writesAfterUpdate > writesAfterTap,
+      `writes before ${writesBefore}, after the tap ${writesAfterTap}, after update ${writesAfterUpdate}`,
+    );
     step(240, () => handle.update(0.25, tick, contextFor()));
     check(
-      'touch: a tap lifts block 3 by 0.15 bu, and no neighbour does',
-      Math.abs(lift(3) - LIFT) < 1e-3 && Math.abs(lift(4)) < 1e-3 && Math.abs(lift(2)) < 1e-3,
-      `lift 3 ${lift(3).toFixed(5)}, lift 4 ${lift(4).toFixed(5)}, lift 2 ${lift(2).toFixed(5)}`,
+      'touch: a tap lifts block 3 by 0.15 bu along the lift axis, no neighbour does, and nothing drifts across it',
+      Math.abs(lift(3) - LIFT) < 1e-3 && Math.abs(lift(4)) < 1e-3 && Math.abs(lift(2)) < 1e-3 && Math.abs(across(3)) < 1e-3,
+      `lift 3 ${lift(3).toFixed(5)}, lift 4 ${lift(4).toFixed(5)}, lift 2 ${lift(2).toFixed(5)}, across 3 ${across(3).toFixed(5)}`,
     );
     document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
     step(240, () => handle.update(0.25, tick, contextFor()));
     check('touch: a second tap on the same block lowers it', Math.abs(lift(3)) < 1e-3, `lift 3 ${lift(3).toFixed(5)}`);
+    // A tap on another block moves the lift: 3 is lifted, a tap on 9 drops 3 and lifts 9, and a tap on 9 drops it.
+    document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
+    document.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
+    step(240, () => handle.update(0.25, tick, contextFor()));
+    document.dispatchEvent(touchEvent('pointerdown', c9.x, c9.y));
+    document.dispatchEvent(touchEvent('pointerup', c9.x, c9.y));
+    step(240, () => handle.update(0.25, tick, contextFor()));
+    check(
+      'touch: a tap on another block moves the lift (3 drops, 9 lifts)',
+      Math.abs(lift(9) - LIFT) < 1e-3 && Math.abs(lift(3)) < 1e-3,
+      `lift 9 ${lift(9).toFixed(5)}, lift 3 ${lift(3).toFixed(5)}`,
+    );
+    document.dispatchEvent(touchEvent('pointerdown', c9.x, c9.y));
+    document.dispatchEvent(touchEvent('pointerup', c9.x, c9.y));
+    step(240, () => handle.update(0.25, tick, contextFor()));
+    check('touch: a tap on the lifted block 9 drops it', Math.abs(lift(9)) < 1e-3, `lift 9 ${lift(9).toFixed(5)}`);
     document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointerup', c3.x + 40, c3.y + 40));
     step(240, () => handle.update(0.25, tick, contextFor()));
@@ -593,6 +655,7 @@ async function main(): Promise<void> {
     }
   }, PRIORITY.glRender + 1);
 
+  const drawn = new Float32Array(BLOCK_COUNT * 4);
   const driver: SpeedDriver = {
     drive(p: number, frames = 60, snap = false): Promise<string> {
       progress = p;
@@ -604,6 +667,10 @@ async function main(): Promise<void> {
       return centreOf(i, viewport());
     },
     frames: (): number => frameCount,
+    rects(): number[] {
+      world.blocks.projectRects(world.stage.camera, viewport(), drawn);
+      return Array.from(drawn);
+    },
   };
   (window as HarnessWindow).__speedHarness = driver;
 }

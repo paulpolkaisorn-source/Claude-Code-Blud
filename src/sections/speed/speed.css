@@ -84,9 +84,9 @@ html:not(.js) #speed .speed-panel {
 
 /* ---------- Placement of the text blocks ---------- */
 
-/* Portrait and phone (aspect below 1): one left band beside the race column and the example panel below it. The
-   head width comes from the column's left edge (speed-layer.ts). The panel is the head width from 600 px, and the full
-   width below that. */
+/* Portrait and phone (aspect below 1): one left band beside the race column and the example panel below it. The head and
+   the panel are both the band's width, from the margin to 12 px left of the column's left edge, at every phone width
+   (D21.2). The width is set from the column's rest footprint (speed.ts, layout). */
 #speed .speed-head {
   position: absolute;
   top: 12vh;

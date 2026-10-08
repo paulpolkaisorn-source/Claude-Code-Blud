@@ -1,6 +1,6 @@
 // The closing section's 3D layer (design/direction-act3.md, closing: Sequence 1 to 3 and 6, the 3D layer, Scroll,
 // Keep-alive and Reduced motion; direction-3d.md 10.6, 10.12, 11.9 and 11.10; design/drafts/director-decisions.md D7,
-// D15 and D18).
+// D15, D18, D22.1, D22.9 and D22.11).
 //
 // Entry, scrubbed over w_c = clamp((1 - topVh) / 0.6, 0, 1), which the choreography passes as progress (act C3). At
 // w_c 0 the 17 blocks hold the rest formation that pricing leaves (direction-3d 11.9) and the camera holds the pricing
@@ -13,11 +13,15 @@
 // Keep-alive. The travelling wave is the breath { amplitude 0.010, phase 'wave' }. The choreography arms it when the
 // section becomes current, and blocks.setBreath starts it T.hold later, so this handle keeps no breath state.
 //
-// Held state. While this section is not current, the choreography calls its handle only when w_c changes. Meanwhile
-// pricing's handle is current and writes its rest formation and pricing camera every frame (src/sections/pricing/gl.ts),
-// so the column would be lost at any scroll stop inside the entry. This handle re-applies its last written state at
-// PRIORITY.state + 6, after the choreography (PRIORITY.state + 5) and before the GL update (PRIORITY.glUpdate). It does
-// nothing while the section is current (update runs then) or while its progress is 0.
+// Order of writes (D22.1, D22.9, D22.11). This handle writes only from update() and setActive(). It has no tick of its
+// own, so it never re-applies a state after another section has written. The choreography (src/choreo/timeline.ts)
+// runs the current section's update first and then this handle's update while this section is entering, that is,
+// while it is the next section in page order and its progress is above 0. While pricing is current, pricing writes its
+// rest formation and pricing camera, and this handle's write follows in the same frame, so the column and the closing
+// camera are the last writes of each frame. When w_c returns to 0, the choreography calls update(0) once, and that write
+// is the entry pose. While this section is neither current nor entering it writes nothing, and the current section holds
+// the column. The footer has no progress, so it never enters. It holds the same column and closing camera from its own
+// update while it is current (src/sections/footer/gl.ts).
 //
 // Reduced motion. The entry is complete when the section top crosses 80 % of the viewport height (act Reduced motion),
 // which is w_c = (1 - 0.8) / 0.6 = 1/3. Before that the rest state holds. There is no write animation and no wave,
@@ -26,8 +30,8 @@
 // This handle sets no mix, light, grain, depth of field or ink bleed (the choreography does), and no pointer response.
 // The ruler is 2D: it reads the column with projection.formationRects, so it needs no GL state.
 import { ef } from '../../core/ease';
-import { PRIORITY, addTick, type Tick } from '../../core/ticker';
 import { scrubLocal } from '../../core/timing';
+import type { Tick } from '../../core/ticker';
 import type { FormationId } from '../../core/types';
 import { BLOCK_COUNT, formationFor, lerpPose, staggerPosition, type Pose } from '../../gl/blocks/formations';
 import { cameraKey } from '../../gl/rig';
@@ -53,11 +57,8 @@ const REDUCED_AT = (1 - 0.8) / CLOSING_SPAN;
 const FAR_DESKTOP = 80;
 const FAR_PHONE = 120;
 
-/** After the choreography's frame (PRIORITY.state + 5) and before the GL update (PRIORITY.glUpdate). */
-const HOLD_PRIORITY = PRIORITY.state + 6;
-
-/** The state last written: entry progress, the previous section's formation and key, and the viewport. */
-interface Held {
+/** The inputs of one write: entry progress, the previous section's formation and key, and the viewport. */
+interface WriteState {
   eff: number;
   fromId: FormationId;
   fromKey: KeyName;
@@ -70,7 +71,7 @@ function clamp01(v: number): number {
   return Number.isNaN(v) ? 0 : Math.min(1, Math.max(0, v));
 }
 
-/** Builds the closing handle: the write of the column, the camera blend and the held state. */
+/** Builds the closing handle: the write of the column and the camera blend. */
 function setup(world: GLWorld): SectionGLHandle {
   const { stage, blocks, rig } = world;
   const camera = stage.camera;
@@ -82,9 +83,9 @@ function setup(world: GLWorld): SectionGLHandle {
   const sizeScratch = { width: 1, height: 1 };
   let keyWidth = -1;
   let keyHeight = -1;
-  let active = false;
   let disposed = false;
-  const held: Held = { eff: 0, fromId: 'rest', fromKey: 'pricing', portrait: false, width: 1, height: 1 };
+  /** The inputs of the last update(), reused. */
+  const state: WriteState = { eff: 0, fromId: 'rest', fromKey: 'pricing', portrait: false, width: 1, height: 1 };
 
   /** The camera key of a name for this viewport, cached until the size changes. */
   function keyOf(name: KeyName, width: number, height: number): CameraKey {
@@ -109,17 +110,17 @@ function setup(world: GLWorld): SectionGLHandle {
     camera.updateProjectionMatrix();
   }
 
-  /** Writes the 17 poses and the camera for the state h: from the previous formation to the column, from its key to the closing key. */
-  function write(h: Held): void {
-    const from = formationFor(h.fromId, h.portrait);
-    const to = formationFor('column', h.portrait);
+  /** Writes the 17 poses and the camera for the inputs s: from the previous formation to the column, from its key to the closing key. */
+  function write(s: WriteState): void {
+    const from = formationFor(s.fromId, s.portrait);
+    const to = formationFor('column', s.portrait);
     for (let i = 0; i < BLOCK_COUNT; i += 1) {
-      const local = scrubLocal(order[i], BLOCK_COUNT, h.eff, SCRUB);
+      const local = scrubLocal(order[i], BLOCK_COUNT, s.eff, SCRUB);
       lerpPose(from[i], to[i], ef.settle(local), poses[i]);
     }
     blocks.setPoses(poses);
-    rig.blend(keyOf(h.fromKey, h.width, h.height), keyOf('closing', h.width, h.height), h.eff);
-    setFar(h.portrait);
+    rig.blend(keyOf(s.fromKey, s.width, s.height), keyOf('closing', s.width, s.height), s.eff);
+    setFar(s.portrait);
   }
 
   /** Returns the block state that a pointer or an earlier section may have left: tilt, group offset and lifts at 0. */
@@ -129,28 +130,22 @@ function setup(world: GLWorld): SectionGLHandle {
     for (let i = 0; i < BLOCK_COUNT; i += 1) blocks.setLift(i, 0, 0);
   }
 
-  const removeHold = addTick(() => {
-    if (disposed || active || held.eff <= 0) return;
-    write(held);
-  }, HOLD_PRIORITY);
-
   const handle: SectionGLHandle = {
     update(progress: number, _tick: Tick, ctx: SectionGLContext): void {
       if (disposed) return;
       if (!(ctx.size.width > 0 && ctx.size.height > 0)) return;
       const w = clamp01(progress);
-      held.eff = ctx.reducedMotion ? (w >= REDUCED_AT ? 1 : 0) : w;
-      held.fromId = ctx.prev === null ? 'rest' : (ctx.prev.exitFormation ?? ctx.prev.formation);
-      held.fromKey = ctx.prev === null ? 'pricing' : ctx.prev.key;
-      held.portrait = ctx.portrait;
-      held.width = ctx.size.width;
-      held.height = ctx.size.height;
-      write(held);
+      state.eff = ctx.reducedMotion ? (w >= REDUCED_AT ? 1 : 0) : w;
+      state.fromId = ctx.prev === null ? 'rest' : (ctx.prev.exitFormation ?? ctx.prev.formation);
+      state.fromKey = ctx.prev === null ? 'pricing' : ctx.prev.key;
+      state.portrait = ctx.portrait;
+      state.width = ctx.size.width;
+      state.height = ctx.size.height;
+      write(state);
     },
 
     setActive(on: boolean, ctx: SectionGLContext): void {
       if (disposed) return;
-      active = on;
       tidy();
       if (on) setFar(ctx.portrait);
     },
@@ -158,7 +153,6 @@ function setup(world: GLWorld): SectionGLHandle {
     dispose(): void {
       if (disposed) return;
       disposed = true;
-      removeHold();
     },
   };
   return handle;

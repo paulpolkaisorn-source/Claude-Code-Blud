@@ -224,7 +224,10 @@ html.js:not(.reduced-motion) #hero .hero-lede {
   white-space: nowrap;
 }
 
-/* ---------- Object layer: fixed to the viewport, placed by P1 ---------- */
+/* ---------- Object layer: fixed to the viewport, placed by P1 ----------
+   The layer is shown and hidden with GSAP (autoAlpha, T.half, E.fade) as the hero is current or not (D20.2). Its two
+   groups, the static stanza and the annotations, wait for loader:done (D22.7), so their opacity is 0 until hero.ts
+   reveals them. The markup is hidden until JavaScript runs (the hidden attribute), so no JavaScript shows nothing. */
 
 #hero .hero-object {
   margin: 0;
@@ -235,17 +238,19 @@ html.js:not(.reduced-motion) #hero .hero-lede {
   inset: 0;
   z-index: var(--z-main);
   pointer-events: none;
-  visibility: hidden;
 }
 
-#hero .hero-art.is-on {
-  visibility: visible;
+#hero .hero-marks {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
 }
 
 #hero .hero-fallback {
   position: absolute;
   left: 0;
   top: 0;
+  opacity: 0;
 }
 
 #hero .hero-fallback svg {

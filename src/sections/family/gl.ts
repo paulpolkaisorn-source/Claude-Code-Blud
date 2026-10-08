@@ -1,10 +1,17 @@
 // The family section's 3D layer (design/direction-act2.md, family; direction-3d.md 10.6, 10.12 to 10.14 and
-// 11.8; decisions D4 and D15 in design/drafts/director-decisions.md).
+// 11.8; decisions D4, D15, D20.1, D22.12 and D22.13 in design/drafts/director-decisions.md).
 //
 // Entry, scrubbed over p 0 to 0.5: the 17 blocks move from the code exit (recede, hero key) to the family
 // formation, and the camera moves from the hero key to the family key. Each block's local progress is
 // scrubLocal on its family stagger position, with t = sym(p / 0.5): the kireji takes anticipate and the other
 // sixteen take settle. The camera blend goes through the rig, which applies sym itself.
+//
+// DOM anchor (D20.1, D22.12). The 2D stage carries data-anchor="family-stations": a box one viewport tall, whose
+// top sits dy px below the viewport top. On every update the blocks group and the phantom group move in world y by
+// -dy / pxPerBu x e, immediately. pxPerBu is the px per bu at the stage plane (z 0), and e is the entry completion:
+// 0 at the entry start, 1 once the entry is complete, and 1 at all times under reduced motion. The stations stay on
+// their 2D labels at every scroll position, and the 3D scrolls with the page through the section. The entry move
+// still follows p.
 //
 // Phantom outlines: the three sibling stations (Slower, Moderate, Fast) carry one LineSegments with one
 // LineDashedMaterial. They are static and visible once p > 0 (under reduced motion, whenever the section is
@@ -23,6 +30,11 @@
 // - The idle breath starts when the formation arrives (p 0.5), through blocks.setBreath.
 // - Three segments per corner put no vertex at the 45 degree point, so each depth edge meets the chord between
 //   the 30 and 60 degree vertices, 0.0012 bu inside the true arc.
+// - The anchor's e is the eased completion that drives the formation, sym(u), so the offset and the formation move
+//   in step. Its distance and field of view are the blend that the rig applies this frame: rig.update runs after
+//   this handle, so the stage camera still holds the previous frame here. The anchor writes x as 0 (D22.12).
+// - blocks.ts holds the group offset at 0 under reduced motion (Blocks.update). There the phantom group follows the
+//   anchor and the blocks do not, until the director decides how the anchor behaves under reduced motion.
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { env } from '../../core/env';
@@ -77,6 +89,8 @@ const PHANTOM_HEX = 0x75705f;
 const FAR_PHONE = 120;
 /** The event the 2D layer dispatches on document (D4). */
 const HOVER_EVENT = 'hk:family-hover';
+/** The 2D stage whose top the stations are anchored to (D20.1, D22.12). */
+const ANCHOR = '[data-anchor="family-stations"]';
 /** Phantom outline geometry (direction-3d 11.8). */
 const HALF_W = 2.96;
 const HALF_H = 1.4;
@@ -255,6 +269,34 @@ function setup(world: GLWorld): SectionGLHandle {
     return key;
   }
 
+  /** The 2D stage that the station labels are placed in. Cached, and looked up again once it is detached. */
+  let anchor: HTMLElement | null = null;
+
+  /**
+   * Writes the anchor offset of this frame, immediately (D20.1, D22.12). The blocks group and the phantom group move
+   * in world y by -dy / pxPerBu x e, where dy is the stage's rect.top in px and pxPerBu = H / (2 d tan(fov / 2)) for
+   * the camera's distance d to the z = 0 plane. u is the entry progress of this frame, and the distance and the field of
+   * view are the blend the rig applies this frame (see the header). A missing anchor gives dy 0.
+   */
+  function writeAnchor(from: CameraKey, to: CameraKey, u: number, rm: boolean, height: number): void {
+    const k = ef.sym(u);
+    const d = Math.abs(from.position[2] + (to.position[2] - from.position[2]) * k);
+    const fov = from.fov + (to.fov - from.fov) * k;
+    const pxPerBu = height / (2 * d * Math.tan((fov * Math.PI) / 360));
+    if (anchor === null || !anchor.isConnected) anchor = document.querySelector<HTMLElement>(ANCHOR);
+    const dy = anchor === null ? 0 : anchor.getBoundingClientRect().top;
+    const e = rm ? 1 : k;
+    const y = pxPerBu > 0 && Number.isFinite(pxPerBu) ? (-dy * e) / pxPerBu : 0;
+    blocks.setGroupOffset(0, y, 0, true);
+    group.position.y = y;
+  }
+
+  /** Puts the blocks group and the phantom group back at zero, at once. */
+  function clearAnchor(): void {
+    blocks.setGroupOffset(0, 0, 0, true);
+    group.position.y = 0;
+  }
+
   function setFar(far: number): void {
     if (camera.far === far) return;
     camera.far = far;
@@ -339,7 +381,10 @@ function setup(world: GLWorld): SectionGLHandle {
 
       const from = keyFor(ctx.prev === null ? 'family' : ctx.prev.key, ctx.size, portrait);
       const to = keyFor('family', ctx.size, portrait);
-      rig.blend(from, to, rm ? 1 : clamp01(s / REST_AT));
+      const u = rm ? 1 : clamp01(s / REST_AT);
+      rig.blend(from, to, u);
+      // Written on every call, whether or not the section is current: the pricing handle scales this same offset (D22.14).
+      writeAnchor(from, to, u, rm, ctx.size.height);
 
       group.visible = rm ? active : s > 0;
       group.rotation.z = portrait ? PORTRAIT_TURN : 0;
@@ -360,7 +405,7 @@ function setup(world: GLWorld): SectionGLHandle {
         snapLift();
         blocks.setActiveGroup(null);
         blocks.setTilt(0, 0);
-        blocks.setGroupOffset(0, 0, 0);
+        clearAnchor();
         setFar(ctx.portrait ? FAR_PHONE : defaultFar);
         return;
       }
@@ -372,7 +417,7 @@ function setup(world: GLWorld): SectionGLHandle {
       group.visible = false;
       setFar(defaultFar);
       blocks.setTilt(0, 0);
-      blocks.setGroupOffset(0, 0, 0);
+      clearAnchor();
       for (let i = 0; i < BLOCK_COUNT; i += 1) blocks.setLift(i, 0);
       // Only a lift that was on screen needs the poses written again, without it.
       if (hadLift) writePoses(lastS, ctx.prev, ctx.portrait, lastRm, 0);
@@ -385,6 +430,7 @@ function setup(world: GLWorld): SectionGLHandle {
       snapLift();
       if (active) blocks.setBreath(null);
       active = false;
+      clearAnchor();
       stage.scene.remove(group);
       geometry.dispose();
       material.dispose();

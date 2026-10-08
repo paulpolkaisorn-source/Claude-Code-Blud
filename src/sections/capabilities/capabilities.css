@@ -405,3 +405,22 @@
     display: none;
   }
 }
+
+/* ---------- Reduced motion (D21.4; act II C8 and the reduced-motion rules): every card changes at once ----------
+   base.css sets every transition duration to 0s, but the active card's transitions also carry a delay of T.micro, so the
+   card would still change after a short wait. The delay is zeroed here for the whole section. */
+@media (prefers-reduced-motion: reduce) {
+  #capabilities,
+  #capabilities *,
+  #capabilities *::before,
+  #capabilities *::after {
+    transition-delay: 0s !important;
+  }
+}
+
+html.reduced-motion #capabilities,
+html.reduced-motion #capabilities *,
+html.reduced-motion #capabilities *::before,
+html.reduced-motion #capabilities *::after {
+  transition-delay: 0s !important;
+}

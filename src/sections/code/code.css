@@ -4,10 +4,10 @@
  * reduced motion and the no-WebGL fallback); design/direction.md headings 3, 4, 5, 8, 9 and 13;
  * design/drafts/director-decisions.md D16.1, D18 and D20.3.
  *
- * Only tokens are used for colour, type, spacing and curves. The one literal is the 2 px live marker width, which is
- * a hairline of the drawing and not a spacing token. The section is 2 vh tall and the block that holds the copy is
- * exactly 100 svh, set at 50 per cent of the section, so its centre is the section's middle (C2 and the structure of
- * the code section).
+ * Only tokens are used for colour, type, spacing and curves. The literals are the 2 px widths of the live marker and
+ * the typing caret (D21.3), which are hairlines of the drawing and not spacing tokens. The section is 2 vh tall and the
+ * block that holds the copy is exactly 100 svh, set at 50 per cent of the section, so its centre is the section's
+ * middle (C2 and the structure of the code section).
  */
 
 /* ---------- Section and block ---------- */
@@ -111,9 +111,12 @@
 
 /* ---------- Code blocks (code style, t-code on the pre) ---------- */
 
+/* The code box is the scroll box of its lines (white-space pre), and the caret is positioned inside it. */
 #code .code__pre {
+  position: relative;
   margin: 0;
   max-width: 100%;
+  overflow-x: auto;
 }
 
 #code .code__code {
@@ -153,8 +156,28 @@
   color: var(--text-1);
 }
 
+/* The request types out (D21.3). Each character group keeps its token colour once typed. An untyped group is
+   transparent and keeps its place in the line, so the panel has its final size from the first frame, and the text
+   stays in the HTML once for screen readers and the copy button. */
+#code .code__group.is-untyped {
+  color: transparent;
+}
+
+/* The typing caret (D21.3): 2 px wide, one line tall, in seal-text. It is positioned inside the request box, so it
+   scrolls with the code. It takes no space in the layout. The script shows it only while the request types. */
+#code .code__caret {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: calc(1em * var(--lh-code));
+  background: var(--seal-text);
+  pointer-events: none;
+}
+
 /* The live line marker: a 2 px seal bar in the padding of the panel, at the line the stream has reached. It is
-   shown only once the script has measured the lines (is-live). */
+   shown only once the script has measured the lines (is-live). While the request types, the caret is the live mark
+   and the marker waits in its box (is-streaming is set from p 0.45, and always under reduced motion). */
 #code .code__marker {
   display: none;
   position: absolute;
@@ -170,6 +193,10 @@
   display: block;
 }
 
+#code .code__panel.is-live:not(.is-streaming) > .code__marker {
+  visibility: hidden;
+}
+
 /* ---------- Copy button (secondary; body style; "Copy" and "Copied") ---------- */
 
 #code .code__copy {
@@ -181,6 +208,12 @@
 #code .code__fallback rect {
   fill: var(--rule-hair);
   fill-opacity: 0.5;
+}
+
+/* The kireji is the seal of the ink act (D21.5), as in the 3D recede: the seal token, not a literal. */
+#code .code__fallback rect.code__kireji {
+  fill: var(--seal);
+  fill-opacity: 1;
 }
 
 #code .code__fallback svg {

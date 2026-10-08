@@ -2,7 +2,9 @@
 // Open /harness/section-code.html on the dev server, optionally with ?nogl (html.no-gl, the static recede shows).
 // The page starts the section as the boot does, emits loader:done after its first tick and runs the checks on the
 // next tick. The verdict lands in dataset.harness ('pass' or 'fail:<names>') and the checks in dataset.harnessChecks.
-// The scroll states (stream and marker at p 0.25, 0.5 and 0.75) are read by the Playwright driver, not here.
+// The scroll states (the typing from p 0.10 to 0.45, the caret, the response stream and the marker from p 0.45 to 0.75)
+// are read by the Playwright driver, not here. At p 0 nothing is typed, the caret waits at the start of the request,
+// and the kireji of the no-WebGL recede is in the seal token (D21.3, D21.5).
 import { bus } from '../src/core/bus';
 import { env } from '../src/core/env';
 import { registerEases } from '../src/core/ease';
@@ -104,6 +106,30 @@ function runChecks(section: HTMLElement): void {
   const responseLength = RESPONSE.reduce((sum, line) => sum + line.length, 0);
   record('response split into one span per character', responseChars === responseLength, `${responseChars} of ${responseLength}`);
 
+  const groups = Array.from(document.querySelectorAll<HTMLElement>('.code__code--request .code__group'));
+  const typedGroups = groups.filter((group) => !group.classList.contains('is-untyped')).length;
+  const groupText = groups.map((group) => group.textContent ?? '').join('');
+  record('request groups rejoin to the request text', groups.length > 0 && groupText === request.join(''), `${groups.length} groups`);
+  // A group is a token, or 2 to 4 characters of a longer token. Single characters are only lone punctuation or digits.
+  const singles = groups.filter((group) => (group.textContent ?? '').trim().length === 1).length;
+  record('single-character groups are a minority (D21.3 rhythm)', groups.length > 0 && singles / groups.length < 0.4, `${singles} of ${groups.length}`);
+
+  const caret = document.querySelector<HTMLElement>('.code__caret');
+  const firstLine = document.querySelector<HTMLElement>('.code__code--request .code__line');
+  const probe = document.createElement('span');
+  probe.style.color = 'var(--seal-text)';
+  section.append(probe);
+  const sealText = getComputedStyle(probe).color;
+  probe.remove();
+  const kireji = document.querySelector<SVGRectElement>('.code__kireji');
+  const sealFill = kireji ? getComputedStyle(kireji).fill : '';
+  const sealBlock = document.createElement('span');
+  sealBlock.style.color = 'var(--seal)';
+  section.append(sealBlock);
+  const sealRgb = getComputedStyle(sealBlock).color;
+  sealBlock.remove();
+  record('kireji of the no-WebGL recede is the seal token', sealFill === sealRgb && sealRgb !== '', `${sealFill} / ${sealRgb}`);
+
   const panel = document.querySelector<HTMLElement>('.code__panel');
   const marker = document.querySelector<HTMLElement>('.code__marker');
   record('panel is live and the marker is measured', panel?.classList.contains('is-live') === true && parseFloat(marker?.style.height ?? '0') > 0, marker?.style.height ?? '');
@@ -113,16 +139,25 @@ function runChecks(section: HTMLElement): void {
     record('reduced motion: no title split', document.querySelectorAll('.code__title-char').length === 0);
     record('reduced motion: response in token colours from the start', lit === responseLength, `${lit} lit`);
     record('reduced motion: stream not dimmed', response.length > 0 && !document.querySelector('.code__code--response.is-stream'));
+    record('reduced motion: request shown at once', typedGroups === groups.length, `${typedGroups} of ${groups.length} typed`);
+    record('reduced motion: no caret', caret?.hidden === true);
   } else {
     const glyphs = document.querySelectorAll('.code__title-char').length;
     record('title split into characters', glyphs > 0, `${glyphs} characters`);
     record('title keeps its full text as an accessible name', title?.getAttribute('aria-label') === TITLE, String(title?.getAttribute('aria-label')));
     record('stream at p 0 has no lit characters', lit === 0, `${lit} lit`);
     record('response dimmed by the stream class', !!document.querySelector('.code__code--response.is-stream'));
+    record('typing at p 0: no group typed yet', typedGroups === 0, `${typedGroups} typed`);
+    record('caret shown at the start of the request', caret !== null && caret.hidden === false && caret.style.left === '0px', caret?.style.left ?? 'none');
+    const caretStyle = caret ? getComputedStyle(caret) : null;
+    record('caret is 2 px wide in seal-text', caretStyle?.width === '2px' && caretStyle.backgroundColor === sealText, `${caretStyle?.width} ${caretStyle?.backgroundColor}`);
+    const lineHeight = firstLine?.getBoundingClientRect().height ?? 0;
+    record('caret is one line tall', Math.abs(parseFloat(caretStyle?.height ?? '0') - lineHeight) < 0.5, `${caretStyle?.height} / ${lineHeight}`);
+    record('marker waits while the request types', !!panel && getComputedStyle(marker ?? panel).visibility === 'hidden', '');
   }
 
   // The marker sits on line 1 at p 0 (on reduced motion as well, the marker is on line 1).
-  const first = document.querySelector<HTMLElement>('.code__code--request .code__line');
+  const first = firstLine;
   const origin = panel?.getBoundingClientRect();
   const firstTop = first && origin ? first.getBoundingClientRect().top - origin.top - (panel?.clientTop ?? 0) : NaN;
   const markerY = marker ? new DOMMatrixReadOnly(getComputedStyle(marker).transform === 'none' ? undefined : getComputedStyle(marker).transform).m42 : NaN;

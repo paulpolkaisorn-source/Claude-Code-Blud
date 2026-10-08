@@ -245,6 +245,33 @@ async function main(): Promise<void> {
   const s4Top = byId('s4').getBoundingClientRect().top;
   check('scrollToTarget offset: s4 lands 100 px above the viewport top', Math.abs(s4Top + 100) <= 2, `top ${s4Top.toFixed(1)} px`);
 
+  // 4b. A native jump, then an element target in the same task (D21.6). Lenis has not seen the jump yet, so its
+  // animatedScroll is behind the native position when scrollToTarget runs. The resync must bring it up to date first,
+  // or the target is computed from the old position and the page lands away from s6.
+  const jump = (): void => window.scrollTo({ top: 2400, behavior: 'instant' });
+  const lenisNow = getLenis();
+  if (lenisNow !== null) {
+    // Control: Lenis's own scrollTo, with no resync, lands away from s6. This is the error the resync removes.
+    jump();
+    lenisNow.scrollTo(byId('s6'), { immediate: true, force: true });
+    const controlTop = byId('s6').getBoundingClientRect().top;
+    check('control: Lenis without the resync misses s6', Math.abs(controlTop) > 1, `top ${controlTop.toFixed(1)} px`);
+  }
+  jump();
+  const lenisAtJump = getLenis();
+  const behind = lenisAtJump === null ? 0 : Math.abs(window.scrollY - lenisAtJump.animatedScroll);
+  scrollToTarget('#s6');
+  await sleep(reduced ? 100 : 1600);
+  const s6Landed = byId('s6').getBoundingClientRect().top;
+  if (!reduced) {
+    check('native jump: Lenis was behind the native position before the target', behind > 100, `${behind.toFixed(0)} px behind`);
+  }
+  check(
+    'native jump then scrollToTarget(#s6): s6 top lands within 1 px',
+    Math.abs(s6Landed) <= 1,
+    `top ${s6Landed.toFixed(2)} px`,
+  );
+
   // 5. Keyboard: PageDown x3 from the driver must still scroll the page.
   const yBeforeKeys = scrollState.y;
   await input('keys');

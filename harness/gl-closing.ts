@@ -2,22 +2,25 @@
 // page's own (createWorld from src/gl/boot.ts). Two modes, chosen by the ?mode= query:
 //   direct (default): the closing handle is driven here, as the choreography drives it, with the pricing SectionGL as the
 //     previous section. The checks cover the write from the rest formation to the column (poses, write order, camera
-//     blend, far plane), the held state, the travelling wave and, under reduced motion, the 80 % rule.
+//     blend, far plane), the order of writes (a stand-in for pricing writes first in each frame, then this handle's
+//     entering update, D22.1), the silence of the handle when it is neither current nor entering (D22.9), the travelling
+//     wave and, under reduced motion, the 80 % rule.
 //   page: the page choreography (src/choreo/timeline.ts) runs over the page's section ids and heights, with the real
-//     pricing and closing handles, and the document is scrolled. It checks the write while pricing is still the current
-//     section. Pricing then writes its rest formation and camera every frame, and the closing handle must hold.
+//     pricing, closing and footer handles, and the document is scrolled. It checks the write while pricing is still the
+//     current section, the entry starting again from below, and the column while the footer comes into view and is current.
 // The verdict goes to document.documentElement.dataset.harness ('pass' or 'fail:<count>') once the checks finish.
 // window.__closing then drives the screenshot states for the Playwright run.
 import * as THREE from 'three';
 import { closingGL } from '../src/sections/closing/gl';
 import { pricingGL } from '../src/sections/pricing/gl';
+import { footerGL } from '../src/sections/footer/gl';
 import { createWorld } from '../src/gl/boot';
 import { env } from '../src/core/env';
 import { ef } from '../src/core/ease';
 import { PRIORITY, addTick, initTicker, tickerTime, type Tick } from '../src/core/ticker';
 import { T, scrubLocal } from '../src/core/timing';
 import { scrollState } from '../src/core/scroll';
-import { initChoreo } from '../src/choreo/timeline';
+import { choreoSnapshot, initChoreo } from '../src/choreo/timeline';
 import { cameraKey } from '../src/gl/rig';
 import { BLOCK_COUNT, formationFor, lerpPose, type Pose } from '../src/gl/blocks/formations';
 import type { CameraKey, GLWorld, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
@@ -231,17 +234,24 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
     portrait: portraitNow(),
     reducedMotion: env.reducedMotion,
     size: size(),
+    bleed: { p1: 1, p2: 1 },
   });
   const tick = (): Tick => ({ time: tickerTime(), dt: 1 / 60, frame: 0 });
   const setW = (w: number): void => handle.update(w, tick(), ctx());
 
-  // A stand-in for pricing's handle while it is current: pricing writes its rest formation and pricing camera each frame.
+  // Stand-ins in the order the choreography gives them (D22.1). The rival is pricing's handle while it is current: it writes
+  // its rest formation and pricing camera each frame. The entering write is this handle's update(w), registered after the
+  // rival at the same priority, so it runs after the rival in every frame, as the choreography runs the entering section last.
   let rivalOn = false;
+  let enteringW: number | null = null;
   addTick(() => {
     if (!rivalOn) return;
     const s = size();
     blocks.setPoses(formationFor('rest', portraitNow()));
     rig.blend(cameraKey('pricing', s), cameraKey('pricing', s), 1);
+  }, PRIORITY.state + 5);
+  addTick(() => {
+    if (enteringW !== null) setW(enteringW);
   }, PRIORITY.state + 5);
 
   const controls: ClosingControls = {
@@ -347,17 +357,38 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
       );
       check(`far plane is ${far} for this viewport (direction-act3 C8)`, camera.far === far, `far=${camera.far}`);
 
-      // Held: the handle is not current, and another section writes the rest formation and the pricing camera every frame.
+      // Not current and not entering: the handle writes nothing (D22.9). The current section writes its rest formation and
+      // pricing camera every frame, and those stand.
       handle.setActive(false, ctx());
       rivalOn = true;
       await framesN(3);
-      rivalOn = false;
+      const quiet = poseError(blocks, rest);
+      check(
+        'not current, not entering: the handle writes nothing, so the current section keeps its rest formation and pricing camera (D22.9)',
+        fits(quiet, Y_TOL) && cameraError(camera, pricingKey()) <= CAMERA_TOL,
+        `${errorText(quiet)} camErr=${cameraError(camera, pricingKey()).toFixed(5)}`,
+      );
+
+      // Entering while pricing is current (D22.1): the rival writes first in each frame, then this handle's update(w).
+      enteringW = 0.5;
+      await framesN(3);
+      const hm = poseError(blocks, expectedAt(0.5, portrait));
+      check('entering (w 0.5, the rival writes first each frame): every block at its written pose', fits(hm, Y_TOL), errorText(hm));
+      check(
+        'entering (w 0.5): the camera is the sym blend of the pricing and closing keys',
+        cameraError(camera, camAt(0.5, size())) <= CAMERA_TOL,
+        `err=${cameraError(camera, camAt(0.5, size())).toFixed(5)}`,
+      );
+      enteringW = 1;
+      await framesN(3);
       const eh = poseError(blocks, column);
       check(
-        'held (not current, w 1): the column survives a frame that writes the rest formation and the pricing camera',
+        'entering (w 1, the rival writes first each frame): the column and the closing key are the last writes and hold (D22.1)',
         fits(eh, Y_TOL) && cameraError(camera, closingKey()) <= CAMERA_TOL,
         errorText(eh),
       );
+      enteringW = null;
+      rivalOn = false;
       handle.setActive(true, ctx());
       await framesN(2);
 
@@ -408,7 +439,7 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
 function startPage(world: GLWorld): { controls: ClosingControls; run: () => Promise<void> } {
   const { stage, blocks } = world;
   const camera = stage.camera;
-  initChoreo(world, [pricingGL, closingGL]);
+  initChoreo(world, [pricingGL, closingGL, footerGL]);
   // The choreography reads scrollState.y. initScroll is not started here, so the scroll position is copied each tick.
   addTick(() => {
     scrollState.y = window.scrollY;
@@ -502,6 +533,45 @@ function startPage(world: GLWorld): { controls: ClosingControls; run: () => Prom
     check('page: topVh 0.5 (w 0.83), scrolled back up: the entry is written again and held', fits(back, Y_TOL_BREATH), `${detail(wb)} ${errorText(back)}`);
     scrollTo(0.1);
     await framesN(3);
+
+    // The entry starts again from below (D22.11): the closing top is below the viewport and pricing is current. The closing
+    // gets one update(0), and its last write is the entry pose, the rest formation with the pricing camera.
+    scrollTo(1.2);
+    await framesN(3);
+    const below = poseError(blocks, expectedAt(0, portrait));
+    const belowCam = cameraError(camera, pricingKey());
+    check(
+      'page: topVh 1.2 (w 0), pricing current: the entry starts again at the rest formation and the pricing camera (D22.11)',
+      fits(below, Y_TOL_BREATH) && belowCam <= CAMERA_TOL,
+      `${errorText(below)} camErr=${belowCam.toFixed(5)}`,
+    );
+
+    // The footer comes into view below the closing. Its top at 0.5 of the viewport height: the closing is still current, and
+    // it holds the column. Then the footer's top reaches the viewport top: the footer is current and holds the same column
+    // and closing key (footer has no progress, so it never enters; D22.9 and D22.1).
+    scrollTo(-2.0);
+    await framesN(3);
+    const halfSnap = choreoSnapshot();
+    const half = poseError(blocks, column);
+    const halfCam = cameraError(camera, closingKey());
+    check(
+      'page: footer half in view (footer top at 0.5 vh): the closing is still current and the column holds',
+      halfSnap?.current === 'closing' && fits(half, Y_TOL_BREATH) && halfCam <= CAMERA_TOL,
+      `current=${String(halfSnap?.current)} ${errorText(half)} camErr=${halfCam.toFixed(5)}`,
+    );
+    check(`page: footer half in view: far plane is ${far}`, camera.far === far, `far=${camera.far}`);
+
+    scrollTo(-2.5);
+    await framesN(3);
+    const footSnap = choreoSnapshot();
+    const foot = poseError(blocks, column);
+    const footCam = cameraError(camera, closingKey());
+    check(
+      'page: footer at the viewport top: the footer is current and holds the column and the closing key',
+      footSnap?.current === 'footer' && fits(foot, Y_TOL_BREATH) && footCam <= CAMERA_TOL,
+      `current=${String(footSnap?.current)} ${errorText(foot)} camErr=${footCam.toFixed(5)}`,
+    );
+    check(`page: footer: far plane is ${far}`, camera.far === far, `far=${camera.far}`);
   }
 
   return { controls, run };

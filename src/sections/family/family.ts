@@ -1,10 +1,12 @@
 // The family section's 2D layer (design/direction-act2.md, family; design/drafts/director-decisions.md D4,
-// D16.4 and D19.2; design/direction.md headings 8, 9 and 13).
+// D16.4, D19.2, D20.1, D22.6 and D22.12; design/direction.md headings 8, 9 and 13).
 //
 // This file owns the title reveal (SplitText, once, at the 80 per cent line), the dimension axis, the four
 // station label blocks, the source notes and the box of the no-WebGL overlay. Every position that follows a
-// 3D block comes from src/core/projection.ts, so the 2D parts sit where the blocks are drawn. The section
-// imports nothing from src/gl. It talks to the 3D layer by one document event, 'hk:family-hover', with
+// 3D block comes from src/core/projection.ts, so the 2D parts sit where the blocks are drawn. The stage is the
+// viewport: its height is the height that projection.ts uses, and every position is in its coordinates, as if its
+// top-left were the viewport origin. The family 3D reads the stage's rect (data-anchor="family-stations").
+// The section imports nothing from src/gl. It talks to the 3D layer by one document event, 'hk:family-hover', with
 // detail { station, toggle? }: station is 0 to 3 while a label is hovered (fine pointer) or tapped (touch),
 // and null when the pointer leaves. A tap sends toggle: true, so the 3D layer can start and stop a run.
 import './family.css';
@@ -46,6 +48,8 @@ const DISPLACE_EM = 0.06;
 const STAGGER_MIN_CHARS = 5;
 /** Number of stations: Slower, Moderate, Fast and Fastest. */
 const STATION_COUNT = 4;
+/** The knockout's vertical padding on an axis label (family.css, D22.6). The label's box rises this far above its text. */
+const KNOCK_PAD_PX = 2;
 
 /** A box in CSS pixels. A property that is not given is cleared, so a layout change leaves no stale value. */
 interface Box {
@@ -74,9 +78,86 @@ function token(el: HTMLElement, name: string): number {
   return Number.isFinite(value) ? value : 0;
 }
 
+/** A 2D context for measuring text. It is made once; null where canvas is not available. */
+let measureContext: CanvasRenderingContext2D | null | undefined;
+
+/** The measuring context, set to el's font. Null where canvas is not available. */
+function textContext(el: HTMLElement): CanvasRenderingContext2D | null {
+  if (measureContext === undefined) measureContext = document.createElement('canvas').getContext('2d');
+  if (measureContext === null || measureContext === undefined) return null;
+  const cs = getComputedStyle(el);
+  measureContext.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  return measureContext;
+}
+
+/** The ascent and descent of el's font, in px. Null where canvas is not available. */
+function fontMetrics(el: HTMLElement): { ascent: number; descent: number } | null {
+  const ctx = textContext(el);
+  if (ctx === null) return null;
+  const m = ctx.measureText('Hg');
+  return { ascent: m.fontBoundingBoxAscent, descent: m.fontBoundingBoxDescent };
+}
+
+/**
+ * The distance in px from the top of the first line box of el to its baseline. The content area of a line is the
+ * font's ascent and descent, centred in the line height, so the baseline sits (line - (ascent + descent)) / 2 below
+ * the line top, plus the ascent.
+ */
+function baselineInLine(el: HTMLElement): number {
+  const line = parseFloat(getComputedStyle(el).lineHeight);
+  const m = fontMetrics(el);
+  if (m === null || !Number.isFinite(line)) return 0;
+  return (line - (m.ascent + m.descent)) / 2 + m.ascent;
+}
+
+/**
+ * The distance in px from the top of the title's box to the lowest ink of its text. The box holds each line at its
+ * line height, so the last baseline sits (ascent - descent - line height) / 2 above the box bottom, with the ascent and
+ * descent of the font. The lowest glyph of the text reaches its ink descent below that baseline. The axis must clear
+ * this line by sp-4 (D22.12, the act II 2D fields). Without canvas, the box bottom is used.
+ */
+function titleInkBelowTop(title: HTMLElement): number {
+  const box = title.getBoundingClientRect().height;
+  const line = parseFloat(getComputedStyle(title).lineHeight);
+  const m = fontMetrics(title);
+  const ctx = m === null ? null : measureContext ?? null;
+  if (m === null || ctx === null || !Number.isFinite(line)) return box;
+  const ink = ctx.measureText(title.textContent ?? '').actualBoundingBoxDescent;
+  return box + (m.ascent - m.descent - line) / 2 + ink;
+}
+
+/**
+ * The right edge, in viewport px, of the last line of the title's text. Each character is measured through a range,
+ * so the result holds while the title is split for its reveal. A character whose top lies below the current line
+ * starts a new line, so the last line is the one that is reached last.
+ */
+function lastLineRight(title: HTMLElement): number {
+  let lineTop = -Infinity;
+  let right = -Infinity;
+  const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+    const text = node.textContent ?? '';
+    for (let i = 0; i < text.length; i += 1) {
+      if (text[i].trim() === '') continue;
+      range.setStart(node, i);
+      range.setEnd(node, i + 1);
+      const box = range.getBoundingClientRect();
+      if (box.top > lineTop + 1) {
+        lineTop = box.top;
+        right = box.right;
+      } else if (box.top >= lineTop - 1) {
+        right = Math.max(right, box.right);
+      }
+    }
+  }
+  return right;
+}
+
 export function initFamily(ctx: SectionContext): void {
   const section = ctx.el;
   const stage = section.querySelector<HTMLElement>('.family__stage');
+  const head = section.querySelector<HTMLElement>('.family__head');
   const title = section.querySelector<HTMLElement>('.family__title');
   const axisTitle = section.querySelector<HTMLElement>('.family__axis-title');
   const axisLine = section.querySelector<HTMLElement>('.family__axis-line');
@@ -90,6 +171,7 @@ export function initFamily(ctx: SectionContext): void {
   const stanzas = section.querySelector<SVGGElement>('.family__stanzas');
   if (
     stage === null ||
+    head === null ||
     title === null ||
     axisTitle === null ||
     axisLine === null ||
@@ -111,6 +193,8 @@ export function initFamily(ctx: SectionContext): void {
     const size = viewportSize();
     const narrow = size.width / size.height < 1; // C3: an aspect below 1.0 is the narrow class
     stage.dataset.layout = narrow ? 'narrow' : 'wide';
+    // D22.12: the stage is the viewport, in the height that projection.ts uses (svh and innerHeight can differ).
+    stage.style.height = px(size.height);
     const pts = stationCenters(size, points);
     // The world origin lies midway between the Slower and Fastest stations, in either orientation.
     const ox = (pts[0].x + pts[3].x) / 2;
@@ -124,10 +208,23 @@ export function initFamily(ctx: SectionContext): void {
     const edge = token(section, '--sp-4');
 
     const stageTop = stage.getBoundingClientRect().top;
-    const titleBottom = title.getBoundingClientRect().bottom - stageTop;
+    // The lowest ink of the title, from the top of its box. Every part of the axis clears it by the edge (sp-4).
+    const titleInk = titleInkBelowTop(title);
 
     if (!narrow) {
+      intro.classList.remove('is-spacer');
+      // The head keeps the CSS rest top (12 per cent of the stage) unless its lowest line would come within the edge
+      // of the axis labels. Then the head moves up by the difference. The label's text is 12 px above the tick, and
+      // its knockout box rises 2 px above the text, so the box top is the edge that the title clears.
       const axisY = oy - AXIS_OFFSET_BU * s;
+      const labelLine = parseFloat(getComputedStyle(axisLabels[0]).lineHeight);
+      const labelTop = axisY - tickLen / 2 - gap - labelLine - KNOCK_PAD_PX;
+      head.style.top = '';
+      const restTop = parseFloat(getComputedStyle(head).top);
+      const headInk = Math.max(titleInk, intro.offsetHeight);
+      const headTop = Math.min(restTop, labelTop - edge - headInk);
+      head.style.top = headTop < restTop ? px(headTop) : '';
+
       const axisLeft = ox - AXIS_HALF_BU * s;
       place(axisLine, { left: axisLeft, top: axisY, width: OVERLAY_LONG_BU * s, height: 1 });
       TICK_BU.forEach((bu, k) => {
@@ -147,7 +244,6 @@ export function initFamily(ctx: SectionContext): void {
       });
       place(notes, { left: axisLeft });
       notes.style.top = '';
-      intro.classList.remove('is-spacer');
       place(fallback, {
         left: ox - AXIS_HALF_BU * s,
         top: oy - (OVERLAY_SHORT_BU / 2) * s,
@@ -157,29 +253,49 @@ export function initFamily(ctx: SectionContext): void {
       svg.setAttribute('viewBox', `-${AXIS_HALF_BU} -${OVERLAY_SHORT_BU / 2} ${OVERLAY_LONG_BU} ${OVERLAY_SHORT_BU}`);
       stanzas.removeAttribute('transform');
     } else {
-      // Portrait: the family group turns by -pi/2, so the stations run down the screen, Slower at the top.
+      // Portrait: the family group turns by -pi/2, so the stations run down the screen, Slower at the top. The head
+      // is in the flow here, so its rest position is the title's own top.
+      head.style.top = '';
       const axisX = ox - AXIS_OFFSET_BU * s;
-      // The axis starts below the title, so its hairline never runs through the title's letters. The +14 bu
-      // tick at its top end moves with it, and is hidden while the axis is trimmed.
       const axisBottom = oy + AXIS_HALF_BU * s;
-      const axisTop = Math.max(oy - AXIS_HALF_BU * s, titleBottom + gap);
-      const trimmed = axisTop > oy - AXIS_HALF_BU * s;
+      // The axis starts one edge below the title's lowest ink. Its top end is the -14 bu tick, which is hidden while the
+      // axis is trimmed, so no tick is drawn into the title. The first station tick is checked by the same measure.
+      const inkBottom = title.getBoundingClientRect().top - stageTop + titleInk;
+      const axisNaturalTop = oy - AXIS_HALF_BU * s;
+      const axisTop = Math.max(axisNaturalTop, inkBottom + edge);
+      const trimmed = axisTop > axisNaturalTop;
       place(axisLine, { left: axisX, top: axisTop, width: 1, height: axisBottom - axisTop });
       TICK_BU.forEach((bu, k) => {
         place(ticks[k], { left: axisX - tickLen / 2, top: oy + bu * s - 0.5, width: tickLen, height: 1 });
-        ticks[k].style.display = trimmed && k === TICK_BU.length - 1 ? 'none' : '';
+        ticks[k].style.display = trimmed && k === 0 ? 'none' : '';
       });
       axisLabels.forEach((label) => place(label, {}));
-      place(axisTitle, {});
+      // The axis title sits at the right margin, on the baseline of the title's last line, so that the two share a row.
+      // It wraps inside the space that the last line leaves free, and the rows below the title stay clear for the axis
+      // and the Fastest block.
+      const titleBox = title.getBoundingClientRect();
+      const titleLine = parseFloat(getComputedStyle(title).lineHeight);
+      const titleLines = Math.max(1, Math.round(titleBox.height / titleLine));
+      const lastBaseline = titleBox.top - stageTop + (titleLines - 1) * titleLine + baselineInLine(title);
+      const stageBox = stage.getBoundingClientRect();
+      const freeWidth = Math.max(0, stageBox.width - 2 * edge - (lastLineRight(title) - stageBox.left));
+      const labelLine = parseFloat(getComputedStyle(axisTitle).lineHeight);
+      place(axisTitle, { right: edge, top: 0, width: freeWidth });
+      const labelLines = Math.max(1, Math.round(axisTitle.getBoundingClientRect().height / labelLine));
+      place(axisTitle, {
+        right: edge,
+        top: lastBaseline - (labelLines - 1) * labelLine - baselineInLine(axisTitle),
+        width: freeWidth,
+      });
       place(notes, {});
       placeIntro(size.height, stage.offsetHeight, token(section, '--sp-5'), gap);
       const blockLeft = ox + (STANZA_HALF_BU + BLOCK_GAP_BU) * s;
       const blockWidth = size.width - edge - blockLeft;
       blocks.forEach((li) => place(li, { left: blockLeft, width: blockWidth }));
-      // Each block is centred on its station, unless that would overlap the title or the block above it.
-      // The heights are read after the width is set, because the text wraps inside that width.
+      // Each block is centred on its station, unless that would reach the title or the block above it. The heights
+      // are read after the width is set, because the text wraps inside that width.
       const heights = blocks.map((li) => li.offsetHeight);
-      let floor = titleBottom + edge;
+      let floor = inkBottom + edge;
       blocks.forEach((li, i) => {
         const top = Math.max(pts[i].y - heights[i] / 2, floor);
         li.style.top = px(top);

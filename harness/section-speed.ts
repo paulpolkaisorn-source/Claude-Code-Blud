@@ -116,6 +116,33 @@ function runChecks(): void {
     );
   }
 
+  // Portrait (D21.2): the head and the example panel share the left band, from the margin to 12 px left of the race
+  // column's rest footprint, and the "17" label stays inside the viewport beneath the line's end.
+  if (!landscape) {
+    const head = el.querySelector<HTMLElement>('.speed-head');
+    const panel = el.querySelector<HTMLElement>('.speed-panel');
+    const label = el.querySelector<HTMLElement>('.speed-dim-label');
+    const bandRight = box.x0 - 12;
+    if (head !== null && panel !== null) {
+      const headRect = head.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      check(
+        'portrait head ends 12 px left of the race column',
+        near(headRect.right, bandRight, 0.5),
+        `head right ${headRect.right.toFixed(2)} band right ${bandRight.toFixed(2)}`,
+      );
+      check(
+        'portrait example panel is the head band',
+        near(panelRect.right, bandRight, 0.5) && near(panelRect.width, headRect.width, 0.5),
+        `panel right ${panelRect.right.toFixed(2)} width ${panelRect.width.toFixed(2)}`,
+      );
+    }
+    if (label !== null) {
+      const labelRect = label.getBoundingClientRect();
+      check('portrait "17" label stays inside the viewport', labelRect.right <= size.width, `label right ${labelRect.right.toFixed(2)}`);
+    }
+  }
+
   const failed = checks.filter((c) => !c.ok).map((c) => c.name);
   (window as unknown as { __speedChecks: Check[] }).__speedChecks = checks;
   root.dataset.harnessChecks = JSON.stringify(checks);

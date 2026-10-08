@@ -16,6 +16,12 @@
 // Keep-alive. The choreography arms this section's breath (amplitude 0.010, phase zero) when the section becomes
 // current, and blocks.setBreath starts it T.hold later. The handle keeps no breath state of its own.
 //
+// Family anchor (D22.14). The family's DOM anchor carries into this section and fades out with the entry. The family
+// writes its group offset (blocks.groupOffset) and the y of its phantom group ('family-phantom-group') earlier in each
+// frame, while it is the section before this one. update() reads both, multiplies them by 1 - sym(w_p) and writes
+// them back at once, so the blocks come back from where the family left them and sit on the world origin at w_p 1.
+// setActive resets the offsets only at eff 1, at once, so it never fights that fade.
+//
 // Reduced motion. The entry is complete once w_p reaches 0.5, the point where the section top crosses 80 % of the
 // viewport (act, Reduced motion). Before that the previous state holds. The canvas fade of act C5 belongs to the
 // choreography, which runs its canvas switch only at a section commit.
@@ -56,6 +62,9 @@ const REDUCED_AT = 0.5;
 /** Name of the family section's phantom outlines (src/sections/family/gl.ts). */
 const OUTLINES = 'family-phantoms';
 
+/** Name of the family section's phantom group, whose y is the family's DOM anchor offset (src/sections/family/gl.ts). */
+const PHANTOM_GROUP = 'family-phantom-group';
+
 interface Outlines {
   line: THREE.LineSegments;
   material: THREE.LineDashedMaterial;
@@ -77,6 +86,9 @@ function setup(world: GLWorld): SectionGLHandle {
   let keyWidth = -1;
   let keyHeight = -1;
   let outlines: Outlines | null = null;
+  let phantomGroup: THREE.Object3D | null = null;
+  /** The eff of the last update(). setActive reads it to decide whether the anchor offsets may be reset (D22.14). */
+  let lastEff = 0;
   let disposed = false;
 
   /** The camera key of a name for this viewport, cached until the size changes. */
@@ -102,6 +114,30 @@ function setup(world: GLWorld): SectionGLHandle {
       outlines = { line: found, material: found.material };
     }
     return outlines;
+  }
+
+  /**
+   * The family's phantom group, found by name. Cached once found, and looked up again only while it is missing or has
+   * left the scene (D22.14).
+   */
+  function findPhantomGroup(): THREE.Object3D | null {
+    if (phantomGroup === null || phantomGroup.parent === null) {
+      phantomGroup = scene.getObjectByName(PHANTOM_GROUP) ?? null;
+    }
+    return phantomGroup;
+  }
+
+  /**
+   * Fades the family's DOM anchor out over the entry (D22.14). The family has written its group offset and the y of its
+   * phantom group earlier in this frame, so both are read here, multiplied by 1 - sym(eff) and written back at once.
+   * At eff 1 both are exactly 0. The offset is written immediately, so blocks.update adds no damping to the fade.
+   */
+  function fadeAnchor(eff: number): void {
+    const k = 1 - ef.sym(eff);
+    const [x, y, z] = blocks.groupOffset;
+    blocks.setGroupOffset(x * k, y * k, z * k, true);
+    const phantoms = findPhantomGroup();
+    if (phantoms !== null) phantoms.position.y *= k;
   }
 
   /** Writes the 17 poses at entry progress eff, from the previous exit formation to the rest formation. */
@@ -146,11 +182,18 @@ function setup(world: GLWorld): SectionGLHandle {
     camera.updateProjectionMatrix();
   }
 
-  /** Returns the block state that a pointer or an earlier section may have left: tilt, group offset and lifts at 0. */
-  function tidy(): void {
+  /**
+   * Returns the block state that a pointer or an earlier section may have left: tilt and lifts at 0. The anchor offsets
+   * (blocks.groupOffset and the phantom group's y) are reset only at eff 1, and then at once (D22.14). Before that,
+   * update() carries them through the fade, so a reset here cannot fight it.
+   */
+  function tidy(eff: number): void {
     blocks.setTilt(0, 0);
-    blocks.setGroupOffset(0, 0, 0);
     for (let i = 0; i < BLOCK_COUNT; i += 1) blocks.setLift(i, 0, 0);
+    if (eff < 1) return;
+    blocks.setGroupOffset(0, 0, 0, true);
+    const phantoms = findPhantomGroup();
+    if (phantoms !== null) phantoms.position.y = 0;
   }
 
   const handle: SectionGLHandle = {
@@ -158,6 +201,7 @@ function setup(world: GLWorld): SectionGLHandle {
       if (disposed) return;
       const w = clamp01(progress);
       const eff = ctx.reducedMotion ? (w >= REDUCED_AT ? 1 : 0) : w;
+      lastEff = eff;
       const prev = ctx.prev;
       const fromId: FormationId = prev === null ? 'family' : (prev.exitFormation ?? prev.formation);
       const fromKey: KeyName = prev === null ? 'family' : prev.key;
@@ -165,11 +209,12 @@ function setup(world: GLWorld): SectionGLHandle {
       rig.blend(keyOf(fromKey, ctx.size), keyOf('pricing', ctx.size), eff);
       setFar(ctx.portrait);
       writeOutlines(eff);
+      fadeAnchor(eff);
     },
 
     setActive(on: boolean, ctx: SectionGLContext): void {
       if (disposed) return;
-      tidy();
+      tidy(lastEff);
       if (on) {
         setFar(ctx.portrait);
       } else {

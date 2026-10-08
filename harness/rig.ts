@@ -1,13 +1,13 @@
 // Harness for src/gl/rig.ts (direction-3d.md sections 10.6 and 11.2; architecture section 10a).
 // Open /harness/rig.html on the dev server. The verdict lands in dataset.harness: 'pass' or
-// 'fail:<reason>'. The numeric checks cover the 1440 x 900 and 375 x 812 keys and the family station
-// centres (D19.2), whatever the page size.
+// 'fail:<reason>'. The numeric checks cover the 1440 x 900 and 375 x 812 keys, the family station
+// centres (D19.2) and the phone speed race column at 86 percent of the width (D21.2), whatever the page size.
 // The live scene uses the page's own viewport: the 17 blocks of the stanza formation, drawn as plain
 // boxes at the hero key through the shared ticker, the stage and the rig. window.rigHarness.showBlend(t)
 // blends hero to speed at t and resolves once that frame is drawn, for the second screenshot.
 import * as THREE from 'three';
 import { ef } from '../src/core/ease';
-import { stationCenters } from '../src/core/projection';
+import { formationRects, stationCenters } from '../src/core/projection';
 import { addTick, initTicker, PRIORITY, type Tick } from '../src/core/ticker';
 import { BLOCK, BLOCK_COUNT, FAMILY_STATION_X, FORMATIONS } from '../src/gl/blocks/formations';
 import { cameraKey, createRig, FIT, type Rig } from '../src/gl/rig';
@@ -49,8 +49,21 @@ interface Expected {
   y: number;
 }
 
-// Values from direction-3d.md section 10.6. The phone speed key is the D15.1 height fit, and the phone
-// family key carries the D19.2 offset of 0.28 W (4.02 bu at 375 x 812).
+const TAN11 = Math.tan((11 * Math.PI) / 180);
+
+/**
+ * D21.2, computed here from the rule rather than from the rig: the phone speed camera x puts the race column centre
+ * (x 0) at 86 percent of the width. The race height fit z is 15.9 / (0.80 x 2 tan 11 deg), and a screen fraction f at
+ * distance z needs the camera at -(f - 0.5) x W(z), with W(z) = 2 z tan 11 deg x aspect.
+ */
+function phoneSpeedX(size: { width: number; height: number }): number {
+  const z = 15.9 / (0.8 * 2 * TAN11);
+  const aspect = size.width / size.height;
+  return -(0.86 - 0.5) * 2 * z * TAN11 * aspect;
+}
+
+// Values from direction-3d.md section 10.6. The phone speed key is the D15.1 height fit with the D21.2 offset
+// (x -3.30 at 375 x 812), and the phone family key carries the D19.2 offset of 0.28 W (4.02 bu at 375 x 812).
 const EXPECTED: Readonly<Record<'desktop' | 'phone', Readonly<Record<KeyName, Expected>>>> = {
   desktop: {
     hero: { z: 21.15, x: -2.89, y: 0 },
@@ -61,7 +74,7 @@ const EXPECTED: Readonly<Record<'desktop' | 'phone', Readonly<Record<KeyName, Ex
   },
   phone: {
     hero: { z: 39.25, x: 0, y: -1.1 },
-    speed: { z: 51.12, x: 0, y: 0 },
+    speed: { z: 51.12, x: phoneSpeedX(PHONE), y: 0 },
     pricing: { z: 69.54, x: 0, y: 0 },
     closing: { z: 14.6, x: 0, y: 0 },
     family: { z: 80.03, x: 4.02, y: 0 },
@@ -149,6 +162,47 @@ function checkStations(): void {
     deskWorst <= TOL,
     `x ${desk.map((p) => fmt(p.x)).join(' ')} y ${desk.map((p) => fmt(p.y)).join(' ')} ` +
       `(worst error ${deskWorst.toExponential(1)} px)`,
+  );
+}
+
+/**
+ * D21.2: on a phone the centre of the vertical race column projects to 86 percent of the width, within 2 px, at the
+ * phone sizes and at 768 x 1024 (portrait). Desktop keeps the column centred. The height fit is checked as well: the
+ * column spans about 0.80 of the height (the blocks' front faces sit 0.23 bu nearer than the centre plane).
+ */
+function checkSpeedColumn(): void {
+  for (const size of [PHONE, PHONE_390, { width: 768, height: 1024 }]) {
+    const rects = formationRects('race', 'speed', size);
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (const r of rects) {
+      x0 = Math.min(x0, r.x0);
+      x1 = Math.max(x1, r.x1);
+      y0 = Math.min(y0, r.y0);
+      y1 = Math.max(y1, r.y1);
+    }
+    const centre = (x0 + x1) / 2;
+    const want = 0.86 * size.width;
+    const heightFrac = (y1 - y0) / size.height;
+    check(
+      `phone speed column centre at 86 percent of the width ${size.width}x${size.height}`,
+      Math.abs(centre - want) <= 2 && heightFrac > 0.78 && heightFrac < 0.84,
+      `centre ${fmt(centre)} px (want ${fmt(want)}, error ${fmt(centre - want)}), height ${fmt(heightFrac)} of H`,
+    );
+  }
+  const desk = formationRects('race', 'speed', DESKTOP);
+  let dx0 = Infinity;
+  let dx1 = -Infinity;
+  for (const r of desk) {
+    dx0 = Math.min(dx0, r.x0);
+    dx1 = Math.max(dx1, r.x1);
+  }
+  check(
+    'desktop speed race stays centred (unchanged)',
+    Math.abs((dx0 + dx1) / 2 - DESKTOP.width / 2) <= 0.5,
+    `centre ${fmt((dx0 + dx1) / 2)} px`,
   );
 }
 
@@ -269,6 +323,7 @@ async function main(): Promise<void> {
   checkTable('phone', PHONE);
   checkOffsetFollowsAspect();
   checkStations();
+  checkSpeedColumn();
 
   const stage = createStage(canvas);
   const rig = createRig(stage);

@@ -198,12 +198,47 @@ function geometry(): HarnessGeometry {
 
 // ---- Checks ----------------------------------------------------------------------------------------
 
+/**
+ * D22.6: every label sits on a knockout of var(--bg) that follows the layer's theme, pads 2px 4px, and keeps its unit
+ * lowercase. A probe with the label classes is put in the layer for the reads and taken out again.
+ */
+function checkKnockout(layer: HTMLElement): void {
+  const probe = document.createElement('span');
+  probe.className = 'cursor-text';
+  probe.textContent = '05 ';
+  const unit = document.createElement('span');
+  unit.className = 'cursor-unit';
+  unit.textContent = 'bu';
+  probe.append(unit);
+  layer.append(probe);
+  const held = layer.dataset.theme;
+  const backgroundIn = (theme: string): string => {
+    layer.dataset.theme = theme;
+    return getComputedStyle(probe).backgroundColor;
+  };
+  // Tokens, direction.md heading 3: paper #F1ECE0 and ink #151512.
+  const paper = backgroundIn('paper');
+  const ink = backgroundIn('ink');
+  const cs = getComputedStyle(probe);
+  const pad = [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft].join(' ');
+  record('label knockout is the paper background under the paper theme', paper === 'rgb(241, 236, 224)', paper);
+  record('label knockout is the ink background under the ink theme', ink === 'rgb(21, 21, 18)', ink);
+  record('label padding is 2px 4px', pad === '2px 4px 2px 4px', pad);
+  record('label text is uppercase', cs.textTransform === 'uppercase', cs.textTransform);
+  const unitTransform = getComputedStyle(unit).textTransform;
+  record('unit keeps its case (text-transform none)', unitTransform === 'none', unitTransform);
+  probe.remove();
+  if (held === undefined) delete layer.dataset.theme;
+  else layer.dataset.theme = held;
+}
+
 function runChecks(): void {
   const vp = viewportSize();
   const layer = need<HTMLElement>('#cursor');
   record('initCursor returns a stop function', typeof stop === 'function', typeof stop);
   record('cursor layer is the fixed z-index 50 layer', getComputedStyle(layer).zIndex === '50', getComputedStyle(layer).zIndex);
   record('no custom form before a pointer event', !layer.hasAttribute('data-form'), layer.getAttribute('data-form') ?? '');
+  checkKnockout(layer);
 
   measure();
   const g = geometry();

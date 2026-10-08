@@ -12,8 +12,9 @@ export const GRAIN_AMP_M1 = 0.04;
 export const GRAIN_SEED_STATIC = 17;
 
 /**
- * Zero-mean grain and triangular dither, added in display space. The effect uses NORMAL blending,
- * so its output replaces the colour it received. The input and output are linear light.
+ * Zero-mean grain and triangular dither, added in display space as one monochrome value (the same on
+ * red, green and blue, so it never shifts a hue). The effect uses NORMAL blending, so its output
+ * replaces the colour it received. The input and output are linear light.
  */
 export class GrainEffect extends Effect {
   private readonly amplitudeUniform: THREE.Uniform<number>;
@@ -62,7 +63,7 @@ export class GrainEffect extends Effect {
     return this.seedUniform.value;
   }
 
-  /** Turns the triangular dither on or off. Production always dithers; the harness switches it off for its colour check. */
+  /** Turns the triangular dither on or off. Production always dithers; the harness switches it off for its readback checks. */
   setDither(on: boolean): void {
     this.ditherUniform.value = on ? 1 : 0;
   }

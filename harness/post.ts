@@ -24,9 +24,10 @@ import {
   RenderPass,
   type Pass,
 } from 'postprocessing';
+import { T } from '../src/core/timing';
 import { addTick, initTicker } from '../src/core/ticker';
 import { GRAIN_AMP_M0, GRAIN_AMP_M1, GRAIN_SEED_STATIC, GrainEffect } from '../src/gl/effects/grain';
-import { createPost, type Post } from '../src/gl/post';
+import { aberrationPx as aberrationForSpeed, createPost, dampSpeed, type Post } from '../src/gl/post';
 import { createStage, type Stage } from '../src/gl/stage';
 
 const root = document.documentElement;
@@ -34,6 +35,17 @@ const LAST = 1000;
 const WAIT_MS = 60000;
 const PAPER_HEX = '#F1ECE0';
 const PAPER_RGB = [241, 236, 224] as const;
+/** Paper differences R - G and G - B: a monochrome grain keeps both on every pixel. */
+const PAPER_RG = PAPER_RGB[0] - PAPER_RGB[1];
+const PAPER_GB = PAPER_RGB[1] - PAPER_RGB[2];
+/** Depth of the black edge of step 5b: between the paper (z -8) and row B (z -5). */
+const EDGE_Z = -7.5;
+/** Pixels of the one-pixel edge row read in step 5b. */
+const EDGE_N = 24;
+/** Normalised device x of the step 5b edge: 15% of the screen width from the left. */
+const EDGE_NDC_X = -0.7;
+/** How long a driver may take to save one screenshot (SwiftShader with the depth of field pass is slow). */
+const SHOT_WAIT_MS = 240000;
 const DOF_FOCUS = 21.15;
 const DOF_BOKEH = 2;
 
@@ -104,7 +116,7 @@ function waitFor(done: () => boolean, ms: number): Promise<boolean> {
 async function capture(name: string): Promise<void> {
   await frames(3);
   root.dataset.harnessShot = name;
-  const taken = await waitFor(() => root.dataset.harnessShotAck === name, WAIT_MS);
+  const taken = await waitFor(() => root.dataset.harnessShotAck === name, SHOT_WAIT_MS);
   check(`shot-${name}`, taken, taken ? '' : 'no driver saved the screenshot');
 }
 
@@ -249,6 +261,63 @@ function rgbText(buf: Uint8Array): string {
   return `${buf[0]},${buf[1]},${buf[2]}`;
 }
 
+/**
+ * Hue of an RGBA patch of paper against the paper's own differences. dRG = (R - G) - 5 and dGB = (G - B) - 12
+ * per pixel. count is the pixels with either one off, maxDev the largest move in levels, std the spread of all
+ * the moves. A monochrome grain moves nothing; the residue is the 8-bit rounding of the HalfFloat input.
+ */
+function hueMoves(buf: Uint8Array, n: number): { count: number; maxDev: number; std: number } {
+  let count = 0;
+  let maxDev = 0;
+  let sum = 0;
+  let sumSq = 0;
+  for (let i = 0; i < n; i++) {
+    const dRG = buf[i * 4] - buf[i * 4 + 1] - PAPER_RG;
+    const dGB = buf[i * 4 + 1] - buf[i * 4 + 2] - PAPER_GB;
+    if (dRG !== 0 || dGB !== 0) count += 1;
+    for (const d of [dRG, dGB]) {
+      maxDev = Math.max(maxDev, Math.abs(d));
+      sum += d;
+      sumSq += d * d;
+    }
+  }
+  const mean = sum / (2 * n);
+  return { count, maxDev, std: Math.sqrt(Math.max(0, sumSq / (2 * n) - mean * mean)) };
+}
+
+/** sRGB transfer curve (IEC 61966-2-1): display value in [0, 1] to linear light. */
+function toLinear(v: number): number {
+  return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+}
+
+/**
+ * Sub-pixel position of a black-to-paper step in one channel of a one-pixel row that starts on the black
+ * side: the number of pixels before the step. The aberration mixes in linear light, so the display values are
+ * linearised before they are summed. A sharp step at pixel boundary k gives exactly k.
+ */
+function stepAt(row: Uint8Array, n: number, channel: number, paper: number): number {
+  const paperLinear = toLinear(paper / 255);
+  let sum = 0;
+  for (let i = 0; i < n; i++) sum += toLinear(row[i * 4 + channel] / 255) / paperLinear;
+  return n - sum;
+}
+
+/** Index of the first pixel of a one-pixel row where a channel is over half its paper value, or -1. */
+function firstOverHalf(row: Uint8Array, n: number, channel: number, paper: number): number {
+  for (let i = 0; i < n; i++) {
+    if (row[i * 4 + channel] > paper / 2) return i;
+  }
+  return -1;
+}
+
+/** World x of the screen point with normalised device x ndcX, on the plane at depth z, for the camera as it stands. */
+function worldXAt(cam: THREE.PerspectiveCamera, ndcX: number, z: number): number {
+  cam.updateMatrixWorld();
+  const origin = cam.position.clone();
+  const dir = new THREE.Vector3(ndcX, 0, 0.5).unproject(cam).sub(origin).normalize();
+  return origin.x + (dir.x * (z - origin.z)) / dir.z;
+}
+
 /** Effects of a pass. EffectPass keeps them in a private field, which the harness reads without changing it. */
 function effectsOf(pass: Pass): Effect[] {
   const raw: unknown = Reflect.get(pass, 'effects');
@@ -299,6 +368,13 @@ async function main(): Promise<void> {
   const key = new THREE.DirectionalLight('#FFF4E2', 6);
   key.position.set(-6, 9, 12);
   scene.add(key);
+
+  // The high-contrast edge of step 5b: black to the left of a line at 15% of the screen width, in front of the
+  // paper and behind row B. It lies outside row B and the depth-of-field rectangle, and its top band is clear.
+  const edgeX = worldXAt(camera, EDGE_NDC_X, EDGE_Z);
+  const edge = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshBasicMaterial({ color: '#000000' }));
+  edge.position.set(edgeX - 30, 0, EDGE_Z);
+  scene.add(edge);
 
   const post: Post = createPost(stage);
 
@@ -411,6 +487,29 @@ async function main(): Promise<void> {
     effectsOf(mergedPass()).some((e) => e instanceof BloomEffect),
   );
 
+  // 1b. The zero rule and the damping as pure functions (post.ts aberrationPx and dampSpeed).
+  check(
+    'aberration-exactly-zero-at-or-below-40',
+    aberrationForSpeed(0) === 0 && aberrationForSpeed(39.9) === 0 && aberrationForSpeed(40) === 0 && aberrationForSpeed(Number.NaN) === 0,
+    `40 -> ${aberrationForSpeed(40)}, NaN -> ${aberrationForSpeed(Number.NaN)}`,
+  );
+  check(
+    'aberration-0.8px-at-3000',
+    Math.abs(aberrationForSpeed(3000) - 0.8) < 1e-12,
+    `${aberrationForSpeed(3000)}`,
+  );
+  const oneTau = dampSpeed(3000, 0, T.micro);
+  check(
+    'damping-is-exponential-with-T.micro',
+    Math.abs(oneTau - 3000 * Math.exp(-1)) < 1e-9,
+    `after one T.micro: ${oneTau.toFixed(6)} against ${(3000 * Math.exp(-1)).toFixed(6)}`,
+  );
+  check(
+    'damping-snaps-to-exact-zero-under-0.5',
+    dampSpeed(40, 0, 2) === 0 && dampSpeed(0, 0, 0.1) === 0 && dampSpeed(500, 500, 0.3) === 500,
+    `40 after 2 s -> ${dampSpeed(40, 0, 2)}`,
+  );
+
   // 2. Compile: the first frames must draw with no shader warning or error.
   await frames(4);
   check(
@@ -424,9 +523,16 @@ async function main(): Promise<void> {
   grainNow().setDither(false);
   await frames(2);
   const paperPixels = await readRects([
-    { x: 60, y: 60, w: 1, h: 1 },
+    { x: W - 60, y: 60, w: 1, h: 1 },
     { x: W - 60, y: H - 60, w: 1, h: 1 },
   ]);
+  const paperOff = (await readRects([{ x: W - 104, y: 40, w: 64, h: 64 }]))[0];
+  const hueOff = hueMoves(paperOff, 64 * 64);
+  check(
+    'paper-hue-exact-with-grain-off',
+    hueOff.count === 0,
+    `${hueOff.count} of 4096 pixels off the paper's R-G 5 and G-B 12`,
+  );
   check(
     'paper-no-bloom-within-4-of-F1ECE0',
     paperPixels.every(within4),
@@ -443,7 +549,7 @@ async function main(): Promise<void> {
     `amplitude=${grainNow().amplitude}`,
   );
   await frames(2);
-  const grainPatch0 = (await readRects([{ x: 40, y: 40, w: 64, h: 64 }]))[0];
+  const grainPatch0 = (await readRects([{ x: W - 104, y: 40, w: 64, h: 64 }]))[0];
   const s0 = patchStats(grainPatch0, 64, 64);
   check(
     'grain-m0-zero-mean-and-std',
@@ -454,6 +560,15 @@ async function main(): Promise<void> {
     'grain-no-neighbour-pattern',
     Math.abs(s0.corrX) < 0.08 && Math.abs(s0.corrY) < 0.08,
     `corrX=${s0.corrX.toFixed(3)} corrY=${s0.corrY.toFixed(3)}`,
+  );
+  // Monochrome: the grain and the dither add one value to R, G and B, so the paper's hue survives. The readback
+  // keeps it to 8-bit rounding (within one level, spread well under 0.35 levels). Per-channel dither would give a
+  // spread of about 0.6 levels from the dither alone.
+  const hue0 = hueMoves(grainPatch0, 64 * 64);
+  check(
+    'grain-monochrome-m0-hue-kept',
+    hue0.maxDev <= 1 && hue0.std < 0.35,
+    `${hue0.count} of 4096 pixels off by a level; largest move ${hue0.maxDev}; spread ${hue0.std.toFixed(3)} levels`,
   );
   const seedA = grainNow().seed;
   await frames(1);
@@ -467,12 +582,18 @@ async function main(): Promise<void> {
     `amplitude=${grainNow().amplitude}`,
   );
   await frames(2);
-  const grainPatch1 = (await readRects([{ x: 40, y: 40, w: 64, h: 64 }]))[0];
+  const grainPatch1 = (await readRects([{ x: W - 104, y: 40, w: 64, h: 64 }]))[0];
   const s1 = patchStats(grainPatch1, 64, 64);
   check(
     'grain-m1-std',
     s1.std > 5.3 && s1.std < 6.5 && Math.abs(s1.mean - PAPER_RGB[0]) < 0.5,
     `mean=${s1.mean.toFixed(2)} std=${s1.std.toFixed(2)} (predicted std 5.9)`,
+  );
+  const hue1 = hueMoves(grainPatch1, 64 * 64);
+  check(
+    'grain-monochrome-m1-hue-kept',
+    hue1.maxDev <= 1 && hue1.std < 0.35,
+    `${hue1.count} of 4096 pixels off by a level; largest move ${hue1.maxDev}; spread ${hue1.std.toFixed(3)} levels`,
   );
   post.setMix(0);
   await frames(2);
@@ -492,6 +613,100 @@ async function main(): Promise<void> {
   post.setVelocity(0);
   const atRest = await waitFor(() => aberrationNow().offset.x === 0, WAIT_MS);
   check('aberration-zero-at-rest', atRest, `offsetX=${aberrationNow().offset.x}`);
+
+  // 5b. Edge alignment (D22.5). A still frame of a high-contrast vertical edge: black on its left, paper on its
+  //     right, on the top band where no block is. Grain and dither are off, so the step is the only signal in the
+  //     row. At rest the red, green and blue steps sit on one pixel column. At 800 px/s red and blue split by twice
+  //     the offset, with green in the middle.
+  grainNow().setAmplitude(0);
+  grainNow().setDither(false);
+  const edgeScreen = new THREE.Vector3(edgeX, 0, EDGE_Z).project(camera);
+  const edgeCol = Math.round(((edgeScreen.x + 1) / 2) * W);
+  const edgeRowGL = H - 1 - Math.round(H * 0.12);
+  const edgeRect: Rect = { x: edgeCol - EDGE_N / 2, y: edgeRowGL, w: EDGE_N, h: 1 };
+  check(
+    'edge-row-clear-of-blocks',
+    rows.every((g) => {
+      const r = deviceRect(g, 0);
+      return edgeRowGL < r.y || edgeRowGL >= r.y + r.h;
+    }),
+    `edge row ${edgeRowGL} (GL y), column ${edgeCol}`,
+  );
+  post.setVelocity(0);
+  const restAt = await waitFor(
+    () => aberrationNow().offset.x === 0 && aberrationNow().offset.y === 0 && post.dampedSpeed === 0,
+    WAIT_MS,
+  );
+  check(
+    'edge-rest-offset-exactly-zero',
+    restAt,
+    `offset=(${aberrationNow().offset.x}, ${aberrationNow().offset.y}) damped=${post.dampedSpeed}`,
+  );
+  const restRow = (await readRects([edgeRect]))[0];
+  const restFirst = PAPER_RGB.map((p, c) => firstOverHalf(restRow, EDGE_N, c, p));
+  const restStep = PAPER_RGB.map((p, c) => stepAt(restRow, EDGE_N, c, p));
+  const last = (EDGE_N - 1) * 4;
+  check(
+    'edge-rest-same-pixel-column',
+    restFirst[0] === restFirst[1] && restFirst[1] === restFirst[2] && restFirst[0] > 0,
+    `first pixel over half paper: R ${restFirst[0]} G ${restFirst[1]} B ${restFirst[2]}; black side ${rgbText(restRow.subarray(0, 4))}; paper side ${rgbText(restRow.subarray(last, last + 4))}`,
+  );
+  check(
+    'edge-rest-steps-coincide',
+    Math.abs(restStep[0] - restStep[1]) < 0.02 && Math.abs(restStep[1] - restStep[2]) < 0.02,
+    `step R ${restStep[0].toFixed(3)} G ${restStep[1].toFixed(3)} B ${restStep[2].toFixed(3)} px`,
+  );
+  await capture('edge-rest');
+
+  const splitPx = aberrationForSpeed(800);
+  post.setVelocity(800);
+  const splitAt = await waitFor(() => Math.abs(aberrationPx() - splitPx) < 0.002, WAIT_MS);
+  check(
+    'edge-800px-s-offset',
+    splitAt,
+    `offset ${aberrationPx().toFixed(4)} px against ${splitPx.toFixed(4)}; damped ${post.dampedSpeed.toFixed(1)} px/s`,
+  );
+  const splitRow = (await readRects([edgeRect]))[0];
+  const splitStep = PAPER_RGB.map((p, c) => stepAt(splitRow, EDGE_N, c, p));
+  const redMinusBlue = splitStep[0] - splitStep[2];
+  check(
+    'edge-800px-s-red-blue-split-by-twice-offset',
+    Math.abs(Math.abs(redMinusBlue) - 2 * splitPx) < 0.04 &&
+      Math.abs(splitStep[1] - (splitStep[0] + splitStep[2]) / 2) < 0.03,
+    `step R ${splitStep[0].toFixed(3)} G ${splitStep[1].toFixed(3)} B ${splitStep[2].toFixed(3)}; R minus B ${redMinusBlue.toFixed(3)} against 2 x ${splitPx.toFixed(3)}`,
+  );
+  await capture('edge-velocity');
+
+  // Rest again: the offset log, wall clock, one line per frame until it has been exactly zero for 1.5 s.
+  post.setVelocity(0);
+  const stoppedAt = performance.now();
+  let zeroAfterMs = -1;
+  for (let frame = 0; frame < 60; frame++) {
+    await frames(1);
+    const ms = performance.now() - stoppedAt;
+    const px = aberrationPx();
+    const off = aberrationNow().offset;
+    console.log(
+      `CA-DECAY t=${(ms / 1000).toFixed(2)} s damped=${post.dampedSpeed.toFixed(3)} px=${px.toFixed(6)} offset=(${off.x}, ${off.y})`,
+    );
+    if (px === 0 && zeroAfterMs < 0) zeroAfterMs = ms;
+    if (zeroAfterMs >= 0 && ms - zeroAfterMs > 1500) break;
+  }
+  check(
+    'aberration-exactly-zero-after-damping',
+    zeroAfterMs >= 0 && aberrationNow().offset.x === 0 && aberrationNow().offset.y === 0,
+    `exact zero from ${(zeroAfterMs / 1000).toFixed(2)} s after the stop (wall clock)`,
+  );
+  const afterRow = (await readRects([edgeRect]))[0];
+  const afterStep = PAPER_RGB.map((p, c) => stepAt(afterRow, EDGE_N, c, p));
+  check(
+    'edge-after-damping-steps-coincide',
+    Math.abs(afterStep[0] - afterStep[1]) < 0.02 && Math.abs(afterStep[1] - afterStep[2]) < 0.02,
+    `step R ${afterStep[0].toFixed(3)} G ${afterStep[1].toFixed(3)} B ${afterStep[2].toFixed(3)} px`,
+  );
+  await capture('edge-rest-after');
+  grainNow().setAmplitude(GRAIN_AMP_M0);
+  grainNow().setDither(true);
 
   // 6. Depth of field: row B sits 5 bu behind the focus. With grain off, its edges must lose energy.
   grainNow().setAmplitude(0);

@@ -9,13 +9,17 @@
 // with no sine and no fract(sin) lattice. It runs on the device pixel floor(uv * uSize) and on the
 // per-frame seed, so every device pixel draws its own sample, and the pattern neither repeats in
 // space nor carries from one frame to the next. The sample is per device pixel, so the result is the
-// same kind of noise at 1x and at 2x DPR. The grain is one value for all three channels, so it reads
-// as luminance grain. Each channel has its own dither, so the dither breaks up colour banding too.
+// same kind of noise at 1x and at 2x DPR.
+//
+// Monochrome. The grain and the dither are one value, added to red, green and blue alike. The noise
+// therefore moves luminance only: it never shifts the hue of a pixel, so it cannot read as coloured
+// noise. A coloured pixel keeps its channel differences exactly (the harness checks R - G and G - B
+// on the paper). Two hash lanes are used: lane 0 for the grain, lane 1 for the dither.
 //
 // Uniforms. uAmp is the grain amplitude in display units (0.028 at m = 0, 0.040 at m = 1, set by
 // post.ts). uSeed is the per-frame seed (17 under reduced motion). uDither is 1 for the dither and 0
-// to switch it off, which the harness does for its colour check. uSize is the drawing-buffer size in
-// device pixels, set through setSize.
+// to switch it off, which the harness does for its readback checks. uSize is the drawing-buffer size
+// in device pixels, set through setSize.
 
 uniform float uAmp;
 uniform float uSeed;
@@ -46,7 +50,7 @@ uvec2 grainPcg2d(uvec2 v) {
 }
 
 // Two independent 32-bit words for a device pixel, the frame seed and a lane. Lane 0 gives the
-// grain; lanes 1, 2 and 3 give the dither of red, green and blue.
+// grain; lane 1 gives the dither.
 uvec2 grainLane(const in uvec2 pixel, const in uint seed, const in uint lane) {
   return grainPcg2d(pixel + uvec2(seed * 0x9E3779B9u + lane * 0x27D4EB2Du, seed ^ (lane * 0x165667B1u)));
 }
@@ -56,17 +60,16 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   uint seed = uint(uSeed);
   float unit = 1.0 / 4294967296.0;
 
-  // Zero-mean grain: uniform in [-uAmp, uAmp), one value for the three channels.
+  // Zero-mean grain: uniform in [-uAmp, uAmp).
   float grain = (float(grainLane(pixel, seed, 0u).x) * unit - 0.5) * 2.0 * uAmp;
 
-  // Triangular dither of plus or minus 1/255 per channel: the sum of two independent uniforms in
-  // [0, 1), minus one, which has zero mean and a triangular density on (-1, 1).
-  uvec2 dr = grainLane(pixel, seed, 1u);
-  uvec2 dg = grainLane(pixel, seed, 2u);
-  uvec2 db = grainLane(pixel, seed, 3u);
-  vec3 tri = vec3(float(dr.x) + float(dr.y), float(dg.x) + float(dg.y), float(db.x) + float(db.y)) * unit - 1.0;
+  // Triangular dither of plus or minus 1/255: the sum of two independent uniforms in [0, 1), minus one,
+  // which has zero mean and a triangular density on (-1, 1).
+  uvec2 d = grainLane(pixel, seed, 1u);
+  float tri = (float(d.x) + float(d.y)) * unit - 1.0;
 
+  // The same value on red, green and blue: the noise changes luminance and never the hue.
   vec3 disp = grainEncode(inputColor.rgb);
-  disp = clamp(disp + vec3(grain) + tri * (uDither / 255.0), 0.0, 1.0);
+  disp = clamp(disp + vec3(grain + tri * (uDither / 255.0)), 0.0, 1.0);
   outputColor = vec4(grainDecode(disp), inputColor.a);
 }

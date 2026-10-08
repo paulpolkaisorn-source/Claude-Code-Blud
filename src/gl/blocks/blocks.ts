@@ -159,7 +159,9 @@ export class Blocks {
   private tiltTargetY = 0;
   private tiltX = 0;
   private tiltY = 0;
-  private readonly offsetTarget = new Float64Array(3);
+  /** The group offset target, in bu. groupOffset returns this same tuple, so reading it allocates nothing. */
+  private readonly offsetTarget: [number, number, number] = [0, 0, 0];
+  /** The damped group offset in bu: what the group position holds after update(). */
   private readonly offset = new Float64Array(3);
 
   private mix = NaN;
@@ -290,11 +292,26 @@ export class Blocks {
     this.tiltTargetY = clamp(requireFinite(sx, 'tilt x') * TILT_RAD, -TILT_RAD, TILT_RAD);
   }
 
-  /** The group offset target in bu, for the code section's pointer translation. Damped with T.half. */
-  setGroupOffset(x: number, y: number, z: number): void {
+  /**
+   * The group offset target in bu. The current value eases to it with T.half, as the code section's pointer
+   * translation and the family and pricing anchors need. With immediate, the current value is set as well, so
+   * the group sits at the offset from now on, with no damping (D22.13).
+   */
+  setGroupOffset(x: number, y: number, z: number, immediate = false): void {
     this.offsetTarget[0] = requireFinite(x, 'group offset x');
     this.offsetTarget[1] = requireFinite(y, 'group offset y');
     this.offsetTarget[2] = requireFinite(z, 'group offset z');
+    if (immediate) {
+      for (let c = 0; c < 3; c += 1) {
+        this.offset[c] = this.offsetTarget[c];
+        this.group.position.setComponent(c, this.offsetTarget[c]);
+      }
+    }
+  }
+
+  /** The group offset target in bu, as x, y, z. The same tuple on every call, so it is read without allocating. */
+  get groupOffset(): readonly [number, number, number] {
+    return this.offsetTarget;
   }
 
   /** The lift target of block i in bu on y, and on z (dz defaults to 0). Damped with T.half. */

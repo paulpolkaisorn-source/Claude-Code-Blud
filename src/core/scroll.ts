@@ -173,10 +173,28 @@ export function initScroll(): void {
   });
 }
 
+/** A native position this close to Lenis's animated position (px) counts as in step. */
+const NATIVE_SYNC_TOLERANCE = 1;
+
+/**
+ * Resyncs Lenis to the native scroll position (D21.6). A jump the browser has not reported yet (window.scrollTo, a
+ * key, a scrollbar drag) leaves Lenis's animatedScroll behind, and Lenis computes an element target from that value,
+ * so the page would land away from the element. The resync is immediate and stops any move in progress. scrollTo
+ * returns early when the position equals Lenis's targetScroll, so resize() sets both values from the native position
+ * in that case.
+ */
+function syncToNative(instance: Lenis): void {
+  const native = window.scrollY;
+  if (Math.abs(native - instance.animatedScroll) <= NATIVE_SYNC_TOLERANCE) return;
+  instance.scrollTo(native, { immediate: true, force: true });
+  if (Math.abs(native - instance.animatedScroll) > NATIVE_SYNC_TOLERANCE) instance.resize();
+}
+
 /**
  * Scrolls to a selector, an element, or the page top ('#top' or 'top'). With Lenis the move takes
  * T.settle with the ef.sym curve. Without Lenis (reduced motion) it is an instant jump. Focus moves
- * to the target once it has landed. A target that matches nothing does nothing.
+ * to the target once it has landed. A target that matches nothing does nothing. Before a move with
+ * Lenis, Lenis is resynced to the native position (syncToNative), so the target lands exactly.
  */
 export function scrollToTarget(target: string | HTMLElement, opts: { offset?: number } = {}): void {
   const offset = opts.offset ?? 0;
@@ -184,6 +202,7 @@ export function scrollToTarget(target: string | HTMLElement, opts: { offset?: nu
   if (dest === null) return;
   const el = dest === 'top' ? null : dest;
   if (lenis) {
+    syncToNative(lenis);
     lenis.scrollTo(el ?? 0, {
       offset,
       duration: T.settle,

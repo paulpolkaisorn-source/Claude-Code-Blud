@@ -7,6 +7,7 @@
 // block group.
 import { ef } from '../core/ease';
 import type { Tick } from '../core/ticker';
+import { formationFor, type Pose } from './blocks/formations';
 import type { CameraKey, KeyName } from './section-gl';
 import type { Stage } from './stage';
 
@@ -29,6 +30,12 @@ export const FIT = {
    * to the right of the vertical axis. Desktop family keeps x 0.
    */
   phoneFamilyOffsetX: 0.28,
+  /**
+   * Phone speed: the centre of the vertical race column sits at this fraction of the viewport width (D21.2). The
+   * camera moves left by the rest, so the column reads at the right edge and the speed text fits to its left.
+   * The height fit (0.80) is unchanged.
+   */
+  phoneSpeedColumnFrac: 0.86,
   /**
    * Extents of the fitted formations. stanza is 6 x 0.87 + 0.70 wide, race 16 x 0.95 + 0.70 wide,
    * rest 16 x 0.52 + 0.42 wide, column 16 x 0.27 + 0.22 tall, and axis is the family axis with margins.
@@ -56,10 +63,21 @@ function heightFit(h: number, f: number): number {
   return h / (f * 2 * FIT.tanHalfFov);
 }
 
+/** The mean x of a formation's poses, in bu: the centre line of the formation. */
+function centreX(poses: readonly Pose[]): number {
+  let sum = 0;
+  for (const pose of poses) sum += pose.p[0];
+  return sum / poses.length;
+}
+
+/** The x of the vertical race column on a phone (formationFor('race', true)). The column is on the centre line, so x is 0. */
+const RACE_COLUMN_X = centreX(formationFor('race', true));
+
 /**
  * The camera keyframe for name in a viewport of size CSS px (direction-3d.md section 10.6). Desktop is
  * an aspect of 1 or wider. Phone is below 1, where the race turns vertical and fits by height (D15.1). On a
- * phone the family key also moves right (D19.2).
+ * phone the family key also moves right (D19.2), and the speed key moves left so that the race column sits
+ * at 86 percent of the width (D21.2).
  * The target is (x, y, 0) and the fov is always FIT.fovDeg. Pass out to write into an existing object
  * and allocate nothing.
  */
@@ -84,7 +102,14 @@ export function cameraKey(name: KeyName, size: { width: number; height: number }
       }
       break;
     case 'speed':
-      z = phone ? heightFit(FIT.extent.race, FIT.fill.speed) : widthFit(FIT.extent.race, FIT.fill.speed, aspect);
+      if (phone) {
+        z = heightFit(FIT.extent.race, FIT.fill.speed);
+        // A screen fraction f for the column centre xc at distance z needs the camera at xc - (f - 0.5) W(z), since
+        // W(z) is the full width at the race plane. Desktop has no offset.
+        x = RACE_COLUMN_X - (FIT.phoneSpeedColumnFrac - 0.5) * visibleWidth(z, aspect);
+      } else {
+        z = widthFit(FIT.extent.race, FIT.fill.speed, aspect);
+      }
       break;
     case 'pricing':
       z = widthFit(FIT.extent.rest, FIT.fill.pricing, aspect);

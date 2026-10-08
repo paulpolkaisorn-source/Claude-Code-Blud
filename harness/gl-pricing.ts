@@ -127,20 +127,42 @@ async function main(): Promise<void> {
   const size = (): { width: number; height: number } => ({ width: stage.size.width, height: stage.size.height });
   const ctxFamily = (): SectionGLContext => {
     const s = size();
-    return { prev: CODE, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s };
+    return { prev: CODE, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s, bleed: { p1: 1, p2: 0 } };
   };
   const ctxPricing = (): SectionGLContext => {
     const s = size();
-    return { prev: familyGL, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s };
+    return { prev: familyGL, portrait: s.width < s.height, reducedMotion: env.reducedMotion, size: s, bleed: { p1: 1, p2: 0 } };
   };
 
-  const drive = { topVh: 1, current: false, on: false };
+  /** fake is the family anchor offset (bu) injected on feeding frames; 0 means none (D22.14). */
+  const drive = { topVh: 1, current: false, on: false, fake: 0 };
+
+  /** The family's DOM anchor offset, as a stand-in: this page has no family stage, so the harness writes it itself. */
+  function injectFamilyAnchor(y: number): void {
+    blocks.setGroupOffset(0, y, 0, true);
+    const phantom = scene.getObjectByName('family-phantom-group');
+    if (phantom !== undefined) phantom.position.y = y;
+  }
+
+  /** The anchor state the pricing handle leaves: the blocks offset, the blocks group y and the phantom group y. */
+  function anchorOf(): { offsetY: number; groupY: number; phantomY: number | null } {
+    const phantom = scene.getObjectByName('family-phantom-group');
+    return {
+      offsetY: blocks.groupOffset[1],
+      groupY: blocks.group.position.y,
+      phantomY: phantom === undefined ? null : phantom.position.y,
+    };
+  }
 
   // One tick per frame, after the choreography's state tick (PRIORITY.state + 5) and before the GL update, so the
-  // pricing poses and camera are the last written in the frame.
+  // pricing poses and camera are the last written in the frame. On a feeding frame (the family is the section before
+  // this one) the family writes first, then the injected anchor, then pricing reads it (the same order as the page).
   addTick((tick: Tick) => {
     if (!drive.on) return;
-    if (!drive.current) family.update(1, tick, ctxFamily());
+    if (!drive.current) {
+      family.update(1, tick, ctxFamily());
+      if (drive.fake !== 0) injectFamilyAnchor(drive.fake);
+    }
     pricing.update(entranceOf(drive.topVh), tick, ctxPricing());
   }, PRIORITY.state + 5);
 
@@ -481,6 +503,66 @@ async function main(): Promise<void> {
       `range=${still.range.toExponential(2)} reach=${still.reach.toExponential(2)}`,
     );
   }
+
+  // Family anchor (D22.14). On feeding frames the harness puts a 2 bu anchor offset in place of the family's DOM anchor.
+  // The pricing handle carries it out by 1 - sym(eff) at once, and it is exactly 0 at eff 1. Under reduced motion eff is
+  // 0 below w_p 0.5 and 1 from it (the same rule as update()).
+  const FAKE = 2;
+  drive.fake = FAKE;
+  for (const topVh of [1, 0.9, 0.8, 0.6]) {
+    show(topVh);
+    await framesN(3);
+    const w = entranceOf(topVh);
+    const eff = reduced ? (w >= 0.5 ? 1 : 0) : w;
+    const want = FAKE * (1 - ef.sym(eff));
+    const a = anchorOf();
+    check(
+      `anchor fade at w_p ${w.toFixed(2)}: the blocks offset and the phantom group carry ${want.toFixed(6)} bu`,
+      Math.abs(a.offsetY - want) < 1e-9 && a.phantomY !== null && Math.abs(a.phantomY - want) < 1e-9,
+      `offset=${a.offsetY.toFixed(6)} phantom=${String(a.phantomY)}`,
+    );
+    // Under reduced motion the group position is not asserted: Blocks.update eases it toward 0 there instead of
+    // snapping it, so an immediate write is only partly kept (reported to the director; blocks.ts is not owned here).
+    if (!reduced) {
+      check(
+        `anchor fade at w_p ${w.toFixed(2)}: the blocks group sits at ${want.toFixed(6)} bu (immediate, no damping)`,
+        Math.abs(a.groupY - want) < 1e-6,
+        `group=${a.groupY.toFixed(6)}`,
+      );
+    }
+  }
+  check(
+    'anchor fade at w_p 1: the offsets are exactly 0',
+    anchorOf().offsetY === 0 && anchorOf().groupY === 0 && anchorOf().phantomY === 0,
+  );
+
+  // tidy below eff 1 keeps the anchor for the fade. Calling setActive(true) at w_p 0.25 must not reset it.
+  show(0.9);
+  await framesN(3);
+  const before = anchorOf();
+  pricing.setActive(true, ctxPricing());
+  const afterKeep = anchorOf();
+  check(
+    'setActive below eff 1 keeps the anchor offsets (no reset)',
+    before.offsetY !== 0 && afterKeep.offsetY === before.offsetY && afterKeep.groupY === before.groupY,
+    `before=${before.offsetY.toFixed(6)} after=${afterKeep.offsetY.toFixed(6)}`,
+  );
+  pricing.setActive(false, ctxPricing());
+
+  // tidy at eff 1 resets the anchor at once, with no frame between (immediate).
+  drive.fake = 0;
+  show(0.6);
+  await framesN(3);
+  injectFamilyAnchor(3);
+  pricing.setActive(true, ctxPricing());
+  const reset = anchorOf();
+  check(
+    'setActive at eff 1 resets the anchor offsets at once',
+    reset.offsetY === 0 && reset.groupY === 0 && reset.phantomY === 0,
+    `offset=${reset.offsetY} group=${reset.groupY} phantom=${String(reset.phantomY)}`,
+  );
+  pricing.setActive(false, ctxPricing());
+  await framesN(2);
 
   const failures = [...report.failures, ...report.diagnostics.map((d) => `diagnostic: ${d}`)];
   root.dataset.harness = failures.length === 0 ? 'pass' : `fail:${failures.slice(0, 8).join(' | ')}`;
