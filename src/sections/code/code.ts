@@ -462,8 +462,12 @@ export function initCode(ctx: SectionContext): void {
     const x = parseFloat(caret.style.left);
     if (Number.isNaN(x)) return;
     const visible = box.clientWidth;
-    if (x > box.scrollLeft + visible - CARET_MARGIN) box.scrollLeft = x - visible + CARET_MARGIN;
-    else if (x < box.scrollLeft + CARET_MARGIN) box.scrollLeft = Math.max(0, x - CARET_MARGIN);
+    if (x > box.scrollLeft + visible - CARET_MARGIN) {
+      box.scrollLeft = x - visible + CARET_MARGIN;
+    } else if (x < box.scrollLeft + CARET_MARGIN) {
+      // Back past the edge: the start of the block when the caret fits from there, so the first words show again.
+      box.scrollLeft = x < visible - CARET_MARGIN ? 0 : x - CARET_MARGIN;
+    }
   };
 
   /**
