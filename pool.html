@@ -437,7 +437,9 @@ function newGame() {
     else putBall(b, pos[b.num][0], pos[b.num][1]);
   }
   Object.assign(S, { phase: 'aim', current: 0, groups: null, isBreak: true, kitchen: true, ballInHand: true, winner: null });
-  shot = null; pull = null; aimAngle = 0;
+  shot = null; pull = null; power = 0; aimAngle = 0;
+  placeGhost.visible = false;
+  updatePower();
   dbg.surface = dbg.cushion = dbg.maxOut = 0;
   document.getElementById('overlay').hidden = true;
   setMsg(`${NAMES[0]} to break. Pull back to shoot, or move the cue ball behind the head string.`);
@@ -580,8 +582,10 @@ function evaluateShot() {
     if (s.isBreak) { respot(8); note += '8-ball on the break is re-spotted. '; }
     else {
       const win = onEight && pocketed.includes(8) && !foul;
-      return endGame(win ? me : opp, win ? `${NAMES[me]} pocketed the 8-ball.` :
-        onEight ? `${NAMES[me]} lost the 8-ball on a foul (${foul || 'off the table'}).` : `${NAMES[me]} pocketed the 8-ball early.`);
+      const why = win ? `${NAMES[me]} pocketed the 8-ball.`
+        : !pocketed.includes(8) ? `${NAMES[me]} knocked the 8-ball off the table.`
+        : onEight ? `${NAMES[me]} pocketed the 8-ball on a foul (${foul}).` : `${NAMES[me]} pocketed the 8-ball early.`;
+      return endGame(win ? me : opp, why);
     }
   }
   if (!S.groups && !s.isBreak && !foul) {
@@ -634,6 +638,7 @@ function placementValid(x, z) {
   return freeSpot(x, z, cueBall);
 }
 function startPlacing(x, z) {
+  pull = null; power = 0; updatePower();
   liftBall(cueBall);
   cueBall.anim = null;
   cueBall.mesh.visible = false;
@@ -772,8 +777,9 @@ cvs.addEventListener('pointermove', e => {
   if (pointers.size > 1) return;
   const p = pickTable(e);
   if (!p) return;
-  if (S.phase === 'placing') { if (e.pointerType === 'mouse' || pointers.size) movePlacement(p.x, p.z); return; }
+  if (S.phase === 'placing') { if (e.pointerType === 'mouse' ? e.buttons === 0 : pointers.size === 1) movePlacement(p.x, p.z); return; }
   if (S.phase !== 'aim') return;
+  if (pull && e.pointerType === 'mouse' && e.buttons === 0) { pull = null; power = 0; updatePower(); return; }
   if (pull) {
     const d = aimDir();
     const back = (pull.start.x - p.x) * d.x + (pull.start.z - p.z) * d.z;
@@ -784,7 +790,7 @@ cvs.addEventListener('pointermove', e => {
 });
 function endPointer(e, cancel) {
   pointers.delete(e.pointerId);
-  if (S.phase === 'placing' && e.pointerType !== 'mouse' && !cancel) placeCue(placeGhost.position.x, placeGhost.position.z);
+  if (S.phase === 'placing' && e.pointerType !== 'mouse' && !cancel && pointers.size === 0) placeCue(placeGhost.position.x, placeGhost.position.z);
   if (pull) {
     const pw = power;
     pull = null; power = 0;
@@ -795,6 +801,7 @@ function endPointer(e, cancel) {
 cvs.addEventListener('pointerup', e => endPointer(e, false));
 cvs.addEventListener('pointercancel', e => endPointer(e, true));
 cvs.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('blur', () => { pointers.clear(); pull = null; power = 0; updatePower(); });
 addEventListener('keydown', e => {
   if (S.phase === 'aim' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
     aimAngle += (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 0.01 : 0.0015);
@@ -820,7 +827,7 @@ function drawSpin() {
 }
 spinEl.addEventListener('pointerdown', e => { spinDrag = true; spinEl.setPointerCapture(e.pointerId); setSpin(e); e.stopPropagation(); });
 spinEl.addEventListener('pointermove', e => { if (spinDrag) setSpin(e); });
-spinEl.addEventListener('pointerup', () => { spinDrag = false; });
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) spinEl.addEventListener(ev, () => { spinDrag = false; });
 spinEl.addEventListener('dblclick', () => { spin.x = spin.y = 0; drawSpin(); });
 
 // ===================== camera views =====================
