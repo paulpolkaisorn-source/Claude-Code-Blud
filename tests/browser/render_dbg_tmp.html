@@ -1,0 +1,288 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Render harness</title>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+  <style>
+    html,body{margin:0;height:100%;background:#123;overflow:hidden}
+    canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <script type="module">
+    import * as THREE from 'three';
+    import { test, assert, run, wait } from './harness.js';
+    import { bus, EV, GRID, isMobile } from '../../src/contracts.js';
+    import { createRenderer } from '../../src/render/renderer.js';
+    import { createAutoQuality, pixelRatioFor, QUALITY_PRESETS } from '../../src/render/quality.js';
+    import { toonMat, addOutline } from '../../src/render/toon.js';
+
+    const canvas = document.getElementById('c');
+    const mobile = isMobile();
+    let clockMs = 0;                                  // fake clock for the FPS watchdog
+    const R = createRenderer(canvas, { mobile, clock: () => clockMs });
+    R.setArenaBounds(21, 33);
+
+    // Stub arena: a floor, five cubes and one glowing crystal.
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(21, 33), toonMat(0x7cc46a));
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(10.5, 0, 16.5);
+    floor.receiveShadow = true;
+    R.scene.add(floor);
+    const cubeGeo = new THREE.BoxGeometry(1, 1.2, 1);
+    const cubeSpots = [[6.5, 10.5, 0xff9f2e], [12.5, 12.5, 0x38e8ff], [9.5, 19.5, 0xb6ff3b],
+      [14.5, 22.5, 0xffe14d], [4.5, 24.5, 0x3d9bff]];
+    for (const [x, z, color] of cubeSpots) {
+      const m = new THREE.Mesh(cubeGeo, toonMat(color));
+      m.position.set(x, 0.6, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      addOutline(m);
+      R.scene.add(m);
+    }
+    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.4),
+      toonMat(0xc46bff, { emissive: 0xc46bff, emissiveIntensity: 2.5 }));
+    crystal.position.set(7.5, 0.9, 15.5);
+    crystal.castShadow = true;
+    R.scene.add(crystal);
+
+    const T = { x: 9.0, z: 14.0 };                    // look-at target used by most checks
+    const W = () => canvas.clientWidth;
+    const H = () => canvas.clientHeight;
+
+    // Advances the fake clock and renders n frames. GPU work is flushed every 10 frames and once per call, so
+    // software GL never builds a long backlog; the single yield at the end lets the page breathe.
+    async function frame(n = 1, dt = 1 / 60) {
+      const gl = R.renderer.getContext();
+      for (let i = 0; i < n; i++) {
+        clockMs += dt * 1000;
+        R.render(dt);
+        if (i % 10 === 9) gl.finish();
+      }
+      gl.finish();
+      await wait(0);
+    }
+
+    test('boots with shadows, bloom and a stable per-frame draw count', async () => {
+      R.snap(T.x, T.z);
+      await frame(30);
+      const s = R.stats();
+      assert(s.drawCalls > 0, `drawCalls ${s.drawCalls}`);
+      assert(s.drawCalls < 150, `drawCalls ${s.drawCalls} over budget`);
+      assert(s.triangles > 0, 'no triangles');
+      assert(s.quality === 'high' && s.bloom && s.shadows, `stats ${JSON.stringify(s)}`);
+      assert(R.renderer.getPixelRatio() <= (mobile ? 1.5 : 2) + 1e-9, 'pixel ratio over cap');
+      const first = s.drawCalls;
+      await frame(10);
+      assert(R.stats().drawCalls === first, `draw count drifted ${first} -> ${R.stats().drawCalls}`);
+    });
+
+    test('sun shadow frustum is 2048 and covers the arena', () => {
+      const c = R.sun.shadow.camera;
+      assert(R.sun.shadow.mapSize.x === 2048 && R.sun.shadow.mapSize.y === 2048, 'shadow map size');
+      assert(c.right >= 18 && c.top >= 18, `frustum half-size ${c.right}`);
+    });
+
+    test('worldToScreen puts the look-at target at the viewport centre', () => {
+      R.snap(T.x, T.z);
+      const o = { x: 0, y: 0, visible: false };
+      R.worldToScreen(T.x, 0, T.z, o);
+      assert(Math.abs(o.x - W() / 2) < 1.5 && Math.abs(o.y - H() / 2) < 1.5,
+        `target at (${o.x}, ${o.y}), centre (${W() / 2}, ${H() / 2})`);
+      assert(o.visible, 'target not visible');
+    });
+
+    test('screenToGround inverts the centre ray back onto the target', () => {
+      R.snap(T.x, T.z);
+      const g = { x: 0, z: 0, hit: false };
+      R.screenToGround(W() / 2, H() / 2, g);
+      assert(g.hit, 'centre ray misses the ground');
+      assert(Math.abs(g.x - T.x) <= 0.5 && Math.abs(g.z - T.z) <= 0.5, `centre hits (${g.x}, ${g.z})`);
+      const s = { x: 0, y: 0, visible: false };
+      for (const [fx, fy] of [[0.1, 0.2], [0.9, 0.85], [0.5, 0.95]]) {
+        R.screenToGround(fx * W(), fy * H(), g);
+        R.worldToScreen(g.x, 0, g.z, s);
+        assert(Math.abs(s.x - fx * W()) < 1 && Math.abs(s.y - fy * H()) < 1, `round trip off at ${fx},${fy}`);
+      }
+    });
+
+    test('follow damps toward its target and clamps to the arena', () => {
+      R.snap(T.x, T.z);
+      for (let i = 0; i < 240; i++) R.follow(15, 20, 1 / 60);
+      const g = {};
+      R.screenToGround(W() / 2, H() / 2, g);
+      assert(Math.abs(g.x - 15) < 0.05 && Math.abs(g.z - 20) < 0.05, `converged to (${g.x}, ${g.z})`);
+      R.snap(-40, 99);
+      R.screenToGround(W() / 2, H() / 2, g);
+      assert(Math.abs(g.x) < 0.01 && Math.abs(g.z - 33) < 0.01, `clamped to (${g.x}, ${g.z})`);
+      R.snap(T.x, T.z);
+    });
+
+    test('setQuality low disables shadows and bloom; high restores them', async () => {
+      R.setQuality('low');
+      let s = R.stats();
+      assert(!R.renderer.shadowMap.enabled && !R.sun.castShadow, 'shadows still on in low');
+      assert(!s.bloom && !s.shadows && s.quality === 'low', `low stats ${JSON.stringify(s)}`);
+      assert(R.renderer.getPixelRatio() === 1, `low pixel ratio ${R.renderer.getPixelRatio()}`);
+      // The first low-quality draw is slow under software GL on desktop (MSAA default framebuffer, roughly 20 s),
+      // so the low draw is only exercised under mobile emulation, where it is cheap.
+      if (mobile) {
+        await frame(3);
+        assert(R.stats().drawCalls > 0, 'low path draws nothing');
+      }
+      R.setQuality('high');
+      s = R.stats();
+      assert(R.renderer.shadowMap.enabled && R.sun.castShadow && s.bloom && s.quality === 'high',
+        `high not restored ${JSON.stringify(s)}`);
+      assert(R.renderer.getPixelRatio() <= (mobile ? 1.5 : 2) + 1e-9, 'pixel ratio over cap');
+      await frame(3);
+    });
+
+    test('screen shake offsets the view and decays back to rest', async () => {
+      R.snap(T.x, T.z);
+      await frame(2);
+      const rest = R.camera.position.clone();
+      R.shake(1, 0.4);
+      let peak = 0;
+      for (let i = 0; i < 4; i++) {
+        await frame(1);
+        peak = Math.max(peak, R.camera.position.distanceTo(rest));
+      }
+      assert(peak > 0.01, `shake moved the camera only ${peak}`);
+      await frame(30);
+      const drift = R.camera.position.distanceTo(rest);
+      assert(drift < 1e-4, `view did not return to rest (${drift})`);
+      const o = { x: 0, y: 0, visible: false };
+      R.worldToScreen(T.x, 0, T.z, o);
+      assert(Math.abs(o.x - W() / 2) < 1.5 && Math.abs(o.y - H() / 2) < 1.5, 'view not centred after shake');
+    });
+
+    test('EV.SCREEN_SHAKE on the bus shakes the view', async () => {
+      R.snap(T.x, T.z);
+      await frame(2);
+      const rest = R.camera.position.clone();
+      bus.emit(EV.SCREEN_SHAKE, { intensity: 0.6, duration: 0.2 });
+      let peak = 0;
+      for (let i = 0; i < 4; i++) {
+        await frame(1);
+        peak = Math.max(peak, R.camera.position.distanceTo(rest));
+      }
+      assert(peak > 0.01, `bus shake moved the camera only ${peak}`);
+      await frame(20);
+      assert(R.camera.position.distanceTo(rest) < 1e-4, 'bus shake did not settle');
+    });
+
+    test('resize updates aspect and fits ~13 tiles landscape, ~11 portrait', () => {
+      R.snap(T.x, T.z);
+      const e = { x: 0, y: 0, visible: false };
+      canvas.style.width = '400px';
+      canvas.style.height = '800px';
+      R.resize();
+      assert(Math.abs(R.camera.aspect - 0.5) < 1e-6, `portrait aspect ${R.camera.aspect}`);
+      const dPortrait = R.camera.position.distanceTo(new THREE.Vector3(T.x, 0, T.z));
+      R.worldToScreen(T.x + 5.5, 0, T.z, e);
+      assert(Math.abs(e.x - 400) < 1.5, `portrait: 11 tiles should span the width, edge at x=${e.x}`);
+
+      canvas.style.width = '800px';
+      canvas.style.height = '400px';
+      R.resize();
+      assert(Math.abs(R.camera.aspect - 2) < 1e-6, `landscape aspect ${R.camera.aspect}`);
+      const dLandscape = R.camera.position.distanceTo(new THREE.Vector3(T.x, 0, T.z));
+      R.worldToScreen(T.x + 6.5, 0, T.z, e);
+      assert(Math.abs(e.x - 800) < 1.5, `landscape: 13 tiles should span the width, edge at x=${e.x}`);
+      assert(dPortrait > dLandscape * 2, `portrait should zoom out (${dPortrait} vs ${dLandscape})`);
+
+      canvas.style.width = '';
+      canvas.style.height = '';
+      R.resize();
+      assert(Math.abs(R.camera.aspect - W() / H()) < 1e-6, 'aspect not restored');
+    });
+
+    test('autoQuality drops to low once after 3 s under 45 fps', async () => {
+      canvas.style.width = '160px';
+      canvas.style.height = '90px';
+      R.resize();
+      R.snap(T.x, T.z);
+      R.setQuality('high');
+      const drops = [];
+      const off = bus.on(EV.QUALITY_CHANGE, (p) => drops.push(p.level));
+      R.autoQuality(true);
+      try {
+        await frame(200, 1 / 60);
+        assert(drops.length === 0 && R.stats().quality === 'high', 'dropped while running at 60 fps');
+        // Feed 30 fps frames until the watchdog drops quality. Rendering stops at the drop, so the test never
+        // draws in low quality (see the note in the setQuality test).
+        const gl = R.renderer.getContext();
+        let k = 0;
+        while (R.stats().quality === 'high' && k < 300) {
+          clockMs += 1000 / 30;
+          console.log('DBG it', k, 'before', Math.round(performance.now()));
+          R.render(1 / 30);
+          console.log('DBG it', k, 'rendered', Math.round(performance.now()));
+          k++;
+          if (k % 5 === 0) gl.finish();
+          console.log('DBG it', k, 'finished', Math.round(performance.now()));
+          if (k % 20 === 0) await wait(0);
+        }
+        assert(drops.length === 1 && drops[0] === 'low', `expected one low drop, got ${drops}`);
+        assert(R.stats().quality === 'low' && !R.renderer.shadowMap.enabled, 'not low after the drop');
+        assert(k >= 85 && k <= 105, `drop after ${k} frames at 30 fps, expected about 90 (3 s)`);
+        await wait(0);
+      } finally {
+        off();
+        R.autoQuality(false);
+        R.setQuality('high');
+        canvas.style.width = '';
+        canvas.style.height = '';
+        R.resize();
+      }
+    });
+
+    test('watchdog trips once after 3 s of sub-45 fps and ignores a short dip', () => {
+      const aq = createAutoQuality({ threshold: 45, sustain: 3 });
+      aq.set(true);
+      let trips = 0;
+      const feed = (n, sec) => { for (let i = 0; i < n; i++) if (aq.frame(sec)) trips++; };
+      feed(192, 1 / 60);
+      assert(trips === 0, 'tripped at 60 fps');
+      feed(60, 1 / 30);
+      assert(trips === 0, 'tripped on a 2 s dip');
+      feed(60, 1 / 60);
+      assert(trips === 0, 'tripped after recovery');
+      feed(120, 1 / 30);
+      assert(trips === 1, `expected one trip, got ${trips}`);
+      feed(120, 1 / 30);
+      assert(trips === 1, 'watchdog fired again after disarming');
+      assert(Math.abs(aq.fps - 30) < 1, `fps ${aq.fps}`);
+    });
+
+    test('pixel ratio caps by preset and device class', () => {
+      assert(pixelRatioFor('high', 3, false) === 2, 'desktop cap');
+      assert(pixelRatioFor('high', 3, true) === 1.5, 'mobile cap');
+      assert(pixelRatioFor('high', 1, false) === 1, 'dpr 1');
+      assert(pixelRatioFor('low', 3, false) === 1, 'low ignores dpr');
+      assert(!QUALITY_PRESETS.low.shadows && !QUALITY_PRESETS.low.bloom, 'low preset');
+    });
+
+    test('a second renderer can draw and dispose without leaking shake handlers', async () => {
+      const c2 = document.createElement('canvas');
+      c2.style.width = '64px';
+      c2.style.height = '64px';
+      document.body.appendChild(c2);
+      const R2 = createRenderer(c2, { mobile, clock: () => clockMs });
+      R2.setArenaBounds(21, 33);
+      R2.render(1 / 60);
+      assert(R2.stats().drawCalls > 0, 'second renderer drew nothing');
+      R2.dispose();
+      c2.remove();
+      R.shake(0.2, 0.1);
+      await frame(2);
+    });
+
+    await run();
+  </script>
+</body>
+</html>
