@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>3D Pool 8-Ball</title>
+<style>
+  :root { --bg:#0e1013; --panel:rgba(14,16,20,.74); --line:rgba(255,255,255,.12); --text:#eef1f4; --muted:#9aa3ad; --accent:#ffd34d; --foul:#ff7b6e; --win:#7dff9b; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text);
+    font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-user-select:none; user-select:none; touch-action:none; }
+  canvas { display:block; touch-action:none; outline:none; }
+  #hud { position:fixed; inset:0; pointer-events:none; }
+  .ui { pointer-events:auto; }
+  #top { position:absolute; top:10px; left:16px; right:16px; display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
+  .player { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 12px; min-width:128px; opacity:.55; transition:opacity .2s,border-color .2s; }
+  .player.active { opacity:1; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+  .player .name { font-weight:700; }
+  .player .grp { color:var(--muted); font-size:12px; margin-top:2px; }
+  .tray { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; min-height:14px; max-width:150px; }
+  .chip { width:15px; height:15px; border-radius:50%; font-size:8px; line-height:15px; text-align:center; color:#111; font-weight:800; }
+  #center { flex:1; display:flex; flex-direction:column; gap:4px; min-width:0; }
+  #msg { text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 12px; min-height:36px; }
+  #msg.foul { color:var(--foul); } #msg.win { color:var(--win); font-weight:700; }
+  #help { text-align:center; color:var(--muted); font-size:11px; }
+  #bottom { position:absolute; left:16px; right:16px; bottom:12px; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  #left { display:flex; gap:14px; align-items:flex-end; }
+  .col { display:flex; flex-direction:column; align-items:center; }
+  #power { width:26px; height:110px; background:var(--panel); border:1px solid rgba(255,255,255,.2); border-radius:8px; position:relative; overflow:hidden; }
+  #powerFill { position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(to top,#3ddc84,#ffd34d 60%,#ff5a4a); }
+  .lbl { font-size:11px; color:var(--muted); margin-top:4px; }
+  #spin { width:92px; height:92px; border-radius:50%; position:relative; cursor:crosshair; touch-action:none;
+    background:radial-gradient(circle at 35% 30%,#fff,#e2ded2 55%,#a9a597); border:2px solid rgba(255,255,255,.25); }
+  #spin::before, #spin::after { content:""; position:absolute; background:rgba(0,0,0,.2); }
+  #spin::before { left:50%; top:8%; bottom:8%; width:1px; }
+  #spin::after { top:50%; left:8%; right:8%; height:1px; }
+  #spinDot { position:absolute; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:#d42020; left:50%; top:50%; box-shadow:0 0 0 2px rgba(255,255,255,.8); pointer-events:none; }
+  #btns { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; max-width:440px; }
+  button { font:inherit; font-size:13px; color:var(--text); background:var(--panel); border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:7px 11px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button[hidden] { display:none; }
+  #overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.45); }
+  #overlay[hidden] { display:none; }
+  #overlay .card { background:#15181d; border:1px solid var(--accent); border-radius:14px; padding:22px 26px; text-align:center; max-width:calc(100vw - 32px); }
+  #winTxt { font-size:20px; font-weight:800; color:var(--win); margin-bottom:6px; }
+  #winWhy { color:var(--muted); margin-bottom:14px; }
+  #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  @media (max-width:640px) {
+    #top { flex-wrap:wrap; }
+    #center { order:3; flex-basis:100%; }
+    .player { min-width:0; flex:1; padding:6px 8px; }
+    #help { display:none; }
+    #power { height:80px; } #spin { width:72px; height:72px; }
+    button { padding:6px 8px; font-size:12px; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="loading">Loading table…</div>
+<div id="hud">
+  <div id="top">
+    <div class="player" id="p0"><div class="name">Player 1</div><div class="grp" id="g0">Open table</div><div class="tray" id="t0"></div></div>
+    <div id="center">
+      <div id="msg">Loading…</div>
+      <div id="help">Move mouse to aim · hold left button and pull back for power, release to shoot · right-drag orbit · wheel zoom · ←/→ fine aim · Esc cancels</div>
+    </div>
+    <div class="player" id="p1"><div class="name">Player 2</div><div class="grp" id="g1">Open table</div><div class="tray" id="t1"></div></div>
+  </div>
+  <div id="bottom">
+    <div id="left">
+      <div class="col"><div id="power"><div id="powerFill"></div></div><div class="lbl" id="powerTxt">Power 0%</div></div>
+      <div class="col"><div id="spin" class="ui" title="Click/drag to set cue tip contact. Double-click to center."><div id="spinDot"></div></div><div class="lbl" id="spinTxt">Center hit</div></div>
+    </div>
+    <div id="btns" class="ui">
+      <button id="bMove" hidden>Move cue ball</button>
+      <button id="bCue">Cue view</button>
+      <button id="bTop">Top view</button>
+      <button id="bSide">Side view</button>
+      <button id="bReset">Reset</button>
+    </div>
+  </div>
+</div>
+<div id="overlay" class="ui" hidden><div class="card"><div id="winTxt"></div><div id="winWhy"></div><button id="bNew">New game</button></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as CANNON from 'cannon-es';
+
+// ===================== constants (SI units) =====================
+const R = 0.028575, BALL_MASS = 0.17;
+const L = 2.54, W = 1.27, HL = L / 2, HW = W / 2;
+const G = 9.81;
+const DT = 1 / 120;                 // fixed physics step
+const MAX_SUBSTEPS = 12;
+const MU_SLIDE = 0.2;               // ball-cloth sliding friction
+const MU_ROLL = 0.012;              // rolling resistance
+const SPIN_DECEL = 9.0;             // rad/s^2, vertical-axis spin friction
+const SLEEP_V = 0.01, SLEEP_W = 0.45;
+const CUSH_D = 0.05, CUSH_NOSE_H = 0.036, CUSH_TOP_H = 0.042;
+const RAIL_W = 0.13, RAIL_TOP = 0.046;
+const CORNER_GAP = 0.082, SIDE_HALF = 0.064, CORNER_K = 0.9, SIDE_K = 0.1;
+const HEAD_X = -HL / 2, FOOT_X = HL / 2;
+const MAX_SPEED = 8.5, PULL_MAX = 0.35, SPIN_MAX = 0.5;
+const COLORS = { 1: '#f2b705', 2: '#1d4fbf', 3: '#d1202b', 4: '#5b2d8c', 5: '#f06d0f', 6: '#0e8a4a', 7: '#8c1f1f', 8: '#111111' };
+const IVORY = '#f7f4ea';
+
+// pockets: c = visual/drop center, r = opening radius
+const POCKETS = [];
+for (const sx of [-1, 1]) for (const sz of [-1, 1])
+  POCKETS.push({ type: 'corner', sx, sz, c: new THREE.Vector2(sx * (HL + 0.03), sz * (HW + 0.03)), r: 0.062 });
+for (const sz of [-1, 1]) POCKETS.push({ type: 'side', sx: 0, sz, c: new THREE.Vector2(0, sz * (HW + 0.052)), r: 0.056 });
+
+// A ball is pocketed when its center crosses the mouth line between the cushion noses.
+function crossedMouth(pk, x, z) {
+  if (pk.type === 'corner')
+    return pk.sx * x + pk.sz * z > HL + HW - CORNER_GAP && Math.hypot(x - pk.c.x, z - pk.c.y) < 0.2;
+  return pk.sz * z > HW && Math.abs(x) < SIDE_HALF + 0.01;
+}
+
+// ===================== renderer / scene =====================
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.prepend(renderer.domElement);
+renderer.domElement.tabIndex = 0;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0f1216);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.01, 60);
+camera.position.set(-2.45, 1.55, 0);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.12;
+controls.enablePan = false;
+controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+controls.touches = { ONE: -1, TWO: THREE.TOUCH.DOLLY_ROTATE };
+controls.minDistance = 0.35;
+controls.maxDistance = 6;
+controls.maxPolarAngle = Math.PI * 0.49;
+
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x20160e, 0.35));
+const sun = new THREE.DirectionalLight(0xfff4e0, 2.2);
+sun.position.set(0.7, 3.2, 0.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -1.9, right: 1.9, top: 1.3, bottom: -1.3, near: 0.5, far: 7 });
+sun.shadow.camera.updateProjectionMatrix();
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.015;
+scene.add(sun);
+for (const x of [-0.75, 0.75]) {
+  const s = new THREE.SpotLight(0xfff1d6, 2.2, 0, 0.8, 0.7, 0);
+  s.position.set(x, 1.5, 0);
+  s.target.position.set(x, 0, 0);
+  scene.add(s, s.target);
+}
+
+// ===================== procedural textures =====================
+function canvasTex(w, h, draw, repeat) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); }
+  return t;
+}
+const feltTex = canvasTex(256, 256, (g, w, h) => {
+  const img = g.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { const v = 225 + Math.random() * 30; img.data.set([v, v, v, 255], i * 4); }
+  g.putImageData(img, 0, 0);
+}, 6);
+const woodTex = canvasTex(1024, 256, (g, w, h) => {
+  g.fillStyle = '#5b2e14'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 200; i++) {
+    const y = Math.random() * h;
+    g.strokeStyle = `rgba(${25 + Math.random() * 45 | 0},${10 + Math.random() * 18 | 0},4,${0.15 + Math.random() * 0.35})`;
+    g.lineWidth = 0.5 + Math.random() * 2.5;
+    g.beginPath();
+    for (let x = 0; x <= w; x += 16) {
+      const yy = y + Math.sin(x * 0.004 + i) * 6 + Math.sin(x * 0.021 + i * 3) * 1.5;
+      x === 0 ? g.moveTo(x, yy) : g.lineTo(x, yy);
+    }
+    g.stroke();
+  }
+}, 1);
+
+function ballTexture(num) {
+  return canvasTex(512, 256, (g, w, h) => {
+    if (num === 0) {
+      g.fillStyle = IVORY; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#c0282d';
+      for (const u of [0, 128, 256, 384, 512]) { g.beginPath(); g.arc(u, 128, 11, 0, Math.PI * 2); g.fill(); }
+      g.fillRect(0, 0, w, 10); g.fillRect(0, h - 10, w, 10);
+      return;
+    }
+    const col = COLORS[num > 8 ? num - 8 : num];
+    if (num <= 8) { g.fillStyle = col; g.fillRect(0, 0, w, h); }
+    else { g.fillStyle = IVORY; g.fillRect(0, 0, w, h); g.fillStyle = col; g.fillRect(0, 70, w, 116); }
+    for (const u of [128, 384]) {
+      g.fillStyle = IVORY; g.beginPath(); g.arc(u, 128, 38, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#111'; g.font = 'bold 46px Arial, Helvetica, sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(String(num), u, 131);
+      if (num === 6 || num === 9) g.fillRect(u - 12, 152, 24, 4);
+    }
+  });
+}
+
+// ===================== physics world =====================
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -G, 0) });
+world.broadphase = new CANNON.NaiveBroadphase();
+world.solver.iterations = 20;
+world.solver.tolerance = 1e-7;
+world.allowSleep = true;
+world.defaultContactMaterial.contactEquationStiffness = 1e8;
+world.defaultContactMaterial.contactEquationRelaxation = 3;
+
+const ballMat = new CANNON.Material('ball'), clothMat = new CANNON.Material('cloth'), cushionMat = new CANNON.Material('cushion');
+const cm = (a, b, friction, restitution) => world.addContactMaterial(new CANNON.ContactMaterial(a, b, {
+  friction, restitution, contactEquationStiffness: 1e8, contactEquationRelaxation: 3, frictionEquationStiffness: 1e8,
+}));
+cm(ballMat, ballMat, 0.05, 0.95);
+cm(ballMat, cushionMat, 0.15, 0.7);
+cm(ballMat, clothMat, 0.0, 0.4);   // cloth friction is handled by the contact-point model below
+
+const bed = new CANNON.Body({ mass: 0, material: clothMat });
+bed.addShape(new CANNON.Plane());
+bed.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+world.addBody(bed);
+
+// outer catch walls (behind the pockets), in case a ball jumps a jaw
+for (const [x, z, sx, sz] of [[HL + 0.2, 0, 0.03, HW + 0.25], [-HL - 0.2, 0, 0.03, HW + 0.25], [0, HW + 0.2, HL + 0.25, 0.03], [0, -HW - 0.2, HL + 0.25, 0.03]]) {
+  const b = new CANNON.Body({ mass: 0, material: cushionMat });
+  b.addShape(new CANNON.Box(new CANNON.Vec3(sx, 0.1, sz)));
+  b.position.set(x, 0.1, z);
+  world.addBody(b);
+}
+
+// ===================== table visuals =====================
+const feltMat = new THREE.MeshStandardMaterial({ color: 0x0b5a32, map: feltTex, roughness: 0.95, metalness: 0 });
+const cushionVisMat = new THREE.MeshStandardMaterial({ color: 0x0e6a3b, map: feltTex, roughness: 0.9 });
+const woodMat = new THREE.MeshPhysicalMaterial({ map: woodTex, roughness: 0.45, clearcoat: 0.7, clearcoatRoughness: 0.2 });
+const leatherMat = new THREE.MeshStandardMaterial({ color: 0x2b1a10, roughness: 0.65, side: THREE.DoubleSide });
+const chromeMat = new THREE.MeshStandardMaterial({ color: 0xd4d8dc, metalness: 1, roughness: 0.22 });
+const blackMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 });
+
+// Ray-sampled outline of rect +/- pocket circles (star-shaped from origin).
+function outline(hx, hz, circles, mode, n = 720) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a);
+    const tr = Math.min(hx / Math.max(Math.abs(dx), 1e-9), hz / Math.max(Math.abs(dz), 1e-9));
+    let t = tr;
+    for (const c of circles) {
+      const b = dx * c.x + dz * c.y, cc = c.x * c.x + c.y * c.y - c.r * c.r, disc = b * b - cc;
+      if (disc <= 0) continue;
+      const s = Math.sqrt(disc), t0 = b - s, t1 = b + s;
+      if (mode === 'subtract') { if (t0 > 0 && t0 < t) t = t0; }
+      else if (t0 <= tr + 1e-6) t = Math.max(t, t1);
+    }
+    pts.push(new THREE.Vector2(dx * t, dz * t));
+  }
+  return pts;
+}
+const pocketCircles = POCKETS.map(p => ({ x: p.c.x, y: p.c.y, r: p.r }));
+function flatExtrude(shape, depth, top, bevel) {
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bevel || 0, bevelSegments: 3, curveSegments: 24,
+  });
+  geo.rotateX(-Math.PI / 2);           // shape (x,y) -> world (x,-z); extrusion -> +y
+  geo.translate(0, top - depth - (bevel || 0), 0);
+  return geo;
+}
+{ // felt bed with pocket holes
+  const shape = new THREE.Shape(outline(HL + CUSH_D, HW + CUSH_D, pocketCircles, 'subtract'));
+  const m = new THREE.Mesh(flatExtrude(shape, 0.03, 0), feltMat);
+  m.receiveShadow = true;
+  scene.add(m);
+}
+{ // wood frame with pocket cut-outs
+  const o = { x: HL + CUSH_D + RAIL_W, z: HW + CUSH_D + RAIL_W };
+  const shape = new THREE.Shape([new THREE.Vector2(-o.x, -o.z), new THREE.Vector2(o.x, -o.z), new THREE.Vector2(o.x, o.z), new THREE.Vector2(-o.x, o.z)]);
+  shape.holes.push(new THREE.Path(outline(HL + CUSH_D, HW + CUSH_D, pocketCircles, 'union')));
+  const m = new THREE.Mesh(flatExtrude(shape, RAIL_TOP + 0.14, RAIL_TOP, 0.005), woodMat);
+  m.castShadow = true; m.receiveShadow = true;
+  scene.add(m);
+  // apron/base and floor
+  const base = new THREE.Mesh(new THREE.BoxGeometry(L + 0.26, 0.55, W + 0.26), new THREE.MeshPhysicalMaterial({ map: woodTex, color: 0x6a5040, roughness: 0.5, clearcoat: 0.4 }));
+  base.position.y = -0.1 - 0.275 - 0.01;
+  base.castShadow = base.receiveShadow = true;
+  scene.add(base);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshStandardMaterial({ color: 0x1b1714, roughness: 0.9 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.76; floor.receiveShadow = true;
+  scene.add(floor);
+  // diamond sights
+  const pearl = new THREE.MeshStandardMaterial({ color: 0xf3efe2, roughness: 0.3, metalness: 0.1 });
+  const dg = new THREE.CylinderGeometry(0.008, 0.008, 0.002, 20);
+  const put = (x, z) => { const d = new THREE.Mesh(dg, pearl); d.position.set(x, RAIL_TOP + 0.005, z); scene.add(d); };
+  const rz = HW + CUSH_D + RAIL_W / 2, rx = HL + CUSH_D + RAIL_W / 2;
+  for (const k of [-3, -2, -1, 1, 2, 3]) { put(k * L / 8, rz); put(k * L / 8, -rz); }
+  for (const k of [-1, 0, 1]) { put(rx, k * W / 4); put(-rx, k * W / 4); }
+}
+// pocket liners: leather cups + chrome plates on the corners, leather on the sides
+for (const p of POCKETS) {
+  const depth = 0.16;
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(p.r, p.r * 0.85, depth, 40, 1, true), leatherMat);
+  cup.position.set(p.c.x, RAIL_TOP - depth / 2, p.c.y);
+  scene.add(cup);
+  const bottom = new THREE.Mesh(new THREE.CircleGeometry(p.r * 0.85, 32), blackMat);
+  bottom.rotation.x = -Math.PI / 2;
+  bottom.position.set(p.c.x, RAIL_TOP - depth + 0.001, p.c.y);
+  scene.add(bottom);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(p.r + 0.004, 0.006, 12, 48), p.type === 'corner' ? chromeMat : leatherMat);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.set(p.c.x, RAIL_TOP + 0.004, p.c.y);
+  ring.castShadow = true;
+  scene.add(ring);
+}
+
+// ===================== cushions: rubber-rail convex prisms =====================
+const cushionBodies = [];
+// Cross-section (depth d outward, height y): undercut nose at 0.036 m (~63% of ball diameter), sloped top.
+function makeCushion(alongX, sgn, u0, u1, k0, k1) {
+  const prof = [[0, 0], [0, CUSH_NOSE_H], [CUSH_D, CUSH_TOP_H], [CUSH_D, 0]];
+  const verts = [];
+  for (const e of [0, 1]) for (const [d, y] of prof) {
+    const u = e === 0 ? u0 - d * k0 : u1 + d * k1;     // angled jaws toward the pockets
+    const off = (alongX ? HW : HL) + d;
+    verts.push(alongX ? new THREE.Vector3(u, y, sgn * off) : new THREE.Vector3(sgn * off, y, u));
+  }
+  const faces = [[0, 1, 2, 3], [7, 6, 5, 4], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]];
+  const cen = verts.reduce((a, v) => a.add(v), new THREE.Vector3()).multiplyScalar(1 / verts.length);
+  for (const f of faces) { // enforce CCW-from-outside winding
+    const a = verts[f[0]], b = verts[f[1]], c = verts[f[2]];
+    const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, b));
+    const fc = f.reduce((s, i) => s.add(verts[i]), new THREE.Vector3()).multiplyScalar(1 / f.length).sub(cen);
+    if (n.dot(fc) < 0) f.reverse();
+  }
+  const shape = new CANNON.ConvexPolyhedron({
+    vertices: verts.map(v => new CANNON.Vec3(v.x - cen.x, v.y - cen.y, v.z - cen.z)),
+    faces: faces.map(f => f.slice()),
+  });
+  const body = new CANNON.Body({ mass: 0, material: cushionMat });
+  body.addShape(shape);
+  body.position.set(cen.x, cen.y, cen.z);
+  body.isCushion = true;
+  world.addBody(body);
+  cushionBodies.push(body);
+  const pos = [], uv = [];
+  for (const f of faces) for (let i = 1; i < f.length - 1; i++) for (const idx of [f[0], f[i], f[i + 1]]) {
+    const v = verts[idx]; pos.push(v.x, v.y, v.z); uv.push((v.x + v.z) * 2, v.y * 4 + (alongX ? v.z : v.x) * 2);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, cushionVisMat);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+for (const s of [-1, 1]) {
+  makeCushion(true, s, SIDE_HALF, HL - CORNER_GAP, SIDE_K, CORNER_K);
+  makeCushion(true, s, -(HL - CORNER_GAP), -SIDE_HALF, CORNER_K, SIDE_K);
+  makeCushion(false, s, -(HW - CORNER_GAP), HW - CORNER_GAP, CORNER_K, CORNER_K);
+}
+
+// ===================== balls =====================
+const ballGeo = new THREE.SphereGeometry(R, 48, 32);
+const balls = [];
+const faceUp = new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+for (let num = 0; num <= 15; num++) {
+  const mat = new THREE.MeshPhysicalMaterial({ map: ballTexture(num), roughness: 0.14, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04 });
+  const mesh = new THREE.Mesh(ballGeo, mat);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  scene.add(mesh);
+  const body = new CANNON.Body({ mass: BALL_MASS, material: ballMat, linearDamping: 0, angularDamping: 0, allowSleep: true, sleepSpeedLimit: 0.001, sleepTimeLimit: 1 });
+  body.addShape(new CANNON.Sphere(R));
+  body.ballNum = num;
+  balls.push({ num, body, mesh, onTable: false, anim: null });
+}
+const cueBall = balls[0];
+const groupOf = n => n === 0 ? 'cue' : n === 8 ? 'eight' : n < 8 ? 'solids' : 'stripes';
+
+// ===================== game state =====================
+const S = { phase: 'aim', current: 0, groups: null, isBreak: true, kitchen: true, ballInHand: true, winner: null };
+let shot = null;
+const dbg = { surface: 0, cushion: 0, maxOut: 0 };
+const NAMES = ['Player 1', 'Player 2'];
+
+function putBall(b, x, z) {
+  const body = b.body;
+  body.position.set(x, R, z);
+  body.velocity.setZero(); body.angularVelocity.setZero();
+  body.force.setZero(); body.torque.setZero();
+  if (!b.onTable) { world.addBody(body); b.onTable = true; }
+  b.anim = null;
+  b.mesh.visible = true;
+  b.mesh.position.set(x, R, z);
+  body.sleep();
+}
+function liftBall(b) {
+  if (b.onTable) world.removeBody(b.body);
+  b.onTable = false;
+}
+function rackPositions() {
+  const rows = [[1], [9, 2], [10, 8, 3], [11, 4, 12, 5], [6, 14, 13, 7, 15]];
+  const d = 2 * R + 0.0004, dx = d * Math.sqrt(3) / 2, pos = {};
+  rows.forEach((row, i) => row.forEach((n, j) => { pos[n] = [FOOT_X + i * dx, (j - i / 2) * d]; }));
+  return pos;
+}
+function newGame() {
+  const pos = rackPositions();
+  for (const b of balls) {
+    liftBall(b);
+    b.body.quaternion.copy(faceUp);
+    if (b.num === 0) putBall(b, HEAD_X - 0.2, 0);
+    else putBall(b, pos[b.num][0], pos[b.num][1]);
+  }
+  Object.assign(S, { phase: 'aim', current: 0, groups: null, isBreak: true, kitchen: true, ballInHand: true, winner: null });
+  shot = null; pull = null; aimAngle = 0;
+  dbg.surface = dbg.cushion = dbg.maxOut = 0;
+  document.getElementById('overlay').hidden = true;
+  setMsg(`${NAMES[0]} to break. Pull back to shoot, or move the cue ball behind the head string.`);
+  updateHUD();
+}
+function freeSpot(x, z, ignore) {
+  return balls.every(b => !b.onTable || b === ignore || Math.hypot(b.body.position.x - x, b.body.position.z - z) > 2 * R + 0.001);
+}
+function respot(num) {
+  const b = balls[num];
+  if (b.onTable) return;
+  let x = FOOT_X;
+  while (!freeSpot(x, 0, b) && x < HL - R) x += 0.005;
+  if (!freeSpot(x, 0, b)) { x = FOOT_X; while (!freeSpot(x, 0, b) && x > HEAD_X) x -= 0.005; }
+  b.body.quaternion.copy(faceUp);
+  putBall(b, x, 0);
+}
+
+// ===================== physics stepping =====================
+const _imp = new CANNON.Vec3(), _rp = new CANNON.Vec3();
+function clothForces(h) {
+  const dv = MU_SLIDE * G * h;
+  for (const b of balls) {
+    if (!b.onTable) continue;
+    const body = b.body;
+    if (body.sleepState === CANNON.Body.SLEEPING || body.position.y > R + 0.002) continue;
+    const v = body.velocity, w = body.angularVelocity;
+    // velocity of the contact point (0,-R,0): u = v + w x r
+    const ux = v.x + R * w.z, uz = v.z - R * w.x, us = Math.hypot(ux, uz);
+    _rp.set(0, -R, 0);
+    if (us > 3.5 * dv) {                         // sliding: kinetic friction at contact point
+      _imp.set(-ux / us * BALL_MASS * dv, 0, -uz / us * BALL_MASS * dv);
+      body.applyImpulse(_imp, _rp);
+    } else {                                    // natural roll reached
+      if (us > 1e-9) { _imp.set(-ux * BALL_MASS * 2 / 7, 0, -uz * BALL_MASS * 2 / 7); body.applyImpulse(_imp, _rp); }
+      const sp = Math.hypot(v.x, v.z);
+      if (sp > 0) { const f = Math.max(0, sp - MU_ROLL * G * h) / sp; v.x *= f; v.z *= f; }
+      w.x = v.z / R; w.z = -v.x / R;
+    }
+    const dw = SPIN_DECEL * h;
+    w.y = Math.abs(w.y) <= dw ? 0 : w.y - Math.sign(w.y) * dw;
+  }
+}
+function nearPocket(x, z) { return POCKETS.some(p => Math.hypot(x - p.c.x, z - p.c.y) < 0.17); }
+function checkBalls() {
+  for (const b of balls) {
+    if (!b.onTable) continue;
+    const p = b.body.position;
+    const pk = POCKETS.find(k => crossedMouth(k, p.x, p.z));
+    if (pk) { pocketBall(b, pk); continue; }
+    if (p.y < -0.3 || Math.abs(p.x) > HL + 0.35 || Math.abs(p.z) > HW + 0.35) { offTable(b); continue; }
+    // integrity monitor (used by the self-tests): surface and cushion penetration
+    if (p.y < R - 0.004) dbg.surface++;
+    const out = Math.max(Math.abs(p.x) - (HL - R), Math.abs(p.z) - (HW - R));
+    if (out > 0.006 && !nearPocket(p.x, p.z)) { dbg.cushion++; dbg.maxOut = Math.max(dbg.maxOut, out); }
+  }
+}
+function physicsStep() {
+  let maxV = 0;
+  for (const b of balls) if (b.onTable && b.body.sleepState !== CANNON.Body.SLEEPING) maxV = Math.max(maxV, b.body.velocity.length());
+  // substeps keep per-step travel under ~0.4 R so the cue ball (and anything it hits) cannot tunnel
+  const n = Math.min(MAX_SUBSTEPS, Math.max(1, Math.ceil((maxV * DT) / (R * 0.4))));
+  const h = DT / n;
+  for (let i = 0; i < n; i++) { clothForces(h); world.step(h); checkBalls(); }
+  for (const b of balls) {
+    if (!b.onTable) continue;
+    const body = b.body;
+    if (body.sleepState === CANNON.Body.SLEEPING) continue;
+    if (body.velocity.lengthSquared() < SLEEP_V * SLEEP_V && body.angularVelocity.lengthSquared() < SLEEP_W * SLEEP_W && body.position.y < R + 0.002) {
+      body.velocity.setZero(); body.angularVelocity.setZero(); body.sleep();
+    }
+  }
+  if (S.phase === 'moving' && balls.every(b => !b.onTable || b.body.sleepState === CANNON.Body.SLEEPING)) evaluateShot();
+}
+function pocketBall(b, pk) {
+  liftBall(b);
+  b.anim = { t: 0, from: b.mesh.position.clone(), to: new THREE.Vector3(pk.c.x, RAIL_TOP - 0.14, pk.c.y) };
+  if (shot) { shot.pocketed.push(b.num); if (b.num === 0) shot.cueScratch = true; }
+}
+function offTable(b) {
+  liftBall(b);
+  b.mesh.visible = false;
+  if (shot) { if (b.num === 0) { shot.cueScratch = true; shot.cueOff = true; } else shot.offTable.push(b.num); }
+}
+cueBall.body.addEventListener('collide', e => {
+  if (S.phase === 'moving' && shot && shot.firstHit == null && e.body.ballNum > 0) shot.firstHit = e.body.ballNum;
+});
+for (const c of cushionBodies) c.addEventListener('collide', () => { if (S.phase === 'moving' && shot && shot.firstHit != null) shot.railAfter = true; });
+
+// ===================== shooting =====================
+let aimAngle = 0, pull = null, power = 0;
+const spin = { x: 0, y: 0 };
+function aimDir() { return new THREE.Vector3(Math.cos(aimAngle), 0, Math.sin(aimAngle)); }
+function contactOffset(dir) {
+  const a = spin.x * SPIN_MAX, b = spin.y * SPIN_MAX;
+  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0));
+  return right.multiplyScalar(a * R).add(new THREE.Vector3(0, b * R, 0)).addScaledVector(dir, -Math.sqrt(Math.max(0, 1 - a * a - b * b)) * R);
+}
+function shoot(pw) {
+  if (S.phase !== 'aim' || !cueBall.onTable) return false;
+  const p = Math.min(1, Math.max(0, pw));
+  const dir = aimDir();
+  const speed = 0.2 + (MAX_SPEED - 0.2) * p;
+  const off = contactOffset(dir);
+  shot = {
+    firstHit: null, pocketed: [], offTable: [], cueScratch: false, cueOff: false, railAfter: false, isBreak: S.isBreak,
+    startOnTable: balls.filter(b => b.onTable && b.num !== 0).map(b => b.num),
+  };
+  const body = cueBall.body;
+  body.wakeUp();
+  // impulse along the cue line, applied at the tip contact point -> top/back/side spin
+  body.applyImpulse(new CANNON.Vec3(dir.x * BALL_MASS * speed, 0, dir.z * BALL_MASS * speed), new CANNON.Vec3(off.x, off.y, off.z));
+  S.phase = 'moving';
+  S.ballInHand = false;
+  pull = null; power = 0;
+  setMsg('…');
+  updateHUD();
+  return true;
+}
+
+// ===================== rules (8-ball, simplified) =====================
+function evaluateShot() {
+  const s = shot, me = S.current, opp = 1 - me;
+  const pocketed = s.pocketed.filter(n => n !== 0);
+  const myBefore = S.groups ? S.groups[me] : null;
+  const onEight = !!myBefore && !s.startOnTable.some(n => groupOf(n) === myBefore);
+  let foul = null, note = '';
+  if (s.cueScratch) foul = s.cueOff ? 'Foul: cue ball left the table' : 'Scratch! Cue ball pocketed';
+  else if (s.firstHit == null) foul = 'Foul: no ball hit';
+  else if (!s.isBreak) {
+    if (myBefore) {
+      if (onEight && s.firstHit !== 8) foul = 'Foul: you must hit the 8-ball first';
+      else if (!onEight && groupOf(s.firstHit) !== myBefore) foul = `Foul: hit ${s.firstHit === 8 ? 'the 8-ball' : 'an opponent ball'} first`;
+    } else if (s.firstHit === 8) foul = 'Foul: 8-ball hit first on an open table';
+    if (!foul && pocketed.length === 0 && !s.railAfter) foul = 'Foul: no rail after contact';
+  }
+  const eightGone = pocketed.includes(8) || s.offTable.includes(8);
+  for (const n of s.offTable) if (n !== 8) respot(n);
+  if (eightGone) {
+    if (s.isBreak) { respot(8); note += '8-ball on the break is re-spotted. '; }
+    else {
+      const win = onEight && pocketed.includes(8) && !foul;
+      return endGame(win ? me : opp, win ? `${NAMES[me]} pocketed the 8-ball.` :
+        onEight ? `${NAMES[me]} lost the 8-ball on a foul (${foul || 'off the table'}).` : `${NAMES[me]} pocketed the 8-ball early.`);
+    }
+  }
+  if (!S.groups && !s.isBreak && !foul) {
+    const first = pocketed.find(n => n !== 8);
+    if (first) {
+      const g = groupOf(first);
+      S.groups = [];
+      S.groups[me] = g; S.groups[opp] = g === 'solids' ? 'stripes' : 'solids';
+      note += `${NAMES[me]} takes ${g}. `;
+    }
+  }
+  const myGroup = S.groups ? S.groups[me] : null;
+  let cont = false;
+  if (!foul) cont = myGroup && !s.isBreak ? pocketed.some(n => groupOf(n) === myGroup) : pocketed.some(n => n !== 8);
+  S.isBreak = false;
+  shot = null;
+  if (foul) {
+    S.current = opp;
+    S.ballInHand = true;
+    S.kitchen = s.isBreak && s.cueScratch;
+    startPlacing(cueBall.onTable ? cueBall.body.position.x : HEAD_X - 0.2, cueBall.onTable ? cueBall.body.position.z : 0);
+    setMsg(`${foul}. ${note}${NAMES[opp]} has ball in hand${S.kitchen ? ' behind the head string' : ''} — click to place.`, 'foul');
+  } else if (cont) {
+    S.phase = 'aim';
+    setMsg(`${note}${NAMES[me]} pocketed ${pocketed.join(', ')} — shoot again.`);
+  } else {
+    S.current = opp;
+    S.phase = 'aim';
+    setMsg(`${note}${NAMES[opp]}'s turn.`);
+  }
+  updateHUD();
+}
+function endGame(winner, why) {
+  S.phase = 'over'; S.winner = winner; shot = null;
+  setMsg(`${NAMES[winner]} wins! ${why}`, 'win');
+  document.getElementById('winTxt').textContent = `${NAMES[winner]} wins!`;
+  document.getElementById('winWhy').textContent = why;
+  document.getElementById('overlay').hidden = false;
+  updateHUD();
+}
+
+// ===================== ball in hand =====================
+const ghostMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthWrite: false });
+const placeGhost = new THREE.Mesh(ballGeo, ghostMat);
+placeGhost.visible = false;
+scene.add(placeGhost);
+function placementValid(x, z) {
+  if (Math.abs(x) > HL - R - 0.002 || Math.abs(z) > HW - R - 0.002) return false;
+  if (S.kitchen && x > HEAD_X) return false;
+  return freeSpot(x, z, cueBall);
+}
+function startPlacing(x, z) {
+  liftBall(cueBall);
+  cueBall.anim = null;
+  cueBall.mesh.visible = false;
+  S.phase = 'placing';
+  placeGhost.position.set(x, R, z);
+  placeGhost.visible = true;
+  updateHUD();
+}
+function movePlacement(x, z) {
+  const lim = (v, m) => Math.max(-m, Math.min(m, v));
+  x = lim(x, HL - R - 0.003); z = lim(z, HW - R - 0.003);
+  if (S.kitchen) x = Math.min(x, HEAD_X);
+  placeGhost.position.set(x, R, z);
+  ghostMat.color.set(placementValid(x, z) ? 0xffffff : 0xff4040);
+}
+function placeCue(x, z) {
+  if (S.phase !== 'placing' || !placementValid(x, z)) return false;
+  putBall(cueBall, x, z);
+  placeGhost.visible = false;
+  S.phase = 'aim';
+  setMsg(`${NAMES[S.current]}: aim and pull back to shoot.`);
+  updateHUD();
+  return true;
+}
+
+// ===================== aim visuals & prediction =====================
+function mkLine(color, opacity) {
+  const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthTest: true }));
+  l.frustumCulled = false; scene.add(l); return l;
+}
+function setLine(l, a, b) { l.geometry.attributes.position.setXYZ(0, a.x, a.y, a.z); l.geometry.attributes.position.setXYZ(1, b.x, b.y, b.z); l.geometry.attributes.position.needsUpdate = true; l.visible = true; }
+const lineAim = mkLine(0xffffff, 0.85), lineObj = mkLine(0xffd34d, 0.95), lineCue = mkLine(0x7fd3ff, 0.9);
+const aimGhost = new THREE.Mesh(ballGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.35 }));
+scene.add(aimGhost);
+const contactDot = new THREE.Mesh(new THREE.SphereGeometry(0.005, 12, 8), new THREE.MeshBasicMaterial({ color: 0xff3030 }));
+scene.add(contactDot);
+
+// cue stick: tip at the group origin, butt along -X
+const cue = new THREE.Group();
+cue.rotation.order = 'YZX';
+{
+  const parts = [[0.006, 0.006, 0.008, 0, 0x2a6fdb], [0.0062, 0.0063, 0.018, -0.008, 0xf2efe6], [0.0064, 0.0095, 0.95, -0.026, 0xe0c08a], [0.0095, 0.0145, 0.5, -0.976, 0x3a1a0c]];
+  for (const [rt, rb, len, x0, col] of parts) {
+    const g = new THREE.CylinderGeometry(rt, rb, len, 24);
+    g.rotateZ(-Math.PI / 2);
+    g.translate(x0 - len / 2, 0, 0);
+    const m = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.35, clearcoat: 0.5 }));
+    m.castShadow = true;
+    cue.add(m);
+  }
+}
+scene.add(cue);
+
+function predict(o, dir) {
+  let best = { t: Infinity, type: 'none' };
+  for (const b of balls) {
+    if (!b.onTable || b.num === 0) continue;
+    const dx = b.body.position.x - o.x, dz = b.body.position.z - o.z;
+    const proj = dx * dir.x + dz * dir.z;
+    if (proj <= 0) continue;
+    const perp2 = dx * dx + dz * dz - proj * proj;
+    if (perp2 >= 4 * R * R) continue;
+    const t = proj - Math.sqrt(4 * R * R - perp2);
+    if (t < best.t) best = { t: Math.max(0, t), type: 'ball', ball: b };
+  }
+  const tx = dir.x > 1e-9 ? (HL - R - o.x) / dir.x : dir.x < -1e-9 ? (-HL + R - o.x) / dir.x : Infinity;
+  const tz = dir.z > 1e-9 ? (HW - R - o.z) / dir.z : dir.z < -1e-9 ? (-HW + R - o.z) / dir.z : Infinity;
+  const tc = Math.min(tx, tz);
+  if (tc < best.t) {
+    const px = o.x + dir.x * tc, pz = o.z + dir.z * tc;
+    best = { t: tc, type: nearPocket(px, pz) ? 'pocket' : 'cushion', nx: tx < tz ? 1 : 0 };
+  }
+  return best;
+}
+function updateAimVisuals() {
+  const show = S.phase === 'aim' && cueBall.onTable;
+  for (const o of [lineAim, lineObj, lineCue, aimGhost, contactDot, cue]) o.visible = false;
+  if (!show) return;
+  const dir = aimDir(), y = 0.002;
+  const cp = cueBall.body.position, o = new THREE.Vector3(cp.x, y, cp.z);
+  const hit = predict(cp, dir);
+  const end = o.clone().addScaledVector(dir, Math.min(hit.t, 4));
+  setLine(lineAim, o, end);
+  if (hit.type === 'ball') {
+    aimGhost.position.set(end.x, R, end.z); aimGhost.visible = true;
+    const bp = hit.ball.body.position;
+    const n = new THREE.Vector3(bp.x - end.x, 0, bp.z - end.z).normalize();
+    contactDot.position.set(end.x + n.x * R, R, end.z + n.z * R); contactDot.visible = true;
+    const cosA = Math.max(0, dir.dot(n));
+    setLine(lineObj, new THREE.Vector3(bp.x, y, bp.z), new THREE.Vector3(bp.x, y, bp.z).addScaledVector(n, 0.12 + 0.45 * cosA));
+    const tan = dir.clone().addScaledVector(n, -dir.dot(n));
+    if (tan.lengthSq() > 1e-8) { tan.normalize(); setLine(lineCue, end, end.clone().addScaledVector(tan, 0.08 + 0.35 * Math.sqrt(1 - cosA * cosA))); }
+  } else if (hit.type === 'cushion') {
+    aimGhost.position.set(end.x, R, end.z); aimGhost.visible = true;
+    const refl = dir.clone(); if (hit.nx) refl.x = -refl.x; else refl.z = -refl.z;
+    setLine(lineCue, end, end.clone().addScaledVector(refl, 0.35));
+  }
+  // cue stick, drawn back with power
+  const off = contactOffset(dir);
+  const tip = new THREE.Vector3(cp.x, cp.y, cp.z).add(off).addScaledVector(dir, -(0.006 + power * 0.28));
+  cue.position.copy(tip);
+  cue.rotation.set(0, -aimAngle, -0.06);
+  cue.visible = true;
+}
+
+// ===================== input =====================
+const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const tablePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -R);
+const pointers = new Set();
+function pickTable(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  const p = new THREE.Vector3();
+  return raycaster.ray.intersectPlane(tablePlane, p) ? p : null;
+}
+function aimAt(p) {
+  const c = cueBall.body.position, dx = p.x - c.x, dz = p.z - c.z;
+  if (dx * dx + dz * dz > 1e-6) aimAngle = Math.atan2(dz, dx);
+}
+const cvs = renderer.domElement;
+cvs.addEventListener('pointerdown', e => {
+  pointers.add(e.pointerId);
+  if (pointers.size > 1) { pull = null; power = 0; updatePower(); return; }
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const p = pickTable(e);
+  if (!p) return;
+  if (S.phase === 'placing') { movePlacement(p.x, p.z); if (e.pointerType === 'mouse') placeCue(placeGhost.position.x, placeGhost.position.z); return; }
+  if (S.phase !== 'aim') return;
+  if (e.pointerType !== 'mouse') aimAt(p);
+  pull = { start: p };
+  power = 0;
+});
+cvs.addEventListener('pointermove', e => {
+  if (pointers.size > 1) return;
+  const p = pickTable(e);
+  if (!p) return;
+  if (S.phase === 'placing') { if (e.pointerType === 'mouse' || pointers.size) movePlacement(p.x, p.z); return; }
+  if (S.phase !== 'aim') return;
+  if (pull) {
+    const d = aimDir();
+    const back = (pull.start.x - p.x) * d.x + (pull.start.z - p.z) * d.z;
+    if (back < -0.02 && e.pointerType !== 'mouse') { aimAt(p); pull.start = p; power = 0; }   // touch: drag forward re-aims
+    else power = Math.max(0, Math.min(1, back / PULL_MAX));
+    updatePower();
+  } else if (e.pointerType === 'mouse' && e.buttons === 0) aimAt(p);
+});
+function endPointer(e, cancel) {
+  pointers.delete(e.pointerId);
+  if (S.phase === 'placing' && e.pointerType !== 'mouse' && !cancel) placeCue(placeGhost.position.x, placeGhost.position.z);
+  if (pull) {
+    const pw = power;
+    pull = null; power = 0;
+    if (!cancel && pw > 0.02) shoot(pw);
+    updatePower();
+  }
+}
+cvs.addEventListener('pointerup', e => endPointer(e, false));
+cvs.addEventListener('pointercancel', e => endPointer(e, true));
+cvs.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('keydown', e => {
+  if (S.phase === 'aim' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    aimAngle += (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 0.01 : 0.0015);
+    e.preventDefault();
+  } else if (e.key === 'Escape' && pull) { pull = null; power = 0; updatePower(); }
+});
+
+// spin widget
+const spinEl = document.getElementById('spin'), spinDot = document.getElementById('spinDot');
+let spinDrag = false;
+function setSpin(e) {
+  const r = spinEl.getBoundingClientRect();
+  let x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), y = -(e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+  const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+  spin.x = x; spin.y = y; drawSpin();
+}
+function drawSpin() {
+  spinDot.style.left = `${50 + spin.x * 42}%`; spinDot.style.top = `${50 - spin.y * 42}%`;
+  const parts = [];
+  if (spin.y > 0.15) parts.push('top'); else if (spin.y < -0.15) parts.push('draw');
+  if (spin.x > 0.15) parts.push('right'); else if (spin.x < -0.15) parts.push('left');
+  document.getElementById('spinTxt').textContent = parts.length ? parts.join(' + ') + ' spin' : 'Center hit';
+}
+spinEl.addEventListener('pointerdown', e => { spinDrag = true; spinEl.setPointerCapture(e.pointerId); setSpin(e); e.stopPropagation(); });
+spinEl.addEventListener('pointermove', e => { if (spinDrag) setSpin(e); });
+spinEl.addEventListener('pointerup', () => { spinDrag = false; });
+spinEl.addEventListener('dblclick', () => { spin.x = spin.y = 0; drawSpin(); });
+
+// ===================== camera views =====================
+let camAnim = null;
+function flyTo(pos, target) { camAnim = { t: 0, p0: camera.position.clone(), p1: pos, t0: controls.target.clone(), t1: target }; }
+document.getElementById('bTop').onclick = () => flyTo(new THREE.Vector3(0, innerWidth < innerHeight ? 4.6 : 2.9, 0.001), new THREE.Vector3());
+document.getElementById('bSide').onclick = () => flyTo(new THREE.Vector3(0, 0.75, 2.1), new THREE.Vector3());
+document.getElementById('bCue').onclick = () => {
+  const c = cueBall.onTable ? cueBall.body.position : { x: HEAD_X, z: 0 }, d = aimDir();
+  flyTo(new THREE.Vector3(c.x - d.x * 0.85, 0.32, c.z - d.z * 0.85), new THREE.Vector3(c.x + d.x * 0.3, 0, c.z + d.z * 0.3));
+};
+document.getElementById('bReset').onclick = () => newGame();
+document.getElementById('bNew').onclick = () => newGame();
+document.getElementById('bMove').onclick = () => {
+  if (S.phase === 'aim' && S.ballInHand) {
+    const p = cueBall.body.position;
+    startPlacing(p.x, p.z);
+    setMsg(`${NAMES[S.current]}: click to place the cue ball${S.kitchen ? ' behind the head string' : ''}.`);
+  }
+};
+
+// ===================== HUD =====================
+const msgEl = document.getElementById('msg');
+function setMsg(t, cls) { msgEl.textContent = t; msgEl.className = cls || ''; }
+function chip(n) {
+  const c = COLORS[n > 8 ? n - 8 : n];
+  return n > 8 ? `<span class="chip" style="background:${IVORY};box-shadow:inset 0 0 0 4px ${c}">${n}</span>`
+    : `<span class="chip" style="background:${c};color:${n === 8 || n === 2 || n === 4 || n === 7 ? '#fff' : '#111'}">${n}</span>`;
+}
+function updateHUD() {
+  for (const i of [0, 1]) {
+    document.getElementById('p' + i).classList.toggle('active', S.current === i && S.phase !== 'over');
+    const g = S.groups ? S.groups[i] : null;
+    document.getElementById('g' + i).textContent = g ? (g === 'solids' ? 'Solids (1–7)' : 'Stripes (9–15)') : 'Open table';
+    const left = g ? balls.filter(b => b.onTable && groupOf(b.num) === g).map(b => b.num) : [];
+    document.getElementById('t' + i).innerHTML = g ? (left.length ? left.map(chip).join('') : chip(8)) : '';
+  }
+  document.getElementById('bMove').hidden = !(S.phase === 'aim' && S.ballInHand);
+}
+const powerFill = document.getElementById('powerFill'), powerTxt = document.getElementById('powerTxt');
+function updatePower() { powerFill.style.height = `${power * 100}%`; powerTxt.textContent = `Power ${Math.round(power * 100)}%`; }
+
+// ===================== main loop =====================
+let acc = 0, last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  acc += dt;
+  let steps = 0;
+  while (acc >= DT && steps < 30) { physicsStep(); acc -= DT; steps++; }
+  if (steps === 30) acc = 0;
+  for (const b of balls) {
+    if (b.onTable) { b.mesh.position.copy(b.body.position); b.mesh.quaternion.copy(b.body.quaternion); }
+    else if (b.anim) {
+      const a = b.anim; a.t = Math.min(1, a.t + dt / 0.35);
+      b.mesh.position.set(a.from.x + (a.to.x - a.from.x) * a.t, a.from.y + (a.to.y - a.from.y) * a.t * a.t, a.from.z + (a.to.z - a.from.z) * a.t);
+      if (a.t >= 1) { b.mesh.visible = false; b.anim = null; }
+    }
+  }
+  if (camAnim) {
+    camAnim.t = Math.min(1, camAnim.t + dt / 0.8);
+    const k = camAnim.t * camAnim.t * (3 - 2 * camAnim.t);
+    camera.position.lerpVectors(camAnim.p0, camAnim.p1, k);
+    controls.target.lerpVectors(camAnim.t0, camAnim.t1, k);
+    if (camAnim.t >= 1) camAnim = null;
+  }
+  updateAimVisuals();
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ===================== test hooks (used by automated checks; harmless in play) =====================
+window.__pool = {
+  S, dbg, balls, POCKETS,
+  newGame, placeCue, startPlacing,
+  shoot(angle, pw, sx = 0, sy = 0) { aimAngle = angle; spin.x = sx; spin.y = sy; return shoot(pw); },
+  layout(cuePos, obj) { // place only the given balls, used for isolated tests
+    for (const b of balls) liftBall(b), (b.mesh.visible = false);
+    putBall(cueBall, cuePos[0], cuePos[1]);
+    for (const [n, p] of Object.entries(obj)) putBall(balls[+n], p[0], p[1]);
+    Object.assign(S, { phase: 'aim', isBreak: false, ballInHand: false, kitchen: false });
+    updateHUD();
+  },
+  simulate(sec = 30) { let n = 0; while (S.phase === 'moving' && n < sec * 120) { physicsStep(); n++; } return n; },
+  state() { return { phase: S.phase, current: S.current, groups: S.groups, ballInHand: S.ballInHand, kitchen: S.kitchen, winner: S.winner, msg: msgEl.textContent,
+    onTable: balls.filter(b => b.onTable).map(b => ({ n: b.num, x: +b.body.position.x.toFixed(4), y: +b.body.position.y.toFixed(4), z: +b.body.position.z.toFixed(4) })) }; },
+};
+
+newGame();
+drawSpin();
+updatePower();
+document.getElementById('loading').remove();
+requestAnimationFrame(frame);
+</script>
+</body>
