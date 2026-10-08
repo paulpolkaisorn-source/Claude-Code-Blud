@@ -9,10 +9,15 @@ Director log for the Claude Haiku 5.5 showcase page. Newest entries at the top o
 
 ## Done
 
+- Phase 2 core foundations (all verified in Chromium harness pages): src/core/types.ts, ticker.ts (single gsap.ticker loop, priorities), bus.ts, ease.ts (8 curves, exact bezier solver), timing.ts (5-7-5 T scale, weighted and per-line haiku staggers), env.ts + head-env partial, scroll.ts (Lenis + ScrollTrigger), pointer.ts (damped, velocity-aware), src/gl/stage.ts (persistent canvas, DPR cap, context-loss fallback), src/core/loader.ts (real weighted progress).
+- Phase 1 research: research/facts.md, 230 entries, every quote re-fetched and verified by independent agents (verify-*.md), a critic spot-check (no digit/unit mismatch) and a fix round.
+
 - Phase 0: agent definitions written (`.claude/agents/`), first agent verified as `claude-haiku-5-5` / `max`.
 - Architecture contract: `design/architecture.md`.
 
 ## In progress
+
+- Phase 1: art direction locked as five files (design/direction*.md) after drafts A/B, critique and director decisions; copy (content/copy.md) with fact-check.
 
 - Phase 0: scaffold (perf), Playwright smoke test (qa).
 - Phase 1: source scout (researcher), art direction drafts A/B + critique (art-director).
@@ -20,5 +25,10 @@ Director log for the Claude Haiku 5.5 showcase page. Newest entries at the top o
 ## In review
 
 ## Rejected (and why)
+
+- Direction merge attempt 1: the agent tried to write the whole document in one tool call and hit the 128K output ceiling; nothing was written. Re-run as five files written in 8 KB chunks.
+- Speed figure: no verified product-latency number exists. Customer quotes (excluded: no testimonials) and system-card eval timings ("not product latency") would mislead, so the Speed section shows no figure.
+- Head script WebGL probe: creating a WebGL2 context before first paint cost 43 ms cold; replaced with a feature check, real failures handled at boot.
+- Critic overruled by the director in four places (direction-aware hover, per-section cursors, post stack, split-and-reassemble titles) because the client brief asks for each.
 
 ## Cut or unverifiable

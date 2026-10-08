@@ -48,4 +48,14 @@ export default tseslint.config(
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
+  {
+    // Harness pages are dev-only verification pages (architecture section 10a).
+    files: ['harness/**/*.ts'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
 );

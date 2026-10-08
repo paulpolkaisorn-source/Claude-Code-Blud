@@ -1,0 +1,27 @@
+<script>
+// head-env: runs before first paint. Sets classes on <html>; src/core/env.ts reads them.
+(function () {
+  var t0 = performance.now();
+  var cl = document.documentElement.classList;
+  try {
+    cl.remove('no-js');
+    cl.add('js');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) cl.add('reduced-motion');
+    if (matchMedia('(hover: none) and (pointer: coarse)').matches) cl.add('touch');
+    // ?nogl is the QA switch for the static version.
+    var gl = null;
+    if (!location.search.includes('nogl')) {
+      gl = document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: false });
+    }
+    if (gl) gl.getExtension('WEBGL_lose_context')?.loseContext();
+    else cl.add('no-gl');
+  } catch (e) {
+    cl.add('no-gl'); // fail safe to the static version
+  }
+  try {
+    performance.measure('head-env', { start: t0, end: performance.now() });
+  } catch (e) {
+    // User Timing unavailable: the measure is informational only.
+  }
+})();
+</script>

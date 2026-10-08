@@ -33,7 +33,9 @@ src/styles/base.css                motion-2d (foundation task)  reset, typograph
 src/styles/fonts.css               perf (font task)
 public/fonts/*.woff2               perf (font task)
 
+src/core/types.ts                  scroll-choreo   shared types: SectionId, FormationId, Tier, Theme (no runtime code)
 src/core/env.ts                    perf
+src/partials/head-env.html         perf       inline <script> in <head> that sets html classes before first paint
 src/core/ease.ts                   motion-2d (foundation task)
 src/core/timing.ts                 motion-2d (foundation task)
 src/core/ticker.ts                 scroll-choreo
@@ -102,7 +104,7 @@ export function onReducedMotionChange(cb: (reduced: boolean) => void): () => voi
 export interface Tick { time: number; dt: number; frame: number } // seconds; dt clamped to [0, 1/20]
 export type TickFn = (t: Tick) => void;
 export const PRIORITY = { input: 0, scroll: 10, state: 20, glUpdate: 30, glRender: 40 } as const;
-export function initTicker(): void;                       // gsap.ticker.lagSmoothing(0); adds one gsap.ticker listener
+export function initTicker(): void;                       // gsap.ticker.lagSmoothing(0); adds one gsap.ticker listener. gsap.ticker is the only application loop; ScrollTrigger's internal empty rAF callback (gsap 3.15 Safari workaround) is accepted.
 export function addTick(fn: TickFn, priority?: number): () => void;   // returns remove fn; stable order within a priority
 
 // src/core/bus.ts  (typed event bus)
@@ -149,7 +151,7 @@ export interface Stage {
 export function createStage(canvas: HTMLCanvasElement): Stage; // throws if no WebGL2; caller checks env.gl first
 
 // src/gl/blocks/formations.ts
-export type FormationId = 'stanza' | 'race' | 'cap-0' | 'cap-1' | 'cap-2' | 'recede' | 'family' | 'rest' | 'column';
+export type { FormationId } from '../../core/types';   // FormationId lives in src/core/types.ts
 export interface Pose { p: [number, number, number]; r: [number, number, number]; s: [number, number, number] }
 export const BLOCK_COUNT = 17;
 export const ROWS = [5, 7, 5] as const;
@@ -168,6 +170,33 @@ export class Blocks {
 export function initChoreo(ctx: { stage: Stage | null; blocks: Blocks | null; rig: Rig | null; background: Background | null }): void;
 // Creates the ScrollTriggers that drive formations, camera keys and background ink per section. Emits 'theme' and 'formation'.
 ```
+
+### 6b. Per-section 3D layer (the "one 3D owner per section" rule)
+
+Each section's 3D or shader layer lives next to its 2D code, in its own file, owned by that section's three-scene or shader agent:
+
+```
+src/sections/<id>/gl.ts      three-scene or shader agent for <id>   imports from src/gl/** only; never imported by src/sections/<id>/<id>.ts
+```
+
+```ts
+// src/gl/section-gl.ts  (three-scene, GL foundation task)
+import type { SectionId, FormationId } from '../core/types';
+export interface CameraKey { position: [number, number, number]; target: [number, number, number]; fov: number }
+export interface GLWorld { stage: Stage; blocks: Blocks; lighting: Lighting; background: Background; post: Post; rig: Rig }
+export interface SectionGLHandle { update(progress: number, tick: Tick): void; setActive(active: boolean): void; dispose(): void }
+export interface SectionGL {
+  id: SectionId;
+  formation: FormationId;                       // the formation this section rests in
+  ink: 0 | 1;                                   // background theme while the section is current
+  camera(size: { width: number; height: number }): CameraKey;   // fit formulas from direction.md section 10
+  dof: { focus: number; bokeh: number } | null; // null = DoF pass removed
+  setup?(world: GLWorld): SectionGLHandle;      // extra objects (e.g. family phantom outlines); optional
+}
+export const SECTION_GL: readonly SectionGL[] // assembled by src/gl/boot.ts from src/sections/*/gl.ts, in page order
+```
+
+`src/choreo/timeline.ts` reads `SECTION_GL` and the section elements, and drives: formation transitions at section boundaries (scrubbed with `scrubLocal` and `ef.sym`), camera keys (interpolated with `ef.sym`), the ink-bleed front, DoF on/off, and each handle's `update(progress)`. `src/gl/boot.ts` (director) wires it all and registers the loader tasks.
 
 ```ts
 // Section contract — every src/sections/<id>/<id>.ts exports exactly one init function
@@ -200,6 +229,10 @@ Sections never import from `src/gl/**`. 2D and 3D talk only through `bus` and `s
 - 3D assets: none expected (procedural). Fonts under 120 KB total woff2.
 - One InstancedMesh for blocks, one fullscreen quad for the background, composer passes merged into as few EffectPasses as possible. Target under 15 draw calls per frame.
 - DPR capped by tier. Quality watchdog steps down when the median frame time over 60 frames exceeds 18.5 ms, with 3 s hysteresis.
+
+## 10a. Harness pages
+
+Agents verify modules in isolation with harness pages: `harness/<task>.html` plus `harness/<task>.ts`, owned by the agent that writes them. Vite serves any HTML under the root in dev, so `http://127.0.0.1:<port>/harness/<task>.html` loads real modules. Harness pages are never part of the production build (the build input is index.html only). Each harness sets `document.documentElement.dataset.harness = 'pass'` or `'fail:<reason>'` when its checks finish, so a Playwright script can read the result.
 
 ## 10. Dev servers and ports
 

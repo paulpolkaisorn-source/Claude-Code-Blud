@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scroll harness</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        font: 16px/1.4 system-ui, sans-serif;
+      }
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        display: flex;
+        gap: 12px;
+        padding: 8px 12px;
+        background: #fff;
+      }
+      section {
+        height: 150vh;
+        box-sizing: border-box;
+        padding: 72px 24px 24px;
+        border-top: 1px solid #888;
+      }
+    </style>
+  </head>
+  <body>
+    <nav aria-label="Harness sections">
+      <a href="#top">top</a>
+      <a href="#s1">s1</a>
+      <a href="#s2">s2</a>
+      <a href="#s3">s3</a>
+      <a href="#s4">s4</a>
+      <a href="#s5">s5</a>
+      <a href="#s6">s6</a>
+    </nav>
+    <main>
+      <section id="s1"><h2>s1</h2></section>
+      <section id="s2"><h2>s2</h2></section>
+      <section id="s3"><h2>s3</h2></section>
+      <section id="s4"><h2>s4</h2></section>
+      <section id="s5"><h2>s5</h2></section>
+      <section id="s6"><h2>s6</h2></section>
+    </main>
+    <script type="module" src="/harness/scroll.ts"></script>
+  </body>
+</html>

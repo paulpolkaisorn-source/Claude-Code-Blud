@@ -70,3 +70,18 @@ Linear working space with HalfFloat render targets; hex values are converted to 
 ## D12. Ban-list exceptions to record
 
 Bloom (specular only, threshold 0.96), Lenis (lerp 0.1, off under reduced motion), follow overshoot (1.86%, objects only, once per arrival), phantom dashed outlines in the family section (drafting convention, static, not a globe or a rotating wireframe).
+
+## D13. Engineering facts discovered in Phase 2 (apply in the direction)
+
+1. three 0.186.1 removed PCFSoftShadowMap for WebGL. Shadows use THREE.PCFShadowMap; softness comes from the shadow camera size and map resolution, not the map type.
+2. The head script no longer creates a WebGL context (43 ms cold in software GL). It checks `typeof WebGL2RenderingContext !== 'undefined'` and `?nogl`. If context creation fails later, boot adds `html.no-gl` and the static fallbacks appear.
+3. gsap.ticker is the page's only application loop. ScrollTrigger keeps an internal empty requestAnimationFrame callback (a Safari workaround in gsap 3.15) that cannot be removed without disabling ScrollTrigger; it is accepted.
+4. Pointer velocity smoothing uses a 0.1 s time constant (local constant), damping uses T.half.
+
+## D14. Document split (the direction is written as five files)
+
+- design/direction.md: headings 1-9 and 13-16 (concept, references, palette, typography, grid and spacing, easing, timing, motion principles, cursor, focus and interaction, ban-list exceptions, open questions, changelog). Heading 10, 11 and 12 in this file are one line each pointing to the files below.
+- design/direction-3d.md: heading 10 (3D direction) and heading 11 (formations).
+- design/direction-act1.md: heading 12 for preloader, hero, speed.
+- design/direction-act2.md: heading 12 for capabilities, code, family.
+- design/direction-act3.md: heading 12 for pricing, closing, footer.
