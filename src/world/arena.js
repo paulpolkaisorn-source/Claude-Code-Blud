@@ -146,6 +146,21 @@ function cliffGeometry(C, R) {
     box(1.1, hL, 1.1, -1, hL / 2, r + 0.5, shade(r + 2));
     box(1.1, hR, 1.1, C + 1, hR / 2, r + 0.5, shade(r + 3));
   }
+  // Outer meadow plateau so a tall (portrait) camera never sees past the arena; same mesh, no extra draw call.
+  const E = 34, OUT = 0x5aa457;
+  box(E, 1.4, R + 4 + 2 * E, -2 - E / 2, 0.7, R / 2, OUT);
+  box(E, 1.4, R + 4 + 2 * E, C + 2 + E / 2, 0.7, R / 2, OUT);
+  box(C + 4, 1.4, E, C / 2, 0.7, -2 - E / 2, OUT);
+  box(C + 4, 1.4, E, C / 2, 0.7, R + 2 + E / 2, OUT);
+  for (let i = 0; i < 70; i++) {
+    const a = hash01(i, 11) * Math.PI * 2, d = 3.2 + hash01(i, 12) * 12;
+    let x = C / 2 + Math.cos(a) * (C / 2 + d), z = R / 2 + Math.sin(a) * (R / 2 + d);
+    if (x > -2.6 && x < C + 2.6 && z > -2.6 && z < R + 2.6) continue;
+    const k = 0.7 + hash01(i, 13) * 0.6, leaf = hash01(i, 14) < 0.5 ? 0x3f9a4c : 0x2f7f3e;
+    parts.push({ geo: new THREE.CylinderGeometry(0.12 * k, 0.16 * k, 0.7 * k, 6), color: 0x7a5230, matrix: xf(x, 1.4 + 0.35 * k, z) });
+    parts.push({ geo: new THREE.IcosahedronGeometry(0.62 * k, 0), color: leaf, matrix: xf(x, 1.4 + 1.0 * k, z) });
+    parts.push({ geo: new THREE.IcosahedronGeometry(0.42 * k, 0), color: 0x52b35a, matrix: xf(x + 0.25 * k, 1.4 + 1.35 * k, z - 0.1 * k) });
+  }
   return mergeParts(parts);
 }
 
