@@ -99,17 +99,20 @@ function runChecks(): void {
   record('section is placed', section.classList.contains('is-placed'), String(section.className));
 
   if (title !== null) {
-    const axisTops = Array.from(section.querySelectorAll<HTMLElement>('.family__axis-line, .family__tick, .family__axis-label'))
-      .filter((node) => getComputedStyle(node).display !== 'none' && node.getBoundingClientRect().width > 0)
-      .map((node) => node.getBoundingClientRect().top);
-    const axisTop = Math.min(...axisTops);
-    const inkBottom = titleInkBottom(title);
-    const sp4 = parseFloat(getComputedStyle(section).getPropertyValue('--sp-4'));
-    record(
-      'title clears the axis, ticks and labels by sp-4 (lowest ink)',
-      axisTop - inkBottom >= sp4 - 0.5,
-      `gap ${(axisTop - inkBottom).toFixed(2)} px, sp-4 ${sp4} px`,
-    );
+    // Wide only (D24.1): on a phone the head is above the stage, so the axis is not below the title.
+    if (layout === 'wide') {
+      const axisTops = Array.from(section.querySelectorAll<HTMLElement>('.family__axis-line, .family__tick, .family__axis-label'))
+        .filter((node) => getComputedStyle(node).display !== 'none' && node.getBoundingClientRect().width > 0)
+        .map((node) => node.getBoundingClientRect().top);
+      const axisTop = Math.min(...axisTops);
+      const inkBottom = titleInkBottom(title);
+      const sp4 = parseFloat(getComputedStyle(section).getPropertyValue('--sp-4'));
+      record(
+        'title clears the axis, ticks and labels by sp-4 (lowest ink)',
+        axisTop - inkBottom >= sp4 - 0.5,
+        `gap ${(axisTop - inkBottom).toFixed(2)} px, sp-4 ${sp4} px`,
+      );
+    }
     const words = lastLineWords(title);
     record('title has no widow (last line has two words or more)', words >= 2, `last line ${words} words`);
   }
@@ -139,16 +142,46 @@ function runChecks(): void {
   const themeBlocks = section.querySelectorAll('[data-theme-block]').length;
   record('theme blocks: head, intro, axis title, four axis labels, four stations, notes', themeBlocks === 12, String(themeBlocks));
 
-  // D23.8: on a phone, each station label sits on its own station, and the title, the label above and the viewport
-  // only push it as far as they must. Positions are in stage coordinates, which are viewport coordinates at rest.
-  if (stage !== null && title !== null && layout === 'narrow') {
+  // D24.1, narrow: the head is in the section's flow above the stage. It starts sp-6 below the section top and ends above
+  // the stage. The stage starts at 50 svh, or sp-5 below the head when the head is taller than the space above the stage.
+  // Each station label is centred on its own station (within 0.5 px), and the axis title sits above the top end of the axis.
+  const head = section.querySelector<HTMLElement>('.family__head');
+  const axisTitle = section.querySelector<HTMLElement>('.family__axis-title');
+  const axisLine = section.querySelector<HTMLElement>('.family__axis-line');
+  if (stage !== null && head !== null && title !== null && layout === 'narrow') {
     const stageBox = stage.getBoundingClientRect();
+    const sectionBox = section.getBoundingClientRect();
     const size = viewportSize();
     const centres = stationCenters(size);
     const style = getComputedStyle(section);
     const gap = parseFloat(style.getPropertyValue('--sp-3'));
     const sp4 = parseFloat(style.getPropertyValue('--sp-4'));
-    const floor = titleInkBottom(title) - stageBox.top + sp4;
+    const sp5 = parseFloat(style.getPropertyValue('--sp-5'));
+    const sp6 = parseFloat(style.getPropertyValue('--sp-6'));
+    const headBox = head.getBoundingClientRect();
+    const headTop = headBox.top - sectionBox.top;
+    const headBottom = headBox.bottom - sectionBox.top;
+    const stageTop = stageBox.top - sectionBox.top;
+    record(
+      'narrow: head is in the flow, sp-6 from the section top, and ends above the stage',
+      Math.abs(headTop - sp6) <= 0.5 && headBox.bottom <= stageBox.top + 0.5,
+      `head ${headTop.toFixed(2)} to ${headBottom.toFixed(2)}, stage top ${stageTop.toFixed(2)}, sp-6 ${sp6}`,
+    );
+    const expectedTop = Math.max(0.5 * size.height, headBottom + sp5);
+    record(
+      'narrow: stage starts at 50 svh, or sp-5 below the head when the head is taller',
+      Math.abs(stageTop - expectedTop) <= 0.5,
+      `stage top ${stageTop.toFixed(2)}, expected ${expectedTop.toFixed(2)}`,
+    );
+    if (axisTitle !== null && axisLine !== null) {
+      const titleBox = axisTitle.getBoundingClientRect();
+      const lineBox = axisLine.getBoundingClientRect();
+      record(
+        'narrow: axis title sits above the top end of the axis, on its left edge',
+        titleBox.bottom <= lineBox.top + 0.5 && Math.abs(titleBox.left - lineBox.left) <= 1,
+        `title bottom ${titleBox.bottom.toFixed(2)}, axis top ${lineBox.top.toFixed(2)}, left ${titleBox.left.toFixed(2)} vs ${lineBox.left.toFixed(2)}`,
+      );
+    }
     const boxes = stations.map((li) => {
       const r = li.getBoundingClientRect();
       return { top: r.top - stageBox.top, bottom: r.bottom - stageBox.top, centre: (r.top + r.bottom) / 2 - stageBox.top };
@@ -160,25 +193,15 @@ function runChecks(): void {
       boxes.map((b) => `${b.top.toFixed(1)}-${b.bottom.toFixed(1)}`).join(' | '),
     );
     record(
-      'first phone label clears the title by sp-4',
-      boxes[0].top >= floor - 0.5,
-      `top ${boxes[0].top.toFixed(2)}, floor ${floor.toFixed(2)}`,
-    );
-    record(
       'phone labels stay on screen',
       boxes.every((b) => b.top >= -0.5 && b.bottom <= size.height - sp4 + 0.5),
       boxes.map((b) => b.bottom.toFixed(1)).join(', '),
     );
-    const placed = boxes.map(
-      (b, i) =>
-        Math.abs(b.centre - centres[i].y) <= 0.5 ||
-        Math.abs(b.top - floor) <= 0.5 ||
-        (i > 0 && Math.abs(b.top - (boxes[i - 1].bottom + gap)) <= 0.5),
-    );
+    const offsets = boxes.map((b, i) => b.centre - centres[i].y);
     record(
-      'each phone label is on its station, or pushed by the title or the label above',
-      placed.every(Boolean),
-      boxes.map((b, i) => `${(b.centre - centres[i].y).toFixed(2)}`).join(', '),
+      'each phone label is centred on its own station (within 0.5 px)',
+      offsets.every((o) => Math.abs(o) <= 0.5),
+      offsets.map((o) => o.toFixed(2)).join(', '),
     );
   }
 

@@ -1,9 +1,14 @@
 // The family section's 2D layer (design/direction-act2.md, family; design/drafts/director-decisions.md D4,
-// D16.4, D19.2, D20.1, D22.6, D22.12, D23.1 and D23.8; design/direction.md headings 8, 9 and 13).
+// D16.4, D19.2, D20.1, D22.6, D22.12, D23.1, D23.8 and D24.1; design/direction.md headings 8, 9 and 13).
 //
-// Phone labels (D23.8): each label is centred on its station's projected y, and fitStack moves a label only as far as
-// the title's clearance, the label above and the viewport bottom require. Block themes (D23.1): the head, intro, axis
-// title, axis labels, stations and notes carry data-theme-block; theme-front.ts sets their theme.
+// The head (kicker, title, intro) is a sibling of the stage, not a child (D24.1). On wide layouts it rests at the
+// stage's rest top plus 12 per cent, and this file moves it up only when its title would reach the axis labels. On
+// narrow layouts it is in the section's flow, above the stage, and the stage starts 50 svh down, or below the head
+// when the head is taller than that. The stage holds the axis, its title, the four station labels and the notes.
+//
+// Phone labels (D24.1, D23.8): each label is centred on its own station's projected y, with no push from its
+// neighbours. Block themes (D23.1): the head, intro, axis title, axis labels, stations and notes carry
+// data-theme-block; theme-front.ts sets their theme.
 //
 // This file owns the title reveal (SplitText, once, at the 80 per cent line), the dimension axis, the four
 // station label blocks, the source notes and the box of the no-WebGL overlay. Every position that follows a
@@ -103,18 +108,6 @@ function fontMetrics(el: HTMLElement): { ascent: number; descent: number } | nul
 }
 
 /**
- * The distance in px from the top of the first line box of el to its baseline. The content area of a line is the
- * font's ascent and descent, centred in the line height, so the baseline sits (line - (ascent + descent)) / 2 below
- * the line top, plus the ascent.
- */
-function baselineInLine(el: HTMLElement): number {
-  const line = parseFloat(getComputedStyle(el).lineHeight);
-  const m = fontMetrics(el);
-  if (m === null || !Number.isFinite(line)) return 0;
-  return (line - (m.ascent + m.descent)) / 2 + m.ascent;
-}
-
-/**
  * The distance in px from the top of the title's box to the lowest ink of its text. The box holds each line at its
  * line height, so the last baseline sits (ascent - descent - line height) / 2 above the box bottom, with the ascent and
  * descent of the font. The lowest glyph of the text reaches its ink descent below that baseline. The axis must clear
@@ -128,82 +121,6 @@ function titleInkBelowTop(title: HTMLElement): number {
   if (m === null || ctx === null || !Number.isFinite(line)) return box;
   const ink = ctx.measureText(title.textContent ?? '').actualBoundingBoxDescent;
   return box + (m.ascent - m.descent - line) / 2 + ink;
-}
-
-/**
- * The right edge, in viewport px, of the last line of the title's text. Each character is measured through a range,
- * so the result holds while the title is split for its reveal. A character whose top lies below the current line
- * starts a new line, so the last line is the one that is reached last.
- */
-function lastLineRight(title: HTMLElement): number {
-  let lineTop = -Infinity;
-  let right = -Infinity;
-  const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT);
-  const range = document.createRange();
-  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
-    const text = node.textContent ?? '';
-    for (let i = 0; i < text.length; i += 1) {
-      if (text[i].trim() === '') continue;
-      range.setStart(node, i);
-      range.setEnd(node, i + 1);
-      const box = range.getBoundingClientRect();
-      if (box.top > lineTop + 1) {
-        lineTop = box.top;
-        right = box.right;
-      } else if (box.top >= lineTop - 1) {
-        right = Math.max(right, box.right);
-      }
-    }
-  }
-  return right;
-}
-
-/**
- * The tops of a column of label blocks on a phone (D23.8). Block k is centred on centres[k] wherever the constraints
- * allow, and they are: the first top is at least floor (the title's clearance); each block starts at least gap below
- * the block above it, so no two overlap; and the last bottom is at most ceiling, so the column stays on screen.
- * The result is the least-squares fit of the tops to their centred positions under those constraints. Writing each top
- * as its offset plus the gaps above it turns the gap rule into "offsets never decrease", a monotone fit that
- * pool-adjacent-violators solves. The fit is then clipped to the range the floor and the ceiling leave, which keeps
- * it monotone, and a block moves only as far as the constraints need.
- */
-function fitStack(
-  centres: readonly number[],
-  heights: readonly number[],
-  gap: number,
-  floor: number,
-  ceiling: number,
-): number[] {
-  const n = centres.length;
-  const offsets: number[] = [];
-  let run = 0;
-  for (let k = 0; k < n; k += 1) {
-    offsets.push(run);
-    run += heights[k] + gap;
-  }
-  const pools: { mean: number; count: number }[] = [];
-  for (let k = 0; k < n; k += 1) {
-    pools.push({ mean: centres[k] - heights[k] / 2 - offsets[k], count: 1 });
-    while (pools.length > 1 && pools[pools.length - 2].mean > pools[pools.length - 1].mean) {
-      const last = pools.pop();
-      const before = pools[pools.length - 1];
-      if (last === undefined) break;
-      const count = before.count + last.count;
-      before.mean = (before.mean * before.count + last.mean * last.count) / count;
-      before.count = count;
-    }
-  }
-  // The largest offset that the ceiling allows the last block. The offsets are monotone, so it bounds every block.
-  const upper = ceiling - heights[n - 1] - offsets[n - 1];
-  const tops: number[] = [];
-  for (const pool of pools) {
-    // The floor wins over the ceiling, because the title's clearance is the stronger rule.
-    const offset = Math.max(Math.min(pool.mean, upper), floor);
-    for (let j = 0; j < pool.count; j += 1) {
-      tops.push(offset + offsets[tops.length]);
-    }
-  }
-  return tops;
 }
 
 export function initFamily(ctx: SectionContext): void {
@@ -240,11 +157,13 @@ export function initFamily(ctx: SectionContext): void {
   }
   const points: Point[] = [];
 
-  /** Places the stations, ticks, labels, notes and overlay box for the current viewport. */
+  /** Places the head, stations, ticks, labels, notes and overlay box for the current viewport. */
   const layout = (): void => {
     const size = viewportSize();
     const narrow = size.width / size.height < 1; // C3: an aspect below 1.0 is the narrow class
-    stage.dataset.layout = narrow ? 'narrow' : 'wide';
+    const name = narrow ? 'narrow' : 'wide';
+    stage.dataset.layout = name;
+    section.dataset.layout = name;
     // D22.12: the stage is the viewport, in the height that projection.ts uses (svh and innerHeight can differ).
     stage.style.height = px(size.height);
     const pts = stationCenters(size, points);
@@ -258,24 +177,27 @@ export function initFamily(ctx: SectionContext): void {
     const gap = token(section, '--sp-3');
     const small = token(section, '--sp-2');
     const edge = token(section, '--sp-4');
+    const sectionTop = section.getBoundingClientRect().top;
 
-    const stageTop = stage.getBoundingClientRect().top;
-    // The lowest ink of the title, from the top of its box. Every part of the axis clears it by the edge (sp-4).
-    const titleInk = titleInkBelowTop(title);
+    // The stage starts at its CSS top (50 svh) unless a narrow head pushes it down (D24.1). Its inline top is cleared
+    // first, so the rest top is read from the stylesheet.
+    stage.style.top = '';
+    const stageTop = stage.getBoundingClientRect().top - sectionTop;
 
     if (!narrow) {
-      intro.classList.remove('is-spacer');
-      // The head keeps the CSS rest top (12 per cent of the stage) unless its lowest line would come within the edge
-      // of the axis labels. Then the head moves up by the difference. The label's text is 12 px above the tick, and
-      // its knockout box rises 2 px above the text, so the box top is the edge that the title clears.
+      // The head rests at its CSS position, 12 per cent of the stage below the stage's top. It moves up by the difference
+      // when its lowest line would come within the edge of the axis labels. The label's text is 12 px above the tick,
+      // and its knockout box rises 2 px above the text, so the box top is the edge that the title clears. The head's
+      // offsets are in section coordinates and the axis is in stage coordinates, so the head's offset is converted.
+      const titleInk = titleInkBelowTop(title);
       const axisY = oy - AXIS_OFFSET_BU * s;
       const labelLine = parseFloat(getComputedStyle(axisLabels[0]).lineHeight);
       const labelTop = axisY - tickLen / 2 - gap - labelLine - KNOCK_PAD_PX;
       head.style.top = '';
-      const restTop = parseFloat(getComputedStyle(head).top);
+      const restTop = parseFloat(getComputedStyle(head).top) - stageTop;
       const headInk = Math.max(titleInk, intro.offsetHeight);
       const headTop = Math.min(restTop, labelTop - edge - headInk);
-      head.style.top = headTop < restTop ? px(headTop) : '';
+      head.style.top = headTop < restTop ? px(stageTop + headTop) : '';
 
       const axisLeft = ox - AXIS_HALF_BU * s;
       place(axisLine, { left: axisLeft, top: axisY, width: OVERLAY_LONG_BU * s, height: 1 });
@@ -305,60 +227,35 @@ export function initFamily(ctx: SectionContext): void {
       svg.setAttribute('viewBox', `-${AXIS_HALF_BU} -${OVERLAY_SHORT_BU / 2} ${OVERLAY_LONG_BU} ${OVERLAY_SHORT_BU}`);
       stanzas.removeAttribute('transform');
     } else {
-      // Portrait: the family group turns by -pi/2, so the stations run down the screen, Slower at the top. The head
-      // is in the flow here, so its rest position is the title's own top.
+      // Portrait (D24.1): the head is in the section's flow, above the stage. The stage starts at its CSS top, or lower
+      // when the head's bottom and a gap of sp-5 below it lie lower. The stage's rect is the 3D anchor (data-anchor),
+      // so the 3D follows the stage wherever it is.
       head.style.top = '';
+      const headBottom = head.getBoundingClientRect().bottom - sectionTop;
+      const lowest = Math.max(stageTop, headBottom + token(section, '--sp-5'));
+      stage.style.top = lowest > stageTop ? px(lowest) : '';
+      // The family group turns by -pi/2, so the stations run down the screen, Slower at the top. The axis runs from the
+      // +14 bu end at its top to the -14 bu end at its bottom, and all six ticks are shown.
       const axisX = ox - AXIS_OFFSET_BU * s;
+      const axisTop = oy - AXIS_HALF_BU * s;
       const axisBottom = oy + AXIS_HALF_BU * s;
-      // The axis starts one edge below the title's lowest ink. Its top end is the -14 bu tick, which is hidden while the
-      // axis is trimmed, so no tick is drawn into the title. The first station tick is checked by the same measure.
-      const inkBottom = title.getBoundingClientRect().top - stageTop + titleInk;
-      const axisNaturalTop = oy - AXIS_HALF_BU * s;
-      const axisTop = Math.max(axisNaturalTop, inkBottom + edge);
-      const trimmed = axisTop > axisNaturalTop;
       place(axisLine, { left: axisX, top: axisTop, width: 1, height: axisBottom - axisTop });
       TICK_BU.forEach((bu, k) => {
         place(ticks[k], { left: axisX - tickLen / 2, top: oy + bu * s - 0.5, width: tickLen, height: 1 });
-        ticks[k].style.display = trimmed && k === 0 ? 'none' : '';
+        ticks[k].style.display = '';
       });
       axisLabels.forEach((label) => place(label, {}));
-      // The axis title sits at the right margin, on the baseline of the title's last line, so that the two share a row.
-      // It wraps inside the space that the last line leaves free, and the rows below the title stay clear for the axis
-      // and the Fastest block.
-      const titleBox = title.getBoundingClientRect();
-      const titleLine = parseFloat(getComputedStyle(title).lineHeight);
-      const titleLines = Math.max(1, Math.round(titleBox.height / titleLine));
-      const lastBaseline = titleBox.top - stageTop + (titleLines - 1) * titleLine + baselineInLine(title);
-      const stageBox = stage.getBoundingClientRect();
-      const freeWidth = Math.max(0, stageBox.width - 2 * edge - (lastLineRight(title) - stageBox.left));
-      const labelLine = parseFloat(getComputedStyle(axisTitle).lineHeight);
-      place(axisTitle, { right: edge, top: 0, width: freeWidth });
-      const labelLines = Math.max(1, Math.round(axisTitle.getBoundingClientRect().height / labelLine));
-      place(axisTitle, {
-        right: edge,
-        top: lastBaseline - (labelLines - 1) * labelLine - baselineInLine(axisTitle),
-        width: freeWidth,
-      });
+      // The axis title sits 7 px (sp-2) above the top end of the axis, on the axis's left edge.
+      const titleLine = parseFloat(getComputedStyle(axisTitle).lineHeight);
+      place(axisTitle, { left: axisX, top: axisTop - small - titleLine });
       place(notes, {});
-      placeIntro(size.height, stage.offsetHeight, token(section, '--sp-5'), gap);
       const blockLeft = ox + (STANZA_HALF_BU + BLOCK_GAP_BU) * s;
       const blockWidth = size.width - edge - blockLeft;
       blocks.forEach((li) => place(li, { left: blockLeft, width: blockWidth }));
-      // Each block sits on its own station (D23.8): centred on the station's projected y. The title's clearance (sp-4
-      // below its lowest ink) and the block above it can push a block down, and the bottom of the viewport can stop
-      // it, so fitStack moves the column by the least amount that those constraints need. The heights are read after
-      // the width is set, because the text wraps inside that width.
+      // Each label is centred on its own station (D24.1). The heights are read once the width is set, because the text
+      // wraps inside that width.
       const heights = blocks.map((li) => li.offsetHeight);
-      const tops = fitStack(
-        pts.map((p) => p.y),
-        heights,
-        gap,
-        inkBottom + edge,
-        size.height - edge,
-      );
-      blocks.forEach((li, i) => {
-        li.style.top = px(tops[i]);
-      });
+      blocks.forEach((li, i) => place(li, { left: blockLeft, width: blockWidth, top: pts[i].y - heights[i] / 2 }));
       place(fallback, {
         left: ox - (OVERLAY_SHORT_BU / 2) * s,
         top: oy - AXIS_HALF_BU * s,
@@ -370,26 +267,6 @@ export function initFamily(ctx: SectionContext): void {
       stanzas.setAttribute('transform', 'matrix(0 1 -1 0 0 0)');
     }
     section.classList.add('is-placed');
-  };
-
-  /**
-   * Narrow only. The intro is drawn in the spacer above the notes when the spacer has room for it. The room is the
-   * part of the 2 vh section below the block that lies above its last 0.18 vh, which direction.md heading 8, rule 13
-   * keeps free of text: 2 vh less 1.5 vh less 0.18 vh, that is 0.32 vh. Otherwise the intro stays visually hidden
-   * and is read by assistive technology only.
-   */
-  const placeIntro = (viewportHeight: number, stageHeight: number, offset: number, gap: number): void => {
-    const room = 0.32 * viewportHeight;
-    intro.classList.remove('is-spacer');
-    notes.style.top = '';
-    const notesHeight = notes.offsetHeight;
-    intro.classList.add('is-spacer');
-    const introHeight = intro.offsetHeight;
-    if (offset + introHeight + gap + notesHeight <= room) {
-      notes.style.top = px(stageHeight + offset + introHeight + gap);
-    } else {
-      intro.classList.remove('is-spacer');
-    }
   };
 
   // ---------- Title reveal (direction.md heading 8, rule 15; D2.3) ----------

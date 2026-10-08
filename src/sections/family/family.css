@@ -1,7 +1,12 @@
 /*
  * Family section, act II (ink). Scoped under #family. Owner: motion-2d.
  * Source: design/direction-act2.md, family; design/direction.md headings 3, 4, 5, 8 and 13;
- * design/drafts/director-decisions.md D4, D16.4 and D19.2.
+ * design/drafts/director-decisions.md D4, D16.4, D19.2 and D24.1.
+ *
+ * The head (kicker, title, intro) is a sibling of the stage, not a child (D24.1). On wide layouts it is
+ * absolutely placed in the section, at the rest position of the stage (50 svh) plus 12 svh, as it was inside
+ * the stage. On narrow layouts it is in the section's flow, above the stage, with the section head padding.
+ * The stage is the viewport-sized box that holds the axis, the four station labels and the notes (D22.12).
  *
  * family.ts places everything that follows a 3D block (the axis, the four station blocks, the notes
  * and the no-WebGL overlay) from src/core/projection.ts. This file sets the section height, the layout
@@ -28,10 +33,12 @@
 
 /* ---------- Head: kicker, title and intro ---------- */
 
+/* Wide: the stage's rest top (50 svh) plus the head's 12 per cent, measured from the section top. family.ts moves
+   the head up only when the title would reach the axis labels. */
 #family .family__head {
   position: absolute;
-  top: 12vh;
-  top: 12svh;
+  top: calc(50vh + 12vh);
+  top: calc(50svh + 12svh);
   left: 50%;
   translate: -50% 0;
   width: min(100%, var(--wrap-max));
@@ -72,70 +79,37 @@
   }
 }
 
-/* Narrow (aspect below 1.0): one column, 19 px margins, the kicker in the flow above the title. The head is in the
-   flow of the stage, so an absolutely placed intro in the spacer measures from the stage and not from the head. */
-#family .family__stage[data-layout="narrow"] .family__head {
+/* Narrow (aspect below 1.0, D24.1): the head is in the section's flow, above the stage. Its top is the section head
+   padding that the act gives (sp-6, as the pricing head does on a phone), and the stage starts at 50 svh below it.
+   family.ts moves the stage down only when the head is taller than the 50 svh above the stage. */
+#family[data-layout="narrow"] {
+  padding-top: var(--sp-6);
+}
+
+#family[data-layout="narrow"] .family__head {
   position: static;
   translate: none;
   left: auto;
   top: auto;
   width: auto;
-  margin-block-start: var(--sp-2);
-  padding-inline: var(--sp-4);
+  padding-inline: var(--margin);
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Narrow: the kicker sits at the top right, in the row of the title's first line, so the title can start at the
-   spec's 7 px. Above the title it would push the title 23 px lower, past the clearance above the top station
-   (D22.12, the act II 2D fields). The title's first line ends 250 px from the left margin at 375 px, so the kicker
-   fits to its right. Below 352 px the kicker goes back above the title, and that case is not measured. */
-#family .family__stage[data-layout="narrow"] .family__kicker {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-4);
-  left: auto;
-  bottom: auto;
-  margin: 0;
+/* Narrow: the kicker is in the flow, above the title, as it is on wide. */
+#family[data-layout="narrow"] .family__kicker {
+  position: static;
+  margin: 0 0 var(--sp-2);
 }
 
-@media (max-width: 351px) {
-  #family .family__stage[data-layout="narrow"] .family__kicker {
-    position: static;
-    top: auto;
-    right: auto;
-    margin-bottom: var(--sp-2);
-  }
-}
-
-#family .family__stage[data-layout="narrow"] .family__title,
-#family .family__stage[data-layout="narrow"] .family__intro {
+/* Narrow: one full-width column, with the intro 31 px (sp-5) below the title. */
+#family[data-layout="narrow"] .family__title,
+#family[data-layout="narrow"] .family__intro {
   grid-column: 1 / -1;
 }
 
-/* Narrow: the intro is read by assistive technology, and it is drawn in the spacer below the block only when the
-   spacer has room for it (family.ts, placeIntro). Otherwise it stays visually hidden, as sr-only text does. */
-#family .family__stage[data-layout="narrow"] .family__intro {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-#family .family__stage[data-layout="narrow"] .family__intro.is-spacer {
-  top: calc(100% + var(--sp-5));
-  left: var(--sp-4);
-  right: var(--sp-4);
-  width: auto;
-  height: auto;
-  margin: 0;
-  overflow: visible;
-  clip-path: none;
-  white-space: normal;
+#family[data-layout="narrow"] .family__intro {
+  margin-block-start: var(--sp-5);
 }
 
 /* Title split (GSAP SplitText, direction.md heading 8, rule 15). Words stay whole; characters move. */
@@ -158,14 +132,6 @@
   position: absolute;
   color: var(--text-3);
   white-space: nowrap;
-}
-
-/* Narrow: the axis title sits at the right margin, beside the title's last line, in two lines. family.ts sets its top
-   and width, so that it stays clear of the last line and of the axis. Below the axis is the Haiku block, and the
-   row above it has the kicker, so the title's rows are the only free space at the right. */
-#family .family__stage[data-layout="narrow"] .family__axis-title {
-  white-space: normal;
-  text-align: right;
 }
 
 #family .family__axis {

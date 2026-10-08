@@ -10,6 +10,9 @@
   </head>
   <body>
     <div style="height: 100vh" aria-hidden="true"></div>
+    <!-- Stands in for the closing CTA (D24.5): a fixed, transparent element before the footer, so that the footer's pointer
+         events can be hit-tested. The footer is positioned above it in paint order, as it is above the real CTA. -->
+    <div id="cta-probe" aria-hidden="true" style="position: fixed; inset: 0"></div>
     <!-- @include src/sections/footer/footer.html -->
     <div style="height: 100vh" aria-hidden="true"></div>
     <script type="module" src="/harness/section-footer.ts"></script>

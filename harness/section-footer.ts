@@ -41,6 +41,30 @@ if (footer instanceof HTMLElement) {
   // The drawing's unit is lowercase (D23.5): the SVG text's unit span resets the uppercase label style.
   const unit = footer.querySelector<SVGTSpanElement>('.footer__dimension-label .footer__unit');
   if (unit?.textContent !== 'bu' || getComputedStyle(unit).textTransform !== 'none') failures.push('footer-unit-case');
+
+  // Pointer events (D24.5). The footer box and its non-interactive wrappers pass pointer events through; links, buttons
+  // and text keep them. The panel keeps them only where it is opaque (portrait), and there it covers the probe.
+  const pointerOf = (el: Element | null): string => (el === null ? 'missing' : getComputedStyle(el).pointerEvents);
+  const portrait = !window.matchMedia('(min-aspect-ratio: 1/1)').matches;
+  const panel = footer.querySelector('.footer__panel');
+  const grid = footer.querySelector<HTMLElement>('.footer__grid');
+  const probe = document.getElementById('cta-probe');
+  if (pointerOf(footer) !== 'none') failures.push('pe-footer');
+  if (pointerOf(grid) !== 'none' || pointerOf(footer.querySelector('.footer__title')) !== 'none') failures.push('pe-wrap');
+  if (pointerOf(panel) !== (portrait ? 'auto' : 'none')) failures.push('pe-panel');
+  if (pointerOf(document.getElementById('footer-title')) !== 'auto') failures.push('pe-title');
+  if (pointerOf(footer.querySelector('.footer__disclaimer')) !== 'auto') failures.push('pe-text');
+  if (pointerOf(footer.querySelector('#sources a')) !== 'auto') failures.push('pe-link');
+  if (grid !== null && probe !== null) {
+    // Hit test on the grid's top-left padding, where no text sits: the probe takes it on landscape, the panel on portrait.
+    window.scrollTo(0, footer.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.5);
+    const box = grid.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + 2, box.top + 2);
+    if (hit !== (portrait ? panel : probe)) failures.push('pe-hit');
+    window.scrollTo(0, 0);
+  } else {
+    failures.push('pe-probe');
+  }
 } else {
   failures.push('no-footer');
 }

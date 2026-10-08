@@ -52,12 +52,14 @@
 
 /* ---------- The text panel ---------- */
 
-/* Portrait and phone: all footer text sits in one opaque panel that covers the column behind it (act III, Deviation 6). */
+/* Portrait and phone: all footer text sits in one opaque panel that covers the column behind it (act III, Deviation 6).
+   The opaque panel keeps its pointer events (D24.5): it hides the closing CTA beneath it, so it takes the pointer there. */
 #footer .footer__panel {
   position: relative;
   margin-inline: calc(-1 * var(--margin));
   padding: var(--sp-4);
   background: var(--bg);
+  pointer-events: auto;
 }
 
 /* Landscape: no panel. The text sits in columns 1 to 8 (desktop) or 1 to 9 (tablet), so it never covers the column. */
@@ -68,6 +70,7 @@
     margin-inline: 0;
     padding: 0;
     background: transparent;
+    pointer-events: none;
   }
 }
 
@@ -85,6 +88,7 @@
     margin-inline: 0;
     padding: 0;
     background: transparent;
+    pointer-events: none;
   }
 }
 
@@ -427,4 +431,41 @@ html.no-js #footer .footer__title {
 
 #footer a:hover {
   color: var(--seal-text);
+}
+
+/* ---------- Pointer events (D24.5) ----------
+   The footer is a positioned element above <main> (base.css), so its boxes take every pointer that falls on them, even
+   where they are transparent. The closing CTA is position fixed inside <main> and sits under the footer in paint order,
+   so the footer blocked it. The footer box and its non-interactive wrappers pass pointer events through. Links, buttons
+   and text keep them, so the text stays selectable. The opaque panel keeps them on portrait and phone (its rule is with
+   the panel, above). Each text block and link is set to auto, and each wrapper to none, so no other element takes the
+   pointer. */
+#footer {
+  pointer-events: none;
+}
+
+#footer .wrap,
+#footer .footer__grid,
+#footer .footer__fallback,
+#footer .footer__title,
+#footer .titleblock,
+#footer .titleblock tbody,
+#footer .titleblock tr,
+#footer .titleblock td,
+#footer .footer__docs,
+#footer .footer__docs-list,
+#footer .footer__sources,
+#footer .footer__sources-list,
+#footer .footer__end {
+  pointer-events: none;
+}
+
+#footer a,
+#footer h2,
+#footer h3,
+#footer p,
+#footer .titleblock__label,
+#footer .titleblock__value,
+#footer .footer__dimension-label {
+  pointer-events: auto;
 }
