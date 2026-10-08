@@ -4,7 +4,7 @@ Director log for the Claude Haiku 5.5 showcase page.
 
 ## Model verification
 
-- Every subagent runs Claude Haiku 5.5 at max effort. Verified from every subagent transcript (`"model":"claude-haiku-5-5"`, `"effort":"max"`); the audit script flags anything else. Last audit: 80 transcripts, 0 flagged.
+- Every subagent runs Claude Haiku 5.5 at max effort. Verified from every subagent transcript (`"model":"claude-haiku-5-5"`, `"effort":"max"`); the audit script flags anything else. Last audit: 104 transcripts, 0 flagged (13,604 assistant messages on `claude-haiku-5-5`, every effort value `max`; the transcripts carry an `advisorModel` session field, but no subagent ever called an advisor tool).
 - `.claude/agents/*.md` (11 roles, `model: claude-haiku-5-5`, `effort: max`) were written mid-session, and Claude Code only loads agent types at session start, so this session runs each role as a workflow or general-purpose subagent overridden to `model: haiku`, `effort: max`, with each brief telling the agent to load its role file first. Future sessions pick up the role files directly.
 
 ## Done
@@ -19,9 +19,11 @@ Director log for the Claude Haiku 5.5 showcase page.
 - Phase 3: nine 2D section layers (motion-2d), nine 3D section layers (three-scene / shader), the choreography engine (scroll-choreo), base.css, the custom cursor (four forms). Each verified in its own harness (`harness/section-*.html`, `harness/gl-*.html`) with screenshots in `qa/shots/`.
 - Phase 3 integration review (director): the whole page boots, gl-ready under SwiftShader, and decisions D20 to D22 record what the integrated screenshots showed.
 
+- Phase 4 round 1 (14 agents): choreography call order with the entering section last and ctx.bleed (D22.1, D22.8, D22.11); DoF focus per aspect (D22.2); chromatic aberration exactly 0 at rest, with the root cause found (velocity and damping on the clamped page clock under slow frames) (D22.5); exposure measured against targets (anodised #3A3934 vs #34332F, kireji #A1302A vs #A9372E) and a soft contact shadow (D22.3, D22.4); phone speed column at 86 % width with text in the left band (D21.2); hero and speed annotations within 1 px of the drawn blocks at every progress (D20.2, D21.7); family 3D anchored to its DOM stage (D20.1, D22.12); code request types itself out with a seal caret (D21.3); cursor label knockouts (D22.6); Lenis resync before scrollToTarget, capabilities landings exact (D21.6).
+
 ## In progress
 
-- Phase 4, integration fixes (two workflows, 14 agents, disjoint files): choreography call order and bleed context (D22.1, D22.8, D22.11), depth-of-field focus per aspect (D22.2), chromatic aberration exactly 0 at rest (D22.5), exposure and contact shadow (D22.3, D22.4), phone speed column at 86 % width with text in the left band (D21.2), labels locked to 3D (D20: hero and speed annotations, family 3D anchored to its DOM stage), the code request typing itself out (D21.3), cursor label knockouts (D22.6), Lenis resync before scrollToTarget (D21.6).
+- Phase 4 round 2 (11 agents, D23): text theme follows the ink front per block, capabilities entering on p1, wall-clock scroll velocity, closing text layer leaking over every section (strict booleans), speed fallback gate and paint-before-layout error, family phone labels at station pitch, phantom fade-in, blocks offset under reduced motion, pricing offset fade, code response streaming in bursts, cursor tick halos, loader timeout bug.
 
 ## Rejected (and why)
 
