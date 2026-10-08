@@ -470,7 +470,8 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
       const s = BRAWLERS[pl.brawlerId], sup = inp.superAiming, spec = sup ? s.super : s.attack;
       const shape = AIM_SHAPE[spec.kind] || 'line';
       const len = shape === 'arc' || shape === 'circle' ? Math.max(1.5, spec.range * clamp(inp.aimLen ?? 1, 0, 1)) : spec.range;
-      fx.setAim(true, lerp(pl.px, pl.x, alpha), lerp(pl.pz, pl.z, alpha), inp.aimX, inp.aimZ, len, shape, sup ? SUPER_AIM_COLOR : AIM_COLOR);
+      fx.setAim(true, lerp(pl.px, pl.x, alpha), lerp(pl.pz, pl.z, alpha), inp.aimX, inp.aimZ, len, shape,
+        sup ? SUPER_AIM_COLOR : AIM_COLOR, spec.blastRadius || spec.radius || 0);
     } else fx.setAim(false, 0, 0, 0, 1, 1, 'line', AIM_COLOR);
 
     R.follow(lerp(pl.px, pl.x, alpha), lerp(pl.pz, pl.z, alpha), dt);

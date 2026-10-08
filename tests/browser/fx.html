@@ -1,0 +1,217 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FX test</title>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+  <style>
+    html,body{margin:0;height:100%;background:#123;overflow:hidden}
+    #stage{position:fixed;left:0;top:0;width:100%;height:100%}
+    #overlay{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none}
+  </style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <div id="overlay"></div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { test, assert, run } from './harness.js';
+    import { bus, EV, DT, makeBrawler } from '../../src/contracts.js';
+    import { createFX } from '../../src/fx/fx.js';
+
+    const canvas = document.getElementById('stage');
+    const overlay = document.getElementById('overlay');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    renderer.setPixelRatio(1);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+    camera.position.set(10.5, 24, 36);
+    camera.lookAt(10.5, 0, 16.5);
+    function fit() {
+      renderer.setSize(innerWidth, innerHeight, false);
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    fit();
+    addEventListener('resize', fit);
+
+    const _v = new THREE.Vector3();
+    function worldToScreen(x, y, z, out) {
+      _v.set(x, y, z).project(camera);
+      out.x = (_v.x + 1) * 0.5 * innerWidth;
+      out.y = (1 - _v.y) * 0.5 * innerHeight;
+      out.visible = _v.z > -1 && _v.z < 1;
+      return out;
+    }
+
+    const fx = createFX({ scene, bus, worldToScreen, overlay });
+    const P = makeBrawler(1, 'rivet', 0, 'You', true);
+    P.x = 10.5; P.z = 22;
+    const E = makeBrawler(2, 'pip', 1, 'Kiko');
+    E.x = 10.5; E.z = 12;
+    const brawlers = [P, E];
+    const shot = { b: P, x: P.x, z: P.z, dirX: 0, dirZ: -1, isSuper: false };
+    const hit = (sup, amount = 320) => ({ target: E, source: P, amount, x: E.x, z: E.z, isSuper: sup, killed: false });
+    const blast = { x: 10.5, z: 16, radius: 1.25, team: 0, isSuper: false };
+    fx.update(DT, brawlers, []);
+
+    test('each event spawns particles, rings or numbers', () => {
+      const cases = [
+        [EV.SHOT, shot],
+        [EV.HIT, hit(false)],
+        [EV.HIT, hit(true)],
+        [EV.HEAL, { target: P, source: P, amount: 520, x: P.x, z: P.z }],
+        [EV.DEATH, { victim: E, killer: P, x: E.x, z: E.z }],
+        [EV.RESPAWN, { b: P }],
+        [EV.EXPLOSION, blast],
+        [EV.WALL_DESTROYED, { c: 3, r: 4, x: 3.5, z: 4.5 }],
+        [EV.CRYSTAL_PICKUP, { b: P, x: P.x, z: P.z, total: 1 }],
+        [EV.SUPER_USED, { b: P, x: P.x, z: P.z, dirX: 0, dirZ: -1 }],
+        [EV.DASH, { b: P, x: P.x, z: P.z, dirX: 1, dirZ: 0 }],
+        [EV.TOTEM, { x: 10.5, z: 26, team: 0, radius: 2.6, duration: 6 }],
+      ];
+      for (const [evt, payload] of cases) {
+        fx.reset();
+        bus.emit(evt, payload);
+        const s = fx.stats();
+        assert(s.addActive + s.dustActive + s.rings + s.numbers > 0, `no effect for ${evt}`);
+      }
+    });
+
+    test('caps hold at high and low quality', () => {
+      fx.setQuality('high');
+      fx.reset();
+      for (let i = 0; i < 3000; i++) {
+        bus.emit(EV.SHOT, shot);
+        bus.emit(EV.EXPLOSION, blast);
+      }
+      let s = fx.stats();
+      assert(s.addActive <= 2000 && s.addActive > 0, `high additive ${s.addActive}`);
+      assert(s.dustActive <= 900 && s.dustActive > 0, `high dust ${s.dustActive}`);
+      fx.update(DT, brawlers, []);
+      s = fx.stats();
+      assert(s.addActive <= 2000 && s.dustActive <= 900, 'high caps after update');
+
+      fx.setQuality('low');
+      fx.reset();
+      for (let i = 0; i < 3000; i++) {
+        bus.emit(EV.SHOT, shot);
+        bus.emit(EV.EXPLOSION, blast);
+      }
+      fx.update(DT, brawlers, []);
+      s = fx.stats();
+      assert(s.addActive <= 700 && s.addActive > 0, `low additive ${s.addActive}`);
+      assert(s.dustActive <= 300, `low dust ${s.dustActive}`);
+      fx.setQuality('high');
+      fx.reset();
+    });
+
+    test('DOM number count stays fixed', () => {
+      fx.reset();
+      const before = overlay.querySelectorAll('.fx-num').length;
+      assert(before > 0, 'number pool exists');
+      for (let i = 0; i < 300; i++) bus.emit(EV.HIT, hit(i % 3 === 0));
+      fx.update(DT, brawlers, []);
+      const after = overlay.querySelectorAll('.fx-num').length;
+      assert(before === after, `DOM count ${before} -> ${after}`);
+      assert(fx.stats().numbers <= before, 'active numbers within pool');
+    });
+
+    test('heal numbers are green with a plus, super numbers use the big style', () => {
+      fx.reset();
+      bus.emit(EV.HEAL, { target: P, source: P, amount: 777, x: P.x, z: P.z });
+      bus.emit(EV.HIT, hit(true, 1234));
+      const texts = [...overlay.querySelectorAll('.fx-num')];
+      assert(texts.some((e) => e.classList.contains('heal') && e.textContent === '+777'), 'green +777');
+      assert(texts.some((e) => e.classList.contains('super') && e.textContent === '1234'), 'super 1234');
+    });
+
+    test('aim shapes toggle', () => {
+      for (const shape of ['line', 'cone', 'arc', 'circle']) {
+        fx.setAim(true, 10.5, 20, 0, -1, 4, shape, 0x4dff8a);
+        const a = fx.stats().aim;
+        assert(a.visible && a.shape === shape, `shape ${shape} -> ${a.shape}`);
+      }
+      fx.setAim(false, 0, 0, 0, 1, 1, 'line', 0);
+      assert(!fx.stats().aim.visible, 'hidden when show is false');
+    });
+
+    test('frame stays within 6 draw calls', () => {
+      fx.reset();
+      for (let i = 0; i < 20; i++) bus.emit(EV.SHOT, shot);
+      bus.emit(EV.EXPLOSION, blast);
+      bus.emit(EV.TOTEM, { x: 6, z: 20, team: 1, radius: 2.6, duration: 6 });
+      fx.setAim(true, 10.5, 20, 0, -1, 4, 'arc', 0xffffff);
+      fx.update(DT, brawlers, [{ active: true, kind: 'bolt', x: 10.5, y: 0.6, z: 18, color: 0x38e8ff }]);
+      renderer.render(scene, camera);
+      const calls = renderer.info.render.calls;
+      assert(calls > 0 && calls <= 6, `draw calls ${calls}`);
+      fx.setAim(false, 0, 0, 0, 1, 1, 'arc', 0);
+      fx.reset();
+    });
+
+    test('600 updates keep pools fixed and then drain', () => {
+      fx.reset();
+      const sceneChildren = scene.children.length;
+      const floats = fx.stats().bufferFloats;
+      const proj = [{ active: true, kind: 'bolt', x: 10.5, y: 0.6, z: 14, color: 0x38e8ff }];
+      for (let i = 0; i < 600; i++) {
+        if (i % 60 === 0) {
+          bus.emit(EV.SHOT, shot);
+          bus.emit(EV.EXPLOSION, blast);
+        }
+        fx.update(DT, brawlers, proj);
+      }
+      assert(scene.children.length === sceneChildren, 'no scene objects added');
+      assert(fx.stats().bufferFloats === floats, 'no buffer growth');
+      proj.length = 0;
+      for (let i = 0; i < 150; i++) fx.update(DT, brawlers, []);
+      const s = fx.stats();
+      assert(s.addActive === 0 && s.dustActive === 0 && s.rings === 0 && s.numbers === 0, `drain ${JSON.stringify(s)}`);
+    });
+
+    test('setQuality changes the cap', () => {
+      fx.setQuality('low');
+      assert(fx.stats().addCap === 700 && fx.stats().dustCap === 300, 'low caps');
+      fx.setQuality('high');
+      assert(fx.stats().addCap === 2000 && fx.stats().dustCap === 900, 'high caps');
+    });
+
+    test('super hits and kills emit shake and hit-stop', () => {
+      fx.reset();
+      const shakes = [];
+      const stops = [];
+      const offShake = bus.on(EV.SCREEN_SHAKE, (p) => shakes.push(p));
+      const offStop = bus.on(EV.HITSTOP, (p) => stops.push(p));
+      bus.emit(EV.HIT, hit(true));
+      bus.emit(EV.EXPLOSION, { ...blast, isSuper: true });
+      bus.emit(EV.DEATH, { victim: E, killer: P, x: E.x, z: E.z });
+      bus.emit(EV.HIT, hit(false));
+      offShake();
+      offStop();
+      assert(shakes.length >= 3, `shakes ${shakes.length}`);
+      assert(shakes.every((s) => s.intensity > 0 && s.intensity <= 1 && s.duration > 0), 'shake payloads');
+      assert(stops.length === 2, `hitstops ${stops.length}`);
+      assert(stops.every((s) => s.ms >= 40 && s.ms <= 60), 'hitstop 40-60 ms');
+    });
+
+    test('moving brawlers leave dust and projectiles leave trails', () => {
+      fx.reset();
+      const mover = makeBrawler(3, 'lumen', 0, 'Mover');
+      mover.x = 5; mover.z = 5; mover.vx = 3; mover.vz = 0;
+      const pj = [
+        { active: true, kind: 'pellet', x: 8, y: 0.6, z: 8, color: 0xff9f2e },
+        { active: true, kind: 'beam', x: 9, y: 0.6, z: 9, color: 0xffe14d },
+      ];
+      for (let i = 0; i < 10; i++) fx.update(DT, [mover], pj);
+      const s = fx.stats();
+      assert(s.dustActive > 0, 'dust under mover');
+      assert(s.addActive > 0, 'projectile trail');
+      fx.reset();
+    });
+
+    await run();
+  </script>
+</body>
+</html>
