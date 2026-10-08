@@ -112,6 +112,25 @@
   margin-block-start: var(--sp-5);
 }
 
+/* Knockout (D25.2, D26.1): the kicker, the title and the intro copy sit in an inline .family__knock span. Each line of
+   it is a var(--bg) band with 0.2em of padding on each side (clone), so the 3D and the outlines do not show through the
+   text as the family entry crosses it. The negative margins take the padding back, so every glyph keeps its place: the
+   glyph boxes are the same with and without the knock at 375 x 667, 375 x 812, 768 x 1024 and 1440 x 900.
+   The band is one line box tall (1lh), not the face's content area. The content area of Bodoni Moda is about 1.55 em,
+   taller than the 0.98 em line of the title, so a full box painted over the baseline of the line above and removed its
+   bottom 5 px (measured at 375 x 812: the bright pixels of that band fell from 988 to 567). The line boxes tile, so the
+   bands never overlap. */
+#family .family__knock {
+  padding-inline: 0.2em;
+  margin-inline: -0.2em;
+  background-image: linear-gradient(var(--bg), var(--bg));
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-size: 100% 1lh;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 /* Title split (GSAP SplitText, direction.md heading 8, rule 15). Words stay whole; characters move. */
 #family .family__line {
   display: block;

@@ -127,6 +127,42 @@ function runChecks(): void {
     );
   }
 
+  // D25.2 and D26.1: the kicker, the title and the intro each sit in one inline knock span: var(--bg), 0.2em of padding on
+  // each side of every line (clone), and a margin that takes the padding back, so the copy keeps its place.
+  const knocks = Array.from(section.querySelectorAll<HTMLElement>('.family__knock'));
+  const knockOk = knocks.map((el) => {
+    const cs = getComputedStyle(el);
+    const em = parseFloat(cs.fontSize);
+    const pad = parseFloat(cs.paddingLeft);
+    const mar = parseFloat(cs.marginLeft);
+    const clone =
+      cs.getPropertyValue('box-decoration-break') === 'clone' ||
+      cs.getPropertyValue('-webkit-box-decoration-break') === 'clone';
+    // The knock is a var(--bg) band of one line box (a gradient, D25.2 with the fix in family.css), so it has no background-color.
+    const band = cs.backgroundImage.startsWith('linear-gradient(') && cs.backgroundRepeat === 'no-repeat';
+    return band && Math.abs(pad - 0.2 * em) < 0.01 && Math.abs(pad + mar) < 0.01 && clone;
+  });
+  // SplitText clones the title's knock span onto each of its lines while the title is split, so the count of spans is not
+  // fixed. Each head part must hold one, and every span must have the knock's style.
+  const partsHaveKnock = ['.family__kicker', '.family__title', '.family__intro'].every(
+    (selector) => section.querySelector(`${selector} .family__knock`) !== null,
+  );
+  record(
+    'head: kicker, title and intro each carry a knock span (var(--bg) line bands, 0.2em padding, clone, net-zero margin)',
+    partsHaveKnock && knocks.length > 0 && knockOk.every(Boolean),
+    `${knocks.length} spans, all with the knock style: ${knockOk.every(Boolean)}`,
+  );
+  const introEl = section.querySelector<HTMLElement>('.family__intro');
+  const titleText = (title?.textContent ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  record(
+    'head copy is unchanged by the knock spans',
+    section.querySelector('.family__kicker')?.textContent === 'Family' &&
+      titleText === 'Four models, by latency' &&
+      (introEl?.textContent ?? '').startsWith('The product page says') &&
+      (introEl?.textContent ?? '').endsWith('in parallel.'),
+    titleText,
+  );
+
   const chars = section.querySelectorAll('.family__char').length;
   if (env.reducedMotion) {
     record('reduced motion: title is not split', chars === 0 && title?.getAttribute('aria-label') === null, `chars ${chars}`);
@@ -155,7 +191,6 @@ function runChecks(): void {
     const centres = stationCenters(size);
     const style = getComputedStyle(section);
     const gap = parseFloat(style.getPropertyValue('--sp-3'));
-    const sp4 = parseFloat(style.getPropertyValue('--sp-4'));
     const sp5 = parseFloat(style.getPropertyValue('--sp-5'));
     const sp6 = parseFloat(style.getPropertyValue('--sp-6'));
     const headBox = head.getBoundingClientRect();
@@ -184,25 +219,50 @@ function runChecks(): void {
     }
     const boxes = stations.map((li) => {
       const r = li.getBoundingClientRect();
-      return { top: r.top - stageBox.top, bottom: r.bottom - stageBox.top, centre: (r.top + r.bottom) / 2 - stageBox.top };
+      return {
+        top: r.top - stageBox.top,
+        bottom: r.bottom - stageBox.top,
+        centre: (r.top + r.bottom) / 2 - stageBox.top,
+        height: r.height,
+      };
     });
+    // D26.2: the labels never overlap (a gap of at least sp-3), and they stay within the viewport.
     const ordered = boxes.every((b, i) => i === 0 || b.top >= boxes[i - 1].bottom + gap - 0.5);
     record(
-      'phone labels keep their order with a gap of sp-3',
+      'phone labels keep their order, with a gap of at least sp-3',
       ordered,
       boxes.map((b) => `${b.top.toFixed(1)}-${b.bottom.toFixed(1)}`).join(' | '),
     );
     record(
-      'phone labels stay on screen',
-      boxes.every((b) => b.top >= -0.5 && b.bottom <= size.height - sp4 + 0.5),
+      'phone labels stay within the viewport',
+      boxes.every((b) => b.top >= -0.5 && b.bottom <= size.height + 0.5),
       boxes.map((b) => b.bottom.toFixed(1)).join(', '),
     );
+    // D26.2: where the stack fits at the stations, every label is centred on its own station. Where it does not, only the
+    // labels that conflict move: one label keeps its station, and a label whose neighbours keep theirs, with clear gaps,
+    // keeps its own.
     const offsets = boxes.map((b, i) => b.centre - centres[i].y);
-    record(
-      'each phone label is centred on its own station (within 0.5 px)',
-      offsets.every((o) => Math.abs(o) <= 0.5),
-      offsets.map((o) => o.toFixed(2)).join(', '),
-    );
+    const centred = offsets.map((o) => Math.abs(o) <= 0.5);
+    const tight = boxes.slice(0, -1).map((b, i) => centres[i + 1].y - centres[i].y - (b.height + boxes[i + 1].height) / 2 < gap - 0.5);
+    if (!tight.some(Boolean)) {
+      record(
+        'phone labels: the stack fits, so each label is centred on its station (within 0.5 px)',
+        centred.every(Boolean),
+        offsets.map((o) => o.toFixed(2)).join(', '),
+      );
+    } else {
+      const freeOk = boxes.every((_, i) => {
+        const clearLeft = i === 0 || !tight[i - 1];
+        const clearRight = i === boxes.length - 1 || !tight[i];
+        const neighboursCentred = (i === 0 || centred[i - 1]) && (i === boxes.length - 1 || centred[i + 1]);
+        return centred[i] || !(clearLeft && clearRight && neighboursCentred);
+      });
+      record(
+        'phone labels: where the stack does not fit, one label keeps its station and a clear label keeps its own',
+        centred.some(Boolean) && freeOk,
+        `offsets ${offsets.map((o) => o.toFixed(2)).join(', ')}, tight pairs ${tight.map(Boolean).join(',')}`,
+      );
+    }
   }
 
   const failed = checks.filter((c) => !c.ok).map((c) => c.name);

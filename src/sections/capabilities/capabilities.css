@@ -471,9 +471,11 @@ html.reduced-motion #capabilities *::after {
    The head and the intro scroll across the fixed blocks at every size. Each line of copy sits on a box of its block's
    ground (var(--bg), which follows the block's theme), reaching 0.2em past both ends of the line, and an equal negative
    margin keeps every glyph in place. The kicker is one line: as an inline-block it leaves the title below where it was
-   (measured at 1440 and 375). The title and the intro are several lines, so each takes an inline .knock span around its
-   copy (the markup does not have the span yet; see the report). The multi-line knock uses box-decoration-break: slice,
-   because clone changes the line breaks of wrapped copy in Chromium, with or without padding. */
+   (measured at 1440 and 375). The intro is several lines of body copy, and it takes an inline .knock span around its copy
+   (the markup does not have the span yet; see the report). The multi-line knock uses box-decoration-break: slice, because
+   clone changes the line breaks of wrapped copy in Chromium, with or without padding.
+   The title is not knocked here: its line-height (0.98) is shorter than the content area of the display face, so a knock
+   on one line paints over the line above it and clips its baseline (measured; see the report). */
 #capabilities .cap__kicker {
   display: inline-block;
   vertical-align: top;
@@ -482,7 +484,7 @@ html.reduced-motion #capabilities *::after {
   background: var(--bg);
 }
 
-#capabilities .knock {
+#capabilities .cap__intro .knock {
   background: var(--bg);
   padding-inline: 0.2em;
   margin-inline: -0.2em;

@@ -428,7 +428,7 @@
   background: var(--bg);
 }
 
-#pricing .knock {
+#pricing .pricing__intro .knock {
   background: var(--bg);
   padding-inline: 0.2em;
   margin-inline: -0.2em;

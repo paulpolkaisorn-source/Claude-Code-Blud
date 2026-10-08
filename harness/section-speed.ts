@@ -1,8 +1,10 @@
 // Harness for the speed section's 2D layer, src/sections/speed/speed.ts (architecture section 10a; direction-act1 speed).
 // Open /harness/section-speed.html on the dev server, optionally with ?nogl (html.no-gl, the static race shows). The page
 // starts the section as the boot does and emits loader:done after the first tick. The copy, the stream arithmetic and the
-// object-layer placement are checked here. The verdict lands in dataset.harness ('pass' or 'fail:<names>'), and the checks
-// in window.__speedChecks. The scroll states are checked by the Playwright script, which reads the same attributes.
+// object-layer placement are checked here, and so is the boundary rule (D25.3): the layer and the "17" label go when the
+// next section's top passes above the dimension line, which the harness scrolls to. The verdict lands in dataset.harness
+// ('pass' or 'fail:<names>'), and the checks in window.__speedChecks. The scroll states are checked by the Playwright
+// script, which reads the same attributes.
 import { bus } from '../src/core/bus';
 import { env } from '../src/core/env';
 import { registerEases } from '../src/core/ease';

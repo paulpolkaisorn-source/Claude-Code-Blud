@@ -320,7 +320,7 @@ html.js:not(.reduced-motion) #hero .hero-lede {
     right: 0.2em;
   }
 
-  #hero .knock {
+  #hero .hero-lede .knock {
     background: var(--bg);
     padding-inline: 0.2em;
     margin-inline: -0.2em;

@@ -6,8 +6,10 @@
 // narrow layouts it is in the section's flow, above the stage, and the stage starts 50 svh down, or below the head
 // when the head is taller than that. The stage holds the axis, its title, the four station labels and the notes.
 //
-// Phone labels (D24.1, D23.8): each label is centred on its own station's projected y, with no push from its
-// neighbours. Block themes (D23.1): the head, intro, axis title, axis labels, stations and notes carry
+// Phone labels (D24.1, D23.8, D26.2): each label is centred on its own station's projected y. Where two labels would
+// sit closer than sp-3, the run they form is packed at sp-3 around one label that keeps its station, and the others
+// move the least that the gaps allow (stackTops). A stack that fits keeps every label on its station. Block themes
+// (D23.1): the head, intro, axis title, axis labels, stations and notes carry
 // data-theme-block; theme-front.ts sets their theme.
 //
 // This file owns the title reveal (SplitText, once, at the 80 per cent line), the dimension axis, the four
@@ -59,6 +61,8 @@ const STAGGER_MIN_CHARS = 5;
 const STATION_COUNT = 4;
 /** The knockout's vertical padding on an axis label (family.css, D22.6). The label's box rises this far above its text. */
 const KNOCK_PAD_PX = 2;
+/** The tolerance, in px, of the phone label stack's comparisons (D26.2). */
+const STACK_EPS = 1e-6;
 
 /** A box in CSS pixels. A property that is not given is cleared, so a layout change leaves no stale value. */
 interface Box {
@@ -121,6 +125,137 @@ function titleInkBelowTop(title: HTMLElement): number {
   if (m === null || ctx === null || !Number.isFinite(line)) return box;
   const ink = ctx.measureText(title.textContent ?? '').actualBoundingBoxDescent;
   return box + (m.ascent - m.descent - line) / 2 + ink;
+}
+
+/** The distance between the centres of labels k and k + 1 that keeps their boxes apart by the gap (D26.2). */
+function stepBetween(heights: readonly number[], k: number, gap: number): number {
+  return (heights[k] + heights[k + 1]) / 2 + gap;
+}
+
+/**
+ * A run of neighbouring labels that is placed as one stack (D26.2). A run keeps its anchor's station, or it is pinned to
+ * the top or the bottom edge of the stack.
+ */
+interface StackRun {
+  first: number;
+  last: number;
+  pin: 'anchor' | 'top' | 'bottom';
+  /** The member whose label keeps its station. Used when the run is not pinned. */
+  anchor: number;
+}
+
+/** Writes the centre of each label of a run into out. The labels are packed at the gap from the anchor, or from the pinned edge. */
+function packRun(
+  run: StackRun,
+  centres: readonly number[],
+  heights: readonly number[],
+  gap: number,
+  lo: number,
+  hi: number,
+  out: number[],
+): void {
+  if (run.pin === 'top') {
+    out[run.first] = lo + heights[run.first] / 2;
+    for (let k = run.first + 1; k <= run.last; k += 1) out[k] = out[k - 1] + stepBetween(heights, k - 1, gap);
+    return;
+  }
+  if (run.pin === 'bottom') {
+    out[run.last] = hi - heights[run.last] / 2;
+    for (let k = run.last - 1; k >= run.first; k -= 1) out[k] = out[k + 1] - stepBetween(heights, k, gap);
+    return;
+  }
+  out[run.anchor] = centres[run.anchor];
+  for (let k = run.anchor + 1; k <= run.last; k += 1) out[k] = out[k - 1] + stepBetween(heights, k - 1, gap);
+  for (let k = run.anchor - 1; k >= run.first; k -= 1) out[k] = out[k + 1] - stepBetween(heights, k, gap);
+}
+
+/**
+ * The anchor of an unpinned run: the member whose label keeps its station with the least total push, then the least
+ * largest push. A tie keeps the upper member.
+ */
+function bestAnchor(
+  run: StackRun,
+  centres: readonly number[],
+  heights: readonly number[],
+  gap: number,
+  lo: number,
+  hi: number,
+): number {
+  const out: number[] = [];
+  let best = run.first;
+  let bestTotal = Infinity;
+  let bestLargest = Infinity;
+  for (let m = run.first; m <= run.last; m += 1) {
+    packRun({ ...run, pin: 'anchor', anchor: m }, centres, heights, gap, lo, hi, out);
+    let total = 0;
+    let largest = 0;
+    for (let k = run.first; k <= run.last; k += 1) {
+      const push = Math.abs(out[k] - centres[k]);
+      total += push;
+      largest = Math.max(largest, push);
+    }
+    const lessTotal = total < bestTotal - STACK_EPS;
+    const sameTotal = Math.abs(total - bestTotal) <= STACK_EPS;
+    if (lessTotal || (sameTotal && largest < bestLargest - STACK_EPS)) {
+      best = m;
+      bestTotal = total;
+      bestLargest = largest;
+    }
+  }
+  return best;
+}
+
+/**
+ * The tops, in px, of a vertical stack of labels between lo and hi (D26.2). centres are the stations' centres and heights
+ * the labels' heights, in stack order. A label keeps its station unless it would sit closer than gap to a neighbour. Such
+ * neighbours form a run, which is packed at the gap around its best anchor, so only the labels that conflict move, and the
+ * least that the gaps allow. Runs that meet merge. A run that would leave the stack's edge is pinned to that edge. A stack
+ * taller than [lo, hi] is packed from the top and overflows at the bottom.
+ */
+function stackTops(
+  centres: readonly number[],
+  heights: readonly number[],
+  gap: number,
+  lo: number,
+  hi: number,
+): number[] {
+  if (centres.length === 0) return [];
+  let runs: StackRun[] = centres.map((_, i) => ({ first: i, last: i, pin: 'anchor', anchor: i }));
+  for (;;) {
+    runs = runs.map((run) =>
+      run.pin === 'anchor' ? { ...run, anchor: bestAnchor(run, centres, heights, gap, lo, hi) } : run,
+    );
+    const placed: number[] = [];
+    for (const run of runs) packRun(run, centres, heights, gap, lo, hi, placed);
+
+    // Two neighbouring runs that come closer than the gap merge into one run, which is placed again.
+    let meet = -1;
+    for (let i = 0; i + 1 < runs.length && meet === -1; i += 1) {
+      const bottom = placed[runs[i].last] + heights[runs[i].last] / 2;
+      const top = placed[runs[i + 1].first] - heights[runs[i + 1].first] / 2;
+      if (bottom + gap > top + STACK_EPS) meet = i;
+    }
+    if (meet !== -1) {
+      const upper = runs[meet];
+      const lower = runs[meet + 1];
+      const pin = upper.pin === 'top' ? 'top' : lower.pin === 'bottom' ? 'bottom' : 'anchor';
+      runs.splice(meet, 2, { first: upper.first, last: lower.last, pin, anchor: upper.first });
+      continue;
+    }
+
+    // A run that would leave the top or the bottom of the stack is pinned to that edge.
+    const first = runs[0];
+    const last = runs[runs.length - 1];
+    if (first.pin === 'anchor' && placed[first.first] - heights[first.first] / 2 < lo - STACK_EPS) {
+      runs[0] = { ...first, pin: 'top' };
+      continue;
+    }
+    if (last.pin === 'anchor' && placed[last.last] + heights[last.last] / 2 > hi + STACK_EPS) {
+      runs[runs.length - 1] = { ...last, pin: 'bottom' };
+      continue;
+    }
+    return placed.map((centre, k) => centre - heights[k] / 2);
+  }
 }
 
 export function initFamily(ctx: SectionContext): void {
@@ -252,10 +387,18 @@ export function initFamily(ctx: SectionContext): void {
       const blockLeft = ox + (STANZA_HALF_BU + BLOCK_GAP_BU) * s;
       const blockWidth = size.width - edge - blockLeft;
       blocks.forEach((li) => place(li, { left: blockLeft, width: blockWidth }));
-      // Each label is centred on its own station (D24.1). The heights are read once the width is set, because the text
-      // wraps inside that width.
-      const heights = blocks.map((li) => li.offsetHeight);
-      blocks.forEach((li, i) => place(li, { left: blockLeft, width: blockWidth, top: pts[i].y - heights[i] / 2 }));
+      // Each label is centred on its own station (D24.1), and a label that would overlap its neighbour is pushed by the least
+      // amount that keeps the gap (D26.2). The heights are read once the width is set, because the text wraps inside that
+      // width. The stack lies in the stage: from its top edge to the bottom of the viewport.
+      const heights = blocks.map((li) => li.getBoundingClientRect().height);
+      const tops = stackTops(
+        pts.map((point) => point.y),
+        heights,
+        gap,
+        0,
+        size.height,
+      );
+      blocks.forEach((li, i) => place(li, { left: blockLeft, width: blockWidth, top: tops[i] }));
       place(fallback, {
         left: ox - (OVERLAY_SHORT_BU / 2) * s,
         top: oy - AXIS_HALF_BU * s,
