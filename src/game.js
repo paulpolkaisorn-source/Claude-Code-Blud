@@ -120,7 +120,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
       const sp = arena.spawns[r.team][r.slot % arena.spawns[r.team].length];
       b.x = b.px = sp.x; b.z = b.pz = sp.z;
       b.facing = r.team === TEAM.BLUE ? Math.PI : 0;
-      b.slot = r.slot; b.attackFace = 0; b.moveSpeed01 = 0; b.baseAnim = 'idle'; b.deadTime = 0;
+      b.slot = r.slot; b.flashShown = 0; b.attackFace = 0; b.moveSpeed01 = 0; b.baseAnim = 'idle'; b.deadTime = 0;
       const view = createBrawlerModel(r.brawlerId, { team: r.team, isPlayer: !!r.isPlayer });
       scene.add(view.root);
       view.setPose(b.x, b.z, b.facing);
@@ -146,6 +146,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     if (!m) return;
     m.views.forEach((v) => { scene.remove(v.root); v.dispose(); });
     m.combat.reset();
+    if (m.combat.dispose) m.combat.dispose();
     m.ai.reset();
     m.crystalView.dispose();
     m.arena.dispose();
@@ -449,7 +450,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
         if (base !== b.baseAnim) { b.baseAnim = base; v.play(base); }
       }
       v.setOpacity(b.team === TEAM.BLUE && b.inBush ? 0.5 : 1);
-      if (b.hitFlash > 0) { b.hitFlash = Math.max(0, b.hitFlash - dt * 6); v.setFlash(b.hitFlash); }
+      if (b.hitFlash > 0 || b.flashShown > 0) { b.flashShown = b.hitFlash; v.setFlash(b.hitFlash); }
       v.update(dt, b.moveSpeed01);
       const L = labels[i];
       R.worldToScreen(x, 2.0, z, scr);
