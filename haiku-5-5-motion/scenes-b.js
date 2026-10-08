@@ -37,14 +37,14 @@ window.HAIKU_SCENES.push({
     <path class="s4-ln" pathLength="1" style="--i:2" d="M800 405 L800 702"></path>
     <path class="s4-ln" pathLength="1" style="--i:3" d="M800 405 L1080 702"></path>
     <path class="s4-ln" pathLength="1" style="--i:4" d="M800 405 L1360 702"></path>
-    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:0;--dx:-560px;--dy:297px"></circle>
-    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:1;--dx:-280px;--dy:297px"></circle>
-    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:2;--dx:0px;--dy:297px"></circle>
-    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:3;--dx:280px;--dy:297px"></circle>
-    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:4;--dx:560px;--dy:297px"></circle>
-    <circle class="s4-du" cx="520" cy="702" r="6" style="--j:0;--dx:280px;--dy:-297px"></circle>
-    <circle class="s4-du" cx="1080" cy="702" r="6" style="--j:1;--dx:-280px;--dy:-297px"></circle>
-    <circle class="s4-du" cx="800" cy="702" r="6" style="--j:2;--dx:0px;--dy:-297px"></circle>
+    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:0;--dx:-35%;--dy:33%"></circle>
+    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:1;--dx:-17.5%;--dy:33%"></circle>
+    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:2;--dx:0%;--dy:33%"></circle>
+    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:3;--dx:17.5%;--dy:33%"></circle>
+    <circle class="s4-dd" cx="800" cy="405" r="7" style="--i:4;--dx:35%;--dy:33%"></circle>
+    <circle class="s4-du" cx="520" cy="702" r="6" style="--j:0;--dx:17.5%;--dy:-33%"></circle>
+    <circle class="s4-du" cx="1080" cy="702" r="6" style="--j:1;--dx:-17.5%;--dy:-33%"></circle>
+    <circle class="s4-du" cx="800" cy="702" r="6" style="--j:2;--dx:0%;--dy:-33%"></circle>
   </svg>
   <span class="s4-ring" aria-hidden="true"></span>
   <div class="s4-orch">orchestrator</div>
