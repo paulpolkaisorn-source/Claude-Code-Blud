@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Models test</title>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+  <style>html,body{margin:0;height:100%;background:#123;overflow:hidden}</style>
+</head>
+<body>
+  <script type="module">
+    import { test, assert, run, frames, wait } from './harness.js';
+    import * as THREE from 'three';
+    import { BRAWLER_IDS } from '../../src/contracts.js';
+    import { createBrawlerModel } from '../../src/entities/models.js';
+    import { createPreview } from '../../src/entities/preview.js';
+
+    const ANIMS = ['idle', 'run', 'attack', 'super', 'hit', 'death', 'victory'];
+    const mkCanvas = (w, h) => {
+      const c = document.createElement('canvas');
+      c.style.cssText = `position:absolute;left:0;top:0;width:${w}px;height:${h}px`;
+      document.body.appendChild(c);
+      return c;
+    };
+    const countMeshes = (root) => { let n = 0; root.traverse((o) => { if (o.isMesh && o.visible) n++; }); return n; };
+    const countVisibleOutlines = (root) => { let n = 0; root.traverse((o) => { if (o.name === 'outline' && o.visible) n++; }); return n; };
+    const allFinite = (root) => {
+      let ok = true;
+      root.traverse((o) => {
+        for (const v of [o.position.x, o.position.y, o.position.z, o.rotation.x, o.rotation.y, o.rotation.z, o.scale.x, o.scale.y, o.scale.z]) {
+          if (!Number.isFinite(v)) ok = false;
+        }
+      });
+      root.updateMatrixWorld(true);
+      for (const v of root.matrixWorld.elements) if (!Number.isFinite(v)) ok = false;
+      return ok;
+    };
+    // Real draw-call count: one render of the model on a tiny offscreen WebGL renderer (no shadow pass).
+    function renderCalls(model) {
+      const canvas = mkCanvas(64, 64);
+      const r = new THREE.WebGLRenderer({ canvas, antialias: false });
+      r.info.autoReset = false;
+      const scene = new THREE.Scene();
+      scene.add(model.root);
+      const sun = new THREE.DirectionalLight(0xffffff, 2);
+      sun.position.set(1, 2, 3);
+      scene.add(sun);
+      const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 20);
+      cam.position.set(0, 1, 4);
+      cam.lookAt(0, 0.8, 0);
+      r.info.reset();
+      r.render(scene, cam);
+      const calls = r.info.render.calls;
+      scene.remove(model.root);
+      r.dispose();
+      r.forceContextLoss();
+      canvas.remove();
+      return calls;
+    }
+
+    test('all four brawlers build their rigs', () => {
+      for (const id of BRAWLER_IDS) {
+        const m = createBrawlerModel(id, { team: 1 });
+        assert(m.root && m.root.isObject3D, `${id}: no root`);
+        assert(countMeshes(m.root) === 11, `${id}: expected 5 parts + 5 outlines + ring, got ${countMeshes(m.root)}`);
+        m.dispose();
+      }
+    });
+
+    test('draw calls stay within 12 per model', () => {
+      for (const id of BRAWLER_IDS) {
+        const m = createBrawlerModel(id, { team: 0, isPlayer: true });
+        const meshes = countMeshes(m.root);
+        const calls = renderCalls(m);
+        assert(meshes <= 12, `${id}: ${meshes} meshes`);
+        assert(calls > 0 && calls <= 12, `${id}: ${calls} draw calls`);
+        m.dispose();
+      }
+    });
+
+    test('every animation runs 60 frames without NaN', () => {
+      for (const id of BRAWLER_IDS) {
+        for (const anim of ANIMS) {
+          const m = createBrawlerModel(id, { team: 0 });
+          m.setPose(2, 3, 0.5);
+          m.play(anim);
+          for (let i = 0; i < 60; i++) m.update(1 / 60, anim === 'run' ? 1 : 0.2);
+          assert(allFinite(m.root), `${id}/${anim}: non-finite transform`);
+          m.dispose();
+        }
+      }
+    });
+
+    test('death holds its final pose', () => {
+      const m = createBrawlerModel('lumen', { team: 0 });
+      m.play('death');
+      for (let i = 0; i < 60; i++) m.update(1 / 60, 0);
+      m.root.updateMatrixWorld(true);
+      const snapshot = m.root.getObjectByName('body').matrixWorld.clone();
+      for (let i = 0; i < 30; i++) m.update(1 / 60, 1);
+      m.root.updateMatrixWorld(true);
+      const after = m.root.getObjectByName('body').matrixWorld;
+      for (let i = 0; i < 16; i++) assert(Math.abs(after.elements[i] - snapshot.elements[i]) < 1e-6, 'death pose moved after holding');
+      m.dispose();
+    });
+
+    test('flash, opacity and pose setters', () => {
+      const m = createBrawlerModel('pip', { team: 0 });
+      m.setPose(3, 4, Math.PI / 2);
+      assert(Math.abs(m.root.position.x - 3) < 1e-6 && Math.abs(m.root.position.z - 4) < 1e-6, 'setPose position');
+      assert(Math.abs(m.root.rotation.y - Math.PI / 2) < 1e-6, 'setPose facing');
+      const body = m.root.getObjectByName('body');
+      m.setFlash(1);
+      assert(body.material.emissive.r > 0.99, 'flash should light emissive');
+      m.setFlash(0);
+      assert(body.material.emissive.r < 0.01, 'flash should clear');
+      assert(countVisibleOutlines(m.root) === 5, 'outlines visible when opaque');
+      m.setOpacity(0.5);
+      assert(body.material.transparent && Math.abs(body.material.opacity - 0.5) < 1e-6, 'translucent material');
+      assert(countVisibleOutlines(m.root) === 0, 'outlines hidden when translucent');
+      m.setOpacity(1);
+      assert(!body.material.transparent && countVisibleOutlines(m.root) === 5, 'opaque restores outlines');
+      m.dispose();
+    });
+
+    test('silhouettes differ: rivet reads much wider than pip', () => {
+      const widthOf = (id) => {
+        const m = createBrawlerModel(id, { team: 0 });
+        m.root.updateMatrixWorld(true);
+        const size = new THREE.Box3().setFromObject(m.root).getSize(new THREE.Vector3());
+        m.dispose();
+        return size.x;
+      };
+      assert(widthOf('rivet') > widthOf('pip') * 1.2, 'rivet should read wider than pip');
+    });
+
+    test('dispose frees geometries and materials, and is idempotent', () => {
+      for (const id of BRAWLER_IDS) {
+        const m = createBrawlerModel(id, { team: 0 });
+        const scene = new THREE.Scene();
+        scene.add(m.root);
+        let freed = 0, expected = 0;
+        m.root.traverse((o) => {
+          if (o.isMesh && o.name !== 'outline') {
+            expected += 2;
+            o.geometry.addEventListener('dispose', () => freed++);
+            o.material.addEventListener('dispose', () => freed++);
+          }
+        });
+        m.dispose();
+        m.dispose();
+        assert(freed === expected, `${id}: freed ${freed}/${expected}`);
+        assert(m.root.parent === null, `${id}: root still attached after dispose`);
+      }
+    });
+
+    test('preview draws the brawler into its canvas', async () => {
+      const c = mkCanvas(200, 260);
+      const pv = createPreview(c, 'rivet');
+      await frames(3);
+      const gl = c.getContext('webgl2');
+      assert(gl, 'no webgl2 context on preview canvas');
+      const px = new Uint8Array(c.width * c.height * 4);
+      gl.readPixels(0, 0, c.width, c.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      let opaque = 0;
+      for (let i = 3; i < px.length; i += 4) if (px[i] > 0) opaque++;
+      pv.dispose();
+      c.remove();
+      assert(opaque > 300, `preview drew only ${opaque} opaque pixels`);
+    });
+
+    test('preview switches brawlers and resizes', async () => {
+      const c = mkCanvas(300, 300);
+      const pv = createPreview(c, 'pip');
+      pv.setBrawler('lumen');
+      pv.setBrawler('mortara');
+      c.style.width = '150px';
+      c.style.height = '320px';
+      pv.resize();
+      await frames(2);
+      assert(c.width > 0 && c.height > 0, 'canvas sized');
+      assert(c.height > c.width, `portrait resize should keep a portrait canvas (${c.width}x${c.height})`);
+      pv.dispose();
+      c.remove();
+    });
+
+    test('preview stops its frame loop on dispose', async () => {
+      const real = window.requestAnimationFrame;
+      let scheduled = 0, ran = 0;
+      window.requestAnimationFrame = (cb) => { scheduled++; return real.call(window, (ts) => { ran++; cb(ts); }); };
+      try {
+        const c = mkCanvas(200, 260);
+        const pv = createPreview(c, 'mortara');
+        await wait(120);
+        assert(ran > 0, 'preview loop never ran');
+        pv.dispose();
+        const before = scheduled;
+        await wait(200);
+        assert(scheduled === before, `${scheduled - before} frame(s) scheduled after dispose`);
+        c.remove();
+      } finally {
+        window.requestAnimationFrame = real;
+      }
+    });
+
+    await run();
+  </script>
+</body>
+</html>
