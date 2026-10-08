@@ -220,6 +220,7 @@ Sections never import from `src/gl/**`. 2D and 3D talk only through `bus` and `s
 ## 8. Reduced motion and no-WebGL contracts
 
 - Reduced motion: no Lenis (native scroll), no scrubbed tweens, no parallax, no pointer tilt, no velocity effects, no custom cursor. Sections crossfade in (opacity only, T.beat5) when 20% visible. WebGL still renders, but each section's formation is set instantly behind a canvas opacity crossfade. Every text element is visible without JS.
+- Backgrounds (D18): sections paint CSS backgrounds by default and under `html.no-gl`; under `html.gl-ready` (set by the GL boot after its first full frame) section backgrounds are transparent and the background shader paints the ground, including a plain cut at act boundaries under reduced motion.
 - No WebGL: `html.no-gl`. The canvas is removed. A designed static version replaces each 3D moment: an inline SVG of the 17 blocks in that section's formation (front elevation, flat ink on paper), drawn by the section's motion-2d owner in its html partial inside `<div class="gl-fallback" aria-hidden="true">`, only displayed under `html.no-gl`.
 - No JS: all copy readable, all links work, sections stacked with CSS backgrounds.
 

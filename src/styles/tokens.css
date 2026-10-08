@@ -1,0 +1,158 @@
+/*
+ * Generated from design/direction.md. Do not edit by hand; change the direction and regenerate.
+ * scripts/check-tokens.mjs reads the tables in that file and fails on any mismatch or missing token.
+ */
+
+:root {
+  /* Raw palette, direction.md heading 3. Hex is the source of truth. */
+  --paper: #F1ECE0;
+  --paper-deep: #E4DCCB;
+  --ink: #151512;
+  --ink-raised: #22211D;
+  --seal-red: #B5312A;
+  --seal-text-paper: #9A2820;
+  --seal-ink: #E7735F;
+  --code-string-raw: #D8C58F;
+
+  /* Semantic colours, paper theme (the default). direction.md heading 3, theme mapping table. */
+  --bg: var(--paper);
+  --bg-raised: var(--paper-deep);
+  --text-1: #151512;
+  --text-2: #45413A;
+  --text-3: #5E5A51;
+  --rule-hair: #7D786A;
+  --rule-strong: #3A3831;
+  --seal: var(--seal-red);
+  --seal-text: var(--seal-text-paper);
+  --focus: #9A2820;
+  --code-string: var(--code-string-raw);
+
+  /* Font stacks, direction.md heading 4. */
+  --font-serif: "Bodoni Moda Variable", "Bodoni Fallback Georgia", "Bodoni Fallback Times", "Bodoni Fallback Liberation", "Bodoni Fallback DejaVu", serif;
+  --font-mono: "Geist Mono Variable", "Geist Mono Fallback Menlo", "Geist Mono Fallback Consolas", "Geist Mono Fallback Liberation", "Geist Mono Fallback DejaVu", monospace;
+
+  /* Type scale, direction.md heading 4. Each size is clamp(min, a px + b vw, max). */
+  --fs-display-xxl: clamp(56px, calc(25.794px + 8.0549vw), 232px);
+  --lh-display-xxl: 0.92;
+  --ls-display-xxl: -0.02em;
+  --fw-display-xxl: 400;
+
+  --fs-display-xl: clamp(44px, calc(25.465px + 4.9428vw), 152px);
+  --lh-display-xl: 0.98;
+  --ls-display-xl: -0.015em;
+  --fw-display-xl: 400;
+
+  --fs-display-l: clamp(30px, calc(20.046px + 2.6545vw), 88px);
+  --lh-display-l: 1.04;
+  --ls-display-l: -0.01em;
+  --fw-display-l: 400;
+
+  --fs-heading: clamp(22px, calc(19.941px + 0.5492vw), 34px);
+  --lh-heading: 1.2;
+  --ls-heading: 0;
+  --fw-heading: 500;
+
+  --fs-lede: clamp(19px, calc(17.455px + 0.4119vw), 28px);
+  --lh-lede: 1.4;
+  --ls-lede: 0;
+  --fw-lede: 400;
+
+  --fs-body: clamp(16px, calc(15.485px + 0.1373vw), 19px);
+  --lh-body: 1.55;
+  --ls-body: 0;
+  --fw-body: 400;
+
+  --fs-small: clamp(14px, calc(13.828px + 0.0458vw), 15px);
+  --lh-small: 1.5;
+  --ls-small: 0.01em;
+  --fw-small: 400;
+
+  --fs-label: clamp(12px, calc(11.828px + 0.0458vw), 13px);
+  --lh-label: 1.3;
+  --ls-label: 0.12em;
+  --fw-label: 500;
+
+  --fs-code: clamp(13px, calc(12.485px + 0.1373vw), 16px);
+  --lh-code: 1.6;
+  --ls-code: 0;
+  --fw-code: 400;
+
+  /* Spacing, direction.md heading 5. */
+  --sp-1: 5px;
+  --sp-2: 7px;
+  --sp-3: 12px;
+  --sp-4: 19px;
+  --sp-5: 31px;
+  --sp-6: 50px;
+  --sp-7: 81px;
+  --sp-8: 131px;
+  --sp-9: 212px;
+
+  /* Grid, direction.md heading 5. Phone values here; tablet and desktop follow in the media queries. */
+  --cols: 17;
+  --wrap-max: 2560px;
+  --margin: 19px;
+  --gutter: 12px;
+
+  /* Easing, direction.md heading 6. The only eight curves in the page. */
+  --ease-cut: cubic-bezier(0.10, 0.90, 0.05, 1.00);
+  --ease-settle: cubic-bezier(0.30, 0.50, 0.10, 1.00);
+  --ease-anticipate: cubic-bezier(0.40, -0.60, 0.20, 1.00);
+  --ease-follow: cubic-bezier(0.25, 0.80, 0.35, 1.10);
+  --ease-sym: cubic-bezier(0.62, 0.00, 0.38, 1.00);
+  --ease-fade: cubic-bezier(0.30, 0.10, 0.20, 1.00);
+  --ease-bleed: cubic-bezier(0.55, 0.05, 0.25, 1.00);
+  --ease-press: cubic-bezier(0.10, 0.50, 0.20, 1.00);
+
+  /* Timing in seconds, direction.md heading 7. Every duration on the page is one of these nine. */
+  --t-snap: 0.05s;
+  --t-flick: 0.07s;
+  --t-micro: 0.17s;
+  --t-half: 0.35s;
+  --t-beat5: 0.50s;
+  --t-beat7: 0.70s;
+  --t-hold: 0.85s;
+  --t-settle: 1.19s;
+  --t-breath: 1.70s;
+
+  /* Layers, architecture.md section 7 (canvas, main, cursor), direction-act1 (preloader), skip link above all. */
+  --z-canvas: 0;
+  --z-main: 1;
+  --z-preloader: 2;
+  --z-cursor: 50;
+  --z-skip: 100;
+
+  /* Focus ring, direction.md heading 13: outline 2px solid var(--focus), outline-offset 3px. */
+  --focus-width: 2px;
+  --focus-offset: 3px;
+}
+
+/* Tablet and up, direction.md heading 5 breakpoints (768 px and wider). */
+@media (min-width: 768px) {
+  :root {
+    --margin: clamp(31px, 3.4722vw, 81px);
+    --gutter: 7px;
+  }
+}
+
+/* Desktop, direction.md heading 5 breakpoints (1024 px and wider). */
+@media (min-width: 1024px) {
+  :root {
+    --gutter: clamp(7px, 0.8333vw, 19px);
+  }
+}
+
+/* Ink theme, direction.md heading 3. Overrides the semantic colours only; everything else stays on :root. */
+[data-theme="ink"] {
+  --bg: var(--ink);
+  --bg-raised: var(--ink-raised);
+  --text-1: #F1ECE0;
+  --text-2: #CFC8B9;
+  --text-3: #A39D90;
+  --rule-hair: #75705F;
+  --rule-strong: #E4DCCB;
+  --seal: var(--seal-ink);
+  --seal-text: var(--seal-ink);
+  --focus: #E7735F;
+  --code-string: var(--code-string-raw);
+}

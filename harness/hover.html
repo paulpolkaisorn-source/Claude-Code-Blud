@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hover harness</title>
+    <style>
+      /* Harness only. src/core/hover.ts has no styles. This sheet stands in for base.css: the hover
+         pseudo-element takes its transform-origin from data-enter (direction.md heading 13). */
+      html { background: #efe9dc; color-scheme: light; }
+      body { margin: 0; color: #1d1b18; font: 16px/1.4 system-ui, sans-serif; }
+      .stage { padding: 120px 80px; }
+      .cap { margin: 0 0 24px; font-size: 14px; color: #5c564c; }
+      .row { display: flex; align-items: center; gap: 48px; height: 56px; }
+      .hit {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 200px;
+        height: 56px;
+        margin: 0;
+        padding: 0 16px;
+        border: 1px solid #8a8377;
+        background: transparent;
+        color: #1d1b18;
+        font: inherit;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .hit::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        background: #9a2820;
+        transform: scaleX(0);
+        transition: transform 170ms cubic-bezier(0.1, 0.5, 0.2, 1);
+        z-index: -1;
+      }
+      .hit[data-enter='left']::after { transform-origin: left center; }
+      .hit[data-enter='right']::after { transform-origin: right center; }
+      .hit:hover::after,
+      .hit:focus-visible::after { transform: scaleX(1); }
+      .hit:focus-visible { outline: 2px solid #9a2820; outline-offset: 3px; }
+      .btn { background: #1d1b18; color: #efe9dc; }
+      .btn::after { top: 0; height: auto; background: #9a2820; }
+      .table { margin-top: 96px; width: 560px; border-collapse: collapse; }
+      .table td { height: 56px; padding: 0 16px; border: 1px solid #8a8377; }
+      .table .hit { display: flex; }
+      tr[data-hover]:hover td { background: #e2d9c8; }
+      @media (prefers-reduced-motion: reduce) {
+        .hit::after { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <p class="cap">Hover harness. Three links and a button in a row, then a table row with a link.</p>
+      <nav class="row" aria-label="Harness row">
+        <a class="hit" id="l1" href="#link-one">Link one</a>
+        <a class="hit" id="l2" href="#link-two">Link two</a>
+        <a class="hit" id="l3" href="#link-three">Link three</a>
+        <button class="hit btn" id="b1" type="button">Button</button>
+      </nav>
+      <table class="table">
+        <tbody>
+          <tr id="r1" data-hover>
+            <td><a class="hit" id="rl1" href="#row-link">Row link</a></td>
+            <td id="rc2">Row cell</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+    <script type="module" src="/harness/hover.ts"></script>
+  </body>
+</html>

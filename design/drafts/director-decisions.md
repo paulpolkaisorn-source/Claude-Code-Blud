@@ -106,3 +106,18 @@ These override the act files where they differ.
 1. capabilities.title cites [F-22, F-24]; D16.3's F-15 was a wrong id.
 2. The code example combines two documented shapes: messages.stream(...).on("text") (F-231) and output_config as a top-level Messages request parameter (F-233, F-234, F-235). No docs page shows the two together, and it has not been run against the live API (no key in this environment). Logged in PROGRESS.md under "Cut or unverifiable".
 3. The hero quote (F-20) is Anthropic's own unqualified lead line; the standard-speed qualifier (F-37) stays with the speed section footnote.
+
+## D18. Backgrounds and the canvas (resolves a layering conflict)
+
+The canvas sits behind main (z-index 0), so an opaque CSS section background hides the 3D. Therefore:
+1. By default (no JS, while loading, html.no-gl) every section paints its own CSS background from its data-theme (paper or ink), with plain cuts at the act boundaries.
+2. When the GL boot has rendered its first full frame it adds html.gl-ready. Under html.gl-ready every section background is transparent and the background shader paints the ground.
+3. Under reduced motion with WebGL on, the background shader paints a plain cut at the act boundaries (the bleed progress snaps to 0 or 1 at the boundary line, no front, no fibre motion). CSS backgrounds are not used for this, because they would cover the blocks.
+4. The switch to html.gl-ready is seamless because the shader's base colours equal the CSS colours.
+
+## D19. Act III and family camera (after the cross-file review)
+
+1. Pricing availability panel: option (a) of direction-act3's "Decisions this section could not apply": no extra gap inside availability item 5, so the panel bottom sits at 588.3 px at 1440 x 900, 5.7 px clear of the rest band.
+2. Phone family camera x is +4.02 bu (0.28 x W(z) at the phone family key), so the station label blocks fit to the right of the vertical axis. Desktop family x stays 0. src/gl/rig.ts cameraKey('family') must return this on phones; src/core/projection.ts stationCenters follows cameraKey automatically.
+3. Act III five-item groups get a lead: the first item starts T.micro before the others and uses cut, the followers settle (direction.md heading 8 rule 1).
+4. D16 wins over direction-act2.md where they differ: the code request is up to 11 lines (D16.1), and the family title is "Four models, by latency" with the kicker "Family" (D16.4).

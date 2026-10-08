@@ -1,6 +1,6 @@
 # Art direction: core (locked)
 
-Owner: art director. Date: 2026-10-08. Status: LOCKED.
+Owner: art director. Date: 2026-10-08. Status: PENDING LOCK. Headings 1 to 9 and 13 to 16 are final, except the open deviations in heading 16, row 16, which the director accepts or rejects before lock.
 
 Parts: this file holds headings 1 to 9 and 13 to 16. design/direction-3d.md holds headings 10 and 11. design/direction-act1.md, design/direction-act2.md and design/direction-act3.md hold heading 12 by act.
 
@@ -17,7 +17,7 @@ The object, stated once:
 - Kireji: block index 4 (block 05), the last block of the first line and the cutting word. It is the only seal-coloured block: #B5312A on paper, #E7735F on ink.
 - Column: the seventeen blocks in one vertical column, read top to bottom, 4.54 bu tall (16 × 0.27 + 0.22 bu).
 
-The page is three acts. Act I (paper, 5 vh) holds hero and speed. Act II (ink, 7 vh) holds capabilities, code and family. Act III (paper, 5 vh) holds pricing, closing and footer. Scroll lengths in viewport heights (vh) are: hero 2, speed 3, capabilities 3, code 2, family 2, pricing 1.5, closing 2.5, footer 1.
+The page is three acts. Act I (paper, 5 vh) holds hero and speed. Act II (ink, 7 vh) holds capabilities, code and family. Act III (paper, 5 vh) holds pricing, closing and footer; pricing starts ink and switches to paper at p2 = 0.5. Scroll lengths in viewport heights (vh) are: hero 2, speed 3, capabilities 3, code 2, family 2, pricing 1.5, closing 2.5, footer 1.
 
 The blocks are dark anodised metal in act I, bare steel in act II, and at the close they stand as one column. Three lines become one breath.
 
@@ -175,7 +175,7 @@ Files and budget. Byte counts come from the Phase 1 package check, design/drafts
 - Both woff2 files are copied to public/fonts/ and preloaded in index.html with rel="preload", as="font", type="font/woff2" and crossorigin.
 
 Weights and sizing.
-- Bodoni Moda weight 400 for display-xxl, display-xl, display-l, lede, body and small. Weight 500 for heading. No other weight is used.
+- Bodoni Moda weight 400 for display-xxl, display-xl, display-l, lede, body and small. Weight 500 for heading. No other weight is used. The hero h1 axis passes through 430 on scroll (heading 8, rule 16); no static weight other than 400 and 500 is used.
 - Optical size is automatic. :root sets font-optical-sizing: auto, so the opsz axis follows the rendered size in px, clamped to 6 to 96. Body renders at opsz 16 to 19. The hero h1 renders at opsz 96: at 1440 px it is 141.8 px. Nothing sets opsz by hand.
 - Geist Mono has no optical axis. Weight 500 for label, weight 400 for code.
 
@@ -209,6 +209,7 @@ Rules.
 - Hero h1 markup: Claude<br>Haiku&nbsp;5.5, with the forced break.
 - Hanging punctuation. body and lede set hanging-punctuation: first last, which only Safari applies. In other browsers an opening quotation mark or apostrophe that starts a line is wrapped in span.hang, and .hang sets margin-inline-start: -0.4em. QA checks the glyph edge against the text edge at 1440 px and 375 px.
 - Case. Uppercase only in the label style. Sentence case everywhere else, including headings and buttons.
+- Exceptions to the no-wrap rules: pricing table header cells on phone may wrap (act3, pricing 2D layer, portrait and phone); the example stream wraps inside its panel (act1). Reasons are in heading 14, items 9 and 10.
 - Entrance colour. Body, lede, heading and label settle their colour from text-3 to their token colour over T.beat5 with settle (heading 8, rule 6).
 
 Font-face declarations. The perf owner writes these to src/styles/fonts.css, and the files are copied to public/fonts/. The unicode-range of Bodoni Moda omits U+2191, U+2193 and U+2215, because that face has no arrows and no division slash. Geist Mono omits U+2215 for the same reason.
@@ -232,7 +233,7 @@ Font-face declarations. The perf owner writes these to src/styles/fonts.css, and
 }
 ```
 
-Fallback faces, so that the first paint has the right size and line box. A local face cannot be assumed, so each local candidate gets its own @font-face rule with its own measured metrics. The stacks are "Bodoni Moda Variable", "Bodoni Fallback Georgia", "Bodoni Fallback Times", serif, and "Geist Mono Variable", "Geist Mono Fallback Menlo", "Geist Mono Fallback Consolas", "Geist Mono Fallback Liberation", monospace. Each fallback rule has src: local() naming exactly its own face, and the descriptors size-adjust, ascent-override, descent-override and line-gap-override.
+Fallback faces, so that the first paint has the right size and line box. A local face cannot be assumed, so each local candidate gets its own @font-face rule with its own measured metrics. The stacks are "Bodoni Moda Variable", "Bodoni Fallback Georgia", "Bodoni Fallback Times", "Bodoni Fallback Liberation", "Bodoni Fallback DejaVu", serif, and "Geist Mono Variable", "Geist Mono Fallback Menlo", "Geist Mono Fallback Consolas", "Geist Mono Fallback Liberation", "Geist Mono Fallback DejaVu", monospace. Each fallback rule has src: local() naming exactly its own face, and the descriptors size-adjust, ascent-override, descent-override and line-gap-override.
 
 Method, owned by perf and recorded as comments in fonts.css:
 1. Size-adjust. Render "Haiku 5.5" in Bodoni Moda Variable at weight 400, at the h1 size for 1440 px (141.8 px, which renders at opsz 96). Render the same string in each fallback at 100%. Set size-adjust to the Bodoni width divided by the fallback width, as a percentage. Accept when the two widths agree within 1 px.
@@ -299,7 +300,7 @@ Notes.
 
 ## 7. Timing scale and stagger
 
-Durations in seconds. Every duration in JavaScript and CSS is one of these nine tokens, exported as T by src/core/timing.ts. Each value is a product of 5, 7 and 17 in hundredths of a second, or of 10 times one of them. There is no other duration. T.long is not used. Loops use T.breath.
+Durations in seconds. Every duration in JavaScript and CSS is one of these nine tokens, exported as T by src/core/timing.ts. Each value is a product of 5, 7 and 17 in hundredths of a second, or of 10 times one of them. There is no other duration. Two local constants are not tween durations: pointer velocity smoothing 0.1 s (D13.4) and the quality watchdog hysteresis of 3 s (direction-3d 10.9). T.long is not used. Loops use T.breath.
 
 | Token | Seconds | Derivation | Used for |
 |---|---|---|---|
@@ -351,16 +352,16 @@ Act rhythm. Each act has its own pace, set by the durations above.
 
 ## 8. Motion principles
 
-1. Lead. Every group has one lead that starts first. In a timed group the lead starts T.micro before its followers and moves with cut, and the followers settle. In a scrubbed group the lead is position 0 of scrubLocal. A group with no lead is a defect.
-2. Curves. Only the eight curves of heading 6 exist. A grep for cubic-bezier or CustomEase.create outside src/core/ease.ts returns nothing. CSS takes its curve from cssEase. CSS ease, ease-in, ease-out and linear are never used for motion.
+1. Lead. Every group has one lead that starts first. In a timed group the lead starts T.micro before its followers and moves with cut, and the followers settle. In a scrubbed group the lead is position 0 of scrubLocal. A group with no lead is a defect. The two exceptions are heading 14, items 6 and 7.
+2. Curves. Only the eight curves of heading 6 exist. A grep for cubic-bezier or CustomEase.create outside src/core/ease.ts returns nothing. CSS takes its curve from cssEase. CSS ease, ease-in, ease-out and linear are never used for motion. Periodic loops (idle breath, closing wave) are sine functions over T.breath, not easings. Damped responses (pointer, cursor, smear) are time constants, not curves; the eight curves are the only easings.
 3. Durations. Every duration comes from the table in heading 7. A literal number of seconds in a tween or transition is a defect.
 4. Stagger. Staggers are never uniform. Timed groups follow the overlap rule of heading 7. Scrubbed staggers are exempt.
 5. Scroll. Scroll-linked motion is tied to scroll position and is scrubbed. Camera and formation moves use sym. Per-block local progress uses scrubLocal, with settle for followers and anticipate for the kireji. The ink front progress p uses sym, smoothed over T.beat7 (D10). An entrance is a timed tween. It starts once, when its element's top crosses the trigger line at 80% of the viewport height, and it never replays.
 6. Text. Text enters in one of three ways. Its colour settles from text-3 to its token colour over T.beat5 with settle. A letter-spacing or variable-axis change moves it (the hero h1, rule 16). Or the section title split moves its characters horizontally (rule 15). Text never fades and never moves in y. It moves in x only under rule 15. Under reduced motion a whole section may crossfade (fade, T.beat5, when 20% visible), as architecture section 8 requires.
 7. Limits. Lifts, tilts, lead dips and pointer offsets stay within 0.6 bu or 24 px. Time-based block travel stays within 1.0 bu per move. Longer travel happens only in scrubbed moves, which are exempt from the 0.6 bu limit, or in keyboard formation changes over T.beat7.
 8. Overshoot. Only follow overshoots, by 1.86%, once per arrival, and only on objects. Nothing bounces. No spring is used.
-9. Keep-alive. After its entrance every section keeps one motion running: the idle breath, a scrubbed value, or a pointer response on desktop. The idle breath has amplitude 0.012 bu and period T.breath. It starts T.hold after the entrance, with phase 0 for row A, 0.4π for row B and 0.8π for row C. A loop starts when its section enters the viewport and pauses when the section leaves it. Reduced motion stops every loop.
-10. Rotation. Formation rotations are about the vertical axis only (yaw), at ±0.35 rad on inactive capability groups. Pointer tilt about x and y is the only other rotation, up to 0.035 rad.
+9. Keep-alive. After its entrance every section keeps one motion running: the idle breath, a scrubbed value, or a pointer response on desktop. The idle breath has amplitude 0.012 bu and period T.breath. It starts T.hold after the entrance, with phase 0 for row A, 0.4π for row B and 0.8π for row C. A loop starts when its section enters the viewport and pauses when the section leaves it. Reduced motion stops every loop. Exceptions, per direction-3d 10.12: speed (phase 0 for all 17 blocks), pricing (0.010 bu, phase 0), closing (travelling wave 0.010 bu), capabilities (only the active group breathes).
+10. Rotation. Formation rotations are about the vertical axis only (yaw), at ±0.35 rad on inactive capability groups, except the phone family group, which turns about z by −π/2 with its real blocks counter-rotated (direction-3d 11.8). Pointer tilt about x and y is the only other rotation, up to 0.035 rad.
 11. Pointer. Pointer response uses a damping time constant of T.half. Pointer velocity is smoothed with a local time constant of 0.1 s (D13). Pointer offsets stay within 0.2 bu and tilt within 0.035 rad. Touch has no pointer response.
 12. Kireji. Block index 4 (block 05) is the only seal-coloured block and the only block that receives anticipate. In every formation change it takes position 0, moves with cut in a timed group, and lands first. In a scrubbed race or column move its position follows anticipate between its two poses. The column is the exception: the blocks write top to bottom in index order, and the kireji keeps its slot in that order.
 13. Ink front. The front tracks the act boundary (D10). Its progress p is linear in the section position and is eased with sym, so the section's data-theme switches at p = 0.5 and the block material and environment intensity follow the same p. The rim band's colour mix is bleed(p). Each section that ends at a theme boundary keeps its last 0.18 vh free of text: the bottom of each paper section before an ink boundary, and the bottom of each ink section before a paper boundary. Text that crosses the band is set in the section's own theme colour. The front's geometry is in design/direction-3d.md, heading 10. Under reduced motion and without WebGL the boundary is a plain cut.
@@ -368,7 +369,7 @@ Act rhythm. Each act has its own pace, set by the durations above.
 15. Section titles (D2.3). Display-xl section titles below the fold are split into characters with GSAP SplitText. The parent keeps an aria-label with the full title, and the characters are aria-hidden. On reveal, once, when the title top crosses 80% of the viewport height, each character starts displaced horizontally by (i − centre) × 0.06em, where centre is (n − 1) ÷ 2 for a line of n characters. Each character starts in text-3. Each line is staggered with the front profile at total T.half, and each character tweens to its set position and token colour with settle over T.beat7. Opacity stays at 1. Lines of fewer than five characters start together. Under reduced motion the title is static.
 16. Hero h1 (D2.4). Letter-spacing settles from +0.02em to −0.02em over T.beat7 with settle, from the first frame, so the h1 is legible at first paint. The weight axis is scrubbed with sym across the first 0.5 of the hero's scroll progress, which is the first 1 vh of its 2 vh: 400 at progress 0, 430 at progress 0.25, and 400 at progress 0.5. The axis is set through font-variation-settings with wght.
 17. Reduced motion. Every state is set at once. Scrub, breath, tilt, pointer response, custom cursor, hover lift and title split are off. Hover and press change colour instantly. A section crossfades with fade over T.beat5 when 20% visible. Canvas switches use fade over T.half.
-18. No timers. Nothing starts on a timer alone. Entrances start on loader:done or on the trigger line.
+18. No timers. Nothing starts on a timer alone. Entrances start on loader:done, on the trigger line, or on the first frame after boot. The first-frame starts are the hero h1 settle and the preloader footprint appearance only.
 19. Engineering (D13 and D2.6). gsap.ticker is the only application loop, and initTicker sets lagSmoothing(0). ScrollTrigger's internal empty requestAnimationFrame callback is accepted. Lenis runs with lerp 0.1 on wheel and touch, with syncTouch false, and is off under reduced motion. Every programmatic jump uses scrollToTarget. WebGL is detected with typeof WebGL2RenderingContext !== 'undefined' and the ?nogl query, and a context that fails later adds html.no-gl. Shadows use THREE.PCFShadowMap; softness comes from the shadow camera size and map resolution (D13.1).
 20. Scope. design/direction-3d.md and the three act files obey rules 1 to 19. A part that must break a rule states the rule and the reason in its own file.
 
@@ -389,7 +390,7 @@ Rules for every section.
 | code | native I-beam | Native. | None. | Code is selected and copied, so the native pointer stays exact. |
 | family | datum | As hero, without the block label. | Hovering a label block runs the dash of its phantom outline. Haiku's label lifts the stanza 0.15 bu with follow (D4). | The family is a measuring view. |
 | pricing | native | Native. | None. | Plans are read, not pointed at. |
-| closing | ruler | A 1px horizontal tick, 12px wide. It snaps to the nearest of the 17 column centres with cut over T.micro. Label: the snapped block's two-digit number in label style, 12px right of the tick. | Colour text-1 of the paper theme. | The column is a scale, and the ruler reads it. |
+| closing | ruler | A 1px horizontal tick, 12px wide. It snaps to the nearest of the 17 column centres with cut over T.micro. Label: the snapped block's two-digit number in label style. Label starts 7 px (sp-2) right of the tick's right end, which is 13 px right of the pointer x, vertically centred on the tick. | Colour text-1 of the paper theme. | The column is a scale, and the ruler reads it. |
 | footer | native | Native. | None. | The footer is a title block. |
 
 Touch. No custom cursor. A tap on a block shows its two-digit label for T.breath, placed as the hero label, with cut over T.flick when it shows and when it hides. A tap on a capability card activates it. A tap on a family label toggles its stanza lift (D4). Touch has no pointer response.
@@ -448,6 +449,11 @@ Anything not listed here is not used. Each exception gives its reason.
 3. Follow overshoot (D12). The follow curve overshoots by 1.86%, on objects only, once per arrival, with a cap of 3%. It is not a spring: one overshoot and no oscillation. Reason: a flat settle after a lift reads as dead.
 4. Phantom outlines in the family section (D12, D4). Three rounded-box outlines show the sibling models at their stations. They are one LineSegments object with LineDashedMaterial: dash 0.17 bu, gap 0.07 bu, colour rule-hair-ink (pair I20). They have no fill and no shading. They are static, except that the dash runs while a label block is hovered. Reason: a drafting convention for adjacent parts shown for reference. They are not a wireframe globe, and they do not rotate.
 5. Section title displacement (D2.3, recorded here). Characters of display-xl titles move horizontally once on reveal, by (i − centre) × 0.06em, and reassemble over T.beat7. Opacity stays at 1, and no character moves in y. Reason: the brief asks for text that splits and reassembles on reveal. Heading 8, rule 6 names this as the one exception to the no-translation rule.
+6. Split title reveal (rule 15): no cut lead. The reveal moves the whole word, and character 0 starts at 0 on the front profile. Reason: D2.3 gives each title line one front-profile stagger and no lead.
+7. Column write (direction-3d 11.10): no lead. Blocks write in index order and the kireji keeps its slot. Reason: the column is written as one sweep from index 0 to 16, so no block leads.
+8. Sine loops (rule 2): the idle breath and the closing wave are sine functions over T.breath, not easings. Reason: a loop has no arrival to ease into.
+9. Pricing table header cells on phone may wrap (heading 4; act3, pricing 2D layer, portrait and phone). Reason: at 375 px the table has three columns of 40%, 30% and 30% of the panel width, and the header labels need to wrap to fit.
+10. The example stream wraps inside its panel (heading 4; act1). Reason: it is prose set in the code style, and it must fit the panel width.
 
 No other exception is used. Checked against the banned list: no default easings, no uniform staggers, no gradients (the link underline is a solid pseudo-element), no glow beyond item 1, no glassmorphism, no particles, no wireframe globes (item 4 is a drafting outline), no blobs, no emoji, no logo or wordmark, no AI imagery, and no spring (item 3 is the only overshoot).
 
@@ -479,3 +485,4 @@ Each row gives the inputs for one heading. "Overridden" names the decision that 
 | 13 | Focus and interaction | Entry-side fill and underline; focus ring with opacity over T.snap; selection rule (kept). | Focus ring at 0 s; reduced-motion rule; button and link anatomy. | D2.1: direction-aware hover as pseudo-elements, press over T.micro, centre origin on touch, colour only under reduced motion. | 7.13: B's clip-path wipe and gradient underline replaced by solid pseudo-elements; focus ring from B. | D2.1 keeps the directional hover that 7.13 removed. B's pressed 1px translate dropped, because button labels are text and text does not translate (rule 6). |
 | 14 | Ban-list exceptions | Exceptions: long pin (dropped), Lenis, bloom, follow. | None declared. | D12 list. D2.3 displacement recorded. | 7.14: bloom, Lenis and follow listed; long pin dropped; uniform stagger removed and not declared. | D12 adds the phantom outlines (exception 4). D2.3 adds exception 5. |
 | 15 | Open questions | Five questions. | Five questions. | D9 on fonts. | 7.15: fonts resolved to B with the fallback named; capability hold moot; research/facts.md exists, so B's item 1 is out of date; kireji confirmed; preloader budget 1.5 s; no fourth weight; colour space decided (D11). | D9 defers the 16 px test, overriding 7.4's test before lock. |
+| 16 | Open deviations (act files) | Not used here. | Not used here. | Open, for the director. Accept or reject each item below before lock; accepted values move into their owning section. Act I: "Deviations recorded for the director (act I)", items 1 to 10. Act II: "Decisions and deviations in this part", A1 to A12; A4 is for the director to add to direction-3d 10.6. Act III: "Deviations recorded for the director (act III)", items 1 to 10, and "Decisions this section could not apply". Far plane: 120 on phones (act I A8, act II A3, act III deviation 7) against far 80 in direction-3d 10.6, marked OPEN in direction-3d. | None. | Not applicable. |

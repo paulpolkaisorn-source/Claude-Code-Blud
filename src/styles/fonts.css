@@ -1,0 +1,147 @@
+/*
+ * Web fonts (design/direction.md section 4). Owner: perf.
+ *
+ * Real faces: Bodoni Moda Variable and Geist Mono Variable, latin subset, normal style, OFL 1.1,
+ * from @fontsource-variable/bodoni-moda@5.3.0 and @fontsource-variable/geist-mono@5.3.0.
+ * Files: public/fonts/bodoni-moda-latin-opsz-normal.woff2 (46,260 bytes) and
+ * public/fonts/geist-mono-latin-wght-normal.woff2 (23,128 bytes), 69,388 bytes together.
+ * Licence texts: public/fonts/bodoni-moda-OFL.txt and public/fonts/geist-mono-OFL.txt.
+ *
+ * Fallback stacks (use these, in this order):
+ *   display, headings, lede, body:
+ *     "Bodoni Moda Variable", "Bodoni Fallback Georgia", "Bodoni Fallback Times",
+ *     "Bodoni Fallback Liberation", "Bodoni Fallback DejaVu", serif
+ *   labels, figures, code:
+ *     "Geist Mono Variable", "Geist Mono Fallback Menlo", "Geist Mono Fallback Consolas",
+ *     "Geist Mono Fallback Liberation", "Geist Mono Fallback DejaVu", monospace
+ *
+ * Fallback faces. A local face cannot be assumed, so each candidate has its own rule. Its
+ * src names only its own face (the full or PostScript name is listed where the family name is
+ * not the name Chromium matches). Chromium skips a rule whose local face is not installed and
+ * moves to the next family in the stack, so every rule is safe to ship on every platform.
+ *
+ * Method. Values come from scripts/measure-fallback.mjs, which runs in Chromium and is the
+ * place to re-measure:
+ *   size-adjust      = real width / fallback width for the probe at the production size.
+ *                      Bodoni probe: "Haiku 5.5" at 141.8 px (the 1440 px hero h1, weight 400,
+ *                      letter-spacing -0.02em). Geist probe: "ABCDEFGHIJ0123456789" at 13 px
+ *                      (label, weight 500, letter-spacing 0.12em).
+ *   ascent-override  = (real ascender / real unitsPerEm) / size-adjust
+ *   descent-override = (real descender / real unitsPerEm) / size-adjust
+ *   line-gap-override = (real line gap / real unitsPerEm) / size-adjust, which is 0% here.
+ *   The division by size-adjust is needed because Chromium applies the overrides to the
+ *   size-adjusted font size (checked: at size-adjust 50%, an ascent-override of 100% gives 50 px).
+ *   Real metrics (USE_TYPO_METRICS is set, so typo and hhea are equal): Bodoni Moda ascender 2250,
+ *   descender 800, unitsPerEm 2000; Geist Mono ascender 1005, descender 295, unitsPerEm 1000.
+ *
+ * Measured here: Chromium 141.0.7390.37 on Linux. Liberation Serif, DejaVu Serif, Liberation Mono
+ * and DejaVu Sans Mono are installed, so their rules are measured directly.
+ *   Liberation Serif: width of "Haiku 5.5" within 0.031 px of the real face; h1 baseline and line
+ *     box equal at 141.8 px. "Claude" (line 1) is 32 px narrower, and the 16 px body sample is
+ *     6.5% narrower, because one size-adjust serves the hero and body glyph proportions differ.
+ *   DejaVu Serif: the same probes agree within 0.031 px (hero); the same body and "Claude" residual.
+ *   Liberation Mono: label width within 0.031 px; baseline and line box equal at 13 px.
+ *   DejaVu Sans Mono: label width within 0.031 px; baseline and line box equal at 13 px.
+ * Not installed here, so they take proxy values:
+ *   Times New Roman takes Liberation Serif. Liberation Serif is designed to be metric-compatible
+ *     with Times New Roman, so these values are expected to be exact (not measured here).
+ *   Menlo takes DejaVu Sans Mono. Menlo is derived from DejaVu Sans Mono's design, so these values
+ *     are expected to match (not measured here).
+ *   Georgia takes Liberation Serif, and Consolas takes DejaVu Sans Mono. No metric-compatible face
+ *     is installed here, so these two are approximate. Re-run scripts/measure-fallback.mjs on macOS
+ *     and Windows and replace these four rules with the measured values.
+ */
+
+@font-face {
+  font-family: "Bodoni Moda Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url(/fonts/bodoni-moda-latin-opsz-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Geist Mono Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/geist-mono-latin-wght-normal.woff2) format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2191, U+2193, U+2212, U+FEFF, U+FFFD;
+}
+
+/* Bodoni fallbacks: measured on Liberation Serif (proxy for Georgia and Times New Roman). */
+
+@font-face {
+  font-family: "Bodoni Fallback Georgia";
+  src: local("Georgia");
+  size-adjust: 105.1503%;
+  ascent-override: 106.9897%;
+  descent-override: 38.0408%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Bodoni Fallback Times";
+  src: local("Times New Roman"), local("TimesNewRomanPSMT");
+  size-adjust: 105.1503%;
+  ascent-override: 106.9897%;
+  descent-override: 38.0408%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Bodoni Fallback Liberation";
+  src: local("Liberation Serif");
+  size-adjust: 105.1503%;
+  ascent-override: 106.9897%;
+  descent-override: 38.0408%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Bodoni Fallback DejaVu";
+  src: local("DejaVu Serif");
+  size-adjust: 83.8565%;
+  ascent-override: 134.1578%;
+  descent-override: 47.7005%;
+  line-gap-override: 0%;
+}
+
+/* Geist Mono fallbacks: measured on DejaVu Sans Mono and Liberation Mono (proxies for Menlo and Consolas). */
+
+@font-face {
+  font-family: "Geist Mono Fallback Menlo";
+  src: local("Menlo"), local("Menlo Regular"), local("Menlo-Regular");
+  size-adjust: 99.717%;
+  ascent-override: 100.7852%;
+  descent-override: 29.5837%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Geist Mono Fallback Consolas";
+  src: local("Consolas");
+  size-adjust: 99.717%;
+  ascent-override: 100.7852%;
+  descent-override: 29.5837%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Geist Mono Fallback Liberation";
+  src: local("Liberation Mono");
+  size-adjust: 100%;
+  ascent-override: 100.5000%;
+  descent-override: 29.5000%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Geist Mono Fallback DejaVu";
+  src: local("DejaVu Sans Mono");
+  size-adjust: 99.717%;
+  ascent-override: 100.7852%;
+  descent-override: 29.5837%;
+  line-gap-override: 0%;
+}
