@@ -85,3 +85,24 @@ Bloom (specular only, threshold 0.96), Lenis (lerp 0.1, off under reduced motion
 - design/direction-act1.md: heading 12 for preloader, hero, speed.
 - design/direction-act2.md: heading 12 for capabilities, code, family.
 - design/direction-act3.md: heading 12 for pricing, closing, footer.
+
+## D15. Director review of direction-3d.md (applies on top of it)
+
+1. Phone race (aspect below 1.0): the race formation turns vertical, like the phone family axis. Pose transform for portrait: (x, y) -> (y, -x) for positions, so index 0 is at the top and index 16 at the bottom; blocks keep rotZ 0 (they are square, so no counter-rotation is needed). Camera fit by height: z = 15.90 / (0.80 x 2 x tan 11 deg) = 51.12, x 0, y 0. Smear still stretches along screen y, which is now the race direction.
+2. "T.stride" in any direction file means T.beat7 (0.7 s). The timing module has no T.stride.
+3. Pose scale is a single number s (uniform). Smear is a shader stretch, not a pose scale.
+
+## D16. Copy overrides after the fact-check (director)
+
+These override the act files where they differ.
+1. Code section: a complete, runnable TypeScript program, not a fragment. At most 11 lines in the REQUEST block, at most 52 characters per line; the EXAMPLE OUTPUT block at most 4 lines of at most 52 characters. Shape: import Anthropic from "@anthropic-ai/sdk"; const client = new Anthropic(); await client.messages.stream({ model: "claude-haiku-5-5", max_tokens: <n>, output_config: { effort: "low" }, messages: [...] }).on("text", (t) => process.stdout.write(t)); — each part confirmed on a primary docs page and recorded in research/facts.md (streaming page TypeScript example; effort page request shape).
+2. Hero lede: Anthropic's positioning line, attributed and quoted: Anthropic calls it "the cheapest, fastest, and most capable small model we've ever released", designed for high-volume, cost-sensitive tasks. [F-20, F-22]. At most 28 words.
+3. Capabilities title: "Narrow tasks, at volume" [F-15, F-22]. Kicker stays "Capabilities".
+4. Family title: "Four models, by latency" [F-139, F-140]. Kicker stays "Family".
+5. The streaming docs page is a source: the researcher adds a facts.md entry for it, and the copy cites it in code-sources and the footer sources list.
+
+## D17. Accepted after the D16 verification
+
+1. capabilities.title cites [F-22, F-24]; D16.3's F-15 was a wrong id.
+2. The code example combines two documented shapes: messages.stream(...).on("text") (F-231) and output_config as a top-level Messages request parameter (F-233, F-234, F-235). No docs page shows the two together, and it has not been run against the live API (no key in this environment). Logged in PROGRESS.md under "Cut or unverifiable".
+3. The hero quote (F-20) is Anthropic's own unqualified lead line; the standard-speed qualifier (F-37) stays with the speed section footnote.

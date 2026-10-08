@@ -51,8 +51,9 @@ Terms used in this part. bu is one block unit. p1 is the ink-bleed progress of t
 | Rim | SpotLight | #F4EEDF | 36 cd | (7, 5, -5) | (0, 0, 0) | off |
 | Fill | HemisphereLight | sky #F4EEDF, ground #151512 | 0.35 | none | none | off |
 
-- Key shadow: THREE.PCFShadowMap (D13.1; PCFSoftShadowMap is removed in three 0.186.1). Map 2048 by 2048. Shadow camera left -8, right 8, top 8, bottom -8, near 1, far 40. Bias -0.0004, normalBias 0.02. Softness comes from the map size and the shadow camera extent.
+- Key shadow: THREE.PCFShadowMap (D13.1; PCFSoftShadowMap is removed in three 0.186.1). Map 2048 by 2048. Shadow camera left -14, right 14, top 14, bottom -14 (a 28 bu square, so one texel is 28 / 2048 = 0.0137 bu), near 1, far 40. Bias -0.0004, normalBias 0.02. Softness comes from the map size and the shadow camera extent. The inputs used 8 bu each way. At 8 bu, 13 of the 17 family blocks lie outside the camera and 3 straddle its edge, because light-space x is 0.8944 x world x on the centre line. At 14 bu every block, outline and the shadow catcher lies inside (section 11.13).
 - Rim spot: angle 0.45 rad, penumbra 0.8, decay 2.
+- Rim coverage (stated here, not retargeted per section): full strength within 5.2 degrees of the axis and zero beyond 25.8 degrees, which is 4.8 bu in radius at the origin. It lights the stanza (0.87 to 0.98 of full strength at its outer blocks), the column, and the race from its centre to its left end (partly, at 19 degrees off axis). It is zero from x 4.5 to the right end of the race (49 to 52 degrees off axis) and on the family stations (71 degrees), so those blocks take key and fill only.
 - Shadow catcher: a ShadowMaterial plane, 24 by 16 bu, at z -0.9, depthWrite false. Opacity lerps 0.14 (m = 0) to 0.50 (m = 1).
 - Not in this lock: the seal point light of draft A.
 
@@ -72,13 +73,13 @@ Terms used in this part. bu is one block unit. p1 is the ink-bleed progress of t
 | Keyframe | Sections | Fit | Desktop z (1440 x 900) | Desktop x | Phone z (375 x 812) | Phone y |
 |---|---|---|---:|---:|---:|---:|
 | hero | hero, capabilities, code | stanza 5.92 bu at f 0.45 (width) | 21.15 | -2.89 | 39.25 (f 0.84) | -1.10 |
-| speed | speed | race 15.90 bu at f 0.80 (width) | 31.95 | 0.00 | 110.70 (f 0.80) | 0.00 |
+| speed | speed | race 15.90 bu at f 0.80 (width on desktop, height on phone) | 31.95 | 0.00 | 51.12 (f 0.80) | 0.00 |
 | pricing | pricing | rest 8.74 bu at f 0.70 (width) | 20.07 | 0.00 | 69.54 (f 0.70) | 0.00 |
 | closing | closing, footer | column 4.54 bu at f 0.80 (height) | 14.60 | -2.00 | 14.60 | 0.00 |
 | family | family | axis 28 bu at f 0.90 (width on desktop, height on phone) | 50.02 | 0.00 | 80.03 | 0.00 |
 
-- Phone hero, capabilities and code use camera y -1.10, which places the formation in the upper half of the screen. Phone closing and footer use camera y 0.00: at -1.10 the column top would sit 0.53 bu above the visible edge (2.27 bu top edge against 1.74 bu, see section 11.13). Desktop y is 0 for every keyframe.
-- Phone speed and pricing use their own fit at the phone aspect. The phone rule in the input covers only the stanza. At 375 x 812 the race is 80 percent of the phone width, so one block (0.70 bu) is 13.21 px wide.
+- Phone hero, capabilities and code use camera y -1.10, which places the formation in the upper half of the screen. Phone closing and footer use camera y 0.00: at -1.10 the column top would sit 0.55 bu above the visible edge (2.27 bu top edge against 1.72 bu at the column's front face, z 0.0723, see section 11.13). Desktop y is 0 for every keyframe.
+- Phone speed and pricing use their own fit at the phone aspect. The phone rule in the input covers only the stanza. On a portrait phone the race is vertical (section 11.3), so speed takes the height fit: at 375 x 812 the race is 80 percent of the phone height, z = 15.90 / (0.80 x 2 x 0.19438) = 51.12, and one block (0.70 bu) is 28.60 px tall. The width fit of z 110.70 at 375 x 812 is no longer used. Pricing stays horizontal and keeps the width fit.
 - Camera moves between sections are scrubbed with sym (section 10.9).
 
 ### 10.7 Labels that carry facts
@@ -97,7 +98,7 @@ Terms used in this part. bu is one block unit. p1 is the ink-bleed progress of t
 - Bloom: BloomEffect with luminanceThreshold 0.96 (linear), luminanceSmoothing 0.02, intensity 0.12, radius 0.2, mipmapBlur true. Neutral: no coloured glow. Section 10.1 gives the threshold margins.
 - Chromatic aberration (misregistration): ChromaticAberrationEffect. v is scrollState.velocity in px/s, and its absolute value is damped with time constant T.micro (0.17 s). Offset in px = 0.8 x clamp((|v| - 40) / 2960, 0, 1). So the offset is 0 px at 40 px/s and below, 0.8 px at 3000 px/s and above, and linear between. The offset in uv is the px value divided by the drawing-buffer width.
 - Grain: amplitude 0.028 of full scale (7 of 255 levels) at m = 0 and 0.040 of full scale at m = 1, lerped by m. Added after the sRGB conversion, re-seeded every frame. In reduced motion the grain seed stays fixed at 17.
-- Depth of field, on only in speed and code, with B's values. Speed: focus distance 31.95 bu, normalised depth (31.95 - 0.5) / 79.5 = 0.3956, bokeh scale 1.2 px. Code: focus distance 21.15 bu, normalised depth (21.15 - 0.5) / 79.5 = 0.2597, bokeh scale 2.0 px. Normalised depth uses near 0.5 and far 80. Off in every other section.
+- Depth of field, on only in speed and code, with B's values. Speed: focus distance 31.95 bu, normalised depth (31.95 - 0.5) / 79.5 = 0.3956, bokeh scale 1.2 px. Speed on a portrait phone (aspect below 1.0), where the race is vertical and fitted by height: focus distance 51.12 bu, normalised depth (51.12 - 0.5) / 79.5 = 0.6367, bokeh scale 1.2 px. Code: focus distance 21.15 bu, normalised depth (21.15 - 0.5) / 79.5 = 0.2597, bokeh scale 2.0 px. Normalised depth uses near 0.5 and far 80. Off in every other section.
 
 ### 10.9 Quality tiers and watchdog
 
@@ -157,7 +158,7 @@ Ink bleed: the ground changes along an irregular front at two boundaries. Bounda
 ### 10.14 Motion limits
 
 - Time-based block travel is at most 1.0 bu per move. Lifts and breath are inside this limit. Preloader entrances scale in place and do not travel.
-- Keyboard formation changes in capabilities last T.stride (0.7 s) and may travel further than 1.0 bu. This is the only exception. Scroll-scrubbed moves are exempt by definition.
+- Formation changes in capabilities, by keyboard or tap, last T.beat7 (0.7 s) and may travel further than 1.0 bu. This is the only exception. Scroll-scrubbed moves are exempt by definition.
 - Overshoot: the follow curve, 1.86 percent, once per arrival, on blocks only. It applies to the end of a keyboard formation change in capabilities and to the Haiku station lift in family. It never applies to text, the camera or the background. No oscillation and no spring.
 - Camera moves use sym, which never overshoots.
 - Rotation: formations rotate about yaw only, except the phone family group, which turns about z (section 11.8). The hero tilt is the only other rotation.
@@ -217,6 +218,7 @@ Every formation below is a table of 17 rows generated from the formulas stated w
 
 - Index k at x = (k - 8) x 0.95, y 0, z 0, s 1, yaw 0. Pitch 0.95. The line is 15.90 bu wide, from -7.95 to +7.95 at the block edges.
 - Stagger order: 4, 3, 2, 1, 0, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5. The kireji leads and the run starts from the far end of the line.
+- Portrait (aspect below 1.0): every position (x, y) becomes (y, -x); index 0 is the top block, index 16 the bottom block; rotZ 0; stagger order unchanged. The portrait positions are therefore x 0, y (8 - k) x 0.95, z 0, s 1, yaw 0. The line is 15.90 bu tall, from y -7.95 to +7.95 at the block edges. The table below is the landscape layout. The phone camera fits this line by height at z 51.12 (section 10.6).
 
 | index | x | y | z | scale | rotX | rotY | rotZ |
 |---:|---:|---:|---:|---:|---:|---:|---:|
@@ -445,7 +447,7 @@ Phantom outlines. Three outlines, one per sibling station, centred at y 0 and z 
 
 ### 11.12 Decisions in this part that differ from the inputs
 
-1. Phone closing and footer camera y is 0.00, not the -1.10 of draft B. At -1.10 the column top (2.27 bu) sits 0.53 bu above the visible top edge, so it is clipped.
+1. Phone closing and footer camera y is 0.00, not the -1.10 of draft B. At -1.10 the column top (2.27 bu) sits 0.55 bu above the visible top edge, so it is clipped.
 2. Desktop family camera x is 0.00, not the -0.22 W(z) of the desktop offset. At z 50.02 that offset would move the visible right edge to 8.71 bu, which cuts the Fastest stanza (7.54 to 13.46 bu).
 3. Phone speed and pricing use their own fit at the phone aspect (section 10.6). Draft B gives a phone z only for the stanza.
 4. Pointer tilt is on the hero only, as in draft B. The code recede translation is damped with T.half, as D13.4 sets for all pointer damping.
@@ -456,6 +458,8 @@ Phantom outlines. Three outlines, one per sibling station, centred at y 0 and z 
 9. The column scale is exactly 0.22 / 0.70, so the column is 4.54 bu tall.
 10. Cap-2 overlaps on screen between the front stair (blocks 15 and 16) and back row A blocks 3 and 4. This is the front-row layering of D6 and is accepted.
 11. The phone family axis is fitted by height (z 80.03), because the axis is rotated to vertical.
+12. The phone race is vertical and fitted by height (z 51.12), as decision D15.1 sets. The race as drafted is horizontal; its width fit gave a 13.21 px block at 375 x 812, which is retired.
+13. The key shadow camera is 14 bu each way, not the 8 bu of the inputs. At 8 bu, 13 of the 17 family blocks lie outside it (section 10.4).
 
 ### 11.13 Verification record
 
@@ -469,4 +473,8 @@ A one-off node script recomputed all nine formation tables from the formulas in 
 - Screen-space overlap (depth-separated pairs). Only cap-2 has it: pairs 3-15, 4-15 and 4-16, depth separation 2.30 bu. Section 11.6 accepts this. No other formation has it.
 - Family outlines: neighbouring gaps are 1.08, 1.08 and 1.08 bu. PASS.
 - Camera at 1440 x 900 (aspect 1.6): hero z 21.15 and x -2.89; speed z 31.95; pricing z 20.07; closing z 14.60 and x -2.00; family z 50.02 and x 0. Fit fractions: race 0.8000, rest 0.7000, family axis 0.9000. PASS.
-- Camera at 375 x 812: hero z 39.25; speed z 110.70; pricing z 69.54; family z 80.03 (height fit); closing z 14.60. With camera y -1.10 at closing, the column top is clipped by 0.53 bu, which is why the phone closing y is 0. Finding confirmed.
+- Camera at 375 x 812: hero z 39.25; speed z 51.12 (height fit, vertical race); pricing z 69.54; family z 80.03 (height fit); closing z 14.60. With camera y -1.10 at closing, the column top is clipped by 0.55 bu (2.27 against 1.72 at the column's front face), which is why the phone closing y is 0. Finding confirmed.
+- Portrait race (review pass, 2026-10-08): positions (0, (8 - k) x 0.95), so the centre pitch is 0.95 against a 0.70 block, a ratio of 1.357 as for the landscape race, and the gap is 0.25 bu. No two blocks overlap. The height fit at f 0.80 gives a visible height of 19.875 bu at z 51.12, and one block is 28.60 px at 812 px. PASS.
+- Key shadow frustum at 14 bu (review pass): in light space every block of every formation (sections 11.2 to 11.10, the open stanza, the portrait race and the rotated phone family) lies inside, and so does the shadow catcher (light-space x -11.14 to 10.33, y -9.19 to 10.08). Depth runs from 7.9 to 25.7 bu, inside near 1 and far 40. At 8 bu, 13 of the 17 family landscape blocks were outside and 3 straddled, and 9 phone-family blocks were outside and 5 straddled. PASS at 14 bu.
+- Rim coverage (review pass, section 10.4): origin 0 degrees (full), stanza outer blocks 9 to 13 degrees (0.87 to 0.98), race left end 19 degrees (0.42), race right end 50 to 52 degrees and family stations 71 degrees (0). PASS against the stated coverage.
+- Far plane (near 0.5, far 80): OPEN. The phone family camera at z 80.03 puts the formation at depth 79.80 to 80.26, so the rear 0.26 bu of each block and outline (57 percent of its depth) is beyond far 80. Direction-act2 A3 sets far 120 for this keyframe, while 10.6 says far 80 for all. The director either records that exception in 10.6 or moves the camera to z 79.5 (family fit f 0.906). All other keyframes pass.

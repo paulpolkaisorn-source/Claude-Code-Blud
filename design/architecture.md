@@ -152,7 +152,7 @@ export function createStage(canvas: HTMLCanvasElement): Stage; // throws if no W
 
 // src/gl/blocks/formations.ts
 export type { FormationId } from '../../core/types';   // FormationId lives in src/core/types.ts
-export interface Pose { p: [number, number, number]; r: [number, number, number]; s: [number, number, number] }
+export interface Pose { p: [number, number, number]; r: [number, number, number]; s: number }   // uniform scale (D15.3)
 export const BLOCK_COUNT = 17;
 export const ROWS = [5, 7, 5] as const;
 export const FORMATIONS: Record<FormationId, Pose[]>;   // each array has exactly 17 poses, index i is the same block everywhere

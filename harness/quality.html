@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>quality watchdog harness</title>
+    <style>
+      html {
+        background: #f1ece0;
+      }
+      body {
+        margin: 0;
+        color: #151512;
+        font: 13px/1.5 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+      }
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 28px 24px 56px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .label {
+        margin: 0;
+        color: #5e5a51;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      #verdict {
+        margin-bottom: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 28px;
+      }
+      th,
+      td {
+        padding: 5px 8px;
+        border-bottom: 1px solid #3a3831;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: #5e5a51;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      tr.fail td {
+        color: #9a2820;
+      }
+      figure {
+        margin: 0 0 26px;
+      }
+      figcaption {
+        margin-bottom: 6px;
+      }
+      figcaption .expect {
+        color: #45413a;
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+      svg text {
+        fill: #45413a;
+        font: 11px/1 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+      }
+      svg .warm {
+        fill: #e4dccb;
+      }
+      svg .hidden {
+        fill: #7d786a;
+        fill-opacity: 0.22;
+      }
+      svg .grid {
+        stroke: #7d786a;
+        stroke-opacity: 0.45;
+        stroke-width: 1;
+      }
+      svg .threshold {
+        stroke: #5e5a51;
+        stroke-dasharray: 4 3;
+        stroke-width: 1;
+      }
+      svg .thr {
+        fill: #5e5a51;
+      }
+      svg .trace {
+        fill: none;
+        stroke: #151512;
+        stroke-width: 1.25;
+      }
+      svg .step {
+        stroke: #b5312a;
+        stroke-width: 1.5;
+      }
+      svg .steplabel {
+        fill: #9a2820;
+      }
+      svg .stop {
+        stroke: #5e5a51;
+        stroke-dasharray: 2 3;
+        stroke-width: 1;
+      }
+      svg .stoplabel {
+        fill: #5e5a51;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="label">harness: src/gl/quality.ts, no WebGL</p>
+      <h1>Quality watchdog</h1>
+      <p class="label" id="verdict">starting</p>
+      <div id="report"></div>
+    </main>
+    <script type="module" src="/harness/quality.ts"></script>
+  </body>
+</html>

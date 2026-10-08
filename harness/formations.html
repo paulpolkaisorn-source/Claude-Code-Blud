@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>formations harness</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #f1ece0;
+      }
+      #gl {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #labels {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #151512;
+      }
+      #labels .label {
+        position: absolute;
+        white-space: nowrap;
+        transform: translateY(-100%);
+      }
+      #status {
+        position: fixed;
+        left: 12px;
+        bottom: 10px;
+        font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #151512;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <div id="labels" aria-hidden="true"></div>
+    <div id="status" aria-hidden="true"></div>
+    <script type="module" src="/harness/formations.ts"></script>
+  </body>
+</html>

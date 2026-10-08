@@ -1043,6 +1043,101 @@ Source for F-226 to F-230: https://platform.claude.com/docs/en/about-claude/mode
   - Source: choosing-a-model guide, "Establish key criteria" (Speed).
   - Accessed 2026-10-08. Status: VERIFIED by fix-round re-fetch. Do not cite the 2.5x as a Haiku 5.5 figure (see C-19).
 
+## Code example sources
+
+Owner: researcher. Accessed 2026-10-08. Code quotes are the page's code block with the common indentation removed. The Markdown copy (.md) is the quote source, because the visible HTML text carries only some code tabs; the HTML page's embedded data carries the same code (checked by script). The streaming page has no import line, so the TypeScript import comes from the Get started page (F-232).
+- **F-231** The streaming page's TypeScript example creates the client with `new Anthropic()` and streams a message with `client.messages.stream({...})`. It logs each text piece in an `.on("text", ...)` handler. The example uses model `claude-opus-5-5` and `max_tokens` 1024.
+  - Quote:
+    ```
+    const client = new Anthropic();
+
+    await client.messages
+      .stream({
+        messages: [{ role: "user", content: "Hello" }],
+        model: "claude-opus-5-5",
+        max_tokens: 1024
+      })
+      .on("text", (text) => {
+        console.log(text);
+      });
+    ```
+  - Source: https://platform.claude.com/docs/en/build-with-claude/streaming (TypeScript tab); Markdown copy https://platform.claude.com/docs/en/build-with-claude/streaming.md
+  - Accessed 2026-10-08. Status: VERIFIED by independent re-fetch (two fetches on 2026-10-08; each quote checked by script against the Markdown copy and the HTML page's embedded data).
+- **F-232** The Get started page's TypeScript quickstart imports the SDK with `import Anthropic from "@anthropic-ai/sdk";` and creates the client with `new Anthropic();`.
+  - Quote:
+    ```
+    import Anthropic from "@anthropic-ai/sdk";
+
+    const client = new Anthropic();
+    ```
+  - Source: https://platform.claude.com/docs/en/get-started (TypeScript tab, "Create your code" step); Markdown copy https://platform.claude.com/docs/en/get-started.md
+  - Accessed 2026-10-08. Status: VERIFIED by independent re-fetch (two fetches on 2026-10-08; each quote checked by script against the Markdown copy and the HTML page's embedded data).
+- **F-233** The effort page's TypeScript example sets effort inside a non-streaming `client.messages.create({...})` call, as `output_config: { effort: "medium" }` beside `model`, `max_tokens` and `messages`.
+  - Quote:
+    ```
+    const client = new Anthropic();
+
+    const response = await client.messages.create({
+      model: "claude-opus-5-5",
+      max_tokens: 4096,
+      messages: [
+        {
+          role: "user",
+          content: "Analyze the trade-offs between microservices and monolithic architectures"
+        }
+      ],
+      output_config: {
+        effort: "medium"
+      }
+    });
+
+    const textBlock = response.content.find(
+      (block): block is Anthropic.TextBlock => block.type === "text"
+    );
+    console.log(textBlock?.text);
+    ```
+  - Source: https://platform.claude.com/docs/en/build-with-claude/effort (TypeScript tab, "Set the effort level"); Markdown copy https://platform.claude.com/docs/en/build-with-claude/effort.md
+  - Accessed 2026-10-08. Status: VERIFIED by independent re-fetch (two fetches on 2026-10-08; each quote checked by script against the Markdown copy and the HTML page's embedded data).
+- **F-234** The effort page sets effort on the request with a top-level `output_config` object that holds `effort`. The cURL example's request body contains these lines:
+  - Quote:
+    ```
+    "output_config": {
+      "effort": "medium"
+    }
+    ```
+  - Source: https://platform.claude.com/docs/en/build-with-claude/effort (cURL tab, "Set the effort level"); Markdown copy https://platform.claude.com/docs/en/build-with-claude/effort.md
+  - Accessed 2026-10-08. Status: VERIFIED by independent re-fetch (two fetches on 2026-10-08; each quote checked by script against the Markdown copy and the HTML page's embedded data).
+- **F-235** The effort page says the top-level effort parameter needs no beta header.
+  - Quote: "The top-level effort parameter is available on all supported models with no beta header required."
+  - Source: https://platform.claude.com/docs/en/build-with-claude/effort (opening paragraph); Markdown copy https://platform.claude.com/docs/en/build-with-claude/effort.md. The same paragraph says per-message effort "is in beta"; that separate feature is not carried here.
+  - Accessed 2026-10-08. Status: VERIFIED by independent re-fetch (two fetches on 2026-10-08; each quote checked by script against the Markdown copy and the HTML page's embedded data).
+- **F-236** The streaming page's second TypeScript example uses `client.messages.stream({...})` and reads raw stream events in a `for await` loop, writing each text delta with `process.stdout.write(event.delta.text)`. It uses model `claude-opus-5-5` and `max_tokens` 256.
+  - Quote:
+    ```
+    const client = new Anthropic();
+
+    const stream = client.messages.stream({
+      model: "claude-opus-5-5",
+      messages: [{ role: "user", content: "Hello" }],
+      max_tokens: 256
+    });
+
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        process.stdout.write(event.delta.text);
+      }
+    }
+    ```
+  - Source: https://platform.claude.com/docs/en/build-with-claude/streaming ("Full HTTP stream response", "Basic streaming request", TypeScript tab); Markdown copy https://platform.claude.com/docs/en/build-with-claude/streaming.md
+  - Accessed 2026-10-08. Status: VERIFIED by independent re-fetch (two fetches on 2026-10-08; each quote checked by script against the Markdown copy and the HTML page's embedded data).
+
+### Not found and wording differences
+
+- NOT FOUND: an import line on the streaming page. No `import Anthropic` line and no `@anthropic-ai/sdk` text appear in either copy (searched by script). The import line is taken from F-232.
+- NOT FOUND: `output_config` inside `client.messages.stream(...)`. The streaming page has no `output_config` text. The effort page's "Set the effort level" TypeScript example uses `client.messages.create(...)` (F-233).
+- Not carried: the effort page's per-message effort example (beta) is TypeScript with `output_config: { effort: "high" }` inside `client.beta.messages.create(...)`, model `claude-fable-5-1`, and `betas: ["mid-conversation-output-config-2026-07-01"]`.
+- Wording difference: the first TypeScript example (F-231) prints each piece with `console.log(text)`, not `process.stdout.write`. The raw-event example (F-236) uses `process.stdout.write(event.delta.text)`. Both examples use model `claude-opus-5-5`, not `claude-haiku-5-5` (the Haiku 5.5 ID is F-02).
+
 
 ## NOT FOUND
 
