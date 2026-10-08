@@ -1,0 +1,12 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+qa/shots/
+qa/traces/
+.vite/
+*.log
+.lighthouseci/
+lighthouse-*.html
+
+# qa/final and qa/reports stay tracked.
