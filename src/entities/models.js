@@ -301,7 +301,13 @@ export function createBrawlerModel(brawlerId, { team = 0, isPlayer = false } = {
   }
 
   function play(anim) {
-    if (dead) return;
+    if (dead) {
+      if (anim !== 'idle' && anim !== 'run') return;   // death holds; a base anim (respawn) revives
+      dead = false;
+      deathT = 0;
+      tilt.rotation.x = 0;
+      tilt.position.y = 0;
+    }
     switch (anim) {
       case 'idle':
       case 'run':
