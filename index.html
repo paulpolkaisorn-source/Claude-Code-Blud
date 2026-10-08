@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1440" />
+  <meta name="description" content="Brawl Arena 3D — an original 3v3 cartoon hero-shooter that runs in the browser." />
+  <title>Brawl Arena 3D</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4l22 14v28L32 60 10 46V18z' fill='%23c46bff' stroke='%231a1230' stroke-width='5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles/ui.css" />
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1440; overscroll-behavior: none;
+      touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+    #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+    #fx-layer, #input-layer, #ui-root { position: fixed; inset: 0; pointer-events: none; }
+    #fx-layer { z-index: 1; overflow: hidden; }
+    #input-layer { z-index: 2; }
+    #ui-root { z-index: 3; }
+    #boot { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #1b1440; color: #fff;
+      font: 900 28px "Arial Rounded MT Bold", ui-rounded, "SF Pro Rounded", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+      letter-spacing: 1px; transition: opacity .4s; }
+    #boot.hide { opacity: 0; pointer-events: none; }
+    #boot .err { max-width: 80vw; font-size: 16px; color: #ffb3bd; white-space: pre-wrap; }
+  </style>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <canvas id="game" tabindex="0" aria-label="Game view"></canvas>
+  <div id="fx-layer"></div>
+  <div id="input-layer"></div>
+  <div id="ui-root"></div>
+  <div id="boot"><div>BRAWL ARENA<br /><small style="font-size:16px;opacity:.7">loading…</small></div></div>
+  <noscript>This game needs JavaScript and WebGL.</noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

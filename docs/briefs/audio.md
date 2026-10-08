@@ -1,0 +1,8 @@
+GOAL: WebAudio-synthesized SFX + procedural music + volumes. API: ARCHITECTURE.md "audio". No audio files.
+FILES: src/audio/audio.js, src/audio/synth.js, src/audio/music.js, tests/browser/audio.html.
+GRAPH: master gain → DynamicsCompressor → destination; sfx + music buses into master. AudioContext created/resumed in unlock() (idempotent); play()/music() before unlock are silent no-ops (music request remembered, starts on unlock).
+SFX (oscillators, one-time generated noise buffers, envelopes, filters, pitch sweeps, ±4% random pitch): shot_rivet (punchy noise burst), shot_pip (laser zap), shot_mortara (thump pop), shot_lumen (shimmer), hit, heal (rising sparkle), explosion (filtered noise sweep + sub), crystal (bell arpeggio), super_ready (rising chime), super (whoosh+boom), death, click, countdown (beep), victory (fanfare), defeat (descending), wall_break (crunch), dash (whoosh), respawn.
+Limits: 24 voices max, same-sound throttle ≥30ms, disconnect nodes on end.
+MUSIC: lookahead scheduler (25ms timer, 0.1s ahead). 'menu' mellow 100bpm, 'battle' upbeat 128bpm: synth kick/snare/hat, bass, chord stabs, simple lead, original 4-chord progressions; crossfade 0.6s on switch; music(null) fades out.
+BUS WIRING: SHOT→shot_<brawlerId> (super → super), HIT (throttled), HEAL, EXPLOSION, CRYSTAL_PICKUP, SUPER_READY (only b.isPlayer), DEATH, WALL_DESTROYED, DASH, RESPAWN, COUNTDOWN (last 5s), MATCH_END (victory/defeat/draw), UI_CLICK→click, UI_SETTINGS→setVolumes.
+TESTS (browser): unlock → running context; every SFX plays without throwing; setVolumes sets gains; music switch/stop; 200 rapid plays respect voice cap; pre-unlock calls safe.
