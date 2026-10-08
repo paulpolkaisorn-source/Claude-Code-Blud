@@ -35,7 +35,7 @@ window.HAIKU_SCENES.push({
     root.innerHTML = `
 <div class="s2-root">
   <div class="s2-grain"></div>
-  <h1 class="s2-title"><span class="s2-tw"><span class="s2-tin" style="--wi:0">Claude</span></span> <span class="s2-tw"><span class="s2-tin" style="--wi:1">Haiku</span></span> <span class="s2-tw"><span class="s2-tin s2-ver" style="--wi:2">5.5</span></span></h1>
+  <h2 class="s2-title"><span class="s2-tw"><span class="s2-tin" style="--wi:0">Claude</span></span> <span class="s2-tw"><span class="s2-tin" style="--wi:1">Haiku</span></span> <span class="s2-tw"><span class="s2-tin s2-ver" style="--wi:2">5.5</span></span></h2>
   <div class="s2-kicker">THE CLAUDE 5 FAMILY</div>
   <div class="s2-row">
     <div class="s2-slot" style="--i:0"><div class="s2-card s2-dim"><span class="s2-dot"></span><span class="s2-name">Fable 5.1</span></div></div>
@@ -55,7 +55,7 @@ window.HAIKU_SCENES.push({
     root.innerHTML = `
 <div class="s3-root">
   <div class="s3-grain"></div>
-  <h1 class="s3-head"><span class="s3-hw"><span class="s3-hin" style="--wi:0">Built</span></span> <span class="s3-hw"><span class="s3-hin" style="--wi:1">for</span></span> <span class="s3-hw"><span class="s3-hin s3-em" style="--wi:2">speed.</span></span></h1>
+  <h2 class="s3-head"><span class="s3-hw"><span class="s3-hin" style="--wi:0">Built</span></span> <span class="s3-hw"><span class="s3-hin" style="--wi:1">for</span></span> <span class="s3-hw"><span class="s3-hin s3-em" style="--wi:2">speed.</span></span></h2>
   <span class="s3-streak s3-k1" style="--s:-14cqw;--e:31cqw;--d:0ms"></span>
   <span class="s3-streak s3-k2" style="--s:-18cqw;--e:31cqw;--d:70ms"></span>
   <span class="s3-streak s3-k3" style="--s:-10cqw;--e:31cqw;--d:130ms"></span>

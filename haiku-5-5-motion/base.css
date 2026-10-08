@@ -79,6 +79,19 @@ body {
   visibility: visible;
   transition: opacity 600ms var(--ease-in-out), visibility 0s;
 }
+/* Outgoing scene: keeps .active, fades out over 600ms and holds its current animation frame.
+   timeline.js removes .leaving and .active when the fade is over. */
+.scene.active.leaving {
+  opacity: 0;
+  visibility: visible;
+  pointer-events: none;
+  transition: opacity 600ms var(--ease-in-out);
+}
+.scene.leaving *,
+.scene.leaving *::before,
+.scene.leaving *::after {
+  animation-play-state: paused !important;
+}
 
 /* Pause: freeze every CSS animation inside scenes where it is (timeline.js pauses its own clock). */
 #stage.paused .scene *,

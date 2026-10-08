@@ -12,6 +12,7 @@
   var DEFAULT_DURATION = 6000; // ms, used when a scene gives no usable duration
   var IDLE_MS = 2000;          // controls fade after this long without pointer activity
   var MAX_STEP_MS = 250;       // cap on time added per frame (background tabs, hitches)
+  var LEAVE_MS = 600;          // outgoing scene's fade-out; keep equal to the .scene transition in base.css
 
   var ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5.5v13l10.5-6.5z"/></svg>';
   var ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
@@ -114,7 +115,8 @@
         entry: entry,
         order: isFinite(order) ? order : Infinity,
         duration: duration > 0 ? duration : DEFAULT_DURATION,
-        seq: seq
+        seq: seq,
+        leaveTimer: 0
       });
     });
     list.sort(function (a, b) {
@@ -143,15 +145,21 @@
     return -1;
   }
 
-  // Activate scene i. Dropping .active everywhere, then forcing a reflow before
-  // re-adding it on the target, restarts that scene's CSS animations.
+  // Activate scene i. Outgoing scenes keep .active and gain .leaving: they fade
+  // out for LEAVE_MS with their animations held (base.css), then startLeave's
+  // timer removes both classes. The incoming scene is reset first (drop .leaving
+  // and .active, flush style, re-add .active), so its CSS animations start over
+  // even if it was still fading out.
   function show(i) {
     var k;
+    var sc = scenes[i];
     index = i;
     for (k = 0; k < scenes.length; k++) {
-      scenes[k].section.classList.remove('active');
+      if (k !== i) startLeave(scenes[k]);
     }
-    var sc = scenes[i];
+    cancelLeave(sc);
+    sc.section.classList.remove('leaving');
+    sc.section.classList.remove('active');
     void sc.section.offsetWidth;
     sc.section.classList.add('active');
     for (k = 0; k < scenes.length; k++) {
@@ -164,6 +172,28 @@
       } catch (err) {
         console.error('[haiku] enter() failed for scene "' + sc.id + '":', err);
       }
+    }
+  }
+
+  // Outgoing scene: keep .active, add .leaving, and drop both after LEAVE_MS.
+  // Not tied to pause: a leave that ends while paused still lands in the right state.
+  // A scene that is already leaving keeps its existing timer.
+  function startLeave(sc) {
+    var el = sc.section;
+    if (!el.classList.contains('active') || el.classList.contains('leaving')) return;
+    el.classList.add('leaving');
+    sc.leaveTimer = setTimeout(function () {
+      sc.leaveTimer = 0;
+      el.classList.remove('leaving');
+      el.classList.remove('active');
+    }, LEAVE_MS);
+  }
+
+  // Called when a scene becomes current again, so its pending cleanup cannot strip .active later.
+  function cancelLeave(sc) {
+    if (sc.leaveTimer) {
+      clearTimeout(sc.leaveTimer);
+      sc.leaveTimer = 0;
     }
   }
 
