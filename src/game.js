@@ -39,13 +39,11 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
   for (let i = 0; i < MAX_CRYSTALS; i++) crystals.push({ active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, settled: false });
 
   // HUD payloads (preallocated, mutated in place).
-  const hud = {
-    mode: 'crystal', time: 0, crystals: [0, 0], target: RULES.crystalTarget, playerTeam: TEAM.BLUE,
-    countdown: { active: false, team: -1, seconds: 0 },
-    player: { hp: 0, maxHp: 1, ammo: 0, maxAmmo: 3, reload: 0, superCharge: 0, superReady: false, crystals: 0, alive: true, respawnIn: 0, brawlerId: 'rivet', name: '' },
-  };
+  // Shapes follow src/ui/hud.js: update(h) and labels(list, count).
+  const hud = { time: 0, teamCrystals: [0, 0], target: RULES.crystalTarget, countdownTeam: -1, countdown: 0,
+    hp: 0, maxHp: 1, ammo: 0, maxAmmo: 3, reload: 0, superCharge: 0, respawn: 0 };
   const labels = [];
-  for (let i = 0; i < 6; i++) labels.push({ id: 0, x: 0, y: 0, visible: false, hp: 0, maxHp: 1, team: 0, name: '', crystals: 0, isPlayer: false, alpha: 1, ammo: 0, maxAmmo: 3, brawlerId: '' });
+  for (let i = 0; i < 6; i++) labels.push({ x: 0, y: 0, name: '', team: 0, isPlayer: false, hpFrac: 1, crystals: 0, visible: false });
 
   // ---------- scene lifetime helpers ----------
   let baseline = new Set(scene.children);
@@ -134,8 +132,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
       countdownTeam: -1, countdownT: 0, countdownSec: 0, winner: -2, endTimer: 0, superReadyShown: false,
       aiCtx: { brawlers, crystals, mine: arena.mine, teamCrystals: [0, 0], countdownTeam: -1, time: 0 },
     };
-    hud.mode = cfg.mode; hud.target = rules.crystalTarget; hud.playerTeam = TEAM.BLUE;
-    hud.player.brawlerId = cfg.brawlerId; hud.player.name = player.name;
+    hud.target = rules.crystalTarget;
     fx.reset();
     R.snap(player.x, player.z);
     return roster;
@@ -426,13 +423,9 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     const score = (b) => b.stats.kills * 3 + b.stats.crystals * 2 + b.stats.damage / 600 + b.stats.healing / 600 - b.stats.deaths * 0.5;
     const pool = m.brawlers.filter((b) => m.winner === -1 || b.team === m.winner);
     const mvp = pool.reduce((best, b) => (score(b) > score(best) ? b : best), pool[0]);
-    return {
-      outcome: m.outcome, winner: m.winner, playerTeam: TEAM.BLUE, mode: m.cfg.mode,
-      score: [m.teamCrystals[0], m.teamCrystals[1]],
-      mvp: { name: mvp.name, brawlerId: mvp.brawlerId, team: mvp.team, score: Math.round(score(mvp) * 10) / 10, isPlayer: mvp.isPlayer },
-      rows: m.brawlers.map((b) => ({ name: b.name, brawlerId: b.brawlerId, team: b.team, isPlayer: b.isPlayer,
-        kills: b.stats.kills, deaths: b.stats.deaths, crystals: b.stats.crystals, damage: Math.round(b.stats.damage), healing: Math.round(b.stats.healing) })),
-    };
+    // Shape follows src/ui/screens.js fillResults: players carry name/brawlerId/team/isPlayer/stats.
+    return { outcome: m.outcome, winner: m.winner, mode: m.cfg.mode, crystals: [m.teamCrystals[0], m.teamCrystals[1]],
+      players: m.brawlers, mvp };
   }
 
   // ---------- per-frame presentation ----------
@@ -454,10 +447,8 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
       v.update(dt, b.moveSpeed01);
       const L = labels[i];
       R.worldToScreen(x, 2.0, z, scr);
-      L.id = b.id; L.x = scr.x; L.y = scr.y; L.visible = scr.visible && v.root.visible && b.alive;
-      L.hp = b.hp; L.maxHp = b.maxHp; L.team = b.team; L.name = b.name; L.crystals = b.crystals;
-      L.isPlayer = b.isPlayer; L.alpha = b.inBush && b.team === TEAM.BLUE ? 0.6 : 1;
-      L.ammo = b.ammo; L.maxAmmo = b.maxAmmo; L.brawlerId = b.brawlerId;
+      L.x = scr.x; L.y = scr.y; L.visible = scr.visible && v.root.visible && b.alive;
+      L.name = b.name; L.team = b.team; L.isPlayer = b.isPlayer; L.hpFrac = b.hp / b.maxHp; L.crystals = b.crystals;
     }
     m.crystalView.sync(crystals, g.clock);
     m.arena.update(dt, g.clock, pl.x, pl.z);
@@ -477,18 +468,18 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     R.follow(lerp(pl.px, pl.x, alpha), lerp(pl.pz, pl.z, alpha), dt);
 
     // HUD
-    hud.time = Math.max(0, m.time);
-    hud.crystals[0] = m.teamCrystals[0]; hud.crystals[1] = m.teamCrystals[1];
-    hud.countdown.active = m.countdownTeam !== -1; hud.countdown.team = m.countdownTeam;
-    hud.countdown.seconds = Math.max(0, Math.ceil(m.countdownT));
-    const P = hud.player, s = BRAWLERS[pl.brawlerId];
-    P.hp = pl.hp; P.maxHp = pl.maxHp; P.ammo = pl.ammo; P.maxAmmo = pl.maxAmmo;
-    P.reload = pl.ammo >= pl.maxAmmo ? 0 : clamp(pl.reloadTimer / s.reload, 0, 1);
-    P.superCharge = pl.superCharge; P.superReady = pl.superCharge >= 1;
-    P.crystals = pl.crystals; P.alive = pl.alive; P.respawnIn = pl.alive ? 0 : Math.max(0, pl.respawnTimer);
+    hud.time = Math.max(0, Math.ceil(m.time));
+    hud.teamCrystals[0] = m.teamCrystals[0]; hud.teamCrystals[1] = m.teamCrystals[1];
+    hud.countdownTeam = m.countdownTeam;
+    hud.countdown = m.countdownTeam === -1 ? 0 : Math.max(0, Math.ceil(m.countdownT));
+    hud.hp = Math.ceil(pl.hp); hud.maxHp = pl.maxHp; hud.ammo = Math.floor(pl.ammo); hud.maxAmmo = pl.maxAmmo;
+    hud.reload = pl.ammo >= pl.maxAmmo ? 0 : clamp(pl.reloadTimer / BRAWLERS[pl.brawlerId].reload, 0, 1);
+    hud.superCharge = pl.superCharge;
+    hud.respawn = pl.alive ? 0 : Math.max(0, Math.ceil(pl.respawnTimer));
     ui.hud.update(hud);
     ui.hud.labels(labels, m.brawlers.length);
-    if (P.superReady !== m.superReadyShown) { m.superReadyShown = P.superReady; input.setSuperReady(P.superReady); }
+    const ready = pl.superCharge >= 1;
+    if (ready !== m.superReadyShown) { m.superReadyShown = ready; input.setSuperReady(ready); }
   }
 
   function presentBackdrop(dt) {
@@ -559,7 +550,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     const roster = buildMatch(g.cfg);
     g.state = 'matchmaking';
     ui.show('matchmaking');
-    ui.matchmaking(g.cfg.mode === 'training' ? 1.5 : 3, roster.map((r) => ({ name: r.name, brawlerId: r.brawlerId, team: r.team, isPlayer: !!r.isPlayer })));
+    ui.matchmaking(g.cfg.mode === 'training' ? 1.5 : 3, roster.map((r) => ({ name: r.isPlayer ? 'YOU' : r.name, brawlerId: r.brawlerId, team: r.team, isPlayer: !!r.isPlayer })));
   }
   function toPlaying() {
     const m = g.match;
@@ -605,7 +596,7 @@ export function createGame({ R, ui, input, fx, audio, mobile }) {
     toMatchmaking();
   });
   bus.on(EV.UI_MATCH_READY, () => { if (g.state === 'matchmaking') toPlaying(); });
-  bus.on(EV.UI_PAUSE, () => pause());
+  bus.on(EV.UI_PAUSE, () => { if (g.state === 'paused') resume(); else pause(); });
   bus.on(EV.UI_RESUME, () => resume());
   bus.on(EV.UI_QUIT, () => { if (g.state === 'paused' || g.state === 'playing' || g.state === 'results') toMenu(); });
   bus.on(EV.UI_AGAIN, () => { if (g.state === 'results') toMatchmaking(); });

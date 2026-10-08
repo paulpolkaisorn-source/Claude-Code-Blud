@@ -1,0 +1,317 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>UI test</title>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+  <link rel="stylesheet" href="../../styles/ui.css" />
+  <style>html,body{margin:0;height:100%;background:#123;overflow:hidden}</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <script type="module">
+    import { test, assert, run, wait, frames } from './harness.js';
+    import { bus, EV, BRAWLER_IDS, SETTINGS_KEY } from '../../src/contracts.js';
+    import { createUI } from '../../src/ui/ui.js';
+
+    const U = createUI(document.getElementById('stage'), bus);
+    const q = (s) => document.querySelector(s);
+    const screen = () => q('.ui-root').dataset.screen;
+    const text = (s) => q(s).textContent;
+    const rec = (...evts) => {
+      const log = [];
+      const offs = evts.map((e) => bus.on(e, (p) => log.push({ e, p })));
+      return {
+        log,
+        names: () => log.map((x) => x.e),
+        last: (e) => { for (let i = log.length - 1; i >= 0; i--) if (log[i].e === e) return log[i].p; return undefined; },
+        stop: () => offs.forEach((f) => f()),
+      };
+    };
+    const cssReady = () => new Promise((res) => {
+      const l = q('link[href$="styles/ui.css"]');
+      if (!l || l.sheet) return res();
+      l.addEventListener('load', res);
+      l.addEventListener('error', res);
+    });
+    await cssReady();
+
+    // Transitions advance with rendered frames, so poll per frame until the fade has finished.
+    const settle = async (el, ok, ms = 3000) => {
+      const t0 = performance.now();
+      while (performance.now() - t0 < ms) {
+        if (ok(getComputedStyle(el))) return true;
+        await frames(1);
+      }
+      return false;
+    };
+
+    test('screens show one at a time and are visible', async () => {
+      for (const name of ['menu', 'select', 'matchmaking', 'pause', 'settings', 'results']) {
+        U.show(name);
+        const active = document.querySelectorAll('.screen.active');
+        assert(active.length === 1 && active[0].dataset.screen === name, 'active screen for ' + name);
+        const ok = await settle(active[0], (cs) => cs.visibility === 'visible' && Number(cs.opacity) > 0.99);
+        assert(ok, 'visible ' + name);
+      }
+      U.show('hud');
+      await settle(q('.hud'), (cs) => cs.visibility === 'visible' && Number(cs.opacity) > 0.99);
+      assert(document.querySelectorAll('.screen.active').length === 0, 'no screen during hud');
+      assert(getComputedStyle(q('.hud')).visibility === 'visible', 'hud visible in match');
+    });
+
+    test('menu buttons emit UI_PLAY / UI_CLICK and navigate', () => {
+      U.show('menu');
+      const r = rec(EV.UI_PLAY, EV.UI_CLICK);
+      q('[data-act="play-crystal"]').click();
+      assert(r.last(EV.UI_PLAY).mode === 'crystal', 'crystal mode');
+      assert(r.names().includes(EV.UI_CLICK), 'uiClick emitted');
+      assert(screen() === 'select', 'menu -> select');
+      U.show('menu');
+      r.log.length = 0;
+      q('[data-act="play-training"]').click();
+      assert(r.last(EV.UI_PLAY).mode === 'training', 'training mode');
+      U.show('menu');
+      q('[data-act="open-settings"]').click();
+      assert(screen() === 'settings', 'settings opened');
+      r.stop();
+    });
+
+    test('select: cards, maps and start emit UI_SELECT / UI_START', () => {
+      U.show('menu');
+      q('[data-act="play-crystal"]').click();
+      assert(document.querySelectorAll('.card').length === BRAWLER_IDS.length, 'one card per brawler');
+      const r = rec(EV.UI_SELECT, EV.UI_START);
+      q('.card[data-brawler="pip"]').click();
+      assert(r.last(EV.UI_SELECT).brawlerId === 'pip', 'select pip');
+      q('.map-btn[data-map="lagoons"]').click();
+      q('[data-act="start"]').click();
+      const s = r.last(EV.UI_START);
+      assert(s && s.brawlerId === 'pip' && s.mode === 'crystal' && s.mapId === 'lagoons', 'start payload ' + JSON.stringify(s));
+      r.stop();
+    });
+
+    test('select: preview canvas holds U.previewCanvas and setSelected highlights a card', () => {
+      U.show('select');
+      assert(U.previewCanvas instanceof HTMLCanvasElement, 'previewCanvas is a canvas');
+      assert(q('.s-select').contains(U.previewCanvas), 'canvas inside select screen');
+      U.setSelected('mortara');
+      assert(q('.card[data-brawler="mortara"]').classList.contains('on'), 'mortara highlighted');
+      assert(!q('.card[data-brawler="pip"]').classList.contains('on'), 'pip cleared');
+      assert(text('.preview-name') === 'Mortara', 'preview name');
+    });
+
+    test('select back returns to menu', () => {
+      U.show('select');
+      const r = rec(EV.UI_CLICK, EV.UI_START);
+      q('[data-act="back-menu"]').click();
+      assert(screen() === 'menu', 'back to menu');
+      assert(r.names().includes(EV.UI_CLICK) && !r.names().includes(EV.UI_START), 'click only');
+      r.stop();
+    });
+
+    test('matchmaking fills slots, then emits UI_MATCH_READY once', async () => {
+      const r = rec(EV.UI_MATCH_READY);
+      U.matchmaking(0.6, 6);
+      assert(screen() === 'matchmaking', 'matchmaking screen');
+      assert(document.querySelectorAll('.slot').length === 6, 'six slots');
+      assert(document.querySelectorAll('.slot.on').length === 1, 'player slot filled first');
+      await wait(250);
+      assert(document.querySelectorAll('.slot.on').length > 1, 'bots fill over time');
+      await wait(700);
+      assert(document.querySelectorAll('.slot.on').length === 6, 'all slots filled');
+      assert(r.log.length === 1, 'ready emitted once, got ' + r.log.length);
+      await wait(300);
+      assert(r.log.length === 1, 'no repeat emit');
+      r.stop();
+    });
+
+    test('hud renders timer, crystals, ammo, hp and super', () => {
+      U.show('hud');
+      U.hud.update({ time: 150, teamCrystals: [3, 2], target: 10, countdownTeam: -1, countdown: 0,
+        hp: 1700, maxHp: 3400, ammo: 2, maxAmmo: 3, reload: 0.5, superCharge: 0.4, respawn: 0 });
+      assert(text('.hud-timer') === '02:30', 'timer 02:30, got ' + text('.hud-timer'));
+      assert(text('.hud-score.t0 .hs-n') === '3', 'blue crystals');
+      assert(text('.hud-score.t1 .hs-n') === '2', 'red crystals');
+      const segs = document.querySelectorAll('.seg-fill');
+      assert(segs.length === 3, 'three ammo segments');
+      assert(segs[0].style.transform === 'scaleX(1)' && segs[1].style.transform === 'scaleX(1)', 'full ammo');
+      assert(segs[2].style.transform === 'scaleX(0.5)', 'partial reload fill ' + segs[2].style.transform);
+      assert(q('.hp-fill').style.transform === 'scaleX(0.5)', 'hp bar');
+      assert(text('.hp-num') === '1700', 'hp number');
+      assert(q('.sp-fill').style.transform === 'scaleX(0.4)', 'super meter');
+      assert(!q('.hud-super').classList.contains('ready'), 'super not ready');
+      U.hud.update({ superCharge: 1 });
+      assert(q('.hud-super').classList.contains('ready'), 'super glows when full');
+      U.hud.update({ superCharge: 0 });
+    });
+
+    test('hud writes DOM only when values change', async () => {
+      const h = { time: 120, teamCrystals: [1, 1], countdownTeam: -1, hp: 900, maxHp: 3400, ammo: 3, maxAmmo: 3,
+        reload: 0, superCharge: 0.2, respawn: 0 };
+      U.hud.update(h);
+      await wait(20);
+      const mo = new MutationObserver(() => {});
+      mo.observe(q('.hud'), { subtree: true, attributes: true, childList: true, characterData: true });
+      U.hud.update(h);
+      U.hud.update(h);
+      const n = mo.takeRecords().length;
+      mo.disconnect();
+      assert(n === 0, 'identical updates wrote ' + n + ' mutations');
+    });
+
+    test('hud countdown banner and respawn overlay', () => {
+      U.hud.update({ countdownTeam: 1, countdown: 7.2 });
+      const b = q('.hud-banner');
+      assert(b.classList.contains('on') && b.classList.contains('t1'), 'banner shown for red');
+      assert(b.textContent.indexOf('RED') >= 0 && b.textContent.endsWith('8'), 'banner text ' + b.textContent);
+      U.hud.update({ countdownTeam: -1 });
+      assert(!b.classList.contains('on'), 'banner hidden');
+      U.hud.update({ respawn: 2.4 });
+      assert(q('.hud-respawn').classList.contains('show'), 'respawn overlay shown');
+      assert(text('.rs-n') === '3', 'respawn countdown rounds up');
+      U.hud.update({ respawn: 0 });
+      assert(!q('.hud-respawn').classList.contains('show'), 'respawn overlay hidden');
+    });
+
+    test('labels pool positions, visibility, team colour and badges', async () => {
+      const list = [
+        { x: 120.4, y: 240, name: 'Kiko', team: 1, isPlayer: false, hpFrac: 0.5, crystals: 2, visible: true },
+        { x: 300, y: 260, name: 'Juno', team: 0, isPlayer: true, hpFrac: 1, crystals: 0, visible: false },
+        { x: 10, y: 10, name: 'Brix', team: 1, isPlayer: false, hpFrac: 0.2, crystals: 0, visible: true },
+      ];
+      U.hud.labels(list, 3);
+      const nodes = document.querySelectorAll('.hud-labels .lbl');
+      assert(nodes.length === 3, 'pooled nodes ' + nodes.length);
+      const shown = [...nodes].filter((n) => n.style.display !== 'none');
+      assert(shown.length === 2, 'hidden when !visible, shown ' + shown.length);
+      const k = shown[0];
+      assert(k.style.transform.replace(/ /g, '') === 'translate3d(120px,240px,0px)', 'translate3d ' + k.style.transform);
+      assert(k.querySelector('.lbl-name').textContent === 'Kiko', 'name');
+      assert(k.classList.contains('t1'), 'team class');
+      assert(k.querySelector('.lbl-cr').classList.contains('show') && k.querySelector('.lbl-cr b').textContent === '2', 'crystal badge');
+      assert(k.querySelector('.lbl-hp-fill').style.transform === 'scaleX(0.5)', 'hp fill');
+      U.hud.labels(list, 0);
+      assert([...nodes].every((n) => n.style.display === 'none'), 'count 0 hides all');
+      U.hud.labels(list, 3);
+      assert(document.querySelectorAll('.hud-labels .lbl').length === 3, 'pool reused');
+    });
+
+    test('kill feed is team coloured and capped at four rows', () => {
+      U.hud.reset();
+      for (let i = 0; i < 6; i++) U.hud.killFeed({ name: 'Pip' + i, team: 0 }, { name: 'Rivet', team: 1 });
+      const rows = document.querySelectorAll('.hud-feed .kf');
+      assert(rows.length === 4, 'capped at 4, got ' + rows.length);
+      const last = rows[rows.length - 1];
+      assert(last.querySelector('.kf-n.t0').textContent === 'Pip5', 'killer name');
+      assert(last.querySelector('.kf-n.t1').textContent === 'Rivet', 'victim colour');
+    });
+
+    test('toast renders with its kind', () => {
+      U.hud.toast('Crystal!', 'crystal');
+      const t = [...document.querySelectorAll('.toast')].find((e) => e.textContent === 'Crystal!');
+      assert(t && t.classList.contains('k-crystal'), 'toast with kind class');
+    });
+
+    test('pause: hud pause button, settings, resume and quit emit correct EV', async () => {
+      U.show('hud');
+      const r = rec(EV.UI_PAUSE, EV.UI_RESUME, EV.UI_QUIT, EV.UI_CLICK);
+      q('.hud-pause').click();
+      assert(r.names().includes(EV.UI_PAUSE) && screen() === 'pause', 'pause emitted and shown');
+      q('[data-act="pause-settings"]').click();
+      assert(screen() === 'settings' && q('.ui-root').classList.contains('in-match'), 'settings over pause keeps hud');
+      q('[data-act="settings-back"]').click();
+      assert(screen() === 'pause', 'back returns to pause');
+      q('[data-act="resume"]').click();
+      assert(r.names().includes(EV.UI_RESUME) && screen() === 'hud', 'resume');
+      U.show('pause');
+      q('[data-act="quit"]').click();
+      assert(r.names().includes(EV.UI_QUIT) && screen() === 'menu', 'quit to menu');
+      assert(r.names().filter((e) => e === EV.UI_CLICK).length >= 5, 'every button emits uiClick');
+      r.stop();
+    });
+
+    test('results render banner, MVP and table; buttons emit UI_AGAIN / UI_MENU', () => {
+      const players = [
+        { name: 'You', brawlerId: 'pip', team: 0, isPlayer: true, stats: { kills: 4, deaths: 1, damage: 5200, healing: 0, crystals: 3 } },
+        { name: 'Kiko', brawlerId: 'rivet', team: 1, isPlayer: false, stats: { kills: 1, deaths: 4, damage: 2100, healing: 0, crystals: 1 } },
+        { name: 'Juno', brawlerId: 'lumen', team: 0, isPlayer: false, stats: { kills: 0, deaths: 2, damage: 800, healing: 1900, crystals: 0 } },
+      ];
+      U.showResults({ outcome: 'victory', winner: 0, crystals: [10, 4], players });
+      assert(screen() === 'results', 'results shown');
+      assert(text('.res-text') === 'VICTORY', 'victory banner');
+      assert(document.querySelectorAll('.res-table tbody tr').length === 3, 'one row per player');
+      assert(text('.mvp-name') === 'You', 'mvp is the top scorer');
+      const r = rec(EV.UI_AGAIN, EV.UI_MENU);
+      q('[data-act="again"]').click();
+      assert(r.last(EV.UI_AGAIN) !== undefined, 'again emitted');
+      q('[data-act="results-menu"]').click();
+      assert(r.last(EV.UI_MENU) !== undefined && screen() === 'menu', 'menu emitted and shown');
+      r.stop();
+    });
+
+    test('settings slider persists to localStorage and emits UI_SETTINGS', () => {
+      U.show('menu');
+      q('[data-act="open-settings"]').click();
+      const r = rec(EV.UI_SETTINGS);
+      const sl = q('input[data-set="master"]');
+      sl.value = '0.3';
+      sl.dispatchEvent(new Event('input', { bubbles: true }));
+      const p = r.last(EV.UI_SETTINGS);
+      assert(p && Math.abs(p.master - 0.3) < 1e-9 && p.quality === 'auto', 'emitted payload');
+      const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      assert(stored && Math.abs(stored.master - 0.3) < 1e-9, 'stored in localStorage');
+      q('[data-q="high"]').click();
+      assert(r.last(EV.UI_SETTINGS).quality === 'high', 'quality emitted');
+      assert(q('[data-q="high"]').classList.contains('on'), 'quality button marked');
+      r.stop();
+      q('[data-act="settings-back"]').click();
+      assert(screen() === 'menu', 'settings back to menu');
+    });
+
+    test('no horizontal overflow on any screen or HUD element', async () => {
+      const vw = document.documentElement.clientWidth;
+      for (const name of ['menu', 'select', 'matchmaking', 'pause', 'settings', 'results', 'hud']) {
+        U.show(name);
+        await wait(300);
+        assert(document.documentElement.scrollWidth <= vw + 1, name + ' page scrollWidth ' + document.documentElement.scrollWidth + ' > ' + vw);
+        for (const el of document.querySelectorAll('.screen.active > *, .hud-top, .hud-status, .hud-feed')) {
+          const r = el.getBoundingClientRect();
+          assert(r.left >= -0.5 && r.right <= vw + 0.5, name + ': ' + el.className + ' spans ' + r.left.toFixed(1) + '..' + r.right.toFixed(1));
+        }
+      }
+    });
+
+    test('HUD is click-through except its buttons; top layout keeps bottom corners clear', () => {
+      U.show('hud');
+      assert(getComputedStyle(q('.hud')).pointerEvents === 'none', 'hud ignores pointer');
+      assert(getComputedStyle(q('.hud-status')).pointerEvents === 'none', 'status ignores pointer');
+      assert(getComputedStyle(q('.hud-pause')).pointerEvents === 'auto', 'pause button clickable');
+      const vh = document.documentElement.clientHeight;
+      for (const s of ['.hud-top', '.hud-status', '.hud-feed']) {
+        const r = q(s).getBoundingClientRect();
+        assert(r.bottom <= vh * 0.5, s + ' bottom at ' + r.bottom.toFixed(0) + ' of ' + vh);
+      }
+    });
+
+    test('settings persist: a fresh UI instance restores stored values', () => {
+      const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+      assert(stored && Math.abs(stored.master - 0.3) < 1e-9 && stored.quality === 'high', 'stored values present');
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      try {
+        const U2 = createUI(host, bus);
+        const v = Number(host.querySelector('input[data-set="master"]').value);
+        assert(Math.abs(v - 0.3) < 1e-6, 'slider restored ' + v);
+        assert(host.querySelector('[data-act="quality"].on').dataset.q === 'high', 'quality restored');
+        assert(Math.abs(U2.getSettings().master - 0.3) < 1e-9, 'getSettings restored');
+      } finally {
+        host.remove();
+      }
+    });
+
+    await run();
+  </script>
+</body>
+</html>
