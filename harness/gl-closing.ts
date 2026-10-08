@@ -96,6 +96,10 @@ window.addEventListener('error', (e: ErrorEvent) => {
   report.diagnostics.push(`uncaught: ${e.message}`);
 });
 
+function clamp01(v: number): number {
+  return Number.isNaN(v) ? 0 : Math.min(1, Math.max(0, v));
+}
+
 /** Resolves after n page-clock ticks, once the frame for each has been drawn (after PRIORITY.glRender). */
 function framesN(n: number): Promise<void> {
   return new Promise((resolve) => {
@@ -108,11 +112,6 @@ function framesN(n: number): Promise<void> {
       }
     }, PRIORITY.glRender + 2);
   });
-}
-
-/** Resolves once the page clock has reached time t (seconds of tick time). */
-async function untilTime(t: number): Promise<void> {
-  while (tickerTime() < t) await framesN(1);
 }
 
 const scratchMatrix = new THREE.Matrix4();
@@ -156,14 +155,13 @@ function cameraError(camera: THREE.PerspectiveCamera, key: CameraKey): number {
   );
 }
 
-/** The key halfway between a and b, which is where the camera sits at sym(0.5) = 0.5. */
-function midKey(a: CameraKey, b: CameraKey): CameraKey {
-  const mid = (i: 0 | 1 | 2): number => (a.position[i] + b.position[i]) / 2;
-  return {
-    position: [mid(0), mid(1), mid(2)],
-    target: [(a.target[0] + b.target[0]) / 2, (a.target[1] + b.target[1]) / 2, (a.target[2] + b.target[2]) / 2],
-    fov: a.fov,
-  };
+/** The camera position at entry progress w: the pricing key to the closing key through ef.sym(w), as rig.blend does. */
+function camAt(w: number, size: { width: number; height: number }): CameraKey {
+  const a = cameraKey('pricing', size);
+  const b = cameraKey('closing', size);
+  const k = ef.sym(w);
+  const lerp = (i: 0 | 1 | 2): number => a.position[i] + (b.position[i] - a.position[i]) * k;
+  return { position: [lerp(0), lerp(1), lerp(2)], target: [0, 0, 0], fov: a.fov };
 }
 
 /**
@@ -179,26 +177,41 @@ function expectedAt(w: number, portrait: boolean): Pose[] {
   });
 }
 
-/** Samples the height of blocks 0 and 16 for one wave cycle, after the hold and the ease-in (direction-3d 10.12). */
-async function sampleWave(blocks: Blocks): Promise<{ range0: number; range16: number }> {
-  const from = tickerTime() + T.hold + 3 * T.half;
-  const to = from + T.breath;
+/**
+ * Drives blocks.update with synthetic ticks at 60 Hz, so the wave does not depend on the browser's frame rate (the
+ * software renderer here runs at under 1 fps). The breath must hold still until T.hold after the request, then swing
+ * (direction-3d 10.12). Returns the height range of block 0 before the hold, and of blocks 0 and 16 over one cycle after it.
+ */
+function waveSamples(blocks: Blocks): { early: number; range0: number; range16: number } {
+  const base = 100;
+  const step = 1 / 60;
+  const holdEnd = base + T.hold;
+  const sampleFrom = holdEnd + 3 * T.half;
+  const sampleTo = sampleFrom + T.breath;
+  let eLo = Infinity;
+  let eHi = -Infinity;
   let lo0 = Infinity;
   let hi0 = -Infinity;
   let lo16 = Infinity;
   let hi16 = -Infinity;
-  const remove = addTick((t: Tick) => {
-    if (t.time < from || t.time > to) return;
+  const steps = Math.round((sampleTo - base) / step);
+  for (let k = 0; k <= steps; k += 1) {
+    const now = base + k * step;
+    blocks.update({ time: now, dt: k === 0 ? 0 : step, frame: k });
     const y0 = blockAt(blocks, 0).y;
     const y16 = blockAt(blocks, 16).y;
-    lo0 = Math.min(lo0, y0);
-    hi0 = Math.max(hi0, y0);
-    lo16 = Math.min(lo16, y16);
-    hi16 = Math.max(hi16, y16);
-  }, PRIORITY.glRender + 2);
-  await untilTime(to + 0.05);
-  remove();
-  return { range0: hi0 - lo0, range16: hi16 - lo16 };
+    if (now < holdEnd - step) {
+      eLo = Math.min(eLo, y0);
+      eHi = Math.max(eHi, y0);
+    }
+    if (now >= sampleFrom) {
+      lo0 = Math.min(lo0, y0);
+      hi0 = Math.max(hi0, y0);
+      lo16 = Math.min(lo16, y16);
+      hi16 = Math.max(hi16, y16);
+    }
+  }
+  return { early: eHi - eLo, range0: hi0 - lo0, range16: hi16 - lo16 };
 }
 
 /** Direct mode: the closing handle alone, driven as the choreography drives it. */
@@ -235,7 +248,7 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
     mode: 'direct',
     async set(w: number): Promise<void> {
       setW(w);
-      await framesN(3);
+      await framesN(2);
     },
     wave(on: boolean): void {
       blocks.setBreath(on ? closingGL.breath : null);
@@ -279,7 +292,7 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
     if (!env.reducedMotion) {
       // Entry start, w 0: the rest formation and the pricing key.
       setW(0);
-      await framesN(3);
+      await framesN(2);
       const e0 = poseError(blocks, rest);
       check('entry start (w 0): the blocks hold the rest formation', fits(e0, Y_TOL), errorText(e0));
       check(
@@ -290,18 +303,18 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
 
       // Mid-entry, w 0.5: every block at its written pose, and the camera halfway between the two keys (sym(0.5) = 0.5).
       setW(0.5);
-      await framesN(3);
+      await framesN(2);
       const e5 = poseError(blocks, expectedAt(0.5, portrait));
       check('mid-entry (w 0.5): every block at its written pose', fits(e5, Y_TOL), errorText(e5));
       check(
-        'mid-entry: the camera is the midpoint of the pricing and closing keys',
-        cameraError(camera, midKey(pricingKey(), closingKey())) <= CAMERA_TOL,
-        `err=${cameraError(camera, midKey(pricingKey(), closingKey())).toFixed(5)}`,
+        'mid-entry: the camera is the sym blend of the pricing and closing keys',
+        cameraError(camera, camAt(0.5, size())) <= CAMERA_TOL,
+        `err=${cameraError(camera, camAt(0.5, size())).toFixed(5)}`,
       );
 
       // Write order, w 0.3: the column is written from index 0 down to index 16, and no block leads (direction-act3 C4).
       setW(0.3);
-      await framesN(3);
+      await framesN(2);
       const shares: number[] = [];
       for (let i = 0; i < BLOCK_COUNT; i += 1) {
         const y = blockAt(blocks, i).y;
@@ -324,7 +337,7 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
 
       // Column, w 1: the 17 blocks stand in the column with index 0 at the top, and the closing key.
       setW(1);
-      await framesN(3);
+      await framesN(2);
       const e1 = poseError(blocks, column);
       check('column (w 1): the 17 blocks stand in the column, scale 0.22 / 0.70', fits(e1, Y_TOL) && Math.abs(blockAt(blocks, 4).s - COLUMN_SCALE) < POSE_TOL, errorText(e1));
       check(
@@ -337,7 +350,7 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
       // Held: the handle is not current, and another section writes the rest formation and the pricing camera every frame.
       handle.setActive(false, ctx());
       rivalOn = true;
-      await framesN(6);
+      await framesN(3);
       rivalOn = false;
       const eh = poseError(blocks, column);
       check(
@@ -348,24 +361,24 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
       handle.setActive(true, ctx());
       await framesN(2);
 
-      // Wave: the breath is set at the commit, starts T.hold later, and swings about 0.010 bu either side of the column.
+      // Wave: the breath is requested at the commit, holds still for T.hold, then swings about 0.010 bu either side of the column.
       blocks.setBreath(closingGL.breath);
-      const wave = await sampleWave(blocks);
+      const wave = waveSamples(blocks);
       check(
-        'wave: blocks 0 and 16 swing 0.012 to 0.0205 bu peak to peak after the hold',
-        wave.range0 >= 0.012 && wave.range0 <= 0.0205 && wave.range16 >= 0.012 && wave.range16 <= 0.0205,
-        `range0=${wave.range0.toFixed(5)} range16=${wave.range16.toFixed(5)}`,
+        'wave: the column holds still for T.hold after the request, then blocks 0 and 16 swing 0.012 to 0.0205 bu peak to peak',
+        wave.early < 1e-6 && wave.range0 >= 0.012 && wave.range0 <= 0.0205 && wave.range16 >= 0.012 && wave.range16 <= 0.0205,
+        `early=${wave.early.toExponential(2)} range0=${wave.range0.toFixed(5)} range16=${wave.range16.toFixed(5)}`,
       );
       blocks.setBreath(null);
-      await framesN(3);
+      await framesN(2);
     } else {
       // Reduced motion: the closing state is set at once when the section top crosses 80 % of the viewport (w 1/3).
       setW(0.2);
-      await framesN(3);
+      await framesN(2);
       const r2 = poseError(blocks, rest);
       check('reduced (w 0.2, top above 80 %): the blocks hold the rest formation', fits(r2, Y_TOL), errorText(r2));
       setW(0.4);
-      await framesN(3);
+      await framesN(2);
       const r4 = poseError(blocks, column);
       check(
         'reduced (w 0.4, top below 80 %): the column and the closing camera are set at once',
@@ -374,19 +387,18 @@ function startDirect(world: GLWorld): { controls: ClosingControls; run: () => Pr
       );
       check(`reduced: far plane is ${far}`, camera.far === far, `far=${camera.far}`);
       blocks.setBreath(closingGL.breath);
-      await untilTime(tickerTime() + T.hold + T.breath);
-      const y0 = blockAt(blocks, 0).y;
+      const quiet = waveSamples(blocks);
       check(
         'reduced: no wave (the breath is zero under reduced motion)',
-        Math.abs(y0 - column[0].p[1]) < 1e-5,
-        `y0=${y0.toFixed(6)}`,
+        quiet.early < 1e-6 && quiet.range0 < 1e-6 && quiet.range16 < 1e-6,
+        `range0=${quiet.range0.toExponential(2)} range16=${quiet.range16.toExponential(2)}`,
       );
       blocks.setBreath(null);
       await framesN(2);
     }
     handle.setActive(true, ctx());
     setW(1);
-    await framesN(3);
+    await framesN(2);
   }
 
   return { controls, run };
@@ -429,16 +441,19 @@ function startPage(world: GLWorld): { controls: ClosingControls; run: () => Prom
   async function run(): Promise<void> {
     const portrait = portraitNow();
     const far = portrait ? 120 : 80;
-    const rest = formationFor('rest', portrait);
     const column = formationFor('column', portrait);
     const pricingKey = (): CameraKey => cameraKey('pricing', size());
     const closingKey = (): CameraKey => cameraKey('closing', size());
+    // The progress from the live scroll position. Scroll positions are whole device pixels, so a nominal topVh can be off by a fraction of a pixel.
+    const wNow = (): number => clamp01((1 - (closingTop() - window.scrollY) / window.innerHeight) / CLOSING_SPAN);
+    const detail = (w: number): string => `w=${w.toFixed(5)}`;
 
     // Pricing is current here: its rest formation sits at w_p 1, and its breath (0.010 bu, phase zero) runs on the blocks.
     scrollTo(1);
-    await framesN(4);
-    const p1 = poseError(blocks, rest);
-    check('page: topVh 1 (w 0), pricing current: the blocks hold the rest formation', fits(p1, Y_TOL_BREATH), errorText(p1));
+    await framesN(3);
+    const w1 = wNow();
+    const p1 = poseError(blocks, expectedAt(w1, portrait));
+    check('page: topVh 1 (w 0), pricing current: the blocks hold the rest formation', fits(p1, Y_TOL_BREATH), `${detail(w1)} ${errorText(p1)}`);
     check(
       'page: topVh 1: the camera holds the pricing key',
       cameraError(camera, pricingKey()) <= CAMERA_TOL,
@@ -447,19 +462,21 @@ function startPage(world: GLWorld): { controls: ClosingControls; run: () => Prom
 
     // The key case: the scroll stops mid-entry while pricing is current. Pricing writes its rest formation every frame.
     scrollTo(0.7);
-    await framesN(10);
-    const m = poseError(blocks, expectedAt(0.5, portrait));
-    check('page: topVh 0.7 (w 0.5), scroll stopped, pricing current: the write holds', fits(m, Y_TOL_BREATH), errorText(m));
+    await framesN(3);
+    const wm = wNow();
+    const m = poseError(blocks, expectedAt(wm, portrait));
+    check('page: topVh 0.7 (w 0.5), scroll stopped, pricing current: the write holds', fits(m, Y_TOL_BREATH), `${detail(wm)} ${errorText(m)}`);
     check(
-      'page: topVh 0.7: the camera is the midpoint of the keys (the entry holds)',
-      cameraError(camera, midKey(pricingKey(), closingKey())) <= CAMERA_TOL,
-      `err=${cameraError(camera, midKey(pricingKey(), closingKey())).toFixed(5)}`,
+      'page: topVh 0.7: the camera is the sym blend of the keys (the entry holds)',
+      cameraError(camera, camAt(wm, size())) <= CAMERA_TOL,
+      `err=${cameraError(camera, camAt(wm, size())).toFixed(5)}`,
     );
 
     scrollTo(0.4);
-    await framesN(10);
+    await framesN(3);
+    const w4 = wNow();
     const c4 = poseError(blocks, column);
-    check('page: topVh 0.4 (w 1), pricing current: the column is complete and held', fits(c4, Y_TOL_BREATH), errorText(c4));
+    check('page: topVh 0.4 (w 1), pricing current: the column is complete and held', fits(c4, Y_TOL_BREATH), `${detail(w4)} ${errorText(c4)}`);
     check(
       'page: topVh 0.4: the camera holds the closing key',
       cameraError(camera, closingKey()) <= CAMERA_TOL,
@@ -468,22 +485,23 @@ function startPage(world: GLWorld): { controls: ClosingControls; run: () => Prom
     check(`page: far plane is ${far} for this viewport`, camera.far === far, `far=${camera.far}`);
 
     scrollTo(0.1);
-    await framesN(10);
+    await framesN(3);
     const c1 = poseError(blocks, column);
     check('page: topVh 0.1, pricing current: the column still stands', fits(c1, Y_TOL_BREATH), errorText(c1));
 
     scrollTo(-0.2);
-    await framesN(10);
+    await framesN(3);
     const cc = poseError(blocks, column);
     check('page: topVh -0.2, closing current: the column stands', fits(cc, Y_TOL_BREATH), errorText(cc));
 
     // Back up past the closing top: the write runs again in reverse, while pricing is current.
     scrollTo(0.5);
-    await framesN(10);
-    const back = poseError(blocks, expectedAt((1 - 0.5) / CLOSING_SPAN, portrait));
-    check('page: topVh 0.5 (w 0.83), scrolled back up: the entry is written again and held', fits(back, Y_TOL_BREATH), errorText(back));
+    await framesN(3);
+    const wb = wNow();
+    const back = poseError(blocks, expectedAt(wb, portrait));
+    check('page: topVh 0.5 (w 0.83), scrolled back up: the entry is written again and held', fits(back, Y_TOL_BREATH), `${detail(wb)} ${errorText(back)}`);
     scrollTo(0.1);
-    await framesN(6);
+    await framesN(3);
   }
 
   return { controls, run };

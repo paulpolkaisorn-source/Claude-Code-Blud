@@ -1,0 +1,59 @@
+<section id="code" class="section section--code" data-theme="ink" data-act="2" data-cursor="native" aria-labelledby="code-title">
+  <div class="wrap code__stage">
+    <div class="grid code__grid">
+      <div class="code__column">
+        <div class="code__head">
+          <p class="t-label code__kicker">The API</p>
+          <h2 class="t-display-xl code__title" id="code-title">In code</h2>
+          <p class="t-body code__intro">On the Claude Platform, developers can get started with <span class="code__nowrap">claude-haiku-5-5</span>. This request streams the reply and sets effort to low.</p>
+        </div>
+        <div class="code__panel">
+          <p class="sr-only" id="code-sr">Short TypeScript program that streams a reply from Claude Haiku 5.5 with effort set to low, and an example of that reply.</p>
+          <div class="code__request">
+            <p class="t-label code__label" id="code-request-label">REQUEST</p>
+            <figure class="code__figure" aria-labelledby="code-request-label" aria-describedby="code-sr"><pre class="t-code code__pre" tabindex="0" role="region" aria-labelledby="code-request-label"><code class="code__code code__code--request"><span class="code__line"><span class="tok-kw">import</span> Anthropic <span class="tok-kw">from</span> <span class="tok-str">"@anthropic-ai/sdk"</span><span class="tok-pun">;</span></span>
+<span class="code__line"><span class="tok-kw">const</span> client <span class="tok-pun">=</span> <span class="tok-kw">new</span> Anthropic<span class="tok-pun">();</span></span>
+<span class="code__line"><span class="tok-kw">const</span> ticket <span class="tok-pun">=</span> <span class="tok-str">"Charged twice for one seat."</span><span class="tok-pun">;</span></span>
+<span class="code__line"></span>
+<span class="code__line"><span class="tok-kw">await</span> client<span class="tok-pun">.</span>messages</span>
+<span class="code__line">  <span class="tok-pun">.</span>stream<span class="tok-pun">({</span></span>
+<span class="code__line">    model<span class="tok-pun">:</span> <span class="tok-str">"claude-haiku-5-5"</span><span class="tok-pun">,</span> max_tokens<span class="tok-pun">:</span> 1024<span class="tok-pun">,</span></span>
+<span class="code__line">    output_config<span class="tok-pun">: {</span> effort<span class="tok-pun">:</span> <span class="tok-str">"low"</span> <span class="tok-pun">},</span></span>
+<span class="code__line">    messages<span class="tok-pun">: [{</span> role<span class="tok-pun">:</span> <span class="tok-str">"user"</span><span class="tok-pun">,</span> content<span class="tok-pun">:</span> ticket <span class="tok-pun">}],</span></span>
+<span class="code__line">  <span class="tok-pun">})</span></span>
+<span class="code__line">  <span class="tok-pun">.</span>on<span class="tok-pun">(</span><span class="tok-str">"text"</span><span class="tok-pun">,</span> <span class="tok-pun">(</span>t<span class="tok-pun">)</span> <span class="tok-pun">=&gt;</span> process<span class="tok-pun">.</span>stdout<span class="tok-pun">.</span>write<span class="tok-pun">(</span>t<span class="tok-pun">));</span></span></code></pre></figure>
+            <button type="button" class="btn btn--secondary code__copy" data-copied-label="Copied">Copy</button>
+          </div>
+          <p class="t-label code__label code__label--response" id="code-response-label">EXAMPLE OUTPUT</p>
+          <figure class="code__figure code__figure--response" aria-labelledby="code-response-label"><pre class="t-code code__pre" tabindex="0" role="region" aria-labelledby="code-response-label"><code class="code__code code__code--response"><span class="code__line">The customer was charged twice for one seat.</span>
+<span class="code__line">Refund the second charge.</span>
+<span class="code__line">Bill the seat once from now on.</span></code></pre></figure>
+          <span class="code__marker" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="gl-fallback code__fallback" aria-hidden="true">
+        <svg class="code__svg" viewBox="-2 -1.2 4 2.4" focusable="false">
+          <g transform="scale(1 -1)">
+            <rect x="-1.2958" y="0.434" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-0.7564" y="0.434" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-0.217" y="0.434" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="0.3224" y="0.434" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="0.8618" y="0.434" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-1.8352" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-1.2958" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-0.7564" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-0.217" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="0.3224" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="0.8618" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="1.4012" y="-0.217" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-1.2958" y="-0.868" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-0.7564" y="-0.868" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="-0.217" y="-0.868" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="0.3224" y="-0.868" width="0.434" height="0.434" rx="0.0217"/>
+            <rect x="0.8618" y="-0.868" width="0.434" height="0.434" rx="0.0217"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>

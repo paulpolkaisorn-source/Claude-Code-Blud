@@ -340,15 +340,26 @@ async function main(): Promise<void> {
       `focus ${dofSeen.focus.toFixed(4)}, bokeh ${dofSeen.bokeh}`,
     );
 
-    // Breath: held off for T.hold after u reaches 1, then on. Every block has phase 0, so the breath is one shared value.
+    // The race is a row on a landscape viewport and a column on a phone (D15.1), so each check compares a block with its own
+    // race position. The breath is one shared value (every block has phase 0). Block 0 is never lifted in these checks, so
+    // its offset from its race position is the breath, and lift(i) is block i's own offset with that breath removed.
+    const base = raceXY(portrait);
+    const restY = (i: number): number => yOf(i) - base[i][1];
+    const lift = (i: number): number => restY(i) - restY(0);
+
+    // Breath: held off for T.hold after u reaches 1, then on.
     step(30, () => handle.update(0.25, tick, contextFor()));
-    check('breath is off for the first 0.5 s at rest (it starts T.hold after u = 1)', Math.abs(yOf(0)) < 1e-6, `y0 ${yOf(0)}`);
+    check(
+      'breath is off for the first 0.5 s at rest (it starts T.hold after u = 1)',
+      Math.abs(restY(0)) < 1e-6,
+      `breath offset ${restY(0).toExponential(2)}`,
+    );
     let maxBreath = 0;
     let worstBreath = 0;
     step(180, () => {
       handle.update(0.25, tick, contextFor());
-      maxBreath = Math.max(maxBreath, Math.abs(yOf(0)));
-      worstBreath = Math.max(worstBreath, Math.abs(yOf(0)));
+      maxBreath = Math.max(maxBreath, Math.abs(restY(0)));
+      worstBreath = Math.max(worstBreath, Math.abs(restY(0)));
     });
     check(
       'breath is on after T.hold: it reaches a few thousandths and never passes 0.012 bu',
@@ -356,7 +367,7 @@ async function main(): Promise<void> {
       `max ${maxBreath.toFixed(5)}, largest ${worstBreath.toFixed(5)}, T.hold ${T.hold}`,
     );
 
-    // Hover: the block under a fine pointer lifts 0.15 bu. Block differences cancel the shared breath.
+    // Hover: the block under a fine pointer lifts 0.15 bu on y (along the column on a phone, where the race is vertical).
     pointer.type = 'mouse';
     pointer.inside = true;
     const c8 = centreOf(8, size);
@@ -364,9 +375,9 @@ async function main(): Promise<void> {
     pointer.clientY = c8.y;
     step(240, () => handle.update(0.25, tick, contextFor()));
     check(
-      'hover: the block under the pointer (8) lifts 0.15 bu and its neighbour (7) stays down',
-      Math.abs(yOf(8) - yOf(7) - LIFT) < 1e-3 && Math.abs(yOf(9) - yOf(7)) < 1e-3,
-      `y8 - y7 ${(yOf(8) - yOf(7)).toFixed(5)}, y9 - y7 ${(yOf(9) - yOf(7)).toFixed(5)}`,
+      'hover: the block under the pointer (8) lifts 0.15 bu, and no other block does',
+      Math.abs(lift(8) - LIFT) < 1e-3 && Math.abs(lift(9)) < 1e-3 && Math.abs(lift(7)) < 1e-3,
+      `lift 8 ${lift(8).toFixed(5)}, lift 9 ${lift(9).toFixed(5)}, lift 7 ${lift(7).toFixed(5)}`,
     );
     // The hit test uses the rest footprint, so the pointer near the bottom edge keeps the lift (no flicker at the edge).
     const rect8 = formationRects('race', 'speed', size)[8];
@@ -374,32 +385,24 @@ async function main(): Promise<void> {
     step(120, () => handle.update(0.25, tick, contextFor()));
     check(
       'hover: a pointer on the lower edge of the rest footprint keeps the lift (the hit test ignores the lift)',
-      Math.abs(yOf(8) - yOf(7) - LIFT) < 1e-3,
-      `y8 - y7 ${(yOf(8) - yOf(7)).toFixed(5)}`,
+      Math.abs(lift(8) - LIFT) < 1e-3,
+      `lift 8 ${lift(8).toFixed(5)}`,
     );
     pointer.clientY = rect8.y0 - 3;
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check(
-      'hover: a pointer just above the footprint lifts nothing',
-      Math.abs(yOf(8) - yOf(7)) < 1e-3,
-      `y8 - y7 ${(yOf(8) - yOf(7)).toFixed(5)}`,
-    );
+    check('hover: a pointer just above the footprint lifts nothing', Math.abs(lift(8)) < 1e-3, `lift 8 ${lift(8).toFixed(5)}`);
     const c9 = centreOf(9, size);
     pointer.clientX = c9.x;
     pointer.clientY = c9.y;
     step(240, () => handle.update(0.25, tick, contextFor()));
     check(
       'hover moves to the next block: 9 lifts, 8 falls back',
-      Math.abs(yOf(9) - yOf(8) - LIFT) < 1e-3 && Math.abs(yOf(8) - yOf(7)) < 1e-3,
-      `y9 - y8 ${(yOf(9) - yOf(8)).toFixed(5)}`,
+      Math.abs(lift(9) - LIFT) < 1e-3 && Math.abs(lift(8)) < 1e-3,
+      `lift 9 ${lift(9).toFixed(5)}, lift 8 ${lift(8).toFixed(5)}`,
     );
     pointer.inside = false;
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check(
-      'hover ends when the pointer leaves the page',
-      Math.abs(yOf(9) - yOf(8)) < 1e-3,
-      `y9 - y8 ${(yOf(9) - yOf(8)).toFixed(5)}`,
-    );
+    check('hover ends when the pointer leaves the page', Math.abs(lift(9)) < 1e-3, `lift 9 ${lift(9).toFixed(5)}`);
 
     // Touch: a tap toggles the lift of its block. Moved taps, cancelled taps and taps on a control do nothing.
     const c3 = centreOf(3, size);
@@ -407,27 +410,23 @@ async function main(): Promise<void> {
     document.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
     step(240, () => handle.update(0.25, tick, contextFor()));
     check(
-      'touch: a tap lifts block 3 by 0.15 bu',
-      Math.abs(yOf(3) - yOf(2) - LIFT) < 1e-3 && Math.abs(yOf(4) - yOf(2)) < 1e-3,
-      `y3 - y2 ${(yOf(3) - yOf(2)).toFixed(5)}`,
+      'touch: a tap lifts block 3 by 0.15 bu, and no neighbour does',
+      Math.abs(lift(3) - LIFT) < 1e-3 && Math.abs(lift(4)) < 1e-3 && Math.abs(lift(2)) < 1e-3,
+      `lift 3 ${lift(3).toFixed(5)}, lift 4 ${lift(4).toFixed(5)}, lift 2 ${lift(2).toFixed(5)}`,
     );
     document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check(
-      'touch: a second tap on the same block lowers it',
-      Math.abs(yOf(3) - yOf(2)) < 1e-3,
-      `y3 - y2 ${(yOf(3) - yOf(2)).toFixed(5)}`,
-    );
+    check('touch: a second tap on the same block lowers it', Math.abs(lift(3)) < 1e-3, `lift 3 ${lift(3).toFixed(5)}`);
     document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointerup', c3.x + 40, c3.y + 40));
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check('touch: a moved touch (a scroll) lifts nothing', Math.abs(yOf(3) - yOf(2)) < 1e-3);
+    check('touch: a moved touch (a scroll) lifts nothing', Math.abs(lift(3)) < 1e-3, `lift 3 ${lift(3).toFixed(5)}`);
     document.dispatchEvent(touchEvent('pointerdown', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointercancel', c3.x, c3.y));
     document.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check('touch: a cancelled touch lifts nothing', Math.abs(yOf(3) - yOf(2)) < 1e-3);
+    check('touch: a cancelled touch lifts nothing', Math.abs(lift(3)) < 1e-3, `lift 3 ${lift(3).toFixed(5)}`);
     const control = document.createElement('button');
     control.textContent = 'control';
     document.body.appendChild(control);
@@ -435,11 +434,11 @@ async function main(): Promise<void> {
     control.dispatchEvent(touchEvent('pointerup', c3.x, c3.y));
     control.remove();
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check('touch: a tap that starts on a control lifts nothing', Math.abs(yOf(3) - yOf(2)) < 1e-3);
+    check('touch: a tap that starts on a control lifts nothing', Math.abs(lift(3)) < 1e-3, `lift 3 ${lift(3).toFixed(5)}`);
     document.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'mouse', pointerId: 2, clientX: c3.x, clientY: c3.y, bubbles: true }));
     document.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'mouse', pointerId: 2, clientX: c3.x, clientY: c3.y, bubbles: true }));
     step(240, () => handle.update(0.25, tick, contextFor()));
-    check('mouse clicks lift nothing (taps are touch only)', Math.abs(yOf(3) - yOf(2)) < 1e-3);
+    check('mouse clicks lift nothing (taps are touch only)', Math.abs(lift(3)) < 1e-3, `lift 3 ${lift(3).toFixed(5)}`);
 
     // Portrait: the race is a column (D15.1), and the depth of field follows the phone key.
     handle.update(0.25, tick, contextFor({ portrait: true, size: { width: 375, height: 812 } }));
@@ -472,8 +471,8 @@ async function main(): Promise<void> {
     step(240, () => handle.update(0.25, tick, contextFor({ reducedMotion: true })));
     check(
       'reduced motion: no hover lift, no tap lift and no breath',
-      Math.abs(yOf(8) - yOf(7)) < 1e-6 && Math.abs(yOf(3) - yOf(2)) < 1e-6 && Math.abs(yOf(0)) < 1e-6,
-      `y8 - y7 ${(yOf(8) - yOf(7)).toExponential(2)}, y3 - y2 ${(yOf(3) - yOf(2)).toExponential(2)}, y0 ${yOf(0).toExponential(2)}`,
+      Math.abs(lift(8)) < 1e-5 && Math.abs(lift(3)) < 1e-5 && Math.abs(restY(0)) < 1e-5,
+      `lift 8 ${lift(8).toExponential(2)}, lift 3 ${lift(3).toExponential(2)}, breath ${restY(0).toExponential(2)}`,
     );
     pointer.inside = false;
 
@@ -494,14 +493,14 @@ async function main(): Promise<void> {
     for (let k = 0; k < before.length; k += 1) if (before[k] !== after[k]) unchanged = false;
     check(
       'setActive(false) tidies: lifts 0, group tilt and offset 0, breath stopped, and an inactive handle writes nothing',
-      Math.abs(yOf(8) - yOf(7)) < 1e-4 &&
-        Math.abs(yOf(0)) < 1e-4 &&
+      Math.abs(lift(8)) < 1e-4 &&
+        Math.abs(restY(0)) < 1e-4 &&
         Math.abs(world.blocks.group.rotation.x) < 1e-6 &&
         Math.abs(world.blocks.group.rotation.y) < 1e-6 &&
         Math.abs(world.blocks.group.position.x) < 1e-6 &&
         Math.abs(world.blocks.group.position.y) < 1e-6 &&
         unchanged,
-      `y8 - y7 ${(yOf(8) - yOf(7)).toExponential(2)}, y0 ${yOf(0).toExponential(2)}, unchanged ${unchanged}`,
+      `lift 8 ${lift(8).toExponential(2)}, breath ${restY(0).toExponential(2)}, unchanged ${unchanged}`,
     );
     pointer.inside = false;
 
@@ -559,7 +558,7 @@ async function main(): Promise<void> {
     );
     handle.update(0.25, tick, contextFor({ reducedMotion: true }));
     step(240, () => handle.update(0.25, tick, contextFor({ reducedMotion: true })));
-    check('reduced run: no breath after the hold', Math.abs(yOf(0)) < 1e-6, `y0 ${yOf(0)}`);
+    check('reduced run: no breath after the hold', Math.abs(yOf(0) - raceXY(portrait)[0][1]) < 1e-6, `y0 ${yOf(0)}`);
   }
 
   const problems = [...report.failures, ...report.diagnostics];

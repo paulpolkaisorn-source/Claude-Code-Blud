@@ -14,7 +14,7 @@ import './capabilities.css';
 import type { SectionContext } from '../../main';
 import { bus } from '../../core/bus';
 import { env, onReducedMotionChange } from '../../core/env';
-import { scrollToTarget } from '../../core/scroll';
+import { getLenis, scrollToTarget } from '../../core/scroll';
 import { PRIORITY, addTick } from '../../core/ticker';
 import { applyStair, createCap0, createCap1, stairStep } from './cap-graphics';
 import { applyStage } from './cap-layout';
@@ -145,7 +145,12 @@ export function initCapabilities(ctx: SectionContext): void {
       dispatch(ACTIVATE_EVENT, { index, source });
     }
     const button = buttons[index];
-    const offset = slots[index].getBoundingClientRect().top - button.getBoundingClientRect().top;
+    // scrollToTarget aims at an element from Lenis's own position (animatedScroll). When the page has moved without
+    // Lenis (a click that scrolls the card into view, a scrollbar drag), that position is stale, and the landing would be
+    // out by the difference. The difference is added to the offset, so the slot lands where it was measured.
+    const lenis = getLenis();
+    const stale = lenis === null ? 0 : window.scrollY - lenis.animatedScroll;
+    const offset = slots[index].getBoundingClientRect().top - button.getBoundingClientRect().top + stale;
     scrollToTarget(button, { offset });
   };
 

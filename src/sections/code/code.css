@@ -1,0 +1,272 @@
+/*
+ * Code section, act II (ink). Scoped under #code. Owner: motion-2d.
+ * Source: design/direction-act2.md, code (structure, 2D layer wide and narrow, phone landscape, copy, keyboard,
+ * reduced motion and the no-WebGL fallback); design/direction.md headings 3, 4, 5, 8, 9 and 13;
+ * design/drafts/director-decisions.md D16.1, D18 and D20.3.
+ *
+ * Only tokens are used for colour, type, spacing and curves. The one literal is the 2 px live marker width, which is
+ * a hairline of the drawing and not a spacing token. The section is 2 vh tall and the block that holds the copy is
+ * exactly 100 svh, set at 50 per cent of the section, so its centre is the section's middle (C2 and the structure of
+ * the code section).
+ */
+
+/* ---------- Section and block ---------- */
+
+#code {
+  height: 200vh;
+  height: 200svh;
+  padding-block: 0;
+}
+
+#code .code__stage {
+  position: absolute;
+  inset-inline: 0;
+  top: 50vh;
+  top: 50svh;
+  height: 100vh;
+  height: 100svh;
+}
+
+#code .code__grid {
+  height: 100%;
+  align-items: center;
+  align-items: safe center;
+}
+
+#code .code__column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ---------- Head: kicker, title and intro (copy order: kicker, title, intro) ---------- */
+
+#code .code__kicker {
+  color: var(--seal-text);
+  margin-block-end: var(--sp-2);
+}
+
+#code .code__title {
+  margin: 0;
+}
+
+#code .code__intro {
+  color: var(--text-2);
+  margin-block-start: var(--sp-4);
+}
+
+#code .code__nowrap {
+  white-space: nowrap;
+}
+
+/* ---------- Panel: REQUEST and EXAMPLE OUTPUT ---------- */
+
+#code .code__panel {
+  position: relative;
+  margin-block-start: var(--sp-5);
+  background: var(--bg-raised);
+  border: 1px solid var(--rule-hair);
+  padding: var(--sp-5);
+}
+
+/* First row: the label and the copy button on one line. The button follows the code in source order, so Tab
+   reaches the code block first (direction.md heading 9, keyboard). */
+#code .code__request {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label copy"
+    "code code";
+  align-items: center;
+  row-gap: var(--sp-4);
+}
+
+#code .code__request > .code__label {
+  grid-area: label;
+}
+
+#code .code__request > .code__figure {
+  grid-area: code;
+}
+
+#code .code__copy {
+  grid-area: copy;
+  justify-self: end;
+  min-height: 0;
+  padding: var(--sp-1) var(--sp-3);
+}
+
+#code .code__label--response {
+  margin-block-start: var(--sp-5);
+}
+
+#code .code__figure {
+  margin: 0;
+  min-width: 0;
+}
+
+#code .code__figure--response {
+  margin-block-start: var(--sp-4);
+}
+
+/* ---------- Code blocks (code style, t-code on the pre) ---------- */
+
+#code .code__pre {
+  margin: 0;
+  max-width: 100%;
+}
+
+#code .code__code {
+  display: block;
+  font: inherit;
+  white-space: normal;
+}
+
+/* A line is a block of its own, so the line index of the live marker is the block's index. A blank line keeps the
+   height of a line. */
+#code .code__line {
+  display: block;
+  white-space: pre;
+  min-height: calc(1em * var(--lh-code));
+}
+
+/* Hand-written tokens (pre-tokenised in the HTML). Keywords seal, strings code-string, punctuation text-3,
+   identifiers and numbers text-1. */
+#code .tok-kw {
+  color: var(--seal-text);
+}
+
+#code .tok-str {
+  color: var(--code-string);
+}
+
+#code .tok-pun {
+  color: var(--text-3);
+}
+
+/* The response stream. The JavaScript adds is-stream; each character is text-3 until is-lit is set, and then text-1. */
+#code .code__code--response.is-stream .code__char {
+  color: var(--text-3);
+}
+
+#code .code__code--response.is-stream .code__char.is-lit {
+  color: var(--text-1);
+}
+
+/* The live line marker: a 2 px seal bar in the padding of the panel, at the line the stream has reached. It is
+   shown only once the script has measured the lines (is-live). */
+#code .code__marker {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: var(--sp-3);
+  width: 2px;
+  height: 0;
+  background: var(--seal);
+  pointer-events: none;
+}
+
+#code .code__panel.is-live > .code__marker {
+  display: block;
+}
+
+/* ---------- Copy button (secondary; body style; "Copy" and "Copied") ---------- */
+
+#code .code__copy {
+  color: var(--text-1);
+}
+
+/* ---------- No-WebGL fallback: the recede pose as a static drawing (direction-3d 11.7) ---------- */
+
+#code .code__fallback rect {
+  fill: var(--rule-hair);
+  fill-opacity: 0.5;
+}
+
+#code .code__fallback svg {
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- Viewport classes (C3). Width sets the columns; aspect sets the placement. ---------- */
+
+/* Wide: 768 px and up, aspect 1 or wider. The column is columns 1 to 9 and the fallback is columns 10 to 17 (C4). */
+@media (width >= 768px) and (aspect-ratio >= 1) {
+  #code .code__column {
+    grid-column: 1 / 10;
+  }
+
+  #code .code__fallback {
+    grid-column: 10 / 18;
+  }
+}
+
+/* Phone landscape: aspect 1 or wider, below 768 px. The wide placement, with its edges as percentages of the width
+   at 1024 px: the panel ends at 52.3 per cent of the width (C3). */
+@media (width < 768px) and (aspect-ratio >= 1) {
+  #code .code__column {
+    width: calc(52.3vw - var(--margin));
+  }
+
+  #code .code__fallback {
+    position: absolute;
+    top: 50%;
+    right: var(--margin);
+    left: 56vw;
+    translate: 0 -50%;
+  }
+}
+
+/* Narrow: aspect below 1 (phones and portrait tablets, C5). The title and the panel sit at fixed heights of the block,
+   and the head is measured from the block top. */
+@media (aspect-ratio < 1) {
+  #code .code__column {
+    display: contents;
+  }
+
+  #code .code__head {
+    position: absolute;
+    top: 12%;
+    inset-inline: var(--sp-4);
+  }
+
+  #code .code__kicker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-block-end: 0;
+    margin-block-start: 0;
+    padding-block-end: var(--sp-2);
+  }
+
+  #code .code__intro {
+    margin-block-start: var(--sp-4);
+  }
+
+  #code .code__panel {
+    position: absolute;
+    top: 50%;
+    inset-inline: var(--sp-4);
+    margin-block-start: 0;
+    padding: var(--sp-4);
+  }
+
+  /* Drawn in the band the 3D recede occupies on a phone, between the intro and the panel. */
+  #code .code__fallback {
+    position: absolute;
+    top: 30%;
+    inset-inline: var(--sp-4);
+    height: 19%;
+  }
+
+  #code .code__fallback svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* ---------- Title split (direction.md heading 8, rule 15). Only SplitText's own classes are styled by the script. ---------- */
+
+#code .code__title-line {
+  display: block;
+}

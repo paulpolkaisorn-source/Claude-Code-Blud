@@ -234,6 +234,15 @@ async function main(): Promise<void> {
     const t0 = performance.now();
     while (performance.now() - t0 < ms) await frames(1);
   }
+  /** Waits for a test to hold, one frame at a time, for up to ms. Resolves with whether it held. */
+  async function until(test: () => boolean, ms: number): Promise<boolean> {
+    const t0 = performance.now();
+    while (performance.now() - t0 < ms) {
+      if (test()) return true;
+      await frames(1);
+    }
+    return test();
+  }
   async function goto(yvh: number, n = POSE_FRAMES): Promise<void> {
     scrollState.y = yvh * window.innerHeight;
     await frames(n);
@@ -458,8 +467,10 @@ async function main(): Promise<void> {
     check(`${label}: card 2 after one crossfade, canvas back to 1`, bd.ok && s.opacity === '', `block ${fmt(bd.worst)} opacity '${s.opacity}'`);
 
     // A keyboard or tap activation under reduced motion switches the card and holds it until the page is in its range.
+    // The crossfade is 2 x T.half (0.7 s). The check polls for the switch to land, up to 2.5 s, because frame time varies
+    // with CPU contention (a fixed 0.9 s window missed the landing once under load).
     activate(0, 'key');
-    await waitMs(900);
+    await until(() => blockDeviation(snapshot().blocks, formationXYZ('cap-0', portrait)).ok, 2500);
     s = snapshot();
     bd = blockDeviation(s.blocks, formationXYZ('cap-0', portrait));
     check(`${label}: activation switches to card 1 and holds`, bd.ok && sameGroup(s.group, [0, 1, 2, 3, 4]), `block ${fmt(bd.worst)}`);
@@ -479,15 +490,18 @@ async function main(): Promise<void> {
     hover(null);
   }
 
-  // Dispose: the layer stops listening and writes nothing further.
-  choreo.dispose();
-  const before = snapshot();
-  activate(0, 'key');
-  hover(2);
-  await frames(60);
-  const after = snapshot();
-  const moved = before.blocks.some((p, i) => Math.abs(p[0] - after.blocks[i][0]) + Math.abs(p[2] - after.blocks[i][2]) > 1e-4);
-  check(`${label}: dispose stops the layer`, !moved, moved ? 'blocks moved after dispose' : '');
+  // Dispose (checks-only load, ?dispose): the layer stops listening and writes nothing further. The screenshot load
+  // keeps the choreography running, so its states are live.
+  if (new URLSearchParams(location.search).has('dispose')) {
+    choreo.dispose();
+    const before = snapshot();
+    activate(0, 'key');
+    hover(2);
+    await frames(60);
+    const after = snapshot();
+    const moved = before.blocks.some((p, i) => Math.abs(p[0] - after.blocks[i][0]) + Math.abs(p[2] - after.blocks[i][2]) > 1e-4);
+    check(`${label}: dispose stops the layer`, !moved, moved ? 'blocks moved after dispose' : '');
+  }
 
   const failed = report.failures.length > 0 || report.diagnostics.length > 0;
   const reason = [...report.failures, ...report.diagnostics].join(' | ');

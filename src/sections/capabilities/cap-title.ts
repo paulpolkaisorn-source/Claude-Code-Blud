@@ -63,7 +63,7 @@ export function createTitleReveal(title: HTMLElement, section: HTMLElement): Tit
       autoSplit: true,
       onSplit: (self: SplitText) => {
         // The parent carries the full title as its name, and SplitText hides the characters from assistive technology.
-        title.setAttribute('aria-label', (title.textContent ?? '').replace(/ /g, ' ').trim());
+        title.setAttribute('aria-label', (title.textContent ?? '').replace(/\u00a0/g, ' ').trim());
         reveal?.kill();
         reveal = buildReveal(self.lines);
       },

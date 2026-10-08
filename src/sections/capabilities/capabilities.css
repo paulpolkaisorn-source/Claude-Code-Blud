@@ -29,10 +29,12 @@
 
 /* ---------- Title block (slot 1) ---------- */
 
+/* The wide title sits at 5 per cent of the viewport height rather than the act's 8 per cent, so the first row of
+   blocks clears its last line by more than 20 px at 1440 by 900 (see the report). */
 #capabilities .cap__text {
   position: absolute;
-  top: 8vh;
-  top: 8svh;
+  top: 5vh;
+  top: 5svh;
   left: calc(var(--margin) + 9 * (var(--cap-col) + var(--gutter)));
   width: calc(8 * var(--cap-col) + 7 * var(--gutter));
 }
@@ -331,7 +333,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(var(--cap-bottom) + var(--cap-gap) - 8svh);
+    top: calc(var(--cap-bottom) + var(--cap-gap) - 5svh);
   }
 }
 

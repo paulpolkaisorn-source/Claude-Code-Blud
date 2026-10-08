@@ -32,7 +32,14 @@ export interface StageGeometry {
 const rects: ScreenRect[] = [];
 const bounds: ScreenRect = { x0: 0, y0: 0, x1: 0, y1: 0 };
 
-/** Measures the capability formations at the hero keyframe for the current viewport. */
+/** The half height of the capability formations, in bu: row A to row B or C, plus the scale 0.9 block half size. */
+const HALF_HEIGHT_BU = 1.365;
+
+/**
+ * Measures the capability formations at the hero keyframe for the current viewport. The bottom is the lower of the
+ * projected block edges and the flat elevation of the no-WebGL fallback (which draws every row at the active scale),
+ * so the content below the stanza clears both.
+ */
 export function measureStage(): StageGeometry {
   const size = viewportSize();
   let cx = 0;
@@ -50,6 +57,7 @@ export function measureStage(): StageGeometry {
     }
     bottom = Math.max(bottom, boundsOf(list, 0, list.length - 1, bounds).y1);
   }
+  bottom = Math.max(bottom, cy + HALF_HEIGHT_BU * k);
   return { cx, cy, k, bottom };
 }
 

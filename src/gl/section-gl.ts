@@ -42,6 +42,11 @@ export interface SectionGLContext {
   reducedMotion: boolean;
   /** Canvas size in CSS px. */
   size: { width: number; height: number };
+  /**
+   * Raw ink-bleed progress of the two act boundaries (direction-3d 10.10), before easing and
+   * smoothing: p1 at the top of capabilities (paper to ink), p2 at the top of pricing (ink to paper).
+   */
+  bleed: { p1: number; p2: number };
 }
 
 /** What a section's GL layer returns to the choreography. */
