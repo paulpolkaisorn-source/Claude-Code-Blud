@@ -520,6 +520,20 @@ export async function runDesktop(rec) {
       if (s.errors.length) throw new Error(`${s.errors.length} captured, first: ${s.errors[0]}`);
       return 'none captured';
     }, { ctx });
+
+    // DEF-01 regression: the brawler preview canvas must keep a live WebGL context after matches and select visits.
+    await rec.check('D20', 'Regression', 'DEF-01: preview canvas WebGL context stays live after matches and select visits', async () => {
+      const info = await page.evaluate(() => {
+        const c = document.querySelector('canvas.preview-canvas');
+        if (!c) return { found: false };
+        const gl = c.getContext('webgl2');
+        return { found: true, hasCtx: !!gl, lost: gl ? gl.isContextLost() : null, w: c.width, h: c.height };
+      });
+      if (!info.found) throw new Error('preview canvas not found');
+      if (!info.hasCtx) throw new Error('preview canvas has no WebGL context');
+      if (info.lost) throw new Error('preview WebGL context is lost');
+      return `preview canvas ${info.w}x${info.h} context live after the D02-D06 matches and select visits`;
+    }, { ctx });
   } finally {
     await closeSession(s);
   }

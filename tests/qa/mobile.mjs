@@ -53,13 +53,88 @@ function touchRects() {
   };
 }
 
-export async function runMobile(rec) {
+// Counts player shots inside the page, so the measurement does not depend on the recorder's event buffer.
+async function installShotCounter(page) {
+  await page.evaluate(() => {
+    if (window.__qaShots !== undefined) return;
+    window.__qaShots = 0;
+    const B = window.__BRAWL__;
+    B.bus.on(B.EV.SHOT, (e) => {
+      if (e && e.b && e.b.isPlayer) window.__qaShots += 1;
+    });
+  });
+}
+
+// Informational touch measurement (not a pass/fail check). Presses under 300 ms (the game's tap window is 350 ms)
+// with ammo available and at least 0.45 s of wall time between presses. Before each press the sim is advanced
+// with fastForward so reload and attack gap are clear. A press counts as fired when a player shot follows within 4 s.
+async function measureTaps(page, send) {
+  await installShotCounter(page);
+  const pad = await page.evaluate(() => {
+    const r = document.querySelector('.bi-pad.bi-atk').getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  const conditions = [
+    { method: 'raw CDP', ms: 0 },
+    { method: 'raw CDP', ms: 100 },
+    { method: 'raw CDP', ms: 200 },
+    { method: 'raw CDP', ms: 250 },
+    { method: 'Playwright tap', ms: null },
+  ];
+  // Conditions are interleaved round by round, so no condition always follows the same predecessor.
+  const TRIALS = 6;
+  const rows = conditions.map((c) => ({ method: c.method, ms: c.ms, trials: 0, noAmmo: 0, fired: 0, delays: [] }));
+  for (let round = 0; round < TRIALS; round++) {
+    for (let i = 0; i < conditions.length; i++) {
+      const cond = conditions[i];
+      const row = rows[i];
+      await page.evaluate(() => {
+        const pl = window.__BRAWL__.game.match.player;
+        pl.hp = pl.maxHp; // keep the test brawler alive across trials
+        pl.alive = true;
+        window.__BRAWL__.fastForward(1.6); // full ammo and a clear attack gap, in sim time
+      });
+      await sleep(450);
+      const pre = await playerPos(page);
+      if (pre.ammo < 1) {
+        row.noAmmo += 1;
+        continue;
+      }
+      row.trials += 1;
+      const before = await page.evaluate(() => window.__qaShots);
+      const t0 = Date.now();
+      if (cond.ms === null) {
+        await page.locator('.bi-pad.bi-atk').tap({ timeout: 15000 });
+      } else {
+        await send('touchStart', [{ x: pad.x, y: pad.y }]);
+        if (cond.ms > 0) await sleep(cond.ms);
+        await send('touchEnd', []);
+      }
+      let delay = null;
+      const until = Date.now() + 4000;
+      while (Date.now() < until) {
+        if ((await page.evaluate(() => window.__qaShots)) > before) {
+          delay = Date.now() - t0;
+          break;
+        }
+        await sleep(100);
+      }
+      if (delay !== null) {
+        row.fired += 1;
+        row.delays.push(delay);
+      }
+    }
+  }
+  return rows;
+}
+
+export async function runMobile(rec, report = {}) {
   const s = await openSession('mobile', { viewport: MOBILE, mobile: true, query: '?mobile' });
   const page = s.page;
   const ctx = s;
   const cdp = await s.b.context.newCDPSession(page);
-  // Multi-step drags use raw CDP touch events (left stick). Single taps use Playwright's touch tap, which the
-  // pads and buttons respond to reliably; raw touchStart/touchEnd pairs of the same shape were not.
+  // Multi-step drags use raw CDP touch events (left stick). Taps use Playwright's touch tap; raw touchStart/
+  // touchEnd pairs are measured separately (see measureTaps and the Touch input measurement section of QA.md).
   const send = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
   const tapCentre = async (sel) => {
     await page.locator(sel).first().tap({ timeout: 15000 });
@@ -213,6 +288,13 @@ export async function runMobile(rec) {
       await fits('menu after results');
       return 'pause, settings, back, resume, results (fits), PLAY AGAIN, MENU all by touch';
     }, { ctx });
+
+    try {
+      await quickStart(page, { mode: 'crystal', brawlerId: 'rivet', mapId: 'lagoons' });
+      report.touchTaps = await measureTaps(page, send);
+    } catch (e) {
+      report.touchTapsError = String(e && e.message ? e.message : e).split('\n')[0];
+    }
 
     await rec.check('M08', 'Errors', 'Whole mobile session: no console, page, request or HTTP errors', async () => {
       if (s.errors.length) throw new Error(`${s.errors.length} captured, first: ${s.errors[0]}`);

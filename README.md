@@ -41,7 +41,7 @@ and regenerates HP after 3 s out of combat. Tall grass hides you unless an enemy
 | Auto-aim attack | Q or Space | Tap the right stick |
 | Super | Right click or E (aimed at mouse) | Drag the Super button, release |
 | Auto-aim super | F | Tap the Super button |
-| Pause | Esc / P | Pause button (top-left) |
+| Pause | Esc / P (press again to resume) | Pause button (top-right) |
 
 ## File map
 
@@ -70,7 +70,8 @@ ARCHITECTURE.md            module contracts     PLAN.md   build plan + subagent 
 npm install                # dev-only: playwright + three (tests route the CDN to node_modules)
 npm test                   # unit tests (Node)
 node tests/browser-test.mjs tests/browser/<module>.html [--mobile]
-npm run qa                 # full Playwright smoke + perf suite, writes QA.md numbers
+npm run qa                 # full Playwright QA suite (33 checks, desktop + 390x844 touch + perf), writes QA.md
+node tests/smoke.mjs [--mobile] [--shots]   # quick integration smoke: one match per brawler + a full match
 ```
 
 Debug handle in the browser console: `window.__BRAWL__` (`stats()`, `quickStart({mode,brawlerId,mapId})`,

@@ -37,7 +37,7 @@ const rec = new Recorder(args.only ? new RegExp(args.only, 'i') : null);
 const report = { perf: [], reference: null };
 const runners = {
   desktop: () => runDesktop(rec),
-  mobile: () => runMobile(rec),
+  mobile: () => runMobile(rec, report),
   perf: () => runPerf(rec, report),
 };
 
