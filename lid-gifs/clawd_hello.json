@@ -1,0 +1,23 @@
+{
+  "fps": 20,
+  "seed": 7,
+  "segments": [
+    {"duration": 2.4, "effect": "boot", "params": {"text": "CLAUDE"}},
+    {"duration": 0.3, "effect": "static", "params": {"density": 0.5}},
+    {"duration": 1.2, "layers": [
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "flash", "land": 17}}, "blend": "max"},
+      {"effect": "sparkle", "params": {"count": 14, "speed": 2, "level": 110}, "blend": "max", "seed": 11},
+      {"effect": "text", "params": {"text": "HI", "align": "left", "offset": 22, "level": 255, "backing": 1}, "blend": "over"},
+      {"effect": "text", "params": {"text": "_", "align": "left", "offset": 34, "level": 255, "backing": 1}, "blend": "over"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "drop", "land": 17, "pocket": true}}, "blend": "subtract"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "drop", "land": 17}}, "blend": "over"}
+    ]},
+    {"duration": 4.0, "layers": [
+      {"effect": "sparkle", "params": {"count": 14, "speed": 2, "level": 110}, "blend": "max", "seed": 11},
+      {"effect": "text", "params": {"text": "HI", "align": "left", "offset": 22, "level": 255, "backing": 1}, "blend": "over"},
+      {"effect": "text", "params": {"text": "_", "align": "left", "offset": 34, "level": 255, "blink": 4, "backing": 1}, "blend": "over"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "idle", "pocket": true}}, "blend": "subtract"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "idle"}}, "blend": "over"}
+    ]}
+  ]
+}

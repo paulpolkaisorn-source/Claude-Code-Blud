@@ -1,0 +1,13 @@
+{
+  "fps": 20,
+  "seed": 7,
+  "segments": [
+    {"duration": 4.0, "layers": [
+      {"effect": "sparkle", "params": {"count": 14, "speed": 2, "level": 110}, "blend": "max", "seed": 11},
+      {"effect": "text", "params": {"text": "HI", "align": "left", "offset": 22, "level": 255, "backing": 1}, "blend": "over"},
+      {"effect": "text", "params": {"text": "_", "align": "left", "offset": 34, "level": 255, "blink": 4, "backing": 1}, "blend": "over"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "idle", "pocket": true}}, "blend": "subtract"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_hello_fx.py", "params": {"mode": "idle"}}, "blend": "over"}
+    ]}
+  ]
+}
