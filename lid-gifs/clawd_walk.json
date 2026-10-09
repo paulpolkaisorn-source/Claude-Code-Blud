@@ -1,0 +1,14 @@
+{
+  "fps": 20,
+  "seed": 7,
+  "segments": [
+    {
+      "duration": 4.8,
+      "layers": [
+        {"effect": "slashes", "params": {"direction": "left", "level": 100, "loops": 2, "count": 6}, "blend": "max"},
+        {"effect": "custom", "params": {"file": "lid-gifs/clawd_walk_fx.py", "params": {"pocket": true}}, "blend": "subtract"},
+        {"effect": "custom", "params": {"file": "lid-gifs/clawd_walk_fx.py", "params": {}}, "blend": "over"}
+      ]
+    }
+  ]
+}
