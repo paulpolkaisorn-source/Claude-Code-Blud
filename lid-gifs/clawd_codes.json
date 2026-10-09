@@ -1,0 +1,29 @@
+{
+  "fps": 20,
+  "seed": 7,
+  "segments": [
+    {"duration": 2.0, "layers": [
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "walk_in"}}, "blend": "over"}
+    ]},
+    {"duration": 2.5, "layers": [
+      {"effect": "rain", "params": {"direction": "down", "density": 0.8, "drops": 3, "speed": 2, "tail": 5, "level": 150}, "blend": "max"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "fade", "fade_in_s": 0.45}}, "blend": "mask"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "coding", "pocket": true}}, "blend": "subtract"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "coding"}}, "blend": "over"}
+    ]},
+    {"duration": 0.3, "layers": [
+      {"effect": "static", "params": {"density": 0.5, "level": 200}, "blend": "max"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "glitch", "pocket": true}}, "blend": "subtract"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "glitch"}}, "blend": "over"}
+    ]},
+    {"duration": 1.8, "layers": [
+      {"effect": "sparkle", "params": {"count": 15, "speed": 2, "size": 1, "level": 120}, "blend": "max"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "celebrate", "pocket": true}}, "blend": "subtract"},
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "celebrate"}}, "blend": "over"},
+      {"effect": "glitch_text", "params": {"text": "LGTM", "intensity": 0.3, "bursts": 2, "flash": 0, "align": "right", "offset": -5, "level": 255, "backing": 1}, "blend": "over"}
+    ]},
+    {"duration": 1.8, "layers": [
+      {"effect": "custom", "params": {"file": "lid-gifs/clawd_codes_fx.py", "params": {"act": "walk_out"}}, "blend": "over"}
+    ]}
+  ]
+}
