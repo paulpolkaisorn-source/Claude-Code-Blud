@@ -1,0 +1,8 @@
+{"fps": 20, "seed": 7, "segments": [
+  {"duration": 3.0, "layers": [
+    {"effect": "slashes", "params": {"count": 6, "width": 3, "lean": 0.0, "loops": 2, "level": 100, "direction": "right"}},
+    {"effect": "glitch_text", "params": {"text": "CLAWD", "align": "right", "offset": -1, "level": 255, "intensity": 0.6, "bursts": 2, "flash": 0.05, "backing": 1}, "blend": "over"},
+    {"effect": "custom", "params": {"file": "lid-gifs/clawd_nameplate_fx.py", "params": {"pocket": true}}, "blend": "subtract"},
+    {"effect": "custom", "params": {"file": "lid-gifs/clawd_nameplate_fx.py", "params": {"pocket": false}}, "blend": "over"}
+  ]}
+]}
