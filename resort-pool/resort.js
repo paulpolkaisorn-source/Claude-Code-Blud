@@ -13,10 +13,10 @@ const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const QUALITY = { low: { pr: 1, shadow: 1024 }, medium: { pr: 1.5, shadow: 2048 }, high: { pr: 2, shadow: 4096 } };
 const VIEWS = {
-  terrace: { pos: [-13.8, 3.5, 9.8], target: [1.5, -0.5, -0.6] },
+  terrace: { pos: [-15.2, 3.3, 7.4], target: [3.2, -0.6, -0.6] },
   deep: { pos: [16.6, 2.8, 8.4], target: [-2.5, -0.4, -0.8] },
   low: { pos: [-10.8, 0.62, 5.4], target: [4, -0.2, -0.6] },
-  sundeck: { pos: [-2.5, 2.2, -9.6], target: [0.5, 0.0, 6] },
+  sundeck: { pos: [1.8, 2.0, -9.9], target: [0.8, -0.3, 6] },
   aerial: { pos: [0.5, 24, 14.5], target: [0, 0, 0] },
 };
 
@@ -33,7 +33,7 @@ async function main() {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.62;
+  renderer.toneMappingExposure = 0.46;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -59,29 +59,34 @@ async function main() {
   const setView = (name, instant) => {
     const v = VIEWS[name]; if (!v) return;
     const to = { pos: new THREE.Vector3(...v.pos), target: new THREE.Vector3(...v.target) };
+    if (camera.aspect < 1) to.pos.sub(to.target).multiplyScalar(1 + (1 / camera.aspect - 1) * 0.5).add(to.target);  // portrait: stand back
     if (instant || reduced.matches) { camera.position.copy(to.pos); controls.target.copy(to.target); controls.update(); return; }
     tween = { t0: performance.now(), dur: 1100, from: { pos: camera.position.clone(), target: controls.target.clone() }, to };
   };
-  setView('terrace', true);
-
   const M = 0.42, tmpV = new THREE.Vector3();
   function constrainCamera() {
     const t = controls.target, p = camera.position;
     const tx = clamp(t.x, -22, 24), ty = clamp(t.y, -1.5, 5), tz = clamp(t.z, -14, 17);
     if (tx !== t.x || ty !== t.y || tz !== t.z) { tmpV.set(tx - t.x, ty - t.y, tz - t.z); t.add(tmpV); p.add(tmpV); }
     p.x = clamp(p.x, -75, 75); p.z = clamp(p.z, -60, 60); p.y = clamp(p.y, 0.3, 140);
-    for (let pass = 0; pass < 2; pass++) {
-      for (const b of world.colliders) {
-        if (p.x <= b.min.x - M || p.x >= b.max.x + M || p.y <= b.min.y - M || p.y >= b.max.y + M || p.z <= b.min.z - M || p.z >= b.max.z + M) continue;
-        const c = [
-          [p.x - (b.min.x - M), 'x', b.min.x - M], [(b.max.x + M) - p.x, 'x', b.max.x + M],
-          [p.z - (b.min.z - M), 'z', b.min.z - M], [(b.max.z + M) - p.z, 'z', b.max.z + M],
-          [(b.max.y + M) - p.y, 'y', b.max.y + M],
-        ];
-        if (b.min.y - M > 0.3) c.push([p.y - (b.min.y - M), 'y', b.min.y - M]);
-        c.sort((a, d) => a[0] - d[0]);
-        p[c[0][1]] = c[0][2];
+    const boxes = world.colliders;
+    const inside = (q) => { for (const b of boxes) if (q.x > b.min.x - M && q.x < b.max.x + M && q.y > b.min.y - M && q.y < b.max.y + M && q.z > b.min.z - M && q.z < b.max.z + M) return b; return null; };
+    const hitBox = inside(p);
+    if (hitBox) {
+      // nearest way out that does not land inside another (possibly adjacent) collider
+      let best = null, bd = Infinity, top = 0;
+      for (const b of boxes) {
+        top = Math.max(top, b.max.y);
+        if (!(p.x > b.min.x - M && p.x < b.max.x + M && p.y > b.min.y - M && p.y < b.max.y + M && p.z > b.min.z - M && p.z < b.max.z + M)) continue;
+        const c = [['x', b.min.x - M, p.x - (b.min.x - M)], ['x', b.max.x + M, (b.max.x + M) - p.x], ['z', b.min.z - M, p.z - (b.min.z - M)], ['z', b.max.z + M, (b.max.z + M) - p.z],
+          ['y', b.max.y + M, (b.max.y + M) - p.y], ['y', b.min.y - M, p.y - (b.min.y - M)]];
+        for (const [axis, val, dist] of c) {
+          if (dist >= bd || (axis === 'y' && val < 0.3)) continue;
+          const q = tmpV.copy(p); q[axis] = val;
+          if (!inside(q)) { bd = dist; best = [axis, val]; }
+        }
       }
+      if (best) p[best[0]] = best[1]; else p.y = top + 1;
     }
     if (p.y < 0.3) p.y = 0.3;
   }
@@ -116,6 +121,7 @@ async function main() {
       fluid.showParticles(state.showParticles);
       fluid.start();
     }
+    state.note = '';
     ui?.setModeUI(m);
   }
 
@@ -135,6 +141,7 @@ async function main() {
   new ResizeObserver(resize).observe(canvas);
   window.addEventListener('resize', () => applyQuality(state.quality));
   applyQuality(state.quality);
+  setView('terrace', true);
 
   // ---- pointer: wake on the water, drag floats, otherwise orbit ---------------------------------
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -POOL.waterLevel);
@@ -145,6 +152,7 @@ async function main() {
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1));
     ray.setFromCamera(ndc, camera);
   }
+  const capture = (e) => { try { canvas.setPointerCapture(e.pointerId); } catch { /* synthetic or already released pointer */ } };
   const onWater = (v, pad = 0) => v.x > POOL.minX - pad && v.x < POOL.maxX + pad && v.z > POOL.minZ - pad && v.z < POOL.maxZ + pad;
   function waterHit() { return ray.ray.intersectPlane(plane, hit) ? hit : null; }
 
@@ -153,13 +161,13 @@ async function main() {
     aim(e);
     if (water.grab(ray)) {
       drag = { type: 'body', id: e.pointerId };
-      controls.enabled = false; canvas.classList.add('grab'); canvas.setPointerCapture(e.pointerId);
+      controls.enabled = false; canvas.classList.add('grab'); capture(e);
       return;
     }
     const h = waterHit();
     if (h && onWater(h)) {
       drag = { type: 'wake', id: e.pointerId, x: h.x, z: h.z, t: performance.now() };
-      controls.enabled = false; canvas.setPointerCapture(e.pointerId);
+      controls.enabled = false; capture(e);
       water.disturb(h.x, h.z, 0.45, 0.1);
     }
   }, { capture: true });
@@ -221,6 +229,10 @@ async function main() {
     if (acc >= 0.5) {
       const fps = Math.round(frames / acc);
       ui.setFps(state.mode === 'particles' && fluid.stepMs ? `${fps} fps, sim ${fluid.stepMs.toFixed(0)} ms` : `${fps} fps`);
+      if (state.mode === 'particles' && fluid.count) {
+        const note = `A true 3D particle fluid (FLIP): ${(fluid.count / 1000).toFixed(1)}k particles${fluid.mode === 'worker' ? ' on a worker thread' : ' on the main thread'}.`;
+        if (note !== state.note) { state.note = note; ui.setNote(note); }
+      }
       frames = 0; acc = 0;
     }
     if (!shown) { shown = true; $('loading').hidden = true; }

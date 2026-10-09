@@ -2,8 +2,10 @@
 import * as THREE from 'three';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { POOL } from '../pool-config.js';
+import { Clouds } from './clouds.js';
 
-const P = { turbidity: 3.4, rayleigh: 1.5, mieCoefficient: 0.0042, mieDirectionalG: 0.82 };
+const P = { turbidity: 2.0, rayleigh: 1.4, mieCoefficient: 0.0025, mieDirectionalG: 0.8 };
+const GAIN = { value: 0.58 };   // scales the sky's HDR output so it tone-maps to a richer blue
 const RAY = [5.804542996261093e-6, 1.3562911419845635e-5, 3.0265902468824876e-5];
 const MIE = [1.8399918514433978e14, 2.7798023919660528e14, 4.0790479543861094e14];
 
@@ -29,7 +31,7 @@ export function skyRadiance(dir, sunDir, out = new THREE.Color()) {
     let lin = Math.pow(sunE * ratio * (1 - fex), 1.5);
     lin *= 1 + (Math.pow(sunE * ratio * fex, 0.5) - 1) * mixAmt;
     const tex = (lin + 0.1 * fex) * 0.04 + [0, 0.0003, 0.00075][i];
-    c[i] = Math.pow(tex, 1 / 2.4);
+    c[i] = Math.pow(tex, 1 / 2.4) * GAIN.value;
   }
   return out.setRGB(c[0], c[1], c[2], THREE.LinearSRGBColorSpace);
 }
@@ -40,14 +42,21 @@ export class SkyRig {
     this.hour = 9.5;
     this.sunDir = new THREE.Vector3(0, 1, 0);
     this.params = P;
-    this.tune = { sunMax: 3.3, sunMin: 0.35, hemiBase: 0.28, hemiK: 0.2, envI: 0.85, fogDensity: 0.0036 };
+    this.tune = { sunMax: 3.2, sunMin: 0.35, hemiBase: 0.3, hemiK: 0.2, envI: 0.8, fogDensity: 0.002 };
     this.sky = new Sky(); this.sky.scale.setScalar(10000); this.sky.name = 'sky';
+    this.gain = GAIN;
+    this.sky.material.onBeforeCompile = (sh) => {
+      sh.uniforms.uSkyGain = GAIN;
+      sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform float uSkyGain;\nvoid main() {').replace('gl_FragColor = vec4( retColor, 1.0 );', 'gl_FragColor = vec4( retColor * uSkyGain, 1.0 );');
+    };
     this.applyParams(true);
     scene.add(this.sky);
+    this.clouds = new Clouds(); scene.add(this.clouds.mesh);
     // environment: a second sky (sharing uniforms) plus a dim ground disc, filtered by PMREM
     this.envScene = new THREE.Scene();
     this.envSky = new Sky(); this.envSky.scale.setScalar(10000);
     this.envSky.material.uniforms = this.sky.material.uniforms;
+    this.envSky.material.onBeforeCompile = this.sky.material.onBeforeCompile;
     this.envScene.add(this.envSky);
     this.envGround = new THREE.Mesh(new THREE.CircleGeometry(4000, 24).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({ color: 0x8a7d62, side: THREE.DoubleSide }));
@@ -57,7 +66,7 @@ export class SkyRig {
     this.envRT = null; this.envDirty = true; this.lastEnv = -1e9;
     this.hemi = new THREE.HemisphereLight(0xcfe3ff, 0xcdb894, 0.5); this.hemi.name = 'hemi';
     scene.add(this.hemi);
-    scene.fog = new THREE.FogExp2(0xbcd2e8, 0.0036);
+    scene.fog = new THREE.FogExp2(0xbcd2e8, 0.002);
     this.fogColor = new THREE.Color(); this.tmp = new THREE.Vector3();
     this.zenith = new THREE.Color(); this.horizon = new THREE.Color();
     sun.castShadow = true;
@@ -97,6 +106,7 @@ export class SkyRig {
     this.hemi.color.copy(this.zenith).lerp(this.horizon, 0.25);
     this.hemi.groundColor.setRGB(0.2 + 0.12 * k, 0.17 + 0.1 * k, 0.12 + 0.06 * k, THREE.LinearSRGBColorSpace);
     this.envGround.material.color.copy(this.horizon).multiplyScalar(0.45).lerp(this.hemi.groundColor, 0.5);
+    this.clouds.setSun(d, this.sun.color, this.zenith, k);
     this.fitShadow();
     this.envDirty = true;
     if (immediate) this.refreshEnvironment(true);
@@ -134,6 +144,7 @@ export class SkyRig {
     this.scene.fog.color.copy(this.fogColor);
     this.scene.fog.density = this.tune.fogDensity;
     this.sky.position.copy(camera.position);
+    this.clouds.update(performance.now() * 0.001, camera);
   }
 
   get fog() { return this.scene.fog; }

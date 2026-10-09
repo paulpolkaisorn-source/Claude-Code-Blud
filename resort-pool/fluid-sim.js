@@ -15,7 +15,7 @@ export class FlipSim {
     this.damping = cfg.damping ?? 0.4;        // 1/s on particles inside dense water
     this.densityGain = cfg.densityGain ?? 4;   // 1/s target expansion per unit of compression
     this.ppc = cfg.ppc ?? 5.8;                 // particles per bulk cell
-    this.impulseGain = cfg.impulseGain ?? 3.2;
+    this.impulseGain = cfg.impulseGain ?? 3.2; this.crownGain = cfg.crownGain ?? 1; this.impulseCap = cfg.impulseCap ?? 8; this.crownAmp = cfg.crownAmp ?? 0.15;
     this.lowDamp = cfg.lowDamp ?? 1.5; this.lowDampV = cfg.lowDampV ?? 0.06;
     this.maxSpray = cfg.maxSpray ?? 4096;
     this.nc = nx * ny * nz;
@@ -68,6 +68,7 @@ export class FlipSim {
     this.drift = 0; this.simTime = 0; this.acc = 0; this.stepCount = 0;
     this.impulses = [];
     this.nSpray = 0;
+    this.maxDrops = 1500; this.dpos = new Float32Array(3 * this.maxDrops); this.dvel = new Float32Array(3 * this.maxDrops); this.nDrops = 0;
     this.settleSteps = cfg.settleSteps ?? 90;
     this.seed();
     this.settleAndCalibrate();
@@ -155,7 +156,7 @@ export class FlipSim {
     this.px.set(r.px); this.py.set(r.py); this.pz.set(r.pz);
     this.vx.fill(0); this.vy.fill(0); this.vz.fill(0);
     this.pp.fill(0); this.drift = 0; this.firstHeights = true; this.firstH2 = true;
-    this.simTime = 0; this.acc = 0; this.stepCount = 0; this.impulses.length = 0;
+    this.simTime = 0; this.acc = 0; this.stepCount = 0; this.impulses.length = 0; this.nDrops = 0;
     this.heights.fill(0);
     this.classify(); this.p2g(false); this.buildSurface(); this.collectSpray(); this.buildHeights(0);
   }
@@ -332,19 +333,22 @@ export class FlipSim {
     for (let q = 0; q < imps.length; q++) {
       const im = imps[q], x = im[0], z = im[1], r = im[2], s = im[3];
       const sig = Math.max(0.55 * h, 0.6 * r), R = 2.6 * sig;
-      const V = Math.min(4, this.impulseGain * s * 3.5 / Math.max(0.4, r));
+      const vcap = this.impulseCap, V = Math.max(-vcap, Math.min(vcap, this.impulseGain * s * 3.5 / Math.max(0.4, r)));
       const i0 = Math.max(0, Math.floor((x - R - minX) / h)), i1 = Math.min(nx - 1, Math.floor((x + R - minX) / h));
       const k0 = Math.max(0, Math.floor((z - R - minZ) / h)), k1 = Math.min(nz - 1, Math.floor((z + R - minZ) / h));
+      const ringGain = Math.min(1, Math.max(0, (s - 0.08) / 0.2)) * this.crownGain;
       for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) {
         const dx = minX + (i + 0.5) * h - x, dz = minZ + (k + 0.5) * h - z, d2 = dx * dx + dz * dz;
         if (d2 > R * R) continue;
         const wxy = Math.exp(-d2 / (2 * sig * sig)), top = surf[i + nx * k];
+        const rr = (Math.sqrt(d2) - 1.4 * sig) / (0.6 * sig), ring = ringGain * this.crownAmp * V * Math.exp(-rr * rr);
         for (let j = 1; j < ny; j++) {
           const c = i + nx * (j + ny * k), f = i + nx * (j + (ny + 1) * k);
           if (!ov[f] || cell[c] === 2 || cell[c - nx] === 2) continue;
           const depth = top - (y0 + j * h);
           if (depth < -0.5 * h) continue;
-          v[f] -= V * wxy * Math.exp(-Math.max(0, depth) / 0.55);
+          const dd = depth > 0 ? depth : 0;
+          v[f] += -V * wxy * Math.exp(-dd / 0.55) + ring * Math.exp(-dd / 0.3);
         }
       }
     }
@@ -357,7 +361,7 @@ export class FlipSim {
     const u = this.F[0], v = this.F[1], w = this.F[2];
     const nxy = nx * ny, nc = this.nc;
     const P = this.pp, R = this.rr, Z = this.zz, S = this.ss, Q = this.qq, T = this.tt;
-    const scale = h / dt, kc = this.densityGain, inv = 1 / this.rho0;
+    const scale = h / dt, kc = this.densityGain, inv = 1 / this.rho0, band = this.deadband;
     for (let c = 0; c < nc; c++) if (cell[c] !== 1) P[c] = 0;
     for (let q = 0; q < nf; q++) {
       const c = flist[q];
@@ -379,7 +383,7 @@ export class FlipSim {
       Ax[c] = cr === 1 ? 1 : 0; Ay[c] = cu === 1 ? 1 : 0; Az[c] = cf === 1 ? 1 : 0;
       const fu = i + (nx + 1) * (j + ny * k), fv = i + nx * (j + (ny + 1) * k);
       const div = u[fu + 1] - u[fu] + v[fv + nx] - v[fv] + w[c + nxy] - w[c];
-      let comp = dens[c] * this.invRef[c] - this.deadband;
+      let comp = dens[c] * this.invRef[c] - band;
       comp = comp < 0 ? 0 : (comp > 0.5 ? 0.5 : comp);
       R[c] = -scale * (div - h * kc * comp);
     }
@@ -643,6 +647,7 @@ export class FlipSim {
   step() {
     const dt = this.dtSim;
     this.integrate(dt);
+    if (this.nDrops) this.stepDrops(dt);
     if (this.stepCount % 8 === 0) this.sortParticles();
     if (this.pushStiffness > 0 && this.stepCount % this.separateEvery === 0) this.separate();
     this.classify();
@@ -677,6 +682,38 @@ export class FlipSim {
 
   disturb(x, z, r, s) {
     if (this.impulses.length < 600) this.impulses.push([x, z, r, s]);
+    if (s >= 0.1) this.spawnDrops(x, z, r, s);
+  }
+
+  // Visual splash droplets (diffuse particles): ballistic, carry no fluid volume, leave a small
+  // ripple where they land. They are drawn with the spray but are not part of the particle count.
+  spawnDrops(x, z, r, s) {
+    const n = Math.min(220, Math.floor((s - 0.08) * 600)), top = this.surfAt(x, z);
+    const up = 0.5 + Math.min(1.5, s * 2.2);
+    for (let i = 0; i < n && this.nDrops < this.maxDrops; i++) {
+      const a = this.rand() * 6.2832, rho = r * (0.3 + 0.9 * this.rand()), o = 3 * this.nDrops++;
+      const out = 0.3 + 1.1 * this.rand();
+      this.dpos[o] = x + Math.cos(a) * rho; this.dpos[o + 1] = top + 0.03; this.dpos[o + 2] = z + Math.sin(a) * rho;
+      this.dvel[o] = Math.cos(a) * out; this.dvel[o + 1] = 1.2 + up * (0.3 + 2.0 * this.rand()); this.dvel[o + 2] = Math.sin(a) * out;
+    }
+  }
+
+  stepDrops(dt) {
+    const P = this.dpos, W = this.dvel, g = this.g;
+    let n = this.nDrops;
+    for (let i = 0; i < n;) {
+      const o = 3 * i, vy = W[o + 1] - g * dt;
+      const x = P[o] + W[o] * dt, y = P[o + 1] + vy * dt, z = P[o + 2] + W[o + 2] * dt;
+      const inside = x > this.minX && x < this.maxX && z > this.minZ && z < this.maxZ;
+      if (!inside || (vy < 0 && y < this.surfAt(x, z) + 0.01)) {
+        if (inside && this.impulses.length < 500 && this.rand() < 0.35) this.impulses.push([x, z, 0.1, 0.003]);
+        n--; const q = 3 * n;
+        P[o] = P[q]; P[o + 1] = P[q + 1]; P[o + 2] = P[q + 2]; W[o] = W[q]; W[o + 1] = W[q + 1]; W[o + 2] = W[q + 2];
+        continue;
+      }
+      P[o] = x; P[o + 1] = y; P[o + 2] = z; W[o + 1] = vy; i++;
+    }
+    this.nDrops = n;
   }
 
   // ---- free surface from the splatted density ---------------------------------------------------
@@ -790,9 +827,11 @@ export class FlipSim {
   }
 
   packSpray(out) {
-    const m = this.nSpray, idx = this.sprayIdx, px = this.px, py = this.py, pz = this.pz;
+    const cap = out.length / 3, m = Math.min(this.nSpray, cap), idx = this.sprayIdx, px = this.px, py = this.py, pz = this.pz;
     for (let t = 0; t < m; t++) { const p = idx[t]; out[3 * t] = px[p]; out[3 * t + 1] = py[p]; out[3 * t + 2] = pz[p]; }
-    return m;
+    const d = Math.min(this.nDrops, cap - m), P = this.dpos;
+    for (let t = 0; t < d; t++) { const o = 3 * (m + t); out[o] = P[3 * t]; out[o + 1] = P[3 * t + 1]; out[o + 2] = P[3 * t + 2]; }
+    return m + d;
   }
 
   packAll(out) {

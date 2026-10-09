@@ -1,6 +1,7 @@
 // Ground around the terrace (lawn, dunes, beach) and the ocean out to the horizon.
 import * as THREE from 'three';
 import { fbm } from './noise.js';
+import { addBreakup } from './breakup.js';
 import { makeGround, makeOceanNormal, makeFoamStrip } from './textures2.js';
 import { TERRACE, GROUND_Y, SEA_Y } from './layout.js';
 
@@ -63,6 +64,7 @@ export function buildLandscape({ aniso = 8 }) {
   const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
     map: gt.map, normalMap: gt.normal, normalScale: new THREE.Vector2(0.6, 0.6), vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0.4,
   }));
+  addBreakup(ground.material, { scale: 0.045, amount: 0.14 });
   ground.receiveShadow = true; ground.name = 'ground';
   group.add(ground);
 

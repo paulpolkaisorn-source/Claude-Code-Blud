@@ -22,15 +22,15 @@ function heightFromCanvas(c, N) {
 export function makeFoliage({ seed = 6, N = 512, count = 5200, hue = 0, patch = 1 } = {}) {
   const rnd = mulberry32(seed);
   const mc = cv(N, N), hc = cv(N, N), mx = mc.getContext('2d'), hx = hc.getContext('2d');
-  mx.fillStyle = 'rgb(20,48,22)'; mx.fillRect(0, 0, N, N);
+  mx.fillStyle = 'rgb(14,32,16)'; mx.fillRect(0, 0, N, N);
   hx.fillStyle = 'rgb(20,20,20)'; hx.fillRect(0, 0, N, N);
   for (let i = 0; i < count; i++) {
     const x = rnd() * N, y = rnd() * N, s = 8 + rnd() * 14, rot = rnd() * Math.PI;
     const t = rnd(), lum = 0.55 + 0.75 * t * t;
-    const r = (34 + 40 * lum + hue) | 0, g = (80 + 78 * lum) | 0, b = (24 + 26 * lum) | 0;
+    const r = (24 + 30 * lum + hue) | 0, g = (56 + 58 * lum) | 0, b = (18 + 18 * lum) | 0;
     const hh = (60 + 150 * t) | 0;
     stamp(mx, hx, N, x, y, s, s * 0.38, rot, `rgb(${r},${g},${b})`, `rgb(${hh},${hh},${hh})`);
-    stamp(mx, hx, N, x, y, s * 0.8, s * 0.04, rot, `rgb(${r + 36},${g + 30},${b + 16})`, `rgb(${hh + 30},${hh + 30},${hh + 30})`);
+    stamp(mx, hx, N, x, y, s * 0.8, s * 0.04, rot, `rgb(${r + 24},${g + 22},${b + 10})`, `rgb(${hh + 30},${hh + 30},${hh + 30})`);
   }
   const p = [patch, patch];
   return { map: tex(mc, { srgb: true, patch: p }), normal: tex(normalFromHeight(heightFromCanvas(hc, N), N, N, 3.2), { patch: p }) };

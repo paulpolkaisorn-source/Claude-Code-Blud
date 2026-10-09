@@ -12,7 +12,25 @@
 //    from externally supplied heights and routes disturbances to externalDisturb.
 //
 // Public contract: class PoolWater (see the member docs below). Extra members:
-//   bodies, heights, sprayCount, stats(), quality, wind, rain, time, dispose().
+//   bodies, heights, sprayCount, stats(), quality, wind, rain, time, dispose(),
+//   and the static PoolWater.QUALITY table (per-quality render budget).
+//
+// Integration notes
+//  * Frame order: water.update(dt) -> [water.setExternalHeights(h) in 'particles' mode, any time
+//    before beforeRender] -> water.beforeRender(renderer, scene, camera) -> renderer.render.
+//  * beforeRender renders, besides the caller's final pass: a caustic map (fullscreen pass, only
+//    while the sun is up; every 2nd frame on 'low'), a refraction pass (scene below the surface,
+//    oblique-clipped, with depth) and, on 'medium'/'high', a planar reflection pass. It restores
+//    renderer state exactly, hides the water/spray/rain objects while it renders, and reuses the
+//    previous frame's shadow map for these extra passes.
+//  * applyUnderwaterLighting(material) expects a MeshStandardMaterial (or subclass) used by pool
+//    floor/walls/steps/ladders/bodies; below the surface it applies Beer-Lambert attenuation of
+//    sun and sky light and sun caustics (looked up by world position). It leaves everything above
+//    the water untouched and can be called before or after the first render.
+//  * Assumes a PerspectiveCamera, a standard (non-logarithmic) depth buffer and the water at
+//    y = POOL.waterLevel. The surface never casts shadows; it receives them.
+//  * Bodies keep 0.25 m off the walls (ladder rails may sit there); they only know the walls
+//    and the floor profile, not other fixtures.
 import * as THREE from 'three';
 import { POOL, HF, HF_DX, HF_DZ, MODES, BODY_TYPES, floorY } from './pool-config.js';
 
@@ -532,7 +550,7 @@ function bodyBeachBall() {
     group, mass: m, inertia: [2 / 3 * m * R * R, 2 / 3 * m * R * R, 2 / 3 * m * R * R],
     samples: [{ x: 0, y: 0, z: 0, vol: V, ry: R, kind: K_SPHERE, area: Math.PI * R * R, fr: R * 0.8 }],
     colliders: [{ x: 0, y: 0, z: 0, r: R }],
-    cd: 0.47, ca: 0.5, zeta: 0.22, probeR: 0.55 * R, radius: R, spawnY: 1.7, rr: 0.0,
+    cd: 0.47, ca: 0.5, zeta: 0.22, radius: R, spawnY: 1.7, rr: 0.0,
   };
 }
 
@@ -555,7 +573,7 @@ function bodyRingFloat() {
   }
   return {
     group, mass: m, inertia: [m * (0.5 * R * R + 0.625 * r * r), m * (R * R + 0.75 * r * r), m * (0.5 * R * R + 0.625 * r * r)],
-    samples, colliders, cd: 1.0, ca: 0.8, zeta: 0.28, probeR: 0, radius: R + r, spawnY: 1.6, rr: 0.0,
+    samples, colliders, cd: 1.0, ca: 0.8, zeta: 0.28, radius: R + r, spawnY: 1.6, rr: 0.0,
   };
 }
 
@@ -574,17 +592,21 @@ function bodyDuck() {
   group.add(ellipsoidMesh(black, 0.02, 0.02, 0.02, 0.225, 0.285, 0.072, 16));
   group.add(ellipsoidMesh(black, 0.02, 0.02, 0.02, 0.225, 0.285, -0.072, 16));
   for (const s of [1, -1]) { const w = ellipsoidMesh(yellow2, 0.13, 0.065, 0.022, -0.02, 0.03, s * 0.168, 28); w.rotation.y = -s * 0.12; w.rotation.z = -0.1; group.add(w); }
-  const m = 1.8, sl = [], N = 5, dxs = 2 * a / N;
-  for (let i = 0; i < N; i++) {
-    const x = -a + (i + 0.5) * dxs, f = Math.sqrt(1 - (x / a) ** 2);
-    sl.push({ x, y: 0, z: 0, vol: Math.PI * b * c * f * f * dxs, ry: b * f, kind: K_CYL, area: (2 * b * f * dxs + Math.PI * b * c * f * f) * 0.5, areaV: 2 * c * f * dxs, fr: 0.13 });
+  // hull as vertical columns over the elliptical footprint: each column's immersion is linear in
+  // depth, and the lateral spread gives the duck real roll and pitch stiffness
+  const m = 1.8, sl = [], NX = 7, NZ = 5, dxs = 2 * a / NX, dzs = 2 * c / NZ;
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+    const x = -a + (i + 0.5) * dxs, z = -c + (j + 0.5) * dzs, q = 1 - (x / a) ** 2 - (z / c) ** 2;
+    if (q <= 0.02) continue;
+    const yh = b * Math.sqrt(q);
+    sl.push({ x, y: 0, z, vol: 2 * yh * dxs * dzs, ry: yh, kind: K_SLAB, area: yh * (dxs + dzs), areaV: dxs * dzs, fr: 0.1 });
   }
   sl.push({ x: 0.16, y: 0.245, z: 0, vol: 4 / 3 * Math.PI * 0.118 * 0.12 * 0.108, ry: 0.12, kind: K_SPHERE, area: 0.04, fr: 0.1 });
   return {
     group, mass: m, inertia: [m / 5 * (b * b + c * c), m / 5 * (a * a + c * c), m / 5 * (a * a + b * b)],
     samples: sl,
     colliders: [{ x: -0.11, y: 0, z: 0, r: 0.16 }, { x: 0.07, y: 0, z: 0, r: 0.16 }, { x: 0.17, y: 0.22, z: 0, r: 0.1 }],
-    cd: 0.8, ca: 0.6, zeta: 0.25, probeR: 0.1, radius: 0.34, spawnY: 1.6, rr: 0.0,
+    cd: 0.8, ca: 0.6, zeta: 0.25, radius: 0.34, spawnY: 1.6, rr: 0.0,
   };
 }
 
@@ -637,21 +659,24 @@ function bodyMattress() {
   for (let i = 0; i < 10; i++) for (let j = 0; j < 4; j++) colliders.push({ x: -L / 2 + 0.11 + i * (L - 0.22) / 9, y: 0, z: -W / 2 + 0.11 + j * (W - 0.22) / 3, r: 0.09 });
   return {
     group, mass: m, inertia: [m / 12 * (T * T + W * W), m / 12 * (L * L + W * W), m / 12 * (L * L + T * T)],
-    samples, colliders, cd: 1.1, ca: 1.0, zeta: 0.35, probeR: 0, radius: Math.hypot(L, W) / 2, spawnY: 1.3, rr: 0.0,
+    samples, colliders, cd: 1.1, ca: 1.0, zeta: 0.35, radius: Math.hypot(L, W) / 2, spawnY: 1.3, rr: 0.0,
   };
 }
 
 function bodyCannonball() {
   const R = 0.09, group = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ color: 0x2a2c31, metalness: 0.85, roughness: 0.42 });
-  // cast-iron grain from a tiny procedural roughness texture
-  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
-  const cx = cv.getContext('2d'), id = cx.createImageData(128, 128);
-  let s = 12345;
-  for (let i = 0; i < 128 * 128; i++) { s = (s * 1664525 + 1013904223) >>> 0; const v = 150 + ((s >>> 24) % 90); id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
-  cx.putImageData(id, 0, 0);
-  const tex = new THREE.CanvasTexture(cv); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(3, 2); tex.colorSpace = THREE.NoColorSpace;
-  mat.roughnessMap = tex; mat.bumpMap = tex; mat.bumpScale = 0.6;
+  // cast-iron grain from a tiny procedural roughness texture (skipped if no canvas is available)
+  try {
+    const cv = typeof document !== 'undefined' ? document.createElement('canvas') : new OffscreenCanvas(128, 128);
+    cv.width = cv.height = 128;
+    const cx = cv.getContext('2d'), id = cx.createImageData(128, 128);
+    let s = 12345;
+    for (let i = 0; i < 128 * 128; i++) { s = (s * 1664525 + 1013904223) >>> 0; const v = 150 + ((s >>> 24) % 90); id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+    cx.putImageData(id, 0, 0);
+    const tex = new THREE.CanvasTexture(cv); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(3, 2); tex.colorSpace = THREE.NoColorSpace;
+    mat.roughnessMap = tex; mat.bumpMap = tex; mat.bumpScale = 0.6;
+  } catch (e) { /* plain metal */ }
   group.add(shadowed(new THREE.Mesh(new THREE.SphereGeometry(R, 56, 36), mat)));
   const seam = shadowed(new THREE.Mesh(new THREE.TorusGeometry(R * 0.999, 0.0035, 8, 64), new THREE.MeshStandardMaterial({ color: 0x1a1b1e, metalness: 0.8, roughness: 0.6 })));
   group.add(seam);
@@ -660,7 +685,7 @@ function bodyCannonball() {
     group, mass: m, inertia: [0.4 * m * R * R, 0.4 * m * R * R, 0.4 * m * R * R],
     samples: [{ x: 0, y: 0, z: 0, vol: V, ry: R, kind: K_SPHERE, area: Math.PI * R * R, fr: R }],
     colliders: [{ x: 0, y: 0, z: 0, r: R }],
-    cd: 0.47, ca: 0.5, zeta: 0.2, probeR: 0, radius: R, spawnY: 3.2, rr: 0.32,
+    cd: 0.47, ca: 0.5, zeta: 0.2, radius: R, spawnY: 3.2, rr: 0.32,
   };
 }
 
@@ -690,7 +715,9 @@ class Body {
     this.floorContact = false;
     this.extAcc = 0; this.extT = 0;
     this.asleep = false; this.sleepT = 0;
+    this.surfaceY = POOL.waterLevel;           // ambient water height at the body (updated every step)
     this.iw = new Float64Array(9);
+    this.rot = { r00: 1, r01: 0, r02: 0, r10: 0, r11: 1, r12: 0, r20: 0, r21: 0, r22: 1 };
     this.radius = def.radius;
     this.age = 0;
     // ambient-surface ring (body frame, xz offsets), 8 points just outside the planform
@@ -701,6 +728,19 @@ class Body {
     this.ring = [];
     for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; this.ring.push((ex + mg) * Math.cos(a), (ez + mg) * Math.sin(a)); }
   }
+  /** World y of the lowest point of the collision shape. */
+  get bottomY() {
+    const { qx, qy, qz, qw } = this;
+    const r10 = 2 * (qx * qy + qw * qz), r11 = 1 - 2 * (qx * qx + qz * qz), r12 = 2 * (qy * qz - qw * qx);
+    let m = Infinity;
+    for (const c of this.colliders) { const y = this.y + r10 * c.x + r11 * c.y + r12 * c.z - c.r; if (y < m) m = y; }
+    return m;
+  }
+  /** Depth of the lowest point below the local water surface (0 when the body is clear of the water). */
+  get draft() { return Math.max(0, this.surfaceY - this.bottomY); }
+  /** The mesh's live position / orientation (kept in sync every update). */
+  get position() { return this.mesh.position; }
+  get quaternion() { return this.mesh.quaternion; }
   setQuat(x, y, z, w) {
     const l = Math.hypot(x, y, z, w) || 1;
     this.qx = x / l; this.qy = y / l; this.qz = z / l; this.qw = w / l;
@@ -722,10 +762,13 @@ class Body {
     m[0] = r00 * r00 * a + r01 * r01 * b + r02 * r02 * c; m[1] = r00 * r10 * a + r01 * r11 * b + r02 * r12 * c; m[2] = r00 * r20 * a + r01 * r21 * b + r02 * r22 * c;
     m[3] = m[1]; m[4] = r10 * r10 * a + r11 * r11 * b + r12 * r12 * c; m[5] = r10 * r20 * a + r11 * r21 * b + r12 * r22 * c;
     m[6] = m[2]; m[7] = m[5]; m[8] = r20 * r20 * a + r21 * r21 * b + r22 * r22 * c;
-    return { r00, r01, r02, r10, r11, r12, r20, r21, r22 };
+    const R = this.rot;
+    R.r00 = r00; R.r01 = r01; R.r02 = r02; R.r10 = r10; R.r11 = r11; R.r12 = r12; R.r20 = r20; R.r21 = r21; R.r22 = r22;
+    return R;
   }
 }
 
+const WALL_GAP = 0.25;                       // floats stay this far off the walls (ladder rails may sit within 0.25 m)
 const COUPLING_GAIN = 0.3;                   // how much of the displaced volume shows up as surface motion
 const GRAB_FREQ = 13;                       // rad/s of the pointer spring
 const SUBSTEP = 1 / 180;
@@ -739,6 +782,8 @@ class BodySystem {
     this._surf = { h: 0, gx: 0, gz: 0, w: 0 };
     this._tmp = { h: 0, gx: 0, gz: 0, w: 0 };
     this._amb = { h: 0, gx: 0, gz: 0, w: 0 };
+    this._R1 = { r00: 1, r01: 0, r02: 0, r10: 0, r11: 1, r12: 0, r20: 0, r21: 0, r22: 1 };
+    this._R2 = Object.assign({}, this._R1);
     this.maxBodies = 18;
   }
 
@@ -814,7 +859,7 @@ class BodySystem {
       if (hits.length && hits[0].distance < bestD) { best = b; bestD = hits[0].distance; bestP = hits[0].point; }
     }
     if (!best) return false;
-    const { rot } = this._rot(best);
+    const rot = this._rot(best, this._R1);
     const dx = bestP.x - best.x, dy = bestP.y - best.y, dz = bestP.z - best.z;
     // world -> body frame (R^T)
     this.grabbed = {
@@ -833,14 +878,13 @@ class BodySystem {
   }
   release() { this.grabbed = null; }
 
-  _rot(b) {
+  _rot(b, out) {
     const { qx, qy, qz, qw } = b;
     const xx = qx * qx, yy = qy * qy, zz = qz * qz, xy = qx * qy, xz = qx * qz, yz = qy * qz, wx = qw * qx, wy = qw * qy, wz = qw * qz;
-    return { rot: {
-      r00: 1 - 2 * (yy + zz), r01: 2 * (xy - wz), r02: 2 * (xz + wy),
-      r10: 2 * (xy + wz), r11: 1 - 2 * (xx + zz), r12: 2 * (yz - wx),
-      r20: 2 * (xz - wy), r21: 2 * (yz + wx), r22: 1 - 2 * (xx + yy),
-    } };
+    out.r00 = 1 - 2 * (yy + zz); out.r01 = 2 * (xy - wz); out.r02 = 2 * (xz + wy);
+    out.r10 = 2 * (xy + wz); out.r11 = 1 - 2 * (xx + zz); out.r12 = 2 * (yz - wx);
+    out.r20 = 2 * (xz - wy); out.r21 = 2 * (yz + wx); out.r22 = 1 - 2 * (xx + yy);
+    return out;
   }
 
   // ---- ambient surface ---------------------------------------------------
@@ -877,12 +921,13 @@ class BodySystem {
       if (gb0 && gb0.body === b) { b.asleep = false; b.sleepT = 0; } else return;
     }
     const def = b.def, m = b.mass, o = this.owner, S = this._surf;
-    const { rot } = this._rot(b);
+    const rot = this._rot(b, this._R1);
     const { r00, r01, r02, r10, r11, r12, r20, r21, r22 } = rot;
     let Fx = 0, Fy = -m * GRAV, Fz = 0, Tx = 0, Ty = 0, Tz = 0, Vsub = 0, kst = 0;
     const wvx = o._windVel.x, wvz = o._windVel.z, level = POOL.waterLevel;
     const cRadF = b.cRadF;
     const amb = this._ambient(b, rot, this._amb);
+    b.surfaceY = level + amb.h;
     for (let i = 0, n = b.samples.length; i < n; i++) {
       const s = b.samples[i];
       const ox = r00 * s.x + r01 * s.y + r02 * s.z, oy = r10 * s.x + r11 * s.y + r12 * s.z, oz = r20 * s.x + r21 * s.y + r22 * s.z;
@@ -924,8 +969,12 @@ class BodySystem {
     if (gb && gb.body === b) {
       const ox = r00 * gb.lx + r01 * gb.ly + r02 * gb.lz, oy = r10 * gb.lx + r11 * gb.ly + r12 * gb.lz, oz = r20 * gb.lx + r21 * gb.ly + r22 * gb.lz;
       const vpx = b.vx + (b.wy * oz - b.wz * oy), vpy = b.vy + (b.wz * ox - b.wx * oz), vpz = b.vz + (b.wx * oy - b.wy * ox);
+      // The pointer target lies on the water plane: follow it horizontally, and only lift (never push the
+      // grab point down to the plane), so a carried float stays buoyant at the surface.
       const k = GRAB_FREQ * GRAB_FREQ, d = 2 * 0.85 * GRAB_FREQ;
-      let ax = k * (gb.tx - (b.x + ox)) - d * vpx, ay = k * (gb.ty - (b.y + oy)) - d * vpy, az = k * (gb.tz - (b.z + oz)) - d * vpz;
+      const ey = gb.ty - (b.y + oy);
+      let ax = k * (gb.tx - (b.x + ox)) - d * vpx, az = k * (gb.tz - (b.z + oz)) - d * vpz;
+      let ay = ey > 0 ? k * ey - d * vpy : 0;
       const al = Math.sqrt(ax * ax + ay * ay + az * az), amax = 90;
       if (al > amax) { const s = amax / al; ax *= s; ay *= s; az *= s; }
       const fm = b.mEff;                                 // spring acts on the effective (wet) mass
@@ -998,18 +1047,19 @@ class BodySystem {
   }
 
   _collideStatic(b, h) {
-    const { rot } = this._rot(b);
+    const rot = this._rot(b, this._R1);
     const { r00, r01, r02, r10, r11, r12, r20, r21, r22 } = rot;
     b.updateInertia();
     let floorHit = false;
+    const wg = b.def.rr > 0 ? 0.04 : WALL_GAP;          // heavy sunken balls sit below the rails
     for (const c of b.colliders) {
       const rx = r00 * c.x + r01 * c.y + r02 * c.z, ry = r10 * c.x + r11 * c.y + r12 * c.z, rz = r20 * c.x + r21 * c.y + r22 * c.z;
       const cx = b.x + rx, cy = b.y + ry, cz = b.z + rz, r = c.r;
       let pen;
-      if ((pen = POOL.minX + r - cx) > 0) this._planeContact(b, rx, ry, rz, 1, 0, 0, pen, 0.25, 0.3);
-      if ((pen = cx - (POOL.maxX - r)) > 0) this._planeContact(b, rx, ry, rz, -1, 0, 0, pen, 0.25, 0.3);
-      if ((pen = POOL.minZ + r - cz) > 0) this._planeContact(b, rx, ry, rz, 0, 0, 1, pen, 0.25, 0.3);
-      if ((pen = cz - (POOL.maxZ - r)) > 0) this._planeContact(b, rx, ry, rz, 0, 0, -1, pen, 0.25, 0.3);
+      if ((pen = POOL.minX + wg + r - cx) > 0) this._planeContact(b, rx, ry, rz, 1, 0, 0, pen, 0.25, 0.3);
+      if ((pen = cx - (POOL.maxX - wg - r)) > 0) this._planeContact(b, rx, ry, rz, -1, 0, 0, pen, 0.25, 0.3);
+      if ((pen = POOL.minZ + wg + r - cz) > 0) this._planeContact(b, rx, ry, rz, 0, 0, 1, pen, 0.25, 0.3);
+      if ((pen = cz - (POOL.maxZ - wg - r)) > 0) this._planeContact(b, rx, ry, rz, 0, 0, -1, pen, 0.25, 0.3);
       // sloped floor: plane through (x, floorY(x)) with normal (-f', 1, 0)/|.|
       const fx = Math.min(POOL.maxX, Math.max(POOL.minX, cx));
       const f0 = floorY(fx), slope = (floorY(fx + 0.02) - floorY(fx - 0.02)) / 0.04;
@@ -1041,7 +1091,7 @@ class BodySystem {
         const A = B[a], D = B[c];
         const dx0 = D.x - A.x, dy0 = D.y - A.y, dz0 = D.z - A.z, rr = A.radius + D.radius;
         if (dx0 * dx0 + dy0 * dy0 + dz0 * dz0 > rr * rr) continue;
-        const ra = this._rot(A).rot, rb = this._rot(D).rot;
+        const ra = this._rot(A, this._R1), rb = this._rot(D, this._R2);
         A.updateInertia(); D.updateInertia();
         for (const ca of A.colliders) {
           const arx = ra.r00 * ca.x + ra.r01 * ca.y + ra.r02 * ca.z, ary = ra.r10 * ca.x + ra.r11 * ca.y + ra.r12 * ca.z, arz = ra.r20 * ca.x + ra.r21 * ca.y + ra.r22 * ca.z;
@@ -1135,6 +1185,14 @@ class BodySystem {
         o._disturbExternal(cx / cw, cz / cw, R, strength);
         b.extAcc = 0; b.extT = 0;
       } else if (b.extT > 0.05) { b.extT = 0; b.extAcc = 0; }
+    }
+    // foam along the waterline of a body that is ploughing through the surface
+    if (!ext && b.wet > 0.01 && b.wet < 0.97) {
+      const sp = Math.hypot(b.vx, b.vz) + 0.5 * Math.abs(b.vy);
+      if (sp > 0.35) {
+        const amt = Math.min(1.0, 1.1 * (sp - 0.35)) * dt;
+        for (const s of b.samples) if (s.frac > 0.02 && s.frac < 0.98) o.sim.addFoam(s.wx, s.wz, s.fr * 0.9, amt * (1 - Math.abs(2 * s.frac - 1) * 0.5));
+      }
     }
     // water entry: a cavity proportional to the impact energy, foam and a crown of spray
     if (b.wet > 0.03 && b.prevWet <= 0.03) {
@@ -1327,7 +1385,7 @@ void main() {
   float w = max(wBase, wPix);
   pos += side * position.x * w;
   gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
-  vFade = (0.25 + 0.75 * position.y) * smoothstep(uBox.x * 0.5, uBox.x * 0.2, dist) * (0.55 + 0.45 * aSeed.w) * clamp(wBase / w * 2.0, 0.35, 1.0);
+  vFade = (0.25 + 0.75 * position.y) * (1.0 - smoothstep(uBox.x * 0.2, uBox.x * 0.5, dist)) * (0.55 + 0.45 * aSeed.w) * clamp(wBase / w * 2.0, 0.35, 1.0);
 }`;
 const RAIN_FRAG = /* glsl */`
 uniform vec3 uColor;
@@ -1368,7 +1426,7 @@ class Rain {
     const a = Math.max(0, Math.min(1, amount));
     this.mesh.geometry.instanceCount = Math.floor(this.max * Math.pow(a, 0.85));
     this.mesh.visible = a > 0.005;
-    this.uniforms.uAlpha.value = 0.16 + 0.26 * a;
+    this.uniforms.uAlpha.value = 0.26 + 0.34 * a;
     this.uniforms.uVel.value.set(wind * 4.5, -9.0, wind * 1.4);
   }
 }
@@ -1532,10 +1590,10 @@ uniform sampler2D uReflTex;
 uniform mat4 uInvVP;
 uniform mat4 uVP;
 uniform mat4 uReflMat;
-uniform vec2 uViewport;
 uniform vec3 uAbsorb;
 uniform vec3 uScatter;
 uniform float uReflDistort;
+uniform float uIter;          // refraction refinement steps (quality)
 ${GLSL_DETAIL}
 ${GLSL_RAIN_RINGS}
 vec3 reconstructPos(vec2 uv, float depth) {
@@ -1566,22 +1624,25 @@ vec3 refrCol = vec3( 0.0 );
 float thick = 8.0;
 {
   vec3 Rw = refract( -Vw, nSoft, 0.7502 );
-  vec2 uv0 = gl_FragCoord.xy / uViewport;
-  float d0 = texture2D( uRefrDepth, uv0 ).x;
+  vec4 c0 = uVP * vec4( vWPos, 1.0 );
+  vec2 uv0 = c0.xy / c0.w * 0.5 + 0.5;          // screen position, independent of the target size
+  float d0 = textureLod( uRefrDepth, uv0, 0.0 ).x;
   vec3 S = reconstructPos( uv0, d0 );
   if ( d0 < 0.99999 && S.y < vWPos.y - 0.004 ) {
     vec2 uvR = uv0;
     for ( int i = 0; i < 3; i ++ ) {
+      if ( float( i ) >= uIter ) break;
       float t = ( S.y - vWPos.y ) / min( Rw.y, -0.05 );
       vec3 Hr = vWPos + Rw * t;
       vec4 cp = uVP * vec4( Hr, 1.0 );
-      vec2 uv1 = cp.xy / cp.w * 0.5 + 0.5;
-      if ( uv1.x < 0.0 || uv1.x > 1.0 || uv1.y < 0.0 || uv1.y > 1.0 ) break;
-      float d1 = texture2D( uRefrDepth, uv1 ).x;
+      vec2 uv1 = clamp( cp.xy / cp.w * 0.5 + 0.5, vec2( 0.002 ), vec2( 0.998 ) );
+      float d1 = textureLod( uRefrDepth, uv1, 0.0 ).x;
       vec3 S1 = reconstructPos( uv1, d1 );
       if ( d1 < 0.99999 && S1.y < vWPos.y - 0.004 ) { S = S1; uvR = uv1; } else break;
     }
-    refrCol = texture2D( uRefrTex, uvR ).rgb;
+    // fade the distortion out toward the screen edges, where the lookup would leave the image
+    uvR = mix( uv0, uvR, smoothstep( 0.0, 0.05, min( min( uvR.x, uvR.y ), min( 1.0 - uvR.x, 1.0 - uvR.y ) ) ) );
+    refrCol = textureLod( uRefrTex, uvR, 0.0 ).rgb;
     thick = length( S - vWPos );
   }
 }
@@ -1730,9 +1791,9 @@ void main() {
 // 7. PoolWater
 // ===========================================================================
 const QUALITY = {
-  low:    { refr: 0.40, refl: 0.0,  tpm: 26, every: 2 },
-  medium: { refr: 0.50, refl: 0.50, tpm: 48, every: 1 },
-  high:   { refr: 0.75, refl: 0.75, tpm: 72, every: 1 },
+  low:    { refr: 0.40, refl: 0.0,  tpm: 26, every: 2, iter: 1 },
+  medium: { refr: 0.50, refl: 0.50, tpm: 48, every: 1, iter: 2 },
+  high:   { refr: 0.75, refl: 0.75, tpm: 72, every: 1, iter: 3 },
 };
 const CAUSTIC_MARGIN = 1.0;           // m of map beyond the pool outline
 const WATER_IOR = 1.333;
@@ -1745,14 +1806,13 @@ function refractDown(toSun, out) {
   return out.set(-toSun.x * eta, -toSun.y * eta + c, -toSun.z * eta);
 }
 
+const _clipPlane = new THREE.Plane(), _clipVec = new THREE.Vector4(), _clipQ = new THREE.Vector4();
 /** Replace the near plane by an arbitrary plane (Lengyel oblique clipping). */
 function obliqueClip(cam, planeNormal, planePoint) {
-  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(planeNormal, planePoint);
-  plane.applyMatrix4(cam.matrixWorldInverse);
-  const clip = new THREE.Vector4(plane.normal.x, plane.normal.y, plane.normal.z, plane.constant);
+  _clipPlane.setFromNormalAndCoplanarPoint(planeNormal, planePoint).applyMatrix4(cam.matrixWorldInverse);
+  const clip = _clipVec.set(_clipPlane.normal.x, _clipPlane.normal.y, _clipPlane.normal.z, _clipPlane.constant);
   const P = cam.projectionMatrix.elements;
-  const q = new THREE.Vector4(
-    (Math.sign(clip.x) + P[8]) / P[0], (Math.sign(clip.y) + P[9]) / P[5], -1.0, (1.0 + P[10]) / P[14]);
+  const q = _clipQ.set((Math.sign(clip.x) + P[8]) / P[0], (Math.sign(clip.y) + P[9]) / P[5], -1.0, (1.0 + P[10]) / P[14]);
   clip.multiplyScalar(2.0 / clip.dot(q));
   P[2] = clip.x; P[6] = clip.y; P[10] = clip.z + 1.0 - 0.003; P[14] = clip.w;
   cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
@@ -1781,9 +1841,9 @@ export class PoolWater {
     this.sim = new WaveSim();
     this._time = 0; this._acc = 0; this._frame = 0;
     this._windVel = { x: 0, z: 0 };
-    this._detached = false; this._extValid = false;
-    this._rainAcc = 0; this._dropAcc = 0;
-    this._targetKey = ''; this._causticSkip = 0; this._causticReady = false;
+    this._detached = false;
+    this._dropAcc = 0;
+    this._targetKey = ''; this._causticSkip = 0;
     this._dbs = new THREE.Vector2();
     this._toSun = new THREE.Vector3(0.3, 0.8, 0.2).normalize();
     this._sunRefr = new THREE.Vector3(0, -1, 0);
@@ -1791,6 +1851,12 @@ export class PoolWater {
     this._tmpA = new THREE.Vector3(); this._tmpB = new THREE.Vector3();
     this._mirror = new THREE.PerspectiveCamera();
     this._refrCam = new THREE.PerspectiveCamera();
+    this._st = { clearColor: new THREE.Color(), viewport: new THREE.Vector4(), scissor: new THREE.Vector4(), vis: [true, true, true] };
+    this._m4 = new THREE.Matrix4(); this._rot = new THREE.Matrix4();
+    this._v1 = new THREE.Vector3(); this._v2 = new THREE.Vector3(); this._v3 = new THREE.Vector3(); this._v4 = new THREE.Vector3();
+    this._clipPoint = new THREE.Vector3(0, POOL.waterLevel + 0.03, 0);
+    this._mirrorPoint = new THREE.Vector3(0, POOL.waterLevel, 0);
+    this._down = new THREE.Vector3(0, -1, 0); this._up = new THREE.Vector3(0, 1, 0);
     this._ext = renderer.extensions;
     this._hasColorBuffer = this._ext.has('EXT_color_buffer_float') || this._ext.has('EXT_color_buffer_half_float');
     this._floatLinear = this._ext.has('OES_texture_float_linear');
@@ -1801,8 +1867,10 @@ export class PoolWater {
     this._buildCausticPass();
 
     this.spray = new Spray(this);
+    this.spray.points.name = 'PoolWaterSpray';
     scene.add(this.spray.points);
     this.rainFx = new Rain();
+    this.rainFx.mesh.name = 'PoolWaterRain';
     scene.add(this.rainFx.mesh);
     this._bodies = new BodySystem(this);
     this.setWind(this.wind);
@@ -1811,7 +1879,7 @@ export class PoolWater {
   }
 
   // ---- diagnostics / extras -------------------------------------------------
-  /** Live list of floating bodies: {id, type, mesh, position, x, y, z, vx, vy, vz, ...} */
+  /** Live list of bodies: {id, type, mesh, position, x, y, z (centre of mass), vx, vy, vz, bottomY, surfaceY, draft, ...} */
   get bodies() { return this._bodies.bodies; }
   /** Surface offsets (m) on the pool-config grid (read-only view of the live array). */
   get heights() { return this.sim.h; }
@@ -1856,10 +1924,9 @@ export class PoolWater {
       uDetail: { value: this.detailTex },
       uRefrTex: { value: null }, uRefrDepth: { value: null }, uReflTex: { value: null },
       uInvVP: { value: new THREE.Matrix4() }, uVP: { value: new THREE.Matrix4() }, uReflMat: { value: new THREE.Matrix4() },
-      uViewport: { value: new THREE.Vector2(1, 1) },
       uAbsorb: { value: new THREE.Vector3(0.50, 0.135, 0.07) },
       uScatter: { value: new THREE.Vector3(0.020, 0.115, 0.145) },
-      uReflDistort: { value: 0.03 },
+      uReflDistort: { value: 0.03 }, uIter: { value: 2 },
       uCausticTex: { value: this._whiteTex },
       uCausticMap: { value: V4(POOL.minX - M, POOL.minZ - M, POOL.length + 2 * M, POOL.width + 2 * M) },
       uSunRefr: { value: this._sunRefr },
@@ -1896,6 +1963,19 @@ export class PoolWater {
     this.mesh.castShadow = false;          // the surface never casts shadows
     this.mesh.receiveShadow = true;
     this.mesh.name = 'PoolWaterSurface';
+    // Pointer picking: intersect the rest plane analytically (the displaced surface is only a few
+    // centimetres off it) instead of testing 65k triangles; uv is the normalised pool position.
+    const plane = { t: 0 }, hitP = new THREE.Vector3();
+    this.mesh.raycast = (raycaster, intersects) => {
+      const ray = raycaster.ray;
+      if (Math.abs(ray.direction.y) < 1e-9) return;
+      plane.t = (POOL.waterLevel - ray.origin.y) / ray.direction.y;
+      if (plane.t < raycaster.near || plane.t > raycaster.far) return;
+      ray.at(plane.t, hitP);
+      if (hitP.x < POOL.minX || hitP.x > POOL.maxX || hitP.z < POOL.minZ || hitP.z > POOL.maxZ) return;
+      intersects.push({ distance: plane.t, point: hitP.clone(), object: this.mesh, face: null, faceIndex: 0,
+        uv: new THREE.Vector2((hitP.x - POOL.minX) / POOL.length, (hitP.z - POOL.minZ) / POOL.width) });
+    };
     this.scene.add(this.mesh);
   }
 
@@ -1922,6 +2002,7 @@ export class PoolWater {
   _ensureTargets(renderer) {
     renderer.getDrawingBufferSize(this._dbs);
     const q = QUALITY[this.quality];
+    this.U.uIter.value = q.iter;
     const key = `${this._dbs.x}x${this._dbs.y}:${this.quality}`;
     if (key === this._targetKey) return;
     this._targetKey = key;
@@ -1952,7 +2033,6 @@ export class PoolWater {
     this.U.uRefrTex.value = this._refrRT.texture;
     this.U.uRefrDepth.value = this._refrRT.depthTexture;
     this.U.uReflTex.value = this._reflRT ? this._reflRT.texture : null;
-    this._causticReady = false;
     this.U.uCausticOn.value = 0;
     this.U.uCausticTex.value = this._whiteTex;
     this._causticSkip = 0;
@@ -1987,15 +2067,20 @@ export class PoolWater {
     this._ensureTargets(renderer);
     camera.updateMatrixWorld();
     this._updateSun();
+    camera.getWorldPosition(this.rainFx.uniforms.uCam.value);     // rain follows the camera
+    this.rainFx.uniforms.uPx.value = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov || 50) / 2) / Math.max(1, this._dbs.y);
     const st = this._saveState(renderer, scene);
     try {
-      this.U.uViewport.value.copy(this._dbs);
       renderer.xr.enabled = false;
-      renderer.autoClear = true;
+      renderer.autoClear = true; renderer.autoClearColor = true; renderer.autoClearDepth = true; renderer.autoClearStencil = true;
       this.mesh.visible = false; this.spray.points.visible = false; this.rainFx.mesh.visible = false;
-      if (this._frame > 0) renderer.shadowMap.autoUpdate = false;   // reuse last frame's shadow map
+      // reuse last frame's shadow map in the extra passes (unless it does not exist yet, e.g. right
+      // after the caller re-created it for a quality change)
+      const sh = this.sun && this.sun.castShadow && this.sun.shadow;
+      if (this._frame > 0 && !(sh && !sh.map)) renderer.shadowMap.autoUpdate = false;
       renderer.shadowMap.needsUpdate = false;
       if (this._sunUp && this._causticRT) this._renderCaustics(renderer);
+      else this.U.uCausticOn.value = 0;                 // no direct sun: no caustic modulation
       this._renderRefraction(renderer, scene, camera);
       if (this._reflRT) this._renderReflection(renderer, scene, camera);
     } finally {
@@ -2006,19 +2091,20 @@ export class PoolWater {
   }
 
   _saveState(renderer, scene) {
-    return {
-      target: renderer.getRenderTarget(), face: renderer.getActiveCubeFace(), mip: renderer.getActiveMipmapLevel(),
-      autoClear: renderer.autoClear, clearColor: renderer.getClearColor(new THREE.Color()), clearAlpha: renderer.getClearAlpha(),
-      viewport: renderer.getViewport(new THREE.Vector4()), scissor: renderer.getScissor(new THREE.Vector4()),
-      scissorTest: renderer.getScissorTest(), shadowAuto: renderer.shadowMap.autoUpdate, shadowNeeds: renderer.shadowMap.needsUpdate,
-      xr: renderer.xr.enabled, background: scene.background,
-      vis: [this.mesh.visible, this.spray.points.visible, this.rainFx.mesh.visible],
-    };
+    const st = this._st;
+    st.target = renderer.getRenderTarget(); st.face = renderer.getActiveCubeFace(); st.mip = renderer.getActiveMipmapLevel();
+    st.autoClear = renderer.autoClear; st.acColor = renderer.autoClearColor; st.acDepth = renderer.autoClearDepth; st.acStencil = renderer.autoClearStencil;
+    renderer.getClearColor(st.clearColor); st.clearAlpha = renderer.getClearAlpha();
+    renderer.getViewport(st.viewport); renderer.getScissor(st.scissor); st.scissorTest = renderer.getScissorTest();
+    st.shadowAuto = renderer.shadowMap.autoUpdate; st.shadowNeeds = renderer.shadowMap.needsUpdate;
+    st.xr = renderer.xr.enabled; st.background = scene.background;
+    st.vis[0] = this.mesh.visible; st.vis[1] = this.spray.points.visible; st.vis[2] = this.rainFx.mesh.visible;
+    return st;
   }
 
   _restoreState(renderer, scene, st) {
     renderer.setRenderTarget(st.target, st.face, st.mip);
-    renderer.autoClear = st.autoClear;
+    renderer.autoClear = st.autoClear; renderer.autoClearColor = st.acColor; renderer.autoClearDepth = st.acDepth; renderer.autoClearStencil = st.acStencil;
     renderer.setClearColor(st.clearColor, st.clearAlpha);
     renderer.setViewport(st.viewport);
     renderer.setScissor(st.scissor);
@@ -2037,7 +2123,6 @@ export class PoolWater {
     renderer.setClearColor(0x000000, 0);
     renderer.state.buffers.depth.setMask(true);
     renderer.render(this._cScene, this._cCam);
-    this._causticReady = true;
     this.U.uCausticTex.value = this._causticRT.texture;
     this.U.uCausticOn.value = 1;
   }
@@ -2052,8 +2137,8 @@ export class PoolWater {
     cam.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
     // keep only what is below the surface (the underwater world and the wet part of bodies)
     const camY = this._tmpA.setFromMatrixPosition(camera.matrixWorld).y;
-    if (camY > POOL.waterLevel + 0.08) obliqueClip(cam, this._tmpB.set(0, -1, 0), new THREE.Vector3(0, POOL.waterLevel + 0.03, 0));
-    const vp = new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    if (camY > POOL.waterLevel + 0.08) obliqueClip(cam, this._down, this._clipPoint);
+    const vp = this._m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
     this.U.uVP.value.copy(vp);
     this.U.uInvVP.value.copy(vp).invert();
     renderer.setRenderTarget(this._refrRT);
@@ -2066,15 +2151,15 @@ export class PoolWater {
   }
 
   _renderReflection(renderer, scene, camera) {
-    const level = POOL.waterLevel, n = this._tmpB.set(0, 1, 0), rp = new THREE.Vector3(0, level, 0);
-    const camPos = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
+    const level = POOL.waterLevel, n = this._up, rp = this._mirrorPoint;
+    const camPos = this._v1.setFromMatrixPosition(camera.matrixWorld);
     this._reflOk = false;
     if (camPos.y <= level + 0.02) return;
-    const view = new THREE.Vector3().subVectors(rp, camPos);
+    const view = this._v2.subVectors(rp, camPos);
     view.reflect(n).negate().add(rp);
-    const rot = new THREE.Matrix4().extractRotation(camera.matrixWorld);
-    const lookAt = new THREE.Vector3(0, 0, -1).applyMatrix4(rot).add(camPos);
-    const target = new THREE.Vector3().subVectors(rp, lookAt).reflect(n).negate().add(rp);
+    const rot = this._rot.extractRotation(camera.matrixWorld);
+    const lookAt = this._v3.set(0, 0, -1).applyMatrix4(rot).add(camPos);
+    const target = this._v4.subVectors(rp, lookAt).reflect(n).negate().add(rp);
     const vc = this._mirror;
     vc.position.copy(view);
     vc.up.set(0, 1, 0).applyMatrix4(rot).reflect(n);
@@ -2102,7 +2187,7 @@ export class PoolWater {
     const prev = this.mode;
     this.mode = mode;
     if (mode === 'particles' || prev === 'particles') {
-      this.sim.reset(); this._acc = 0; this._extValid = false; this._detached = false;
+      this.sim.reset(); this._acc = 0; this._detached = false;
       this._uploadHeights();
     }
     if (prev === 'spray') this.spray.clear();
@@ -2113,6 +2198,7 @@ export class PoolWater {
   /** Advance simulation and bodies. dt in seconds (caller clamps to <= 1/30). */
   update(dt, time) {
     dt = dt > 0 ? Math.min(dt, 1 / 20) : 0;
+    this._lastDt = dt > 0 ? dt : this._lastDt;
     this._time += dt;
     const sim = this.sim, ext = this._routeExternal();
     if (!ext) sim.beginFrame();
@@ -2136,12 +2222,7 @@ export class PoolWater {
     }
     if (sim.pack(dt)) this._uploadHeights();
     this.U.uDet.value.x = this._time; this.U.uDet.value.y = this.wind; this.U.uDet.value.z = this.rain;
-    this.camera.getWorldPosition(this.rainFx.uniforms.uCam.value);
     this.rainFx.uniforms.uTime.value = this._time;
-    if (this.rain > 0.005) {            // streak width in world units per metre of distance = one pixel
-      const hpx = Math.max(1, this.renderer.getDrawingBufferSize(this._dbs).y), cam = this.camera;
-      this.rainFx.uniforms.uPx.value = 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov || 50) / 2) / hpx;
-    }
     this.time = this._time;
   }
 
@@ -2162,10 +2243,8 @@ export class PoolWater {
     if (this._routeExternal()) { this._disturbExternal(x, z, radius, strength); return; }
     const s = THREE.MathUtils.clamp(strength, -0.5, 0.5), r = Math.max(0.03, radius);
     this.sim.splat(x, z, r, -s);
-    if (s > 0.09) {
-      this.sim.addFoam(x, z, r * 0.9, Math.min(1, s * 2.2));
-      if (this.mode === 'spray') this.spray.burst(x, z, r, 1.0 + 7 * s, Math.min(400, 1800 * s * s + 8));
-    }
+    if (s > 0.09) this.sim.addFoam(x, z, r * 0.9, Math.min(1, s * 2.2));
+    if (s > 0.035 && this.mode === 'spray') this.spray.burst(x, z, r, 0.8 + 6.5 * s, Math.min(400, 6000 * s * s + 2));
   }
 
   // body entering the water: cavity, foam, crown of spray
@@ -2239,15 +2318,16 @@ export class PoolWater {
    *  internal sim. Called every frame in 'particles' mode; re-upload each call. */
   setExternalHeights(heights) {
     if (heights == null) {
-      this._detached = true; this._extValid = false;
+      this._detached = true;
       this.sim.reset(); this._acc = 0;
       this._uploadHeights();
       return;
     }
     this._detached = false;
     if (this.mode !== 'particles' || !heights.length || heights.length < this.sim.N) return;
-    this._extValid = true;
     this.sim.loadExternal(heights);
+    // pack and upload now: callers typically feed the heights after update() and before beforeRender()
+    if (this.sim.pack(this._lastDt || SIM_STEP)) this._uploadHeights();
   }
 
   /** Surface height (y) at world (x, z). */

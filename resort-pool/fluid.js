@@ -117,7 +117,7 @@ export class ParticleFluid {
     this.ready = false; this.busy = false; this.epoch = 0;
     this.pending = 0; this.queue = []; this.lastCall = 0; this.tight = 0; this.batchUntil = 0;
     this.simTime = 0; this.stepMs = 0; this.nParticles = 0; this.nSpray = 0; this.backlog = 0;
-    this.error = null; this.waiters = [];
+    this.error = null; this.waiters = []; this.autoSync = true;
 
     const su = { uScale: { value: 600 }, uSize: { value: 0.07 }, uColor: { value: new THREE.Color(0xf2fbff) }, uAlpha: { value: 0.85 } };
     this.spray = makePoints(MAX_SPRAY, SPRAY_VERT, SPRAY_FRAG, su, { depthWrite: false });
@@ -185,6 +185,9 @@ export class ParticleFluid {
     this.tight = (now - this.lastCall < 2) ? this.tight + 1 : 0;
     this.lastCall = now;
     if (this.tight >= 3) this.batchUntil = now + 600;
+    // A burst of step() calls (a script stepping in a tight loop) wants synchronous results,
+    // which a worker cannot give: continue on the main thread from the rest state.
+    if (this.mode === 'worker' && this.autoSync && this.tight >= 3) { this.pending += dt; this._switchToMain(); return; }
     const batch = now < this.batchUntil;
     this.pending += dt;
     if (!batch && this.pending > 0.1) this.pending = 0.1;
@@ -233,6 +236,15 @@ export class ParticleFluid {
     if (this.worker) { this.worker.terminate(); this.worker = null; }
     if (this.blobUrl) { URL.revokeObjectURL(this.blobUrl); this.blobUrl = null; }
     this.sim = null; this.mode = 'idle';
+  }
+
+  _switchToMain() {
+    console.info('[fluid] burst of step() calls: continuing synchronously on the main thread');
+    const queue = this.queue.slice(), pending = this.pending;
+    this._teardown(); this.forceMain = true; this.epoch++; this.busy = false;
+    this._mainInit();
+    this.queue = queue; this.pending = pending;
+    this._stepMain(true);
   }
 
   _fallback() {
