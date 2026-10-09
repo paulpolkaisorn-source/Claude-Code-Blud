@@ -1,11 +1,11 @@
 /*
  * Base stylesheet. Owner: motion-2d.
  * Source: design/direction.md headings 4, 5, 7, 8 and 13; design/architecture.md sections 7 and 8;
- * design/drafts/director-decisions.md D2.1 and D18.
+ * design/drafts/director-decisions.md D2.1, D18, D25.2 and D27.1.
  *
  * Plain CSS with no @import. main.ts imports it after tokens.css, so every value here is a token.
  * The only literal values are the reset values, the zero durations that reduced motion requires,
- * and the print palette.
+ * the glyph halo offsets of D27.1 (not in direction.md, so not tokens), and the print palette.
  */
 
 /* ---------- Reset ---------- */
@@ -171,6 +171,39 @@ body {
 /* Hanging punctuation for browsers without hanging-punctuation (heading 4). */
 .hang {
   margin-inline-start: -0.4em;
+}
+
+/* ---------- Glyph halos, director-decisions D27.1 ----------
+   Display and running text that scrolls across the fixed 3D is knocked out with a halo in its own ground, not a plate
+   (D25.2 plates are removed; D27.1). text-shadow only: no layout change and no markup change. var(--bg) resolves on
+   each element, so a halo follows the theme of the block its text sits in. The values are written on each selector,
+   not in a custom property: a custom property would resolve var(--bg) on :root and paint paper halos inside ink.
+   Labels keep their plates (D22.6). */
+
+/* Display text: the display-xl titles that cross the 3D. The offsets are in em, so they scale with the type. */
+.family__title,
+.pricing__title-main,
+.pricing__title-tail,
+.cap__title {
+  text-shadow: 0 0 0.02em var(--bg), 0 0 0.05em var(--bg), 0 0 0.1em var(--bg);
+}
+
+/* Running text up to 24 px: the kickers, the intros and the lede. */
+.family__kicker,
+.family__intro,
+.pricing__kicker,
+.pricing__intro,
+.cap__kicker,
+.cap__intro {
+  text-shadow: 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
+}
+
+/* Phones (portrait): the hero lede and the hero link scroll across the fixed 3D. */
+@media (orientation: portrait) {
+  .hero-lede,
+  .hero-link {
+    text-shadow: 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
+  }
 }
 
 /* ---------- Grid, direction.md heading 5 ---------- */
@@ -579,6 +612,7 @@ html.reduced-motion *::after {
     color: #000 !important;
     background: #fff !important;
     box-shadow: none !important;
+    text-shadow: none !important;
   }
 
   a::before {

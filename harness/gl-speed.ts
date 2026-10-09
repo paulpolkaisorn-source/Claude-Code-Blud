@@ -19,6 +19,7 @@ import { T, scrubLocal } from '../src/core/timing';
 import { initChoreo } from '../src/choreo/timeline';
 import { createWorld } from '../src/gl/boot';
 import { BLOCK_COUNT, staggerPosition } from '../src/gl/blocks/formations';
+import { FIT, cameraKey } from '../src/gl/rig';
 import type { GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../src/gl/section-gl';
 import { heroGL } from '../src/sections/hero/gl';
 import { speedGL } from '../src/sections/speed/gl';
@@ -113,7 +114,9 @@ function raceXY(portrait: boolean): [number, number][] {
  * The expected block positions at race progress u: each block moves from the hero exit pose (the stanza open at 1) to the
  * race, eased by anticipate for the kireji (stagger position 0) and settle for the others (direction-act1 speed, 3D layer).
  */
-function entryXY(u: number, portrait: boolean): [number, number][] {
+function entryXY(u: number, size: Size): [number, number][] {
+  const portrait = size.width < size.height;
+  const shift = portrait ? expectedShift(size) : 0;
   const from = stanzaXY(0.95, 1.13);
   const to = raceXY(portrait);
   const order = staggerPosition('race');
@@ -121,24 +124,41 @@ function entryXY(u: number, portrait: boolean): [number, number][] {
     const k = order[i];
     const q = scrubLocal(k, BLOCK_COUNT, u, { total: 0.35, lead: 0.1 });
     const e = k === 0 ? ef.anticipate(q) : ef.settle(q);
-    return [fx + (to[i][0] - fx) * e, fy + (to[i][1] - fy) * e];
+    // The portrait start shift decays with the block's own entry (gl.ts header, rule 2).
+    return [fx + (to[i][0] - fx) * e + shift * (1 - e), fy + (to[i][1] - fy) * e];
   });
 }
 
-/** The speed key's distance (direction-act1 A7 and D15.1): the width fit on desktop, the height fit on a phone. */
+/**
+ * The speed key's distance and x, from rig.ts (cameraKey, the key the handle must use). The desktop fill and the tablet and
+ * phone fits are the rig's (polish pass 1, D15.1, D21.2), so the harness reads them rather than repeating them.
+ */
 function expectedSpeedZ(size: Size): number {
-  const a = size.width / size.height;
-  return a >= 1 ? 15.9 / (0.8 * 2 * TAN11 * a) : 15.9 / (0.8 * 2 * TAN11);
+  return cameraKey('speed', size).position[2];
+}
+
+function expectedSpeedX(size: Size): number {
+  return cameraKey('speed', size).position[0];
+}
+
+/** The phone speed key's x from its definition (D21.2): the column centre at 86% of the width, 0.36 of the width left of centre. */
+function phoneSpeedX(size: Size): number {
+  return -(0.86 - 0.5) * 2 * expectedSpeedZ(size) * TAN11 * (size.width / size.height);
 }
 
 /**
- * The speed key's x (D21.2): on a phone the race column's centre sits at 86% of the viewport width, so the camera moves
- * left by 0.36 of the visible width at the speed distance. Desktop has no offset.
+ * The portrait start shift (gl.ts header, rule 2): the leftmost block of the open stanza (-2.85 bu, row B) moves to 6 px left
+ * of the column's centre line, seen from the speed camera at its distance in a viewport height px tall.
  */
-function expectedSpeedX(size: Size): number {
-  const a = size.width / size.height;
-  if (a >= 1) return 0;
-  return -(0.86 - 0.5) * 2 * expectedSpeedZ(size) * TAN11 * a;
+function expectedShift(size: Size): number {
+  const pxPerBu = size.height / (2 * expectedSpeedZ(size) * FIT.tanHalfFov);
+  return -6 / pxPerBu + 2.85;
+}
+
+/** The 17 start poses of the entry at a viewport: the open stanza, shifted right on a portrait viewport. */
+function startXY(size: Size): [number, number][] {
+  const shift = size.width < size.height ? expectedShift(size) : 0;
+  return stanzaXY(0.95, 1.13).map(([x, y]): [number, number] => [x + shift, y]);
 }
 
 /** The hero key's distance and x (direction-3d 10.6): width fit at 0.45 on desktop, 0.84 on a phone; x -0.22 W on desktop. */
@@ -303,21 +323,27 @@ async function main(): Promise<void> {
     handle.update(0, tick, contextFor());
     step(2);
     check(
-      'entry u = 0 (s = 0): the 17 blocks sit at the hero exit pose (stanza open at 1, pitch 0.95, offsets 1.13)',
-      matrixError(stanzaXY(0.95, 1.13)) < EPS,
-      `max error ${matrixError(stanzaXY(0.95, 1.13)).toExponential(2)}`,
+      portrait
+        ? 'entry u = 0 (s = 0): the 17 blocks sit at the open stanza shifted into the right band (portrait, gl.ts header rule 2)'
+        : 'entry u = 0 (s = 0): the 17 blocks sit at the hero exit pose (stanza open at 1, pitch 0.95, offsets 1.13)',
+      matrixError(startXY(size)) < EPS,
+      `max error ${matrixError(startXY(size)).toExponential(2)}`,
     );
     const heroKey = expectedHeroKey(size);
     let cam = cameraPos();
+    // Landscape: the camera holds the hero key at u = 0 (A7). Portrait: it is the speed key from s 0 (gl.ts header, rule 1).
+    const at0 = portrait ? { x: expectedSpeedX(size), y: 0, z: expectedSpeedZ(size) } : heroKey;
     check(
-      'camera at u = 0 holds the hero key (A7, D15.1)',
-      Math.abs(cam.z - heroKey.z) < 1e-3 && Math.abs(cam.x - heroKey.x) < 1e-3 && Math.abs(cam.y - heroKey.y) < 1e-3,
-      `camera (${cam.x.toFixed(4)}, ${cam.y.toFixed(4)}, ${cam.z.toFixed(4)}), hero (${heroKey.x.toFixed(4)}, ${heroKey.y.toFixed(4)}, ${heroKey.z.toFixed(4)})`,
+      portrait
+        ? 'camera at u = 0 is the speed key on a portrait viewport (gl.ts header, rule 1)'
+        : 'camera at u = 0 holds the hero key (A7, D15.1)',
+      Math.abs(cam.z - at0.z) < 1e-3 && Math.abs(cam.x - at0.x) < 1e-3 && Math.abs(cam.y - at0.y) < 1e-3,
+      `camera (${cam.x.toFixed(4)}, ${cam.y.toFixed(4)}, ${cam.z.toFixed(4)}), expected (${at0.x.toFixed(4)}, ${at0.y.toFixed(4)}, ${at0.z.toFixed(4)})`,
     );
 
     handle.update(0.125, tick, contextFor());
     step(2);
-    const midErr = matrixError(entryXY(0.5, portrait));
+    const midErr = matrixError(entryXY(0.5, size));
     check(
       'entry u = 0.5 (s = 0.125): each block sits on its scrubbed settle (anticipate for the kireji), 11.3 and act I speed',
       midErr < EPS,
@@ -326,10 +352,14 @@ async function main(): Promise<void> {
     cam = cameraPos();
     const speedZ = expectedSpeedZ(size);
     const speedX = expectedSpeedX(size);
+    // Landscape: halfway in ef.sym between the hero and speed keys. Portrait: the speed key from s 0 (gl.ts header, rule 1).
+    const half = portrait ? { z: speedZ, x: speedX } : { z: (heroKey.z + speedZ) / 2, x: (heroKey.x + speedX) / 2 };
     check(
-      'camera at u = 0.5 is halfway in ef.sym (sym(0.5) = 0.5) between the hero and speed keys',
-      Math.abs(cam.z - (heroKey.z + speedZ) / 2) < 1e-3 && Math.abs(cam.x - (heroKey.x + speedX) / 2) < 1e-3,
-      `z ${cam.z.toFixed(4)}, halfway ${((heroKey.z + speedZ) / 2).toFixed(4)}; x ${cam.x.toFixed(4)}, halfway ${((heroKey.x + speedX) / 2).toFixed(4)}`,
+      portrait
+        ? 'camera at u = 0.5 is the speed key on a portrait viewport (gl.ts header, rule 1)'
+        : 'camera at u = 0.5 is halfway in ef.sym (sym(0.5) = 0.5) between the hero and speed keys',
+      Math.abs(cam.z - half.z) < 1e-3 && Math.abs(cam.x - half.x) < 1e-3,
+      `z ${cam.z.toFixed(4)}, expected ${half.z.toFixed(4)}; x ${cam.x.toFixed(4)}, expected ${half.x.toFixed(4)}`,
     );
 
     // The kireji (stagger position 0) takes anticipate. At u = 0.05 its local progress is 0.5, where anticipate and settle
@@ -340,8 +370,8 @@ async function main(): Promise<void> {
     const anticipateGap = Math.abs(ef.anticipate(q) - ef.settle(q));
     check(
       'kireji at u = 0.05 is on anticipate, not settle (their gap at local progress 0.5 is above 0.2)',
-      anticipateGap > 0.2 && matrixError(entryXY(0.05, portrait)) < EPS,
-      `anticipate ${ef.anticipate(q).toFixed(4)}, settle ${ef.settle(q).toFixed(4)}, max error ${matrixError(entryXY(0.05, portrait)).toExponential(2)}`,
+      anticipateGap > 0.2 && matrixError(entryXY(0.05, size)) < EPS,
+      `anticipate ${ef.anticipate(q).toFixed(4)}, settle ${ef.settle(q).toFixed(4)}, max error ${matrixError(entryXY(0.05, size)).toExponential(2)}`,
     );
 
     // The race at u = 1 and the hold after it.
@@ -354,12 +384,18 @@ async function main(): Promise<void> {
     );
     cam = cameraPos();
     check(
-      'camera at u = 1 is the speed key (desktop z 31.95 at 1440 by 900; phone z 51.12, D15.1; phone x offset, D21.2)',
+      'camera at u = 1 is the speed key from rig.ts (cameraKey: the desktop fill, the tablet fill, or the phone column, D15.1, D21.2)',
       Math.abs(cam.z - speedZ) < 1e-3 && Math.abs(cam.x - expectedSpeedX(size)) < 1e-3 && Math.abs(cam.y) < 1e-3,
       `camera (${cam.x.toFixed(4)}, ${cam.y.toFixed(4)}, ${cam.z.toFixed(4)}), speed (${expectedSpeedX(size).toFixed(4)}, 0, ${speedZ.toFixed(4)})`,
     );
     if (size.width === 1440 && size.height === 900) {
-      check('at 1440 by 900 the speed key is z 31.95 (A7)', Math.abs(speedZ - 31.95) < 0.01);
+      // The desktop race fill is the rig's FIT.speedDesktopFill (polish pass 1): z = race extent / (fill x 2 tan x aspect).
+      const desktopZ = FIT.extent.race / (FIT.speedDesktopFill * 2 * TAN11 * (size.width / size.height));
+      check(
+        'at 1440 by 900 the speed key is the desktop race fill (FIT.speedDesktopFill)',
+        Math.abs(speedZ - desktopZ) < 0.01,
+        `z ${speedZ.toFixed(4)}, from the fill ${desktopZ.toFixed(4)}`,
+      );
     }
     if (size.width === 375 && size.height === 812) {
       check('at 375 by 812 the speed key is z 51.12 (D15.1)', Math.abs(speedZ - 51.12) < 0.01);
@@ -507,6 +543,38 @@ async function main(): Promise<void> {
     );
     handle.update(0.25, tick, contextFor());
     step(2);
+
+    // Portrait entry (gl.ts header). For each phone size: the phone key puts the column centre at 86% of the width (D21.2), the
+    // camera is the speed key at every u of the entry, and no block's centre passes left of 6 px from the column's centre line,
+    // so every block stays right of the copy band (the column's left edge less 12 px, D21.2). Swept from s 0 to s 0.25.
+    for (const [w, h] of [
+      [375, 812],
+      [768, 1024],
+    ] as const) {
+      const phone: Size = { width: w, height: h };
+      const ctxPhone = contextFor({ portrait: true, size: phone });
+      const limit = -6 / (h / (2 * expectedSpeedZ(phone) * FIT.tanHalfFov));
+      let worstX = Number.POSITIVE_INFINITY;
+      let camErr = 0;
+      for (let k = 0; k <= 40; k += 1) {
+        handle.update((k / 40) * 0.25, tick, ctxPhone);
+        step(2);
+        for (let i = 0; i < BLOCK_COUNT; i += 1) worstX = Math.min(worstX, xOf(i));
+        const c = cameraPos();
+        camErr = Math.max(
+          camErr,
+          Math.abs(c.z - expectedSpeedZ(phone)),
+          Math.abs(c.x - expectedSpeedX(phone)),
+          Math.abs(c.y),
+        );
+      }
+      const keyMatchesD21 = Math.abs(expectedSpeedX(phone) - phoneSpeedX(phone)) < 1e-6;
+      check(
+        `portrait ${w} by ${h}: the speed key is the 86 percent column (D21.2), the camera holds it for s 0 to 0.25, and every block centre stays at or right of the band (x >= ${limit.toFixed(3)} bu)`,
+        keyMatchesD21 && camErr < 1e-3 && worstX >= limit - 1e-6,
+        `worst block x ${worstX.toFixed(4)} bu, limit ${limit.toFixed(4)}, camera error ${camErr.toExponential(2)}`,
+      );
+    }
 
     // Reduced motion, given through the context: the race is complete at once, with no breath and no lifts.
     handle.update(0, tick, contextFor({ reducedMotion: true }));

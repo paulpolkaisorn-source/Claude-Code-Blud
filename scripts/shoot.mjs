@@ -5,8 +5,9 @@
 // (15 s at most, or html.no-gl), then 1.5 s for the preloader handoff. Each section is scrolled to its
 // top and to its middle (top + 0.5 x height; the footer is top only) with window.scrollTo, instant.
 // After each scroll it waits 1800 ms, then saves the viewport to
-// qa/shots/pass1/<section>-<width>-<top|mid>[-rm|-nogl].png. The 1440 run also saves the first frame
-// after DOMContentLoaded as preloader-1440-boot.png.
+// qa/shots/pass1/<section>-<width>-<top|mid>[-rm|-nogl].png. The 1440 run also saves the preloader frame,
+// preloader-1440-boot.png: the last composited frame before loader:done, taken from a CDP screencast
+// (a page screenshot lands after loader:done under software WebGL, so it cannot show the preloader).
 //
 // Outputs:
 //   qa/shots/pass1/*.png              the screenshots
@@ -15,9 +16,10 @@
 //
 // A later call with --runs replaces only the runs it executes, so the sweep can be split across calls.
 // A screenshot that takes longer than 60 s limits the 2560 run to the hero, family and closing sections.
+// --boot-only (with --runs=1440) re-captures only the preloader frame and keeps the rest of that run.
 //
 // Usage:
-//   node scripts/shoot.mjs [--runs=375,768,1440,2560,1440-rm,375-rm,1440-nogl,375-nogl] [--base=http://127.0.0.1:4190/]
+//   node scripts/shoot.mjs [--runs=375,768,1440,2560,1440-rm,375-rm,1440-nogl,375-nogl] [--base=http://127.0.0.1:4190/] [--boot-only]
 // PW_CHROMIUM overrides the browser binary. Otherwise the Playwright default applies.
 
 /* eslint-disable no-console -- command-line sweep; console is its output */
@@ -57,8 +59,12 @@ const RUNS = [
 const pause = (ms) => new Promise((resolvePause) => setTimeout(resolvePause, ms));
 
 function parseArgs(argv) {
-  const opts = { base: 'http://127.0.0.1:4190/', runs: RUNS.map((run) => run.id) };
+  const opts = { base: 'http://127.0.0.1:4190/', runs: RUNS.map((run) => run.id), bootOnly: false };
   for (const arg of argv) {
+    if (arg === '--boot-only') {
+      opts.bootOnly = true;
+      continue;
+    }
     const match = /^--([a-z]+)=(.*)$/.exec(arg);
     if (!match) throw new Error(`unknown argument: ${arg}`);
     if (match[1] === 'base') opts.base = match[2];
@@ -180,20 +186,50 @@ function sectionBox(id) {
   return { top: rect.top + window.scrollY, height: rect.height };
 }
 
-async function shootBootFrame(page) {
-  const before = await page.evaluate(() => ({
-    loaderDone: window.__qaTimes?.loaderDone ?? null,
-    boot: window.__qaTimes?.boot ?? null,
-    now: performance.now(),
-  }));
-  const started = Date.now();
-  await page.screenshot({ path: resolve(SHOT_DIR, 'preloader-1440-boot.png'), timeout: SHOT_TIMEOUT_MS });
+/**
+ * The preloader frame: the last composited frame before loader:done. A page screenshot cannot serve for
+ * this under software WebGL. It resolves 4 to 8 s after navigation, after loader:done at 0.6 to 1.0 s, so
+ * the frame it saves is already the settled hero. A CDP screencast delivers each frame as it is composited,
+ * so it can. The frame's compositor timestamp is compared with loader:done (performance.timeOrigin + t).
+ * The navigation itself happens here, after the screencast has started, so no early frame is missed.
+ */
+async function captureBootFrame(context, page, url) {
+  const cdp = await context.newCDPSession(page);
+  const frames = [];
+  cdp.on('Page.screencastFrame', (ev) => {
+    const ts = ev.metadata?.timestamp;
+    const epochMs = ts && Math.abs(ts * 1000 - Date.now()) < 60_000 ? ts * 1000 : Date.now();
+    frames.push({ data: ev.data, epochMs });
+    cdp.send('Page.screencastFrameAck', { sessionId: ev.sessionId }).catch(() => undefined);
+  });
+  await cdp.send('Page.startScreencast', { format: 'png', everyNthFrame: 1 });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  let done = null;
+  const deadline = Date.now() + BOOT_WAIT_MS;
+  while (done === null && Date.now() < deadline) {
+    done = await page
+      .evaluate(() =>
+        window.__qaTimes && window.__qaTimes.loaderDone !== undefined
+          ? { origin: performance.timeOrigin, t: window.__qaTimes.loaderDone }
+          : null,
+      )
+      .catch(() => null);
+    if (done === null) await pause(50);
+  }
+  await cdp.send('Page.stopScreencast').catch(() => undefined);
+  const origin = done ? done.origin : null;
+  const loaderDoneEpoch = done ? done.origin + done.t : null;
+  const before = loaderDoneEpoch === null ? [] : frames.filter((f) => f.epochMs <= loaderDoneEpoch);
+  const chosen = before.length ? before[before.length - 1] : (frames[frames.length - 1] ?? null);
+  if (chosen) writeFileSync(resolve(SHOT_DIR, 'preloader-1440-boot.png'), Buffer.from(chosen.data, 'base64'));
+  await cdp.detach().catch(() => undefined);
   return {
     file: 'qa/shots/pass1/preloader-1440-boot.png',
-    atMs: Math.round(before.now),
-    bootBeforeShot: before.boot,
-    loaderDoneBeforeShot: before.loaderDone,
-    shotMs: Date.now() - started,
+    method: 'CDP screencast: last composited frame before loader:done',
+    framesCaptured: frames.length,
+    frameAtMs: chosen && origin !== null ? Math.round(chosen.epochMs - origin) : null,
+    loaderDoneMs: done ? Math.round(done.t) : null,
+    beforeLoaderDone: before.length > 0,
   };
 }
 
@@ -227,7 +263,7 @@ async function shootAt(page, run, id, pos, target, box) {
   };
 }
 
-async function runOne(browser, run, manifest, state) {
+async function runOne(browser, run, state) {
   const context = await browser.newContext({
     viewport: { width: run.width, height: run.height },
     deviceScaleFactor: 1,
@@ -271,11 +307,15 @@ async function runOne(browser, run, manifest, state) {
   await page.addInitScript(timingProbe);
 
   try {
-    await page.goto(log.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     if (run.boot) {
-      log.bootFrame = await shootBootFrame(page);
-      console.log(`[${run.id}] preloader-1440-boot.png (loaderDone before shot: ${log.bootFrame.loaderDoneBeforeShot})`);
+      log.bootFrame = await captureBootFrame(context, page, log.url);
+      console.log(
+        `[${run.id}] preloader-1440-boot.png: frame at ${log.bootFrame.frameAtMs} ms, loader:done at ${log.bootFrame.loaderDoneMs} ms (before: ${log.bootFrame.beforeLoaderDone})`,
+      );
+    } else {
+      await page.goto(log.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     }
+    if (state.bootOnly) return log;
     await page.waitForFunction(
       () => document.documentElement.getAttribute('data-boot') === 'ok',
       undefined,
@@ -328,8 +368,8 @@ async function runOne(browser, run, manifest, state) {
   } finally {
     await context.close().catch(() => undefined);
     log.finishedAt = new Date().toISOString();
-    manifest.runs[run.id] = log;
   }
+  return log;
 }
 
 /** Per run: the union of overflow offenders across every probe, and whether the document scrolls sideways. */
@@ -422,18 +462,31 @@ async function main() {
   try {
     for (const run of RUNS) {
       if (!opts.runs.includes(run.id)) continue;
+      if (opts.bootOnly && !run.boot) continue;
       const elapsed = Date.now() - sweepStart;
-      if (elapsed > START_CUTOFF_MS) {
+      if (elapsed > START_CUTOFF_MS && !opts.bootOnly) {
         manifest.runs[run.id] = {
           id: run.id,
           width: run.width,
           skippedRun: `not started: ${Math.round(elapsed / 1000)} s into the sweep, past the ${START_CUTOFF_MS / 60_000}-minute start cutoff`,
         };
         console.log(`[${run.id}] skipped: past the start cutoff`);
+      } else if (opts.bootOnly) {
+        // Re-captures only the preloader frame. The run's other screenshots and records stay as they are.
+        const state = { base: opts.base, slowMode: manifest.slowMode === true, bootOnly: true };
+        const fresh = await runOne(browser, run, state);
+        const prev = manifest.runs[run.id];
+        if (prev) {
+          prev.bootFrame = fresh.bootFrame ?? null;
+          prev.bootFrameErrors = fresh.errors;
+        } else {
+          manifest.runs[run.id] = fresh;
+        }
+        console.log(`[${run.id}] boot frame re-captured (other records of this run unchanged)`);
       } else {
-        const state = { base: opts.base, slowMode: manifest.slowMode === true };
+        const state = { base: opts.base, slowMode: manifest.slowMode === true, bootOnly: false };
         console.log(`[${run.id}] start at ${Math.round(elapsed / 1000)} s into the sweep`);
-        await runOne(browser, run, manifest, state);
+        manifest.runs[run.id] = await runOne(browser, run, state);
         manifest.slowMode = state.slowMode;
       }
       manifest.sweepEndedAt = new Date().toISOString();

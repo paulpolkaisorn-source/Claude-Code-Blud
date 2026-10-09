@@ -1,21 +1,21 @@
 // Lights, the shadow catcher and the procedural environment (direction-3d sections 10.4 and 10.5, with the
-// integration changes of design/drafts/director-decisions.md D22.3 and D22.4).
-// createLighting adds one group to stage.scene: the key light (the only shadow caster), the rim spot,
-// the fill hemisphere and the shadow catcher plane. The environment is RoomEnvironment, baked once
-// through PMREM. setMix moves the four values that follow the block mix m (key, environment, fill and the
+// integration changes of design/drafts/director-decisions.md D22.3 and D22.4, and the polish pass 1 shadow fix).
+// createLighting adds one group to stage.scene: the key light (shading only), the contact light (the only shadow
+// caster), the rim spot, the fill hemisphere and the shadow catcher plane. The environment is RoomEnvironment, baked
+// once through PMREM. setMix moves the four values that follow the block mix m (key, environment, fill and the
 // catcher opacity). This module starts no loop: the stage draws on the shared ticker.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { Stage } from './stage';
 
 export interface Lighting {
-  /** Key, rim and fill lights with their targets, and the shadow catcher. createLighting adds it to stage.scene. */
+  /** Key, contact, rim and fill lights with their targets, and the shadow catcher. createLighting adds it to stage.scene. */
   readonly group: THREE.Group;
-  /** The ShadowMaterial plane at z -0.5 that receives the key light's shadow. A child of group. */
+  /** The ShadowMaterial plane at z -0.5 that receives the contact light's shadow. A child of group. */
   readonly catcher: THREE.Mesh;
   /** Sets the block mix m, clamped to [0, 1]: 0 on paper, 1 on ink. Throws a RangeError when m is not finite. */
   setMix(m: number): void;
-  /** Sets the key shadow map to 1024 or 2048 pixels a side. The old map is disposed; the new one is built on the next frame. */
+  /** Sets the contact light's shadow map to 1024 or 2048 pixels a side. The old map is disposed; the new one is built on the next frame. */
   setShadowMapSize(size: 1024 | 2048): void;
   /** Removes the group from the scene, clears the environment and frees what this module allocated. */
   dispose(): void;
@@ -41,22 +41,34 @@ export interface Lighting {
 //   - The ink ends are the direction-3d values and are unchanged: key 1.7, environment 0.30, fill 0.35. Fill and
 //     environment lerp by m, so m = 1 gives exactly those values.
 // The paper ground is unlit (background.ts, toneMapped false), so none of these values changes #F1ECE0.
-// Shadow (D22.4): the catcher sits at z -0.5 with opacity 0.12 (m = 0) and 0.45 (m = 1), and the key uses PCF
-// shadows with radius 4.
+// Shadow (D22.4, polish pass 1): the catcher sits at z -0.5 with opacity 0.12 (m = 0) and 0.45 (m = 1). The shadow
+// comes from the contact light, not from the key. The key is at (-6, 9, 12), so per bu of depth between a block and
+// the catcher it throws the shadow 0.5 bu right and 0.75 bu down. A block 0.73 bu in front of the catcher (its front
+// face) therefore shows its shadow 0.37 bu right and 0.55 bu down, which read as an offset drop shadow. A
+// DirectionalLight casts with parallel rays along its direction (the contact light points along -z), so each block's
+// shadow lies directly behind it, and only the PCF halo of radius 4 texels shows around the block: a soft contact
+// shadow. The key keeps its position, colour and intensity, so the shading and the D22.3 exposure are the same as
+// before.
 
 // Values from design/direction-3d.md, sections 10.4 and 10.5, with the exposure of the comment above.
 const KEY_COLOR = 0xfff4e2;
 const KEY_POSITION: readonly [number, number, number] = [-6, 9, 12];
 const KEY_INTENSITY: readonly [number, number] = [2.4, 1.7]; // m = 0, m = 1
+// The contact light: on the view axis, so its rays run straight along -z. Its intensity is zero, so it lights nothing;
+// it only casts the shadow that the catcher receives (ShadowMaterial takes the mask whatever the intensity).
+const CONTACT_COLOR = 0xffffff;
+const CONTACT_POSITION: readonly [number, number, number] = [0, 0, 14];
+const CONTACT_INTENSITY = 0;
 const SHADOW_MAP_SIZE = 2048;
 // The shadow camera spans -14 to 14 on each side (direction-3d 10.4). At 8 the family formation (light-space x 12.4)
-// and the portrait family (light-space y -11.5) were outside the map, so their shadows were cut.
+// and the portrait family (light-space y -11.5) were outside the map, so their shadows were cut. The family stations
+// reach x 13.46, inside 14. Outside the map no shadow is cast, as before.
 const SHADOW_EXTENT = 14;
 const SHADOW_NEAR = 1;
 const SHADOW_FAR = 40;
 const SHADOW_BIAS = -0.0004;
 const SHADOW_NORMAL_BIAS = 0.02;
-// PCF blur in map texels (D22.4): a soft contact shadow, not an offset drop shadow.
+// PCF blur in map texels (D22.4): one texel is 28 / 2048 = 0.0137 bu, so the halo is about 0.055 bu wide.
 const SHADOW_RADIUS = 4;
 
 const RIM_COLOR = 0xf4eedf;
@@ -106,9 +118,15 @@ export function createLighting(stage: Stage): Lighting {
   key.name = 'key';
   key.position.set(...KEY_POSITION);
   key.target.position.set(0, 0, 0);
-  key.castShadow = true;
-  key.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
-  const shadowCamera = key.shadow.camera;
+  key.castShadow = false;
+
+  const contact = new THREE.DirectionalLight(CONTACT_COLOR, CONTACT_INTENSITY);
+  contact.name = 'contact';
+  contact.position.set(...CONTACT_POSITION);
+  contact.target.position.set(0, 0, 0);
+  contact.castShadow = true;
+  contact.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+  const shadowCamera = contact.shadow.camera;
   shadowCamera.left = -SHADOW_EXTENT;
   shadowCamera.right = SHADOW_EXTENT;
   shadowCamera.top = SHADOW_EXTENT;
@@ -116,9 +134,9 @@ export function createLighting(stage: Stage): Lighting {
   shadowCamera.near = SHADOW_NEAR;
   shadowCamera.far = SHADOW_FAR;
   shadowCamera.updateProjectionMatrix();
-  key.shadow.bias = SHADOW_BIAS;
-  key.shadow.normalBias = SHADOW_NORMAL_BIAS;
-  key.shadow.radius = SHADOW_RADIUS;
+  contact.shadow.bias = SHADOW_BIAS;
+  contact.shadow.normalBias = SHADOW_NORMAL_BIAS;
+  contact.shadow.radius = SHADOW_RADIUS;
 
   const rim = new THREE.SpotLight(RIM_COLOR, RIM_INTENSITY, 0, RIM_ANGLE, RIM_PENUMBRA, RIM_DECAY);
   rim.name = 'rim';
@@ -138,7 +156,7 @@ export function createLighting(stage: Stage): Lighting {
   catcher.receiveShadow = true;
   catcher.renderOrder = CATCHER_RENDER_ORDER;
 
-  group.add(key, key.target, rim, rim.target, fill, catcher);
+  group.add(key, key.target, contact, contact.target, rim, rim.target, fill, catcher);
   scene.add(group);
 
   // One PMREM bake of the room. The generator and the room are freed here; the baked target stays
@@ -167,10 +185,10 @@ export function createLighting(stage: Stage): Lighting {
     if (requested !== 1024 && requested !== 2048) {
       throw new RangeError(`setShadowMapSize: ${String(size)} is not 1024 or 2048`);
     }
-    if (disposed || key.shadow.mapSize.x === requested) return;
-    key.shadow.map?.dispose();
-    key.shadow.map = null;
-    key.shadow.mapSize.set(requested, requested);
+    if (disposed || contact.shadow.mapSize.x === requested) return;
+    contact.shadow.map?.dispose();
+    contact.shadow.map = null;
+    contact.shadow.mapSize.set(requested, requested);
   }
 
   function dispose(): void {
@@ -179,8 +197,8 @@ export function createLighting(stage: Stage): Lighting {
     scene.remove(group);
     if (scene.environment === envTexture) scene.environment = null;
     scene.environmentIntensity = 1;
-    key.shadow.map?.dispose();
-    key.shadow.map = null;
+    contact.shadow.map?.dispose();
+    contact.shadow.map = null;
     envTarget.dispose();
     catcherGeometry.dispose();
     catcherMaterial.dispose();

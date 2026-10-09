@@ -1,0 +1,418 @@
+{
+  "generatedAt": "2026-10-08T23:36:15.406Z",
+  "base": "http://127.0.0.1:4190/",
+  "runs": [
+    "375",
+    "768",
+    "1440",
+    "2560",
+    "1440-rm",
+    "375-rm",
+    "1440-nogl",
+    "375-nogl"
+  ],
+  "summary": {
+    "consoleMessages": 22,
+    "byType": {
+      "warning": 22
+    },
+    "distinctMessages": [
+      {
+        "type": "warning",
+        "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020001C0A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+        "count": 1,
+        "runs": [
+          "375"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x35dc0013b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "count": 3,
+        "runs": [
+          "375"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x35dc0013b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+        "count": 1,
+        "runs": [
+          "375"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0A020001C0A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+        "count": 1,
+        "runs": [
+          "768"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0A020000C2C0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+        "count": 1,
+        "runs": [
+          "1440"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x34ac0013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "count": 3,
+        "runs": [
+          "1440"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x34ac0013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+        "count": 1,
+        "runs": [
+          "1440"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0A02000743A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+        "count": 1,
+        "runs": [
+          "2560"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x30840013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "count": 3,
+        "runs": [
+          "2560"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x30840013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+        "count": 1,
+        "runs": [
+          "2560"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000E40F0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+        "count": 2,
+        "runs": [
+          "1440-rm",
+          "375-rm"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x3f4400132600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "count": 3,
+        "runs": [
+          "1440-rm"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      },
+      {
+        "type": "warning",
+        "text": "[.WebGL-0x3f4400132600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+        "count": 1,
+        "runs": [
+          "1440-rm"
+        ],
+        "location": {
+          "url": "http://127.0.0.1:4190/",
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      }
+    ],
+    "pageErrors": 0,
+    "failedRequests": 0
+  },
+  "messages": [
+    {
+      "run": "375",
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A07020001C0A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "375",
+      "type": "warning",
+      "text": "[.WebGL-0x35dc0013b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "375",
+      "type": "warning",
+      "text": "[.WebGL-0x35dc0013b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "375",
+      "type": "warning",
+      "text": "[.WebGL-0x35dc0013b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "375",
+      "type": "warning",
+      "text": "[.WebGL-0x35dc0013b200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "768",
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0A020001C0A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440",
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0A020000C2C0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440",
+      "type": "warning",
+      "text": "[.WebGL-0x34ac0013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440",
+      "type": "warning",
+      "text": "[.WebGL-0x34ac0013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440",
+      "type": "warning",
+      "text": "[.WebGL-0x34ac0013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440",
+      "type": "warning",
+      "text": "[.WebGL-0x34ac0013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "2560",
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0A02000743A0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "2560",
+      "type": "warning",
+      "text": "[.WebGL-0x30840013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "2560",
+      "type": "warning",
+      "text": "[.WebGL-0x30840013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "2560",
+      "type": "warning",
+      "text": "[.WebGL-0x30840013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "2560",
+      "type": "warning",
+      "text": "[.WebGL-0x30840013e000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440-rm",
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000E40F0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440-rm",
+      "type": "warning",
+      "text": "[.WebGL-0x3f4400132600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440-rm",
+      "type": "warning",
+      "text": "[.WebGL-0x3f4400132600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440-rm",
+      "type": "warning",
+      "text": "[.WebGL-0x3f4400132600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "1440-rm",
+      "type": "warning",
+      "text": "[.WebGL-0x3f4400132600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "run": "375-rm",
+      "type": "warning",
+      "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0702000E40F0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+      "location": {
+        "url": "http://127.0.0.1:4190/",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": []
+}

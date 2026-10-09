@@ -7,7 +7,7 @@
 // block group.
 import { ef } from '../core/ease';
 import type { Tick } from '../core/ticker';
-import { formationFor, type Pose } from './blocks/formations';
+import { REST_Y, formationFor, type Pose } from './blocks/formations';
 import type { CameraKey, KeyName } from './section-gl';
 import type { Stage } from './stage';
 
@@ -37,15 +37,44 @@ export const FIT = {
    */
   phoneSpeedColumnFrac: 0.86,
   /**
+   * Landscape speed, desktop (width 1024 and wider). The race fills columns 7 to 17 of the 17-column track and
+   * the speed text stays in columns 1 to 6 (direction.md heading 5, direction-act1 A10). At 1440 by 900 the race
+   * spans x 527 to 1390 px, centre 958.6 px, which is the centre fraction below (polish pass 1).
+   */
+  speedDesktopFill: 0.6,
+  speedDesktopCentreFrac: 0.6657,
+  /**
+   * Landscape speed, tablet (width 768 to 1023). The race fills columns 9 to 17, and the speed text stays in columns
+   * 1 to 8 (direction-act1, tablet-landscape speed). The fill and centre are the grid fractions at 768, 800 and 900
+   * wide, which agree to 0.005.
+   */
+  speedTabletFill: 0.484,
+  speedTabletCentreFrac: 0.7195,
+  /**
+   * Portrait pricing row. The row centre sits at this share of the viewport height, counted from the top (polish
+   * pass 1). It leaves the table below the row and the lede above it.
+   */
+  phonePricingRowFromTop: 0.36,
+  /**
    * Extents of the fitted formations. stanza is 6 x 0.87 + 0.70 wide, race 16 x 0.95 + 0.70 wide,
    * rest 16 x 0.52 + 0.42 wide, column 16 x 0.27 + 0.22 tall, and axis is the family axis with margins.
    */
   extent: { stanza: 5.92, race: 15.9, rest: 8.74, column: 4.54, axis: 28 },
   /**
    * Fill fractions. heroPhone is the hero fit at phone aspect. Every other key keeps one fraction on
-   * both aspects.
+   * both aspects, except pricingPhone and closingPhone, which are the portrait fills (polish pass 1): the pricing
+   * row spans the 19 px phone margins at 375 wide, and the closing column keeps its CTA 29 px clear.
    */
-  fill: { hero: 0.45, heroPhone: 0.84, speed: 0.8, pricing: 0.7, closing: 0.8, family: 0.9 },
+  fill: {
+    hero: 0.45,
+    heroPhone: 0.84,
+    speed: 0.8,
+    pricing: 0.7,
+    pricingPhone: 0.9,
+    closing: 0.8,
+    closingPhone: 0.76,
+    family: 0.9,
+  },
 } as const;
 
 /** Visible width W(z) at distance z, in bu. */
@@ -72,12 +101,14 @@ function centreX(poses: readonly Pose[]): number {
 
 /** The x of the vertical race column on a phone (formationFor('race', true)). The column is on the centre line, so x is 0. */
 const RACE_COLUMN_X = centreX(formationFor('race', true));
-
+/** The x of the horizontal race's centre line (formationFor('race', false)). It is 0 as well. */
+const RACE_CENTRE_X = centreX(formationFor('race', false));
 /**
  * The camera keyframe for name in a viewport of size CSS px (direction-3d.md section 10.6). Desktop is
  * an aspect of 1 or wider. Phone is below 1, where the race turns vertical and fits by height (D15.1). On a
  * phone the family key also moves right (D19.2), and the speed key moves left so that the race column sits
- * at 86 percent of the width (D21.2).
+ * at 86 percent of the width (D21.2). On a landscape viewport the race moves right of the speed text: columns 7
+ * to 17 on desktop and columns 9 to 17 on tablet, so race and copy never share x (polish pass 1).
  * The target is (x, y, 0) and the fov is always FIT.fovDeg. Pass out to write into an existing object
  * and allocate nothing.
  */
@@ -105,17 +136,30 @@ export function cameraKey(name: KeyName, size: { width: number; height: number }
       if (phone) {
         z = heightFit(FIT.extent.race, FIT.fill.speed);
         // A screen fraction f for the column centre xc at distance z needs the camera at xc - (f - 0.5) W(z), since
-        // W(z) is the full width at the race plane. Desktop has no offset.
+        // W(z) is the full width at the race plane.
         x = RACE_COLUMN_X - (FIT.phoneSpeedColumnFrac - 0.5) * visibleWidth(z, aspect);
+      } else if (width >= 1024) {
+        z = widthFit(FIT.extent.race, FIT.speedDesktopFill, aspect);
+        x = RACE_CENTRE_X - (FIT.speedDesktopCentreFrac - 0.5) * visibleWidth(z, aspect);
+      } else if (width >= 768) {
+        z = widthFit(FIT.extent.race, FIT.speedTabletFill, aspect);
+        x = RACE_CENTRE_X - (FIT.speedTabletCentreFrac - 0.5) * visibleWidth(z, aspect);
       } else {
         z = widthFit(FIT.extent.race, FIT.fill.speed, aspect);
       }
       break;
     case 'pricing':
-      z = widthFit(FIT.extent.rest, FIT.fill.pricing, aspect);
+      if (phone) {
+        // The rest row sits at 36 percent of the height from the top. The camera is set below it by the row's
+        // offset from the centre, (0.5 - 0.36) of the visible height at z (polish pass 1).
+        z = widthFit(FIT.extent.rest, FIT.fill.pricingPhone, aspect);
+        y = REST_Y - (0.5 - FIT.phonePricingRowFromTop) * 2 * z * FIT.tanHalfFov;
+      } else {
+        z = widthFit(FIT.extent.rest, FIT.fill.pricing, aspect);
+      }
       break;
     case 'closing':
-      z = heightFit(FIT.extent.column, FIT.fill.closing);
+      z = heightFit(FIT.extent.column, phone ? FIT.fill.closingPhone : FIT.fill.closing);
       if (!phone) x = FIT.desktopOffsetX * visibleWidth(z, aspect);
       break;
     case 'family':

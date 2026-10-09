@@ -9,6 +9,18 @@
 // take ef.settle. The camera blends from the previous section's key (the hero) to the speed key through rig.blend,
 // which applies ef.sym. At u = 1 everything holds.
 //
+// Portrait entry (aspect below 1: phones and portrait tablets; D21.2, D22.10, polish pass 1 on the speed copy). The
+// race column sits in the right band and the copy in the left band, with the copy's right edge 12 px left of the
+// column's left edge. Two rules keep the blocks clear of the copy at every progress of the entry, which the hero key
+// cannot give: (1) the camera holds the speed key from s 0 and does not blend from the hero key, so the open stanza
+// is drawn at the column's scale and centre line (86 percent of the width); (2) the start pose is shifted sideways
+// (x only) so that its leftmost block's centre sits PHONE_START_CLEAR_PX left of the column's centre line. The shift
+// is written as shift x (1 - e) on each block, so it decays with the block's own entry and is 0 at u = 1. Every block
+// then stays right of the band edge for all u, because the lerp runs between two x values that both lie right of it
+// (settle is monotonic, and only the kireji takes anticipate, whose start is further right). This is a deviation from
+// A4 (the camera is not scrubbed on a portrait viewport), recorded for the director: A4 would keep the open stanza over
+// the notes at s 0. The 2D object layer mirrors this entry (speed-layer.ts follow) and must take the same two rules.
+//
 // The choreography draws the smear (smear: true) and sets the depth of field from dof. Its focus is the speed key's
 // distance from the z = 0 plane at the current size (31.95 bu at 1440 by 900, 51.12 bu on a phone; D22.2), so this
 // layer sets no depth of field (D23.12). The breath starts T.hold after u reaches 1 (act I speed, 3D layer), whatever
@@ -32,7 +44,7 @@
 // reduced motion there are no lifts, no taps and no breath.
 import type { BreathMode } from '../../gl/blocks/blocks';
 import { BLOCK_COUNT, formationFor, lerpPose, staggerPosition, type Pose } from '../../gl/blocks/formations';
-import { cameraKey } from '../../gl/rig';
+import { FIT, cameraKey } from '../../gl/rig';
 import type { CameraKey, GLWorld, KeyName, SectionGL, SectionGLContext, SectionGLHandle } from '../../gl/section-gl';
 import { ef } from '../../core/ease';
 import { env } from '../../core/env';
@@ -50,6 +62,11 @@ const SCRUB = { total: 0.35, lead: 0.1 } as const;
 const BREATH: BreathMode = { amplitude: 0.012, phase: 'zero' };
 /** The lift of the hovered or tapped block, in bu: along y on a landscape viewport, along x on a phone (D22.10). */
 const LIFT_BU = 0.15;
+/**
+ * Portrait entry: the leftmost block of the start pose keeps its centre this many CSS px left of the column's centre line,
+ * so its left edge clears the band edge (the column's left edge less 12 px, D21.2) by 6 px at every size (header).
+ */
+const PHONE_START_CLEAR_PX = 6;
 /** Depth of field bokeh scale in px (direction-3d 10.8). The choreography applies it with the focus from dof (D22.2). */
 const DOF_BOKEH = 1.2;
 /** Largest travel, in CSS px, between a touch down and its up that still counts as a tap. */
@@ -102,6 +119,8 @@ function setup(world: GLWorld): SectionGLHandle {
   const sentY = new Float64Array(BLOCK_COUNT);
   /** The damped sideways lift of each block on a portrait viewport. It is added to the block's pose x. */
   const liftX = new Float64Array(BLOCK_COUNT);
+  /** The sideways amount last added to each block's pose x by writePoses: the lift plus the portrait start shift. */
+  const sideX = new Float64Array(BLOCK_COUNT);
   /** The block under a fine pointer at rest, or -1. update() sets it. */
   let hovered = -1;
   /** The block lifted by a tap, or -1. The touch listener sets it, and update() draws it. */
@@ -139,18 +158,35 @@ function setup(world: GLWorld): SectionGLHandle {
     return -1;
   }
 
-  /** Writes the 17 race poses for race progress u, from the previous section's exit pose, plus each block's sideways lift. */
-  function writePoses(u: number, prev: SectionGL | null, portrait: boolean): void {
+  /**
+   * The portrait start shift (header, rule 2): the x that moves the leftmost block of the start pose to PHONE_START_CLEAR_PX
+   * left of the column's centre line, seen from the speed camera at distance dist in a viewport height px tall.
+   */
+  function startShift(start: readonly Pose[], dist: number, height: number): number {
+    let leftmost = Number.POSITIVE_INFINITY;
+    for (const pose of start) leftmost = Math.min(leftmost, pose.p[0]);
+    // Pixels per bu at the race plane: the camera sees 2 dist tan(fov / 2) bu over the viewport height.
+    const pxPerBu = height / (2 * dist * FIT.tanHalfFov);
+    return -PHONE_START_CLEAR_PX / pxPerBu - leftmost;
+  }
+
+  /**
+   * Writes the 17 race poses for race progress u, from the previous section's exit pose, plus each block's sideways lift
+   * and, on a portrait viewport, the start shift that decays with the block's entry (header, rule 2).
+   */
+  function writePoses(u: number, prev: SectionGL | null, portrait: boolean, dist: number, height: number): void {
     const from: readonly Pose[] =
       prev === null || prev.id === 'hero' ? exit : formationFor(prev.exitFormation ?? prev.formation, portrait);
     const to = formationFor('race', portrait);
+    const shift = portrait ? startShift(from, dist, height) : 0;
     for (let i = 0; i < BLOCK_COUNT; i += 1) {
       const k = RACE_POSITION[i];
       const q = scrubLocal(k, BLOCK_COUNT, u, SCRUB);
       const e = k === 0 ? ef.anticipate(q) : ef.settle(q);
       const pose = poses[i];
       lerpPose(from[i], to[i], e, pose);
-      pose.p[0] += liftX[i];
+      sideX[i] = liftX[i] + shift * (1 - e);
+      pose.p[0] += sideX[i];
     }
     blocks.setPoses(poses);
   }
@@ -162,18 +198,19 @@ function setup(world: GLWorld): SectionGLHandle {
     hovered = -1;
     tapped = -1;
     pendingTap = null;
-    // The y lift goes back through blocks.setLift and damps out there. The sideways lift is part of the poses this layer
-    // wrote last, and this layer no longer updates, so it comes out of those poses here. The next section writes its
-    // own poses in the same frame.
+    // The y lift goes back through blocks.setLift and damps out there. The sideways lift and the portrait start shift are
+    // part of the poses this layer wrote last (sideX), and this layer no longer updates, so they come out of those poses
+    // here. The next section writes its own poses in the same frame.
     let shifted = false;
     for (let i = 0; i < BLOCK_COUNT; i += 1) {
-      if (liftX[i] !== 0) {
-        poses[i].p[0] -= liftX[i];
+      if (sideX[i] !== 0) {
+        poses[i].p[0] -= sideX[i];
         shifted = true;
       }
     }
     if (shifted) blocks.setPoses(poses);
     liftX.fill(0);
+    sideX.fill(0);
     for (let i = 0; i < BLOCK_COUNT; i += 1) {
       sentY[i] = 0;
       blocks.setLift(i, 0);
@@ -222,7 +259,9 @@ function setup(world: GLWorld): SectionGLHandle {
       // Reduced motion completes the race at once (direction-act1 speed, reduced motion; the choreography cross-fades).
       const u = rm ? 1 : clamp01(progress / RACE_SPAN);
       const to = keyOf('speed');
-      const from = keyOf(ctx.prev === null ? 'hero' : ctx.prev.key);
+      // On a portrait viewport the camera is the speed key from s 0 (header, rule 1). The hero key would put the open stanza
+      // over the notes at s 0, so the entry does not blend from it there.
+      const from = portrait ? to : keyOf(ctx.prev === null ? 'hero' : ctx.prev.key);
       const rest = u >= 1 && !rm;
       atRest = rest;
 
@@ -251,7 +290,7 @@ function setup(world: GLWorld): SectionGLHandle {
         liftX[i] = damp(liftX[i], portrait ? want : 0, a);
       }
 
-      writePoses(u, ctx.prev, portrait);
+      writePoses(u, ctx.prev, portrait, to.position[2], size.height);
       rig.blend(from, to, u);
 
       // The breath starts T.hold after the race completes (act I speed). It is requested only when its state changes, so
@@ -273,6 +312,7 @@ function setup(world: GLWorld): SectionGLHandle {
         pendingTap = null;
         breathSent = BREATH_UNSET;
         liftX.fill(0);
+        sideX.fill(0);
         for (let i = 0; i < BLOCK_COUNT; i += 1) {
           sentY[i] = 0;
           blocks.setLift(i, 0);

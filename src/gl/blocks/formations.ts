@@ -134,9 +134,12 @@ function family(stanzaPoses: readonly Pose[]): Pose[] {
   return stanzaPoses.map((q): Pose => pose(q.p[0] + FAMILY_STATION_X[3], q.p[1], q.p[2], 1, 0));
 }
 
+/** The y of the rest row in bu (section 11.9). The pricing camera frames this row. */
+export const REST_Y = -1.45;
+
 /** Rest (section 11.9): one line of 17 at pitch 0.52 and scale 0.60, centred on x 0 under the pricing copy. */
 function rest(): Pose[] {
-  return Array.from({ length: BLOCK_COUNT }, (_, i) => pose((i - (BLOCK_COUNT - 1) / 2) * 0.52, -1.45, 0, 0.6, 0));
+  return Array.from({ length: BLOCK_COUNT }, (_, i) => pose((i - (BLOCK_COUNT - 1) / 2) * 0.52, REST_Y, 0, 0.6, 0));
 }
 
 /** Column block size in bu (section 11.10): 0.22 bu across, so the column scale is 0.22 / 0.70. */

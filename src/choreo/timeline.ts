@@ -10,7 +10,8 @@
 //   2. Ink bleed (D10, direction-3d 10.10, D25.1). Each boundary's raw position is eased with sym and smoothed with
 //      T.beat7. The eased values go into ctx.bleed before any handle call (D22.8) and set the block mix m. They do not
 //      place the ink front. Its mean line is the screen y of the lower section's top edge, computed each frame from
-//      the cached geometry and scrollState.y with no easing, and its wave is capped by the lower section's top padding.
+//      the cached geometry and scrollState.y with no easing, and its wave is capped at half the room the lower section
+//      leaves above its first text block (D27.2), so the wave never reaches text.
 //      The background draws the front; with no front on screen, the ground takes the theme of the section it lies in.
 //   2b. Text theme (D23.1, D25.1). theme-front sets data-theme on each data-theme-block from the same front lines: a
 //      block takes the lower section's theme when its centre is below the boundary's front line, else the upper
@@ -47,7 +48,7 @@ import { frontParam } from '../gl/background/background';
 import { formationFor } from '../gl/blocks/formations';
 import { cameraKey } from '../gl/rig';
 import type { CameraKey, GLWorld, SectionGL, SectionGLContext, SectionGLHandle } from '../gl/section-gl';
-import { createThemeFront, type ThemeBlockState } from './theme-front';
+import { THEME_BLOCK_ATTR, createThemeFront, type ThemeBlockState } from './theme-front';
 
 /** The state the harness and QA read. A copy, taken on request. */
 export interface ChoreoSnapshot {
@@ -111,12 +112,14 @@ const BOUNDARY_2: SectionId = 'pricing';
 /** A bleed or smear value this close to its target is taken as arrived. */
 const ARRIVE = 1e-3;
 /**
- * The ink front's wave (D25.1): its amplitude is at most WAVE_VH of the canvas height (the amplitude the shader drew
- * before D25.1) and at most WAVE_PAD_SHARE of the lower section's top padding, which keeps it under the 60 % the act
- * allows, so no text block can sit on the other section's ground.
+ * The ink front's wave (D25.1, D27.2): its amplitude is at most WAVE_VH of the canvas height (the amplitude the shader
+ * drew before D25.1) and at most WAVE_INSET_SHARE of the lower section's text inset, the distance from its top to its
+ * first text block. Half of that room keeps the wave clear of every text block of the lower section, so no text can
+ * sit on the other section's ground. Capabilities has no top padding, so its inset (5 svh to its head) is what sets
+ * its wave; a cap taken from the padding alone would give 0 and a straight edge.
  */
 const WAVE_VH = 0.06;
-const WAVE_PAD_SHARE = 0.5;
+const WAVE_INSET_SHARE = 0.5;
 
 /** Smear strength reaches 1 at this scroll speed, in px/s (direction-3d 10.11). */
 const SMEAR_FULL_SPEED = 2400;
@@ -131,8 +134,11 @@ interface Geo {
   top: number;
   /** Height, in CSS px. */
   height: number;
-  /** The computed padding-top, in CSS px, read once per layout (D25.1: it caps the wave of a front). */
-  padTop: number;
+  /**
+   * The text inset, in CSS px, read once per layout: the distance from the section's top to its highest text block
+   * (a data-theme-block), or its padding-top when it has none (D27.2: it caps the wave of a front).
+   */
+  textInset: number;
 }
 
 interface Slot {
@@ -151,6 +157,21 @@ function clamp01(v: number): number {
 function pxOf(value: string): number {
   const n = Number.parseFloat(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * The distance in CSS px from a section's top (sectionTop, in document coordinates) to its highest rendered text block,
+ * a [data-theme-block] inside it. A section with no text block gives its computed padding-top (D27.2).
+ */
+function textInsetOf(section: HTMLElement, sectionTop: number): number {
+  let inset = Number.POSITIVE_INFINITY;
+  for (const el of section.querySelectorAll<HTMLElement>(`[${THEME_BLOCK_ATTR}]`)) {
+    if (el.getClientRects().length === 0) continue; // not rendered: no text to keep clear
+    const top = el.getBoundingClientRect().top + window.scrollY - sectionTop;
+    if (top < inset) inset = top;
+  }
+  if (Number.isFinite(inset)) return Math.max(0, inset);
+  return pxOf(getComputedStyle(section).paddingTop);
 }
 
 /** Progress of a section from its top and height in viewport heights (topVh, heightVh). */
@@ -230,7 +251,7 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
   const geoOf = (id: SectionId): Geo => {
     const known = geos.get(id);
     if (known !== undefined) return known;
-    const created: Geo = { id, found: false, top: 0, height: 0, padTop: 0 };
+    const created: Geo = { id, found: false, top: 0, height: 0, textInset: 0 };
     geos.set(id, created);
     return created;
   };
@@ -262,12 +283,12 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
       if (el === null) {
         geo.top = 0;
         geo.height = 0;
-        geo.padTop = 0;
+        geo.textInset = 0;
       } else {
         const rect = el.getBoundingClientRect();
         geo.top = rect.top + window.scrollY;
         geo.height = rect.height;
-        geo.padTop = pxOf(getComputedStyle(el).paddingTop);
+        geo.textInset = textInsetOf(el, geo.top);
       }
     }
     cachedHeight = document.documentElement.scrollHeight;
@@ -489,9 +510,10 @@ export function initChoreo(world: GLWorld, sections: readonly SectionGL[]): { di
     const centre = H / 2;
     const side: Theme = front1 < centre && centre <= front2 ? 'ink' : 'paper';
     if (board !== 0) {
-      // The wave is capped by the lower section's top padding (D25.1). Reduced motion turns it into a plain cut in the background.
-      const lowerPad = board === 1 ? boundary1.padTop : boundary2.padTop;
-      const wave = Math.min(WAVE_VH * H, WAVE_PAD_SHARE * lowerPad);
+      // The wave is capped by the room the lower section leaves above its first text block (D25.1, D27.2). Reduced motion
+      // turns it into a plain cut in the background.
+      const lowerInset = board === 1 ? boundary1.textInset : boundary2.textInset;
+      const wave = Math.min(WAVE_VH * H, WAVE_INSET_SHARE * lowerInset);
       const fp = board === 1 ? pf1 : pf2;
       if (!bleedOn || bleedArg.boundary !== board || bleedArg.p !== fp || bleedArg.wave !== wave) {
         bleedArg.boundary = board;

@@ -25,7 +25,7 @@ export interface QualitySteps {
   bloomOff(): void;
   /** Sets the device-pixel-ratio cap, whatever the tier. */
   dprCap(cap: number): void;
-  /** Sets the key light shadow map size. */
+  /** Sets the shadow map size of the contact light, the only shadow caster (lighting.ts). */
   shadowMap(size: 1024): void;
 }
 
