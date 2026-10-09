@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pool water harness</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1520; overflow: hidden; font: 12px/1.35 system-ui, sans-serif; color: #e8f1f8; }
+  canvas { display: block; }
+  #ui { position: fixed; left: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; max-width: 330px; padding: 8px;
+        background: rgba(8, 18, 28, .72); border-radius: 8px; backdrop-filter: blur(4px); }
+  #ui .row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  #ui button { background: #1d3b52; color: #e8f1f8; border: 1px solid #35597a; border-radius: 5px; padding: 3px 8px; cursor: pointer; font: inherit; }
+  #ui button.on { background: #2b7cb0; }
+  #ui label { display: flex; gap: 6px; align-items: center; }
+  #ui input[type=range] { width: 120px; }
+  #hud { white-space: pre; opacity: .85; font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div class="row" id="modes"></div>
+  <div class="row" id="bodies"></div>
+  <div class="row" id="quality"></div>
+  <label>rain <input id="rain" type="range" min="0" max="1" step="0.01" value="0"></label>
+  <label>wind <input id="wind" type="range" min="0" max="1" step="0.01" value="0.3"></label>
+  <label>sun&nbsp; <input id="sun" type="range" min="0.05" max="1.2" step="0.01" value="0.75"></label>
+  <div class="row"><button id="splash">splash</button><button id="clear">clear bodies</button><button id="reset">reset water</button></div>
+  <div id="hud"></div>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { PoolWater } from '../water.js';
+import { POOL, HF, HF_DX, HF_DZ, floorY, MODES, BODY_TYPES } from '../pool-config.js';
+
+const params = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.5;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 2000000);
+camera.position.set(9.5, 4.2, 10.5);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, -0.4, 0);
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 1.5;
+controls.update();
+
+// ---- sky, sun, environment ------------------------------------------------
+const sky = new Sky(); sky.scale.setScalar(450000);
+const su = sky.material.uniforms;
+su.turbidity.value = 8; su.rayleigh.value = 2.4; su.mieCoefficient.value = 0.005; su.mieDirectionalG.value = 0.75;
+scene.add(sky);
+const sun = new THREE.DirectionalLight(0xffffff, 3);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 120 });
+sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.03;
+scene.add(sun, sun.target);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const skyScene = new THREE.Scene(); const skyEnv = new Sky(); skyEnv.scale.setScalar(450000); skyScene.add(skyEnv);
+let envRT = null, sunElev = +params.get('sun') || 0.75, envDirty = true, lastEnv = 0;
+const azimuth = 2.2;
+function applySun() {
+  const dir = new THREE.Vector3(Math.cos(sunElev) * Math.cos(azimuth), Math.sin(sunElev), Math.cos(sunElev) * Math.sin(azimuth));
+  sun.position.copy(dir).multiplyScalar(60);
+  sun.target.position.set(0, 0, 0);
+  const warm = THREE.MathUtils.smoothstep(sunElev, 0.05, 0.5);
+  sun.color.setRGB(1, 0.55 + 0.45 * warm, 0.3 + 0.7 * warm);
+  sun.intensity = 3.2 * THREE.MathUtils.smoothstep(Math.sin(sunElev), 0.02, 0.35) + 0.15;
+  su.sunPosition.value.copy(dir);
+  skyEnv.material.uniforms.sunPosition.value.copy(dir);
+  for (const k of ['turbidity', 'rayleigh', 'mieCoefficient', 'mieDirectionalG']) skyEnv.material.uniforms[k].value = su[k].value;
+  envDirty = true;
+}
+function refreshEnv(force) {
+  const now = performance.now();
+  if (!envDirty || (!force && now - lastEnv < 400)) return;
+  envDirty = false; lastEnv = now;
+  const old = envRT; envRT = pmrem.fromScene(skyScene, 0, 0.1, 1000000); scene.environment = envRT.texture; if (old) old.dispose();
+}
+applySun(); refreshEnv(true);
+
+// ---- procedural tile / stone materials ----------------------------------------
+function tileTexture(base, grout, n = 8, size = 256, noise = 14) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); g.fillStyle = grout; g.fillRect(0, 0, size, size);
+  const s = size / n; let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const v = (rnd() - 0.5) * noise;
+    g.fillStyle = `rgb(${Math.round(base[0] + v)},${Math.round(base[1] + v)},${Math.round(base[2] + v)})`;
+    g.fillRect(i * s + 2, j * s + 2, s - 4, s - 4);
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8; return t;
+}
+const tileMap = tileTexture([196, 226, 238], '#9bb4c2', 8);
+const stoneMap = tileTexture([196, 176, 146], '#a8977a', 4, 256, 22);
+const water = new PoolWater({ renderer, scene, camera, sun });
+const poolMat = water.applyUnderwaterLighting(new THREE.MeshStandardMaterial({ map: tileMap, roughness: 0.32, metalness: 0 }));
+const stepMat = water.applyUnderwaterLighting(new THREE.MeshStandardMaterial({ map: tileMap, color: 0xe8f4ff, roughness: 0.4 }));
+const railMat = water.applyUnderwaterLighting(new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: 0.9, roughness: 0.22 }));
+const deckMat = new THREE.MeshStandardMaterial({ map: stoneMap, roughness: 0.8 });
+
+// ---- pool shell built from the shared floor profile ------------------------------
+const TILE = 1.0;
+function shell() {
+  const pos = [], uv = [];
+  const quad = (p0, p1, p2, p3, uvs) => {
+    for (const idx of [0, 1, 2, 0, 2, 3]) { const p = [p0, p1, p2, p3][idx]; pos.push(p[0], p[1], p[2]); uv.push(uvs[idx][0] / TILE, uvs[idx][1] / TILE); }
+  };
+  const xs = [POOL.minX, POOL.slopeStartX, POOL.slopeEndX, POOL.maxX];
+  const { minX, maxX, minZ, maxZ, deckY } = POOL;
+  for (let i = 0; i < 3; i++) {
+    const x0 = xs[i], x1 = xs[i + 1], f0 = floorY(x0), f1 = floorY(x1);
+    quad([x0, f0, minZ], [x0, f0, maxZ], [x1, f1, maxZ], [x1, f1, minZ], [[x0, minZ], [x0, maxZ], [x1, maxZ], [x1, minZ]]);
+    quad([x0, f0, minZ], [x1, f1, minZ], [x1, deckY, minZ], [x0, deckY, minZ], [[x0, f0], [x1, f1], [x1, deckY], [x0, deckY]]);
+    quad([x1, f1, maxZ], [x0, f0, maxZ], [x0, deckY, maxZ], [x1, deckY, maxZ], [[x1, f1], [x0, f0], [x0, deckY], [x1, deckY]]);
+  }
+  const fMin = floorY(minX), fMax = floorY(maxX);
+  quad([minX, fMin, maxZ], [minX, fMin, minZ], [minX, deckY, minZ], [minX, deckY, maxZ], [[maxZ, fMin], [minZ, fMin], [minZ, deckY], [maxZ, deckY]]);
+  quad([maxX, fMax, minZ], [maxX, fMax, maxZ], [maxX, deckY, maxZ], [maxX, deckY, minZ], [[minZ, fMax], [maxZ, fMax], [maxZ, deckY], [minZ, deckY]]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.computeVertexNormals();
+  return g;
+}
+const poolMesh = new THREE.Mesh(shell(), poolMat); poolMesh.receiveShadow = true; poolMesh.castShadow = false; scene.add(poolMesh);
+
+const slabs = [
+  [POOL.minX - 7, POOL.minX - 0.005, POOL.minZ - 7, POOL.maxZ + 7], [POOL.maxX + 0.005, POOL.maxX + 7, POOL.minZ - 7, POOL.maxZ + 7],
+  [POOL.minX - 0.005, POOL.maxX + 0.005, POOL.minZ - 7, POOL.minZ - 0.005], [POOL.minX - 0.005, POOL.maxX + 0.005, POOL.maxZ + 0.005, POOL.maxZ + 7],
+];
+for (const [x0, x1, z0, z1] of slabs) {
+  const g = new THREE.BoxGeometry(x1 - x0, 0.75, z1 - z0);
+  const uvA = g.attributes.uv; for (let i = 0; i < uvA.count; i++) uvA.setXY(i, uvA.getX(i) * (x1 - x0) / 1.2, uvA.getY(i) * (z1 - z0) / 1.2);
+  const m = new THREE.Mesh(g, deckMat); m.position.set((x0 + x1) / 2, POOL.deckY - 0.375, (z0 + z1) / 2);
+  m.receiveShadow = true; m.castShadow = true; scene.add(m);
+}
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x4f7040, roughness: 1 });
+for (const [x0, x1, z0, z1] of [[-300, POOL.minX - 7, -300, 300], [POOL.maxX + 7, 300, -300, 300], [POOL.minX - 7, POOL.maxX + 7, -300, POOL.minZ - 7], [POOL.minX - 7, POOL.maxX + 7, POOL.maxZ + 7, 300]]) {
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0).rotateX(-Math.PI / 2), groundMat);
+  g.position.set((x0 + x1) / 2, POOL.deckY - 0.05, (z0 + z1) / 2); g.receiveShadow = true; scene.add(g);
+}
+
+// submerged steps + a ladder to exercise refraction and absorption
+const steps = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.75, 1.1), stepMat);
+steps.position.set(POOL.minX + 0.7, -0.4 - 0.375, POOL.maxZ - 0.55); steps.castShadow = steps.receiveShadow = true; scene.add(steps);
+for (const dx of [0, 0.42]) {
+  const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.9, 12), railMat);
+  rail.position.set(-3 + dx, -0.45, POOL.minZ + 0.12); rail.castShadow = true; scene.add(rail);
+}
+for (const y of [-0.8, -0.45, -0.1]) {
+  const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.42, 10).rotateZ(Math.PI / 2), railMat);
+  rung.position.set(-2.79, y, POOL.minZ + 0.12); rung.castShadow = true; scene.add(rung);
+}
+// resort props: parasols, loungers, a far wall (for reflections and shadows)
+function parasol(x, z, col) {
+  const g = new THREE.Group();
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.3, 10), railMat); pole.position.y = 1.15 + POOL.deckY; g.add(pole);
+  const top = new THREE.Mesh(new THREE.ConeGeometry(1.5, 0.55, 24, 1, true), new THREE.MeshStandardMaterial({ color: col, roughness: 0.8, side: THREE.DoubleSide }));
+  top.position.y = 2.55 + POOL.deckY; top.castShadow = true; g.add(top);
+  g.position.set(x, 0, z); scene.add(g);
+}
+parasol(-10.5, 3.2, 0xe8e0d0); parasol(10.5, -3.0, 0xe85a4f); parasol(0, 7.6, 0x2f9fb8);
+for (const [x, z] of [[-6, 6.2], [-4.4, 6.2], [5, -6.2], [6.6, -6.2]]) {
+  const l = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.28, 0.7), new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.6 }));
+  l.position.set(x, POOL.deckY + 0.14, z); l.castShadow = l.receiveShadow = true; scene.add(l);
+}
+const farWall = new THREE.Mesh(new THREE.BoxGeometry(46, 6, 0.6), new THREE.MeshStandardMaterial({ color: 0xe9dfcc, roughness: 0.9 }));
+farWall.position.set(0, 3, -14); farWall.castShadow = farWall.receiveShadow = true; scene.add(farWall);
+const bldg = new THREE.Mesh(new THREE.BoxGeometry(8, 9, 6), new THREE.MeshStandardMaterial({ color: 0xcfc3a8, roughness: 0.85 }));
+bldg.position.set(-16, 4.5, 6); bldg.castShadow = bldg.receiveShadow = true; scene.add(bldg);
+
+// ---- synthetic heights for 'particles' mode ------------------------------------------
+const synth = new Float32Array(HF.nx * HF.nz);
+const bumps = [];
+water.externalDisturb = (x, z, r, s) => {
+  (window.__extCalls ||= []).push({ x, z, r, s, t: performance.now() });
+  if (window.__extCalls.length > 200) window.__extCalls.shift();
+  bumps.push({ x, z, r: Math.max(r, 0.15), s: -s, t: clock.elapsedTime });
+  if (bumps.length > 60) bumps.shift();
+};
+function fillSynth(t) {
+  for (let j = 0; j < HF.nz; j++) {
+    const z = POOL.minZ + (j + 0.5) * HF_DZ;
+    for (let i = 0; i < HF.nx; i++) {
+      const x = POOL.minX + (i + 0.5) * HF_DX;
+      let h = 0.025 * Math.sin(0.9 * x + 1.7 * t) + 0.018 * Math.sin(1.4 * z - 2.3 * t + 1) + 0.012 * Math.sin(2.1 * (x + z) + 3 * t);
+      for (const b of bumps) {
+        const age = t - b.t; if (age > 4) continue;
+        const d = Math.hypot(x - b.x, z - b.z);
+        h += b.s * Math.exp(-age * 0.8) * Math.exp(-((d - age * 1.6) ** 2) / (b.r * b.r * 2 + 0.05)) * Math.cos(age * 2) * 0.6;
+      }
+      synth[i + j * HF.nx] = h;
+    }
+  }
+  return synth;
+}
+
+// ---- UI -----------------------------------------------------------------------------------
+const el = (id) => document.getElementById(id);
+function button(parent, label, fn, cls) { const b = document.createElement('button'); b.textContent = label; b.onclick = fn; if (cls) b.dataset.k = cls; parent.appendChild(b); return b; }
+const modeBtns = MODES.map(m => button(el('modes'), m, () => setMode(m), m));
+function setMode(m) {
+  water.setMode(m);
+  if (m !== 'particles') water.setExternalHeights(null);
+  modeBtns.forEach(b => b.classList.toggle('on', b.dataset.k === m));
+}
+BODY_TYPES.forEach(t => button(el('bodies'), t, () => water.spawnBody(t)));
+const qBtns = ['low', 'medium', 'high'].map(q => button(el('quality'), q, () => setQ(q), q));
+function setQ(q) { water.setQuality(q); qBtns.forEach(b => b.classList.toggle('on', b.dataset.k === q)); }
+el('rain').oninput = e => water.setRain(+e.target.value);
+el('wind').oninput = e => water.setWind(+e.target.value);
+el('sun').value = sunElev; el('sun').oninput = e => { sunElev = +e.target.value; applySun(); };
+el('splash').onclick = () => water.disturb((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 4, 0.45, 0.25);
+el('clear').onclick = () => water.clearBodies();
+el('reset').onclick = () => water.reset();
+addEventListener('keydown', e => {
+  const k = e.key; if (k >= '1' && k <= '3') setMode(MODES[+k - 1]);
+  const bi = 'bridmc'.indexOf(k); if (k === 'b') water.spawnBody('ball'); if (k === 'r') water.spawnBody('ring'); if (k === 'd') water.spawnBody('duck');
+  if (k === 'm') water.spawnBody('mattress'); if (k === 'c') water.spawnBody('cannonball');
+  if (k === 'x') rainToggle();
+});
+function rainToggle() { const v = water.rain > 0 ? 0 : 0.8; el('rain').value = v; water.setRain(v); }
+
+// ---- pointer interaction ----------------------------------------------------------------------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+let down = false, grabbed = false, lastHit = null;
+function setRay(e) { const r = renderer.domElement.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); }
+renderer.domElement.addEventListener('pointerdown', e => {
+  setRay(e); down = true;
+  grabbed = water.grab(ray);
+  if (grabbed) { controls.enabled = false; plane.constant = -0.25; }
+  else if (ray.ray.intersectPlane(plane.set(new THREE.Vector3(0, 1, 0), 0), hit)) { water.disturb(hit.x, hit.z, 0.4, 0.08); lastHit = hit.clone(); }
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!down) return; setRay(e);
+  if (grabbed) { if (ray.ray.intersectPlane(plane.set(new THREE.Vector3(0, 1, 0), -0.25), hit)) water.dragTo(hit); }
+  else if (!controls.enabled || true) { if (ray.ray.intersectPlane(plane.set(new THREE.Vector3(0, 1, 0), 0), hit) && lastHit) { const d = hit.distanceTo(lastHit); if (d > 0.1) { water.disturb(hit.x, hit.z, 0.3, Math.min(0.12, 0.02 + d * 0.15)); lastHit.copy(hit); } } }
+});
+addEventListener('pointerup', () => { if (grabbed) water.release(); down = false; grabbed = false; controls.enabled = true; lastHit = null; });
+
+// ---- main loop ------------------------------------------------------------------------------------
+const clock = new THREE.Clock();
+let frames = 0, fpsT = performance.now(), fps = 0;
+const api = { water, renderer, scene, camera, THREE, controls, sun, paused: false, auto: true, synth, setMode, setQ, applySun,
+  setSun(v) { sunElev = v; el('sun').value = v; applySun(); refreshEnv(true); },
+  renderOnce() { refreshEnv(true); water.beforeRender(renderer, scene, camera); renderer.render(scene, camera); },
+  stepSim(seconds, dt = 1 / 60) { const n = Math.round(seconds / dt); for (let i = 0; i < n; i++) { if (water.mode === 'particles') water.setExternalHeights(fillSynth(clock.elapsedTime + i * dt)); water.update(dt, clock.elapsedTime + i * dt); } } };
+window.__pool = api;
+setMode(params.get('mode') || 'waves'); setQ(params.get('q') || 'medium');
+if (params.get('wind')) { el('wind').value = params.get('wind'); water.setWind(+params.get('wind')); } else water.setWind(+el('wind').value);
+if (params.get('rain')) { el('rain').value = params.get('rain'); water.setRain(+params.get('rain')); }
+if (params.get('bodies')) for (const t of params.get('bodies').split(',')) water.spawnBody(t);
+
+function frame() {
+  const dt = Math.min(clock.getDelta(), 1 / 30);
+  if (api.auto && !api.paused) {
+    if (water.mode === 'particles') water.setExternalHeights(fillSynth(clock.elapsedTime));
+    water.update(dt, clock.elapsedTime);
+    refreshEnv();
+    water.beforeRender(renderer, scene, camera);
+    renderer.render(scene, camera);
+    controls.update();
+  }
+  frames++;
+  const now = performance.now();
+  if (now - fpsT > 1000) {
+    fps = frames * 1000 / (now - fpsT); frames = 0; fpsT = now;
+    const s = water.stats();
+    el('hud').textContent = `fps ${fps.toFixed(0)}  q:${water.quality}  mode:${water.mode}\nmax|h| ${(s.maxAbs * 1000).toFixed(1)} mm  mean ${(s.mean * 1000).toFixed(3)} mm\nbodies ${s.bodies}  spray ${s.sprayCount}`;
+  }
+}
+renderer.setAnimationLoop(frame);
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+</script>
+</body>
+</html>
