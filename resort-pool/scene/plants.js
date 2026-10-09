@@ -4,7 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { POOL } from '../pool-config.js';
 import { TERRACE, GROUND_Y } from './layout.js';
 import { makeFoliage, makeThatch } from './textures2.js';
-import { makeStone, setAniso } from './textures.js';
+import { makeStone, setAniso, shared } from './textures.js';
 import { mulberry32, fbm } from './noise.js';
 import { merge, xform, scaleUV, metricBox } from './geo.js';
 import { terrainH } from './landscape.js';
@@ -28,11 +28,11 @@ export function buildPlants({ aniso = 8 }) {
   const group = new THREE.Group(); group.name = 'plants';
   const colliders = [];
   const rnd = mulberry32(77);
-  const fol = makeFoliage({ seed: 6 }); setAniso(fol, aniso);
-  const fol2 = makeFoliage({ seed: 16, hue: -10, count: 4200 }); setAniso(fol2, aniso);
+  const fol = shared('foliage', () => makeFoliage({ seed: 6 })); setAniso(fol, aniso);
+  const fol2 = fol;
   const hedgeMat = new THREE.MeshStandardMaterial({ map: fol.map, normalMap: fol.normal, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.78, envMapIntensity: 0.5 });
-  const bushMat = new THREE.MeshStandardMaterial({ map: fol2.map, normalMap: fol2.normal, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.75, envMapIntensity: 0.5 });
-  const stone = makeStone({ seed: 41, base: [214, 200, 176], tintVar: 0.04 }); setAniso(stone, aniso);
+  const bushMat = new THREE.MeshStandardMaterial({ color: 0xe6f4d8, map: fol2.map, normalMap: fol2.normal, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.75, envMapIntensity: 0.5 });
+  const stone = shared('deckStone', () => makeStone({ seed: 11, tintVar: 0.03 })); setAniso(stone, aniso);
   const stoneMat = new THREE.MeshStandardMaterial({ map: stone.map, roughnessMap: stone.rough, roughness: 1, normalMap: stone.normal, envMapIntensity: 0.4 });
   const potMat = new THREE.MeshStandardMaterial({ color: 0xb4623c, roughness: 0.8, envMapIntensity: 0.3 });
 

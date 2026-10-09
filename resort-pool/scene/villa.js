@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { POOL } from '../pool-config.js';
 import { VILLA, TERRACE } from './layout.js';
-import { makePlaster, makeWood, setAniso, retile } from './textures.js';
+import { makePlaster, makeWood, setAniso, retile, shared } from './textures.js';
 import { makeRoof, makeThatch } from './textures2.js';
 import { metricBox, merge, xform } from './geo.js';
 
@@ -34,8 +34,8 @@ export function buildVilla({ aniso = 8 }) {
   const V = VILLA, front = V.maxZ;
   const plaster = makePlaster({ seed: 8 }); setAniso(plaster, aniso);
   const plasterMat = new THREE.MeshStandardMaterial({ map: plaster.map, normalMap: plaster.normal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 0.92, envMapIntensity: 0.4 });
-  const teak = makeWood({ seed: 23, base: [118, 78, 46] }); setAniso(teak, aniso);
-  const woodMat = new THREE.MeshStandardMaterial({ map: teak.map, roughnessMap: teak.rough, roughness: 1, normalMap: teak.normal, envMapIntensity: 0.4 });
+  const teak = shared('teak', () => makeWood({ seed: 5 })); setAniso(teak, aniso);
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x8a6a54, map: teak.map, roughnessMap: teak.rough, roughness: 1, normalMap: teak.normal, envMapIntensity: 0.4 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x181410, roughness: 0.95 });
   const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a3135, metalness: 0.7, roughness: 0.4, envMapIntensity: 0.9 });
   const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x24444c, roughness: 0.04, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 2.2 });
@@ -96,7 +96,7 @@ export function buildVilla({ aniso = 8 }) {
   );
   for (let i = 0; i < 9; i++) colliders.push(new THREE.Box3(new THREE.Vector3(-16.2 + i * 4, -1, front + ox - 0.65), new THREE.Vector3(-15.8 + i * 4, FL + gfH, front + ox - 0.25)));
   void TERRACE;
-  return { group, colliders };
+  return { group, colliders, glassMat };
 }
 
 // Thatched palapa with a small bar, on the sea side of the terrace.
@@ -106,8 +106,8 @@ export function buildPalapa({ aniso = 8, cx = 14.4, cz = -6.8 }) {
   const thatch = makeThatch(); setAniso(thatch, aniso);
   const roofTex = { map: retile(thatch.map, 8, 2.4), normal: retile(thatch.normal, 8, 2.4) };
   const thatchMat = new THREE.MeshStandardMaterial({ map: roofTex.map, normalMap: roofTex.normal, normalScale: new THREE.Vector2(1.1, 1.1), roughness: 1, side: THREE.DoubleSide, envMapIntensity: 0.3 });
-  const teak = makeWood({ seed: 29, base: [120, 80, 48] }); setAniso(teak, aniso);
-  const woodMat = new THREE.MeshStandardMaterial({ map: teak.map, roughnessMap: teak.rough, roughness: 1, normalMap: teak.normal, envMapIntensity: 0.4 });
+  const teak = shared('teak', () => makeWood({ seed: 5 })); setAniso(teak, aniso);
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x8a6a54, map: teak.map, roughnessMap: teak.rough, roughness: 1, normalMap: teak.normal, envMapIntensity: 0.4 });
   const R = 3.4, H = 2.5, postH = 2.55;
   const cone = new THREE.Mesh(new THREE.ConeGeometry(R, H, 32, 1, true), thatchMat);
   cone.position.y = postH + H / 2; cone.castShadow = true; cone.receiveShadow = true; group.add(cone);
@@ -131,5 +131,5 @@ export function buildPalapa({ aniso = 8, cx = 14.4, cz = -6.8 }) {
   const colliders = [new THREE.Box3(new THREE.Vector3(cx - R, FL + postH - 0.4, cz - R), new THREE.Vector3(cx + R, FL + postH + H + 1, cz + R)),
     new THREE.Box3(new THREE.Vector3(cx - 1.4, -1, cz - 0.35), new THREE.Vector3(cx + 1.4, FL + 1.1, cz + 0.55))];
   for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.3; colliders.push(new THREE.Box3(new THREE.Vector3(cx + Math.cos(a) * 2.75 - 0.15, -1, cz + Math.sin(a) * 2.75 - 0.15), new THREE.Vector3(cx + Math.cos(a) * 2.75 + 0.15, FL + postH, cz + Math.sin(a) * 2.75 + 0.15))); }
-  return { group, colliders };
+  return { group, colliders, lampMat };
 }

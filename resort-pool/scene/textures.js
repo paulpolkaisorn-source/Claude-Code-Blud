@@ -3,6 +3,10 @@
 import * as THREE from 'three';
 import { mulberry32, hash2, fbm, vnoise, smooth, mix } from './noise.js';
 
+const _cache = new Map();
+// Build a texture set once and share it between modules (generation is the slow part of start-up).
+export function shared(key, make) { if (!_cache.has(key)) _cache.set(key, make()); return _cache.get(key); }
+
 export function cv(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
 // UV units are meters for most of the shell/deck geometry, so repeat = 1 / patch size.

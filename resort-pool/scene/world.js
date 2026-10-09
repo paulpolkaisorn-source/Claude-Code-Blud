@@ -17,9 +17,11 @@ const PALMS = [
 
 export function buildWorld({ scene, water, renderer, onProgress = () => {} }) {
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const colliders = [], updaters = [], extras = {};
+  const colliders = [], updaters = [], extras = {}, timings = {};
+  let t0 = performance.now();
   const add = (mod, name) => {
     if (!mod) return;
+    timings[name] = Math.round(performance.now() - t0); t0 = performance.now();
     scene.add(mod.group);
     if (mod.colliders) colliders.push(...mod.colliders);
     if (mod.update) updaters.push(mod.update);
@@ -35,7 +37,7 @@ export function buildWorld({ scene, water, renderer, onProgress = () => {} }) {
   add(buildPlants({ aniso }), 'plants');
   add(buildPalms({ aniso }, PALMS), 'palms');
   return {
-    colliders, extras,
+    colliders, extras, timings,
     update(t, dt, camera) { for (const u of updaters) u(t, dt, camera); },
   };
 }

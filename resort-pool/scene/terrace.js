@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { POOL } from '../pool-config.js';
 import { COPING_W } from './shell.js';
 import { TERRACE, WOOD, GROUND_Y } from './layout.js';
-import { makeStone, makeWood, setAniso, retile } from './textures.js';
+import { makeStone, makeWood, setAniso, shared } from './textures.js';
 import { metricBox } from './geo.js';
 import { addBreakup } from './breakup.js';
 
@@ -11,7 +11,7 @@ export function buildTerrace({ aniso = 8 }) {
   const group = new THREE.Group(); group.name = 'terrace';
   const colliders = [];
   const T = TERRACE, dk = POOL.deckY;
-  const stone = makeStone({ seed: 11, tintVar: 0.03 });
+  const stone = shared('deckStone', () => makeStone({ seed: 11, tintVar: 0.03 }));
   setAniso(stone, aniso);
   const deckMat = new THREE.MeshStandardMaterial({
     map: stone.map, roughnessMap: stone.rough, roughness: 1, normalMap: stone.normal, normalScale: new THREE.Vector2(0.7, 0.7), envMapIntensity: 0.5,
@@ -32,7 +32,7 @@ export function buildTerrace({ aniso = 8 }) {
   // inner wall of the hole is hidden behind the coping; nothing else to do for the pool edge
 
   // wooden sun deck raised a few centimetres above the travertine
-  const wood = makeWood({ seed: 5 });
+  const wood = shared('teak', () => makeWood({ seed: 5 }));
   setAniso(wood, aniso);
   const woodMat = new THREE.MeshStandardMaterial({ map: wood.map, roughnessMap: wood.rough, roughness: 1, normalMap: wood.normal, normalScale: new THREE.Vector2(0.8, 0.8), envMapIntensity: 0.45 });
   addBreakup(woodMat, { scale: 0.33, amount: 0.12 });

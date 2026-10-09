@@ -117,7 +117,7 @@ export class ParticleFluid {
     this.ready = false; this.busy = false; this.epoch = 0;
     this.pending = 0; this.queue = []; this.lastCall = 0; this.tight = 0; this.batchUntil = 0;
     this.simTime = 0; this.stepMs = 0; this.nParticles = 0; this.nSpray = 0; this.backlog = 0;
-    this.error = null; this.waiters = []; this.autoSync = true;
+    this.error = null; this.waiters = []; this.autoSync = true; this.rate = [];
 
     const su = { uScale: { value: 600 }, uSize: { value: 0.07 }, uColor: { value: new THREE.Color(0xf2fbff) }, uAlpha: { value: 0.85 } };
     this.spray = makePoints(MAX_SPRAY, SPRAY_VERT, SPRAY_FRAG, su, { depthWrite: false });
@@ -185,12 +185,17 @@ export class ParticleFluid {
     this.tight = (now - this.lastCall < 2) ? this.tight + 1 : 0;
     this.lastCall = now;
     if (this.tight >= 3) this.batchUntil = now + 600;
-    // A burst of step() calls (a script stepping in a tight loop) wants synchronous results,
-    // which a worker cannot give: continue on the main thread from the rest state.
-    if (this.mode === 'worker' && this.autoSync && this.tight >= 3) { this.pending += dt; this._switchToMain(); return; }
+    // A script that steps faster than real time (a tight loop, or a paced loop that outruns the
+    // clock) wants results it can read back synchronously, which a worker cannot give: continue on
+    // the main thread from the rest state. Interactive use (one step per frame, real dt) never trips this.
+    const win = this.rate; win.push(now, dt);
+    while (win.length > 2 && now - win[0] > 400) win.splice(0, 2);
+    let simSum = 0; for (let i = 1; i < win.length; i += 2) simSum += win[i];
+    const fast = win.length >= 24 && simSum / Math.max(0.05, (now - win[0]) / 1000 + 0.01) > 1.6;
+    if (this.mode === 'worker' && this.autoSync && (this.tight >= 3 || fast)) { this.pending += dt; this._switchToMain(); return; }
     const batch = now < this.batchUntil;
     this.pending += dt;
-    if (!batch && this.pending > 0.1) this.pending = 0.1;
+    if (!batch && this.pending > 0.35) this.pending = 0.35;
     if (this.pending > 60) this.pending = 60;
     if (this.mode === 'main') this._stepMain(batch);
     else if (this.mode === 'worker') this._dispatch();
@@ -217,7 +222,7 @@ export class ParticleFluid {
   _spawn() {
     if (this.worker) return true;
     try {
-      const src = `${FlipSim.toString()}\n${WORKER_GLUE}`;
+      const src = `const FlipSim = (${FlipSim.toString()});\n${WORKER_GLUE}`;
       this.blobUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
       this.worker = new Worker(this.blobUrl);
       this.worker.onmessage = (e) => this._onMessage(e.data);
@@ -254,7 +259,7 @@ export class ParticleFluid {
   }
 
   _mainInit() {
-    this.sim = new FlipSim({ ...this.cfg, settleSteps: 40 });
+    this.sim = new FlipSim(this.cfg);
     this.mode = 'main'; this.ready = true; this.busy = false;
     this.nParticles = this.sim.n;
     this._readMain();
@@ -306,7 +311,7 @@ export class ParticleFluid {
     this.busy = true;
     this.worker.postMessage({
       t: 'adv', dt, imp, epoch: this.epoch, all: this.showAll,
-      budget: batch ? 150 : 22, maxBacklog: batch ? 1e9 : 0.1,
+      budget: batch ? 150 : 22, maxBacklog: batch ? 1e9 : 0.35,
     }, imp ? [imp.buffer] : []);
   }
 

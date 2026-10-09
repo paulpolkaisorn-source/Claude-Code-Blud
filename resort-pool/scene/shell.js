@@ -150,5 +150,5 @@ export function buildShell({ water, aniso = 8 }) {
 
   // pass every underwater material through the water module before its first render
   for (const m of uw) water.applyUnderwaterLighting(m);
-  return { group, underwater: uw, copingMat };
+  return { group, underwater: uw, copingMat, lensMat: lens };
 }

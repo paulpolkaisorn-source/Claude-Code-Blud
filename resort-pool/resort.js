@@ -2,7 +2,7 @@
 // module and the procedural resort. Water is used only through its public API.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { POOL, MODES, BODY_TYPES } from './pool-config.js';
+import { POOL, MODES } from './pool-config.js';
 import { PoolWater } from './water.js';
 import { ParticleFluid } from './fluid.js';
 import { SkyRig } from './scene/sky.js';
@@ -18,10 +18,16 @@ const VIEWS = {
   low: { pos: [-10.8, 0.62, 5.4], target: [4, -0.2, -0.6] },
   sundeck: { pos: [1.8, 2.0, -9.9], target: [0.8, -0.3, 6] },
   aerial: { pos: [0.5, 24, 14.5], target: [0, 0, 0] },
+  terracePortrait: { pos: [-17.4, 10.4, 2.4], target: [1.5, -0.8, 0.2] },   // tall frames: look down the pool from above the hedge
 };
 
 function hasWebGL2() {
-  try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    if (!gl) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();   // free the probe context
+    return true;
+  } catch { return false; }
 }
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 
@@ -45,6 +51,15 @@ async function main() {
   const water = new PoolWater({ renderer, scene, camera, sun });
   const world = buildWorld({ scene, water, renderer });
   const fluid = new ParticleFluid({ scene });
+  // lamps, niche lights and windows warm up as the sun gets low
+  const lens = world.extras.shell.lensMat, glass = world.extras.villa.glassMat, lamps = world.extras.palapa.lampMat;
+  glass.emissive.setRGB(1, 0.62, 0.3);
+  rig.onLight.push((night) => {
+    lens.emissiveIntensity = 0.9 + 3.2 * night;
+    glass.emissiveIntensity = 0.16 * night;
+    lamps.emissiveIntensity = 0.5 + 2.4 * night;
+  });
+  for (const cb of rig.onLight) cb(rig.night);
 
   // ---- controls and camera ---------------------------------------------------------------
   const controls = new OrbitControls(camera, canvas);
@@ -52,27 +67,27 @@ async function main() {
   controls.minDistance = 2.2; controls.maxDistance = 46;
   controls.maxPolarAngle = Math.PI * 0.497;
   controls.screenSpacePanning = false; controls.rotateSpeed = 0.6; controls.zoomSpeed = 0.8; controls.panSpeed = 0.7;
+  controls.listenToKeyEvents(canvas); controls.keyPanSpeed = 12;   // arrow keys pan while the canvas has focus
   controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
   controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let tween = null;
   const setView = (name, instant) => {
-    const v = VIEWS[name]; if (!v) return;
+    const portrait = camera.aspect < 0.9;
+    const v = VIEWS[name === 'terrace' && portrait ? 'terracePortrait' : name]; if (!v) return;
     const to = { pos: new THREE.Vector3(...v.pos), target: new THREE.Vector3(...v.target) };
-    if (camera.aspect < 1) to.pos.sub(to.target).multiplyScalar(1 + (1 / camera.aspect - 1) * 0.5).add(to.target);  // portrait: stand back
+    if (portrait && name !== 'terrace' && name !== 'aerial') to.pos.sub(to.target).multiplyScalar(Math.min(1.35, 1 + (1 / camera.aspect - 1) * 0.3)).add(to.target);
     if (instant || reduced.matches) { camera.position.copy(to.pos); controls.target.copy(to.target); controls.update(); return; }
     tween = { t0: performance.now(), dur: 1100, from: { pos: camera.position.clone(), target: controls.target.clone() }, to };
   };
-  const M = 0.42, tmpV = new THREE.Vector3();
+  const M = 0.42, tmpV = new THREE.Vector3(), boxes = world.colliders;
+  const inside = (q) => { for (const b of boxes) if (q.x > b.min.x - M && q.x < b.max.x + M && q.y > b.min.y - M && q.y < b.max.y + M && q.z > b.min.z - M && q.z < b.max.z + M) return b; return null; };
   function constrainCamera() {
     const t = controls.target, p = camera.position;
     const tx = clamp(t.x, -22, 24), ty = clamp(t.y, -1.5, 5), tz = clamp(t.z, -14, 17);
     if (tx !== t.x || ty !== t.y || tz !== t.z) { tmpV.set(tx - t.x, ty - t.y, tz - t.z); t.add(tmpV); p.add(tmpV); }
     p.x = clamp(p.x, -75, 75); p.z = clamp(p.z, -60, 60); p.y = clamp(p.y, 0.3, 140);
-    const boxes = world.colliders;
-    const inside = (q) => { for (const b of boxes) if (q.x > b.min.x - M && q.x < b.max.x + M && q.y > b.min.y - M && q.y < b.max.y + M && q.z > b.min.z - M && q.z < b.max.z + M) return b; return null; };
-    const hitBox = inside(p);
-    if (hitBox) {
+    if (inside(p)) {
       // nearest way out that does not land inside another (possibly adjacent) collider
       let best = null, bd = Infinity, top = 0;
       for (const b of boxes) {
@@ -98,7 +113,7 @@ async function main() {
   function resize() {
     const w = Math.max(1, canvas.clientWidth), h = Math.max(1, canvas.clientHeight);
     renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.updateProjectionMatrix();
+    camera.aspect = w / h; camera.fov = camera.aspect < 0.9 ? 52 : 46; camera.updateProjectionMatrix();
   }
   function applyQuality(level) {
     state.quality = level;
@@ -139,7 +154,7 @@ async function main() {
   });
   ui.setQualityUI(state.quality);
   new ResizeObserver(resize).observe(canvas);
-  window.addEventListener('resize', () => applyQuality(state.quality));
+  window.addEventListener('resize', () => { renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[state.quality].pr)); resize(); });
   applyQuality(state.quality);
   setView('terrace', true);
 
@@ -210,7 +225,7 @@ async function main() {
   let last = performance.now(), frames = 0, acc = 0, shown = false;
   function frame(now) {
     requestAnimationFrame(frame);
-    const dt = Math.min(1 / 30, Math.max(0, (now - last) / 1000)); last = now;
+    const real = Math.max(0, (now - last) / 1000), dt = Math.min(1 / 30, real); last = now;
     if (tween) {
       const k = clamp((now - tween.t0) / tween.dur, 0, 1), e = k * k * (3 - 2 * k);
       camera.position.lerpVectors(tween.from.pos, tween.to.pos, e);
@@ -225,7 +240,7 @@ async function main() {
     if (state.mode === 'particles') { fluid.step(dt); water.setExternalHeights(fluid.heights); }
     water.beforeRender(renderer, scene, camera);
     renderer.render(scene, camera);
-    frames++; acc += dt <= 0 ? 0 : (now - (frame.prev ?? now)) / 1000; frame.prev = now;
+    frames++; acc += real;
     if (acc >= 0.5) {
       const fps = Math.round(frames / acc);
       ui.setFps(state.mode === 'particles' && fluid.stepMs ? `${fps} fps, sim ${fluid.stepMs.toFixed(0)} ms` : `${fps} fps`);

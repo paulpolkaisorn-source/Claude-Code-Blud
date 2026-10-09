@@ -40,6 +40,8 @@ export class SkyRig {
   constructor({ renderer, scene, sun }) {
     this.renderer = renderer; this.scene = scene; this.sun = sun;
     this.hour = 9.5;
+    this.onLight = [];            // callbacks(night 0..1) so lamps and windows can glow at dusk
+    this.night = 0;
     this.sunDir = new THREE.Vector3(0, 1, 0);
     this.params = P;
     this.tune = { sunMax: 3.2, sunMin: 0.35, hemiBase: 0.3, hemiK: 0.2, envI: 0.8, fogDensity: 0.002 };
@@ -107,6 +109,8 @@ export class SkyRig {
     this.hemi.groundColor.setRGB(0.2 + 0.12 * k, 0.17 + 0.1 * k, 0.12 + 0.06 * k, THREE.LinearSRGBColorSpace);
     this.envGround.material.color.copy(this.horizon).multiplyScalar(0.45).lerp(this.hemi.groundColor, 0.5);
     this.clouds.setSun(d, this.sun.color, this.zenith, k);
+    this.night = 1 - THREE.MathUtils.smoothstep(Math.sin(el), 0.05, 0.28);
+    for (const cb of this.onLight) cb(this.night);
     this.fitShadow();
     this.envDirty = true;
     if (immediate) this.refreshEnvironment(true);
@@ -118,7 +122,7 @@ export class SkyRig {
     const world = new THREE.Matrix4().lookAt(this.sun.position, this.sun.target.position, new THREE.Vector3(0, 1, 0)).setPosition(this.sun.position);
     const toLight = world.invert();
     const box = new THREE.Box3(), p = new THREE.Vector3();
-    for (const x of [-19, 19]) for (const y of [-1.5, 7]) for (const z of [-14, 14]) box.expandByPoint(p.set(x, y, z).applyMatrix4(toLight));
+    for (const x of [-19, 19]) for (const y of [-1.5, 9.5]) for (const z of [-24, 14]) box.expandByPoint(p.set(x, y, z).applyMatrix4(toLight));
     cam.left = box.min.x - 1; cam.right = box.max.x + 1; cam.bottom = box.min.y - 1; cam.top = box.max.y + 1;
     cam.near = Math.max(0.5, -box.max.z - 6); cam.far = -box.min.z + 6;
     cam.updateProjectionMatrix();
