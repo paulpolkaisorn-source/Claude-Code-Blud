@@ -34,7 +34,7 @@ TYPEWRITER = [
     r"   _____|_____________|_____   ",
     r"  /   o   o   o   o   o   o \  ",
     r" /  [Q][W][E][R][T][Y][U][I] \ ",
-    r"/  [A][S][D][F][G][H][J][K][L] \\".replace("\\\\", "\\"),
+    "/  [A][S][D][F][G][H][J][K][L]  \\",
     r"|   [Z][X][C][V][B][N][M][,]   |",
     r"|      [________________]      |",
     r"'------------------------------'",
@@ -74,7 +74,7 @@ def paper_rows(t):
     ramp = E.RAMP
     out = []
     off = int(t * 3)
-    for j in range(5):
+    for j in range(6):
         s = ""
         for i in range(12):
             v = (i + j * 2 + off) % 18
@@ -108,8 +108,11 @@ def modem_art(t):
 
 
 def smiley_art():
-    s = bt(":-)", 5)
-    w = max(len(x) for x in s)
+    col = ["  ", "##", "  ", "  ", "##", "  "]
+    mn = ["        ", "        ", "########", "########", "        ", "        "]
+    pa = ["##   ", "  ## ", "   ##", "   ##", "  ## ", "##   "]
+    s = [col[j] + "   " + mn[j] + "   " + pa[j] for j in range(6)]
+    w = len(s[0])
     pad = (31 - w) // 2
     s = [" " * pad + x for x in s]
     face = [
@@ -190,7 +193,7 @@ def render(g, t):
         if t >= FINAL_T + 0.0:
             is_act = False
         acc = ACC[i]
-        b = 1.0 if is_act else 0.5
+        b = 1.0 if is_act else 0.6
         cx = CX[i]
         # marker
         g.put(cx - 1, TY, "[+]", acc if is_act else dim(acc, 0.6))
@@ -241,7 +244,7 @@ def render(g, t):
 
     # final line
     if t >= FINAL_T:
-        fb = bt(FINAL, 5)
+        fb = bt(FINAL, 6)
         fw = len(fb[0])
         fx = (E.COLS - fw) // 2
         n = int((t - FINAL_T) * FINAL_CPS / len(FINAL) * fw)
@@ -254,9 +257,9 @@ def render(g, t):
                     k = q / max(1, fw - 1)
                     g.set(fx + q, FY + j, ln[q], E.mix(AMB, CREAM, 0.3 + 0.6 * k))
         if n < fw and E.blink(t, 4):
-            for j in range(5):
+            for j in range(6):
                 g.set(fx + n, FY + j, "#", CREAM)
         elif n >= fw and E.blink(t, 1.5):
-            for j in range(5):
-                g.set(fx + fw + 1, FY + j, "_" if j == 4 else " ", CREAM)
-        g.center(FY + 7, "+" + "=" * 60 + "+", dim(AMB, 0.5))
+            for j in range(6):
+                g.set(fx + fw + 1, FY + j, "_" if j == 5 else " ", CREAM)
+        g.center(FY + 8, "+" + "=" * 60 + "+", dim(AMB, 0.5))

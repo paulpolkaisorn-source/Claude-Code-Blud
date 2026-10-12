@@ -17,7 +17,7 @@ RAMP_CODES = [ord(c) for c in E.RAMP]
 
 TX, TY, TW, TH = 14, 13, 98, 35        # table box
 CELLW = 15
-PX, PW = 124, 104                      # right panel
+PX, PW = 122, 112                      # right panel
 
 T_REV = 1.2          # table reveal start
 T_SWEEP = 2.4        # sweep start
@@ -42,6 +42,10 @@ for _k in range(0, 24, 3):
 EVENTS.append((0.2, "whoosh"))
 EVENTS.append((T_FIN, "chime"))
 EVENTS.sort()
+
+
+DIG = {"1": ["  #  ", " ##  ", "  #  ", "  #  ", " ### "],
+       "0": [" ### ", "#   #", "#   #", "#   #", " ### "]}
 
 
 @functools.lru_cache(maxsize=None)
@@ -157,13 +161,9 @@ def render(g, t):
         if head:
             g.put(x - 1, y, " " + label + "  ", BG, AMB)
         else:
-            g.put(x - 1, y, " ", None, bg)
+            g.put(x - 1, y, " " * 11, fg, bg)
             g.put(x, y, label[:3], num_fg, bg)
-            g.put(x + 3, y, " ", fg, bg)
             g.put(x + 4, y, label[4:], fg, bg)
-            g.put(x + 5, y, " ", fg, bg) if len(label) == 5 else g.put(x + 6, y, " ", fg, bg)
-            if len(label) == 5:
-                g.put(x + 6, y, " ", fg, bg)
 
     # ---- right panel: callout ----------------------------------------------
     cur = None
@@ -174,6 +174,8 @@ def render(g, t):
     if cur is not None:
         text = "%s = %d = %s" % (_name(cur), cur, format(cur, "07b"))
         lines = _big(text, 5)
+        if len(lines[0]) > PW - 4:
+            lines = _big(text, 4)
         lw = len(lines[0])
         lx = PX + (PW - lw) // 2
         pbox = E.mix(BG, AMB, 0.45)
@@ -199,17 +201,16 @@ def render(g, t):
                 for xx in range(x0, x0 + bwid):
                     g.set(xx, yy, " ", None, fillc)
             g.box(x0, TY + 15, bwid, 7, col, fillc)
-            big = _big(bits[b], 3)
+            big = DIG[bits[b]]
             bw2 = len(big[0])
             for j, ln in enumerate(big):
                 for i2, chh in enumerate(ln):
                     if chh != " ":
-                        g.set(x0 + (bwid - bw2) // 2 + i2, TY + 17 + j,
+                        g.set(x0 + (bwid - bw2) // 2 + i2, TY + 16 + j,
                               "#", WHT if on else AMB_D, fillc)
-            g.put(x0 + bwid // 2 - 2, TY + 22, "b%d=%2d" % (6 - b, 1 << (6 - b)), AMB_D)
+            g.put(x0 + bwid // 2 - 3, TY + 22, "b%d=%2d" % (6 - b, 1 << (6 - b)), AMB_D)
         # sum line
         parts = [str(1 << (6 - b)) for b in range(7) if bits[b] == "1"]
-        g.center_x = None
         sline = " + ".join(parts) + " = %d" % cur
         g.put(PX + (PW - len(sline)) // 2, TY + 26, sline, E.mix(AMB, WHT, 0.4))
         g.put(PX + (PW - 40) // 2, TY + 30, "each code is just a number in 7 bits", AMB_DD)
@@ -223,7 +224,7 @@ def render(g, t):
 
     # ---- caption / final ------------------------------------------------------
     if T_CAP <= t < T_FIN + 0.2:
-        lines = _big(CAP, 5)
+        lines = _big(CAP, 4)
         w = len(lines[0])
         k = (t - T_CAP) * 110
         if t > T_FIN - 0.3:

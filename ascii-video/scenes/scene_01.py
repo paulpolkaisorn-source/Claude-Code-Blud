@@ -129,7 +129,7 @@ def render(g, t):
         k = np.clip(age / 0.45, 0, 1)[..., None]
         rowg = np.clip((_R - _BY) / max(1, _BH - 1), 0, 1)[..., None]
         base = (np.array([140, 255, 170], np.float32) * (1 - rowg) + _GREEN * rowg * 0.95)
-        shimmer = 1.0 + 0.06 * np.sin(t * 4.0 + _C * 0.15 + _R * 0.3)
+        shimmer = 1.0 + 0.06 * np.sin(t * 4.0 + _C * 0.15 + _R * 0.3)[..., None]
         col = (_HEAD * (1 - k) + base * k) * shimmer
         col = col.clip(0, 255).astype(np.uint8)
         # a few locked cells use denser glyphs for texture
