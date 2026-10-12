@@ -36,8 +36,13 @@ EVENTS = ([(s, "blip") for s in STARTS]
 EVENTS.sort()
 
 # ---- static art ------------------------------------------------------------
-LOGO1 = E.big_text("M Y T O O L", 5)
-LOGO2 = E.big_text("G L Y P H", 5)
+def _spaced(text, rows, gap=2):
+    parts = [E.big_text(c, rows) for c in text]
+    return [(" " * gap).join(p[r] for p in parts) for r in range(rows)]
+
+
+LOGO1 = _spaced("MYTOOL", 5)
+LOGO2 = _spaced("GLYPH", 5)
 
 FLOWER = [
     "    _    ",
@@ -306,7 +311,7 @@ def render(g, t):
     _bg_rain(g, t)
 
     # title
-    lines = E.big_text("T O D A Y", 5)
+    lines = _spaced("TODAY", 5)
     tw = len(lines[0])
     tx = (E.COLS - tw) // 2
     reveal = int(E.ease_out(E.prog(t, 0.0, 0.9)) * tw)
