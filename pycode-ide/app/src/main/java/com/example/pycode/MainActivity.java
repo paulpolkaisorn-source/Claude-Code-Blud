@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +21,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -76,6 +78,11 @@ public class MainActivity extends Activity {
     private TextView lineNums, console, title;
     private ScrollView consoleScroll;
     private EditText stdinBox;
+    private LinearLayout root, fsBar;
+    private HorizontalScrollView tbScroll, symScroll;
+    private ScrollView editScroll;
+    private boolean fullscreen = false;
+    private float consoleSp = 11, fsSp = 14;
     private File dir, current;
     private SharedPreferences prefs;
 
@@ -137,7 +144,7 @@ public class MainActivity extends Activity {
         installSamples();
         if (!Python.isStarted()) Python.start(new AndroidPlatform(this));
 
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG);
         setContentView(root);
@@ -150,7 +157,7 @@ public class MainActivity extends Activity {
         title.setBackgroundColor(BAR);
         root.addView(title);
 
-        HorizontalScrollView tbScroll = new HorizontalScrollView(this);
+        tbScroll = new HorizontalScrollView(this);
         tbScroll.setBackgroundColor(BAR);
         tbScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout tb = new LinearLayout(this);
@@ -158,6 +165,8 @@ public class MainActivity extends Activity {
         root.addView(tbScroll);
         addTool(tb, "▶ RUN", "#4caf50", v -> runCode());
         addTool(tb, "■ STOP", "#f44336", v -> stopCode());
+        addTool(tb, "⛶ FULL RUN", "#4dd0e1", v -> { enterFullscreen(); runCode(); });
+        addTool(tb, "⛶ VIEW", "#4dd0e1", v -> enterFullscreen());
         addTool(tb, "NEW", null, v -> newFile());
         addTool(tb, "OPEN", null, v -> openFile());
         addTool(tb, "SAVE", null, v -> { save(); toast("Saved " + current.getName()); });
@@ -167,7 +176,7 @@ public class MainActivity extends Activity {
         addTool(tb, "CLEAR", null, v -> { consoleBuf.setLength(0); console.setText(""); });
 
         // editor
-        ScrollView editScroll = new ScrollView(this);
+        editScroll = new ScrollView(this);
         LinearLayout editRow = new LinearLayout(this);
         editRow.setOrientation(LinearLayout.HORIZONTAL);
         editScroll.addView(editRow);
@@ -203,7 +212,7 @@ public class MainActivity extends Activity {
         root.addView(editScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 3f));
 
         // symbol bar
-        HorizontalScrollView symScroll = new HorizontalScrollView(this);
+        symScroll = new HorizontalScrollView(this);
         symScroll.setBackgroundColor(BAR);
         symScroll.setHorizontalScrollBarEnabled(false);
         LinearLayout sym = new LinearLayout(this);
@@ -216,6 +225,7 @@ public class MainActivity extends Activity {
         // console
         console = new TextView(this);
         styleCode(console, 11);
+        consoleSp = 11;
         console.setTextColor(Color.parseColor("#e0e0e0"));
         console.setTextIsSelectable(true);
         console.setPadding(dp(8), dp(4), dp(8), dp(4));
@@ -223,6 +233,17 @@ public class MainActivity extends Activity {
         consoleScroll.setBackgroundColor(Color.BLACK);
         consoleScroll.addView(console);
         root.addView(consoleScroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 2f));
+
+        fsBar = new LinearLayout(this);
+        fsBar.setBackgroundColor(BAR);
+        fsBar.setVisibility(View.GONE);
+        addBar(fsBar, "EXIT ⛶", "#4dd0e1", v -> exitFullscreen());
+        addBar(fsBar, "■ STOP", "#f44336", v -> stopCode());
+        addBar(fsBar, "↻ RERUN", "#4caf50", v -> { boolean was = running; if (was) stopCode(); ui.postDelayed(this::runCode, was ? 500 : 0); });
+        addBar(fsBar, "FIT", "#ffd54f", v -> fitConsole());
+        addBar(fsBar, "A-", null, v -> setFsSize(fsSp / 1.15f));
+        addBar(fsBar, "A+", null, v -> setFsSize(fsSp * 1.15f));
+        root.addView(fsBar);
 
         LinearLayout inRow = new LinearLayout(this);
         inRow.setBackgroundColor(BAR);
@@ -240,6 +261,20 @@ public class MainActivity extends Activity {
         send.setOnClickListener(v -> sendInput());
         inRow.addView(send);
         root.addView(inRow);
+
+        root.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (!fullscreen) {
+                if (root.getPaddingBottom() != 0) root.setPadding(0, 0, 0, 0);
+                return;
+            }
+            Rect r = new Rect();
+            View decor = getWindow().getDecorView();
+            decor.getWindowVisibleDisplayFrame(r);
+            int full = decor.getRootView().getHeight();
+            int kb = full - r.bottom;
+            int pad = kb > full * 0.15 ? kb : 0;
+            if (root.getPaddingBottom() != pad) root.setPadding(0, 0, 0, pad);
+        });
 
         String last = prefs.getString("last", "hello.py");
         File f = new File(dir, last);
@@ -273,6 +308,79 @@ public class MainActivity extends Activity {
         b.setMinimumWidth(0);
         b.setOnClickListener(l);
         row.addView(b);
+    }
+
+    private void addBar(LinearLayout row, String text, String color, View.OnClickListener l) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setAllCaps(false);
+        b.setBackgroundColor(Color.TRANSPARENT);
+        b.setTextColor(color == null ? Color.WHITE : Color.parseColor(color));
+        b.setTypeface(Typeface.DEFAULT_BOLD);
+        b.setMinWidth(0);
+        b.setMinimumWidth(0);
+        b.setPadding(dp(6), 0, dp(6), 0);
+        b.setOnClickListener(l);
+        row.addView(b, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+    }
+
+    // ------------------------------------------------------- fullscreen
+    private void applyImmersive() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+    }
+
+    private void enterFullscreen() {
+        fullscreen = true;
+        title.setVisibility(View.GONE);
+        tbScroll.setVisibility(View.GONE);
+        editScroll.setVisibility(View.GONE);
+        symScroll.setVisibility(View.GONE);
+        fsBar.setVisibility(View.VISIBLE);
+        console.setTextSize(TypedValue.COMPLEX_UNIT_SP, fsSp);
+        applyImmersive();
+        toast("Fullscreen - Back button exits");
+    }
+
+    private void exitFullscreen() {
+        fullscreen = false;
+        title.setVisibility(View.VISIBLE);
+        tbScroll.setVisibility(View.VISIBLE);
+        editScroll.setVisibility(View.VISIBLE);
+        symScroll.setVisibility(View.VISIBLE);
+        fsBar.setVisibility(View.GONE);
+        console.setTextSize(TypedValue.COMPLEX_UNIT_SP, consoleSp);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        root.setPadding(0, 0, 0, 0);
+    }
+
+    private void setFsSize(float sp) {
+        fsSp = Math.max(5f, Math.min(40f, sp));
+        console.setTextSize(TypedValue.COMPLEX_UNIT_SP, fsSp);
+    }
+
+    /** Pick the biggest font where 42 monospace columns fit the screen width. */
+    private void fitConsole() {
+        float widthPx = getResources().getDisplayMetrics().widthPixels - dp(16);
+        float px = widthPx / (42f * 0.6f);
+        setFsSize(px / getResources().getDisplayMetrics().scaledDensity);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (fullscreen) exitFullscreen();
+        else super.onBackPressed();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && fullscreen) applyImmersive();
     }
 
     private void addSym(LinearLayout row, String label, final String ins) {
@@ -464,6 +572,7 @@ public class MainActivity extends Activity {
         inQ.clear();
         stopping = false;
         running = true;
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         final String code = editor.getText().toString();
         final String name = current.getName();
         final String wd = dir.getAbsolutePath();
@@ -477,6 +586,7 @@ public class MainActivity extends Activity {
             }
             running = false;
             bridge.write("\n[finished]\n");
+            ui.post(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
         }, "py-run").start();
     }
 
