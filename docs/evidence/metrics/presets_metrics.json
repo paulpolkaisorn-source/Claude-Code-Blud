@@ -1,0 +1,1208 @@
+{
+ "GrandMaster_Balanced": {
+  "floor": {
+   "mean_rgb_in": [
+    157.97,
+    163.55,
+    171.93
+   ],
+   "mean_rgb_out": [
+    160.07,
+    166.17,
+    174.67
+   ],
+   "edge_energy_in": 0.0068,
+   "edge_energy_out": 0.00947,
+   "mean_abs_diff": 4.11,
+   "halo_mean": 0.01167,
+   "halo_p999": 0.0375,
+   "temporal_flicker_mean": 0.4636,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.208,
+     0.663
+    ],
+    [
+     1.05,
+     1.275,
+     1.538,
+     1.0
+    ],
+    [
+     0.655,
+     0.805,
+     0.99,
+     1.0
+    ],
+    [
+     0.895,
+     0.969,
+     1.06,
+     0.003
+    ],
+    [
+     1.0,
+     0.476,
+     -3.904,
+     0.683
+    ],
+    [
+     0.0,
+     0.912,
+     -0.41,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.42
+  },
+  "water": {
+   "mean_rgb_in": [
+    88.5,
+    133.32,
+    138.98
+   ],
+   "mean_rgb_out": [
+    88.99,
+    133.18,
+    139.7
+   ],
+   "edge_energy_in": 0.01106,
+   "edge_energy_out": 0.01475,
+   "mean_abs_diff": 3.227,
+   "halo_mean": 0.00596,
+   "halo_p999": 0.0429,
+   "temporal_flicker_mean": 0.4647,
+   "temporal_flicker_max": 4,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.25,
+     0.485
+    ],
+    [
+     1.049,
+     1.273,
+     1.531,
+     1.0
+    ],
+    [
+     1.019,
+     1.253,
+     1.529,
+     1.0
+    ],
+    [
+     0.414,
+     0.568,
+     0.631,
+     0.002
+    ],
+    [
+     1.0,
+     0.619,
+     -3.831,
+     0.94
+    ],
+    [
+     0.0,
+     0.926,
+     -0.378,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.11
+  },
+  "sky": {
+   "mean_rgb_in": [
+    120.23,
+    142.7,
+    130.18
+   ],
+   "mean_rgb_out": [
+    120.09,
+    142.93,
+    130.95
+   ],
+   "edge_energy_in": 0.00828,
+   "edge_energy_out": 0.01249,
+   "mean_abs_diff": 2.882,
+   "halo_mean": 0.00749,
+   "halo_p999": 0.0339,
+   "temporal_flicker_mean": 0.4646,
+   "temporal_flicker_max": 4,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.479,
+     0.526
+    ],
+    [
+     1.536,
+     1.686,
+     1.892,
+     1.0
+    ],
+    [
+     1.402,
+     1.574,
+     1.818,
+     1.0
+    ],
+    [
+     0.767,
+     0.877,
+     0.929,
+     0.003
+    ],
+    [
+     1.0,
+     0.446,
+     -3.563,
+     1.106
+    ],
+    [
+     0.0,
+     0.992,
+     -0.122,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.1
+  },
+  "ui": {
+   "mean_rgb_in": [
+    164.52,
+    171.69,
+    178.21
+   ],
+   "mean_rgb_out": [
+    166.34,
+    173.86,
+    180.52
+   ],
+   "edge_energy_in": 0.01216,
+   "edge_energy_out": 0.01489,
+   "mean_abs_diff": 3.247,
+   "halo_mean": 0.00569,
+   "halo_p999": 0.0387,
+   "temporal_flicker_mean": 0.4635,
+   "temporal_flicker_max": 4,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.208,
+     0.687
+    ],
+    [
+     0.698,
+     0.854,
+     1.038,
+     1.0
+    ],
+    [
+     0.427,
+     0.529,
+     0.658,
+     1.0
+    ],
+    [
+     1.037,
+     1.106,
+     1.168,
+     0.003
+    ],
+    [
+     1.0,
+     0.595,
+     -3.907,
+     0.677
+    ],
+    [
+     0.0,
+     0.912,
+     -0.41,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.12,
+   "ui_mean_abs_diff": 2.091,
+   "nonui_mean_abs_diff": 3.493,
+   "shop_panel_contrast_in": 0.7986,
+   "shop_panel_contrast_out": 0.8025,
+   "shop_panel_max_abs_diff": 16
+  },
+  "texture": {
+   "mean_rgb_in": [
+    100.52,
+    127.1,
+    93.77
+   ],
+   "mean_rgb_out": [
+    100.2,
+    127.42,
+    94.01
+   ],
+   "edge_energy_in": 0.01072,
+   "edge_energy_out": 0.01502,
+   "mean_abs_diff": 2.803,
+   "halo_mean": 0.01227,
+   "halo_p999": 0.035,
+   "temporal_flicker_mean": 0.4653,
+   "temporal_flicker_max": 2,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.125,
+     0.457
+    ],
+    [
+     0.995,
+     1.259,
+     1.475,
+     1.0
+    ],
+    [
+     0.628,
+     0.769,
+     0.95,
+     1.0
+    ],
+    [
+     0.38,
+     0.696,
+     0.358,
+     0.002
+    ],
+    [
+     1.0,
+     0.238,
+     -3.862,
+     0.885
+    ],
+    [
+     0.0,
+     0.944,
+     -0.33,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.11
+  },
+  "neon": {
+   "mean_rgb_in": [
+    23.35,
+    24.73,
+    34.58
+   ],
+   "mean_rgb_out": [
+    25.35,
+    24.89,
+    37.88
+   ],
+   "edge_energy_in": 0.00304,
+   "edge_energy_out": 0.00622,
+   "mean_abs_diff": 4.768,
+   "halo_mean": 0.00845,
+   "halo_p999": 0.0337,
+   "temporal_flicker_mean": 0.4628,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.396,
+     0.117
+    ],
+    [
+     0.004,
+     0.007,
+     0.017,
+     1.0
+    ],
+    [
+     0.004,
+     0.007,
+     0.017,
+     1.0
+    ],
+    [
+     0.196,
+     0.064,
+     0.221,
+     0.001
+    ],
+    [
+     1.0,
+     0.571,
+     -3.569,
+     1.219
+    ],
+    [
+     0.0,
+     0.985,
+     -0.174,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.12,
+   "ui_mean_abs_diff": 3.161,
+   "nonui_mean_abs_diff": 4.844,
+   "shop_panel_contrast_in": 0.8989,
+   "shop_panel_contrast_out": 0.9224,
+   "shop_panel_max_abs_diff": 107
+  }
+ },
+ "GrandMaster_Ultra": {
+  "floor": {
+   "mean_rgb_in": [
+    157.97,
+    163.55,
+    171.93
+   ],
+   "mean_rgb_out": [
+    160.67,
+    167.3,
+    176.18
+   ],
+   "edge_energy_in": 0.0068,
+   "edge_energy_out": 0.00948,
+   "mean_abs_diff": 6.552,
+   "halo_mean": 0.01631,
+   "halo_p999": 0.0547,
+   "temporal_flicker_mean": 0.4597,
+   "temporal_flicker_max": 5,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.208,
+     0.663
+    ],
+    [
+     1.05,
+     1.275,
+     1.538,
+     1.0
+    ],
+    [
+     0.655,
+     0.805,
+     0.99,
+     1.0
+    ],
+    [
+     0.895,
+     0.969,
+     1.06,
+     0.003
+    ],
+    [
+     1.0,
+     0.446,
+     -3.903,
+     0.684
+    ],
+    [
+     0.0,
+     0.912,
+     -0.41,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.14
+  },
+  "water": {
+   "mean_rgb_in": [
+    88.5,
+    133.32,
+    138.98
+   ],
+   "mean_rgb_out": [
+    90.83,
+    133.69,
+    140.59
+   ],
+   "edge_energy_in": 0.01106,
+   "edge_energy_out": 0.0152,
+   "mean_abs_diff": 5.559,
+   "halo_mean": 0.00919,
+   "halo_p999": 0.0611,
+   "temporal_flicker_mean": 0.4666,
+   "temporal_flicker_max": 5,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.25,
+     0.485
+    ],
+    [
+     1.049,
+     1.273,
+     1.531,
+     1.0
+    ],
+    [
+     1.019,
+     1.253,
+     1.529,
+     1.0
+    ],
+    [
+     0.414,
+     0.568,
+     0.631,
+     0.002
+    ],
+    [
+     1.0,
+     0.604,
+     -3.831,
+     0.939
+    ],
+    [
+     0.0,
+     0.926,
+     -0.378,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.13
+  },
+  "sky": {
+   "mean_rgb_in": [
+    120.23,
+    142.7,
+    130.18
+   ],
+   "mean_rgb_out": [
+    120.13,
+    143.15,
+    131.5
+   ],
+   "edge_energy_in": 0.00828,
+   "edge_energy_out": 0.0135,
+   "mean_abs_diff": 4.694,
+   "halo_mean": 0.01275,
+   "halo_p999": 0.0457,
+   "temporal_flicker_mean": 0.4636,
+   "temporal_flicker_max": 6,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.479,
+     0.526
+    ],
+    [
+     1.536,
+     1.686,
+     1.892,
+     1.0
+    ],
+    [
+     1.402,
+     1.574,
+     1.818,
+     1.0
+    ],
+    [
+     0.767,
+     0.877,
+     0.929,
+     0.003
+    ],
+    [
+     1.0,
+     0.546,
+     -3.494,
+     1.202
+    ],
+    [
+     0.0,
+     0.996,
+     -0.093,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.1
+  },
+  "ui": {
+   "mean_rgb_in": [
+    164.52,
+    171.69,
+    178.21
+   ],
+   "mean_rgb_out": [
+    166.76,
+    174.63,
+    181.58
+   ],
+   "edge_energy_in": 0.01216,
+   "edge_energy_out": 0.01499,
+   "mean_abs_diff": 4.938,
+   "halo_mean": 0.00802,
+   "halo_p999": 0.0577,
+   "temporal_flicker_mean": 0.4649,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.208,
+     0.687
+    ],
+    [
+     0.698,
+     0.854,
+     1.038,
+     1.0
+    ],
+    [
+     0.427,
+     0.529,
+     0.658,
+     1.0
+    ],
+    [
+     1.037,
+     1.106,
+     1.168,
+     0.003
+    ],
+    [
+     1.0,
+     0.619,
+     -3.905,
+     0.679
+    ],
+    [
+     0.0,
+     0.912,
+     -0.41,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.13,
+   "ui_mean_abs_diff": 3.077,
+   "nonui_mean_abs_diff": 5.335,
+   "shop_panel_contrast_in": 0.7986,
+   "shop_panel_contrast_out": 0.8025,
+   "shop_panel_max_abs_diff": 21
+  },
+  "texture": {
+   "mean_rgb_in": [
+    100.52,
+    127.1,
+    93.77
+   ],
+   "mean_rgb_out": [
+    100.11,
+    127.47,
+    94.46
+   ],
+   "edge_energy_in": 0.01072,
+   "edge_energy_out": 0.0153,
+   "mean_abs_diff": 4.583,
+   "halo_mean": 0.01817,
+   "halo_p999": 0.0485,
+   "temporal_flicker_mean": 0.4665,
+   "temporal_flicker_max": 2,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.125,
+     0.457
+    ],
+    [
+     0.995,
+     1.259,
+     1.475,
+     1.0
+    ],
+    [
+     0.628,
+     0.769,
+     0.95,
+     1.0
+    ],
+    [
+     0.38,
+     0.696,
+     0.358,
+     0.002
+    ],
+    [
+     1.0,
+     0.165,
+     -3.861,
+     0.89
+    ],
+    [
+     0.0,
+     0.944,
+     -0.33,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.13
+  },
+  "neon": {
+   "mean_rgb_in": [
+    23.35,
+    24.73,
+    34.58
+   ],
+   "mean_rgb_out": [
+    25.32,
+    24.52,
+    38.57
+   ],
+   "edge_energy_in": 0.00304,
+   "edge_energy_out": 0.00642,
+   "mean_abs_diff": 6.685,
+   "halo_mean": 0.01175,
+   "halo_p999": 0.0449,
+   "temporal_flicker_mean": 0.4627,
+   "temporal_flicker_max": 4,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.396,
+     0.117
+    ],
+    [
+     0.004,
+     0.007,
+     0.017,
+     1.0
+    ],
+    [
+     0.004,
+     0.007,
+     0.017,
+     1.0
+    ],
+    [
+     0.196,
+     0.064,
+     0.221,
+     0.001
+    ],
+    [
+     1.0,
+     0.51,
+     -3.571,
+     1.213
+    ],
+    [
+     0.0,
+     0.981,
+     -0.192,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.13,
+   "ui_mean_abs_diff": 4.653,
+   "nonui_mean_abs_diff": 6.782,
+   "shop_panel_contrast_in": 0.8989,
+   "shop_panel_contrast_out": 0.9339,
+   "shop_panel_max_abs_diff": 140
+  }
+ },
+ "GrandMaster_Reality": {
+  "floor": {
+   "mean_rgb_in": [
+    157.97,
+    163.55,
+    171.93
+   ],
+   "mean_rgb_out": [
+    162.23,
+    167.91,
+    175.9
+   ],
+   "edge_energy_in": 0.0068,
+   "edge_energy_out": 0.00897,
+   "mean_abs_diff": 5.823,
+   "halo_mean": 0.01543,
+   "halo_p999": 0.0423,
+   "temporal_flicker_mean": 0.4625,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.208,
+     0.663
+    ],
+    [
+     1.05,
+     1.275,
+     1.538,
+     1.0
+    ],
+    [
+     0.655,
+     0.805,
+     0.99,
+     1.0
+    ],
+    [
+     0.895,
+     0.969,
+     1.06,
+     0.003
+    ],
+    [
+     1.0,
+     0.428,
+     -3.904,
+     0.682
+    ],
+    [
+     0.0,
+     0.911,
+     -0.411,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.12
+  },
+  "water": {
+   "mean_rgb_in": [
+    88.5,
+    133.32,
+    138.98
+   ],
+   "mean_rgb_out": [
+    91.21,
+    133.63,
+    139.97
+   ],
+   "edge_energy_in": 0.01106,
+   "edge_energy_out": 0.0138,
+   "mean_abs_diff": 3.896,
+   "halo_mean": 0.0069,
+   "halo_p999": 0.0504,
+   "temporal_flicker_mean": 0.465,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.25,
+     0.485
+    ],
+    [
+     1.049,
+     1.273,
+     1.531,
+     1.0
+    ],
+    [
+     1.019,
+     1.253,
+     1.529,
+     1.0
+    ],
+    [
+     0.414,
+     0.568,
+     0.631,
+     0.002
+    ],
+    [
+     1.0,
+     0.604,
+     -3.832,
+     0.936
+    ],
+    [
+     0.0,
+     0.926,
+     -0.379,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.12
+  },
+  "sky": {
+   "mean_rgb_in": [
+    120.23,
+    142.7,
+    130.18
+   ],
+   "mean_rgb_out": [
+    120.82,
+    142.81,
+    131.23
+   ],
+   "edge_energy_in": 0.00828,
+   "edge_energy_out": 0.01233,
+   "mean_abs_diff": 3.508,
+   "halo_mean": 0.00989,
+   "halo_p999": 0.0392,
+   "temporal_flicker_mean": 0.465,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.479,
+     0.526
+    ],
+    [
+     1.536,
+     1.686,
+     1.892,
+     1.0
+    ],
+    [
+     1.402,
+     1.574,
+     1.818,
+     1.0
+    ],
+    [
+     0.767,
+     0.877,
+     0.929,
+     0.003
+    ],
+    [
+     1.0,
+     0.446,
+     -3.494,
+     1.205
+    ],
+    [
+     0.0,
+     0.996,
+     -0.091,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.1
+  },
+  "ui": {
+   "mean_rgb_in": [
+    164.52,
+    171.69,
+    178.21
+   ],
+   "mean_rgb_out": [
+    168.26,
+    175.3,
+    181.56
+   ],
+   "edge_energy_in": 0.01216,
+   "edge_energy_out": 0.01451,
+   "mean_abs_diff": 4.744,
+   "halo_mean": 0.0076,
+   "halo_p999": 0.0434,
+   "temporal_flicker_mean": 0.4626,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.208,
+     0.687
+    ],
+    [
+     0.698,
+     0.854,
+     1.038,
+     1.0
+    ],
+    [
+     0.427,
+     0.529,
+     0.658,
+     1.0
+    ],
+    [
+     1.037,
+     1.106,
+     1.168,
+     0.003
+    ],
+    [
+     1.0,
+     0.446,
+     -3.907,
+     0.677
+    ],
+    [
+     0.0,
+     0.912,
+     -0.411,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.12,
+   "ui_mean_abs_diff": 2.99,
+   "nonui_mean_abs_diff": 5.118,
+   "shop_panel_contrast_in": 0.7986,
+   "shop_panel_contrast_out": 0.8025,
+   "shop_panel_max_abs_diff": 25
+  },
+  "texture": {
+   "mean_rgb_in": [
+    100.52,
+    127.1,
+    93.77
+   ],
+   "mean_rgb_out": [
+    102.17,
+    128.54,
+    96.13
+   ],
+   "edge_energy_in": 0.01072,
+   "edge_energy_out": 0.01448,
+   "mean_abs_diff": 4.739,
+   "halo_mean": 0.01468,
+   "halo_p999": 0.0406,
+   "temporal_flicker_mean": 0.4646,
+   "temporal_flicker_max": 2,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.125,
+     0.457
+    ],
+    [
+     0.995,
+     1.259,
+     1.475,
+     1.0
+    ],
+    [
+     0.628,
+     0.769,
+     0.95,
+     1.0
+    ],
+    [
+     0.38,
+     0.696,
+     0.358,
+     0.002
+    ],
+    [
+     1.0,
+     0.238,
+     -3.861,
+     0.889
+    ],
+    [
+     0.0,
+     0.944,
+     -0.33,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.11
+  },
+  "neon": {
+   "mean_rgb_in": [
+    23.35,
+    24.73,
+    34.58
+   ],
+   "mean_rgb_out": [
+    24.36,
+    24.06,
+    36.1
+   ],
+   "edge_energy_in": 0.00304,
+   "edge_energy_out": 0.00616,
+   "mean_abs_diff": 4.564,
+   "halo_mean": 0.0123,
+   "halo_p999": 0.0527,
+   "temporal_flicker_mean": 0.4631,
+   "temporal_flicker_max": 3,
+   "nonfinite": {
+    "V__GM_SSRResTex": 0,
+    "V__GM_GeoQTex": 0,
+    "V__GM_StatsTex": 0,
+    "V__GM_U1Tex": 0,
+    "V__GM_CompQTex": 0
+   },
+   "stats": [
+    [
+     1.0,
+     0.815,
+     0.396,
+     0.117
+    ],
+    [
+     0.004,
+     0.007,
+     0.017,
+     1.0
+    ],
+    [
+     0.004,
+     0.007,
+     0.017,
+     1.0
+    ],
+    [
+     0.196,
+     0.064,
+     0.221,
+     0.001
+    ],
+    [
+     1.0,
+     0.51,
+     -3.573,
+     1.211
+    ],
+    [
+     0.0,
+     0.982,
+     -0.188,
+     1.0
+    ]
+   ],
+   "sec_per_frame_llvmpipe": 0.12,
+   "ui_mean_abs_diff": 3.468,
+   "nonui_mean_abs_diff": 4.616,
+   "shop_panel_contrast_in": 0.8989,
+   "shop_panel_contrast_out": 0.9263,
+   "shop_panel_max_abs_diff": 59
+  }
+ }
+}

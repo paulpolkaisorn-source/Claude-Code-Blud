@@ -1,0 +1,15 @@
+linear           floor  polarity=+1 response=+1 (score +0.512) floorN=(0.00,0.91,-0.41) conf=1.00 meanRGB [160.45, 166.78, 175.42] flicker 0.0006/1
+linear           water  polarity=+1 response=+1 (score +0.722) floorN=(0.00,0.93,-0.38) conf=1.00 meanRGB [89.5, 133.34, 139.93] flicker 0.0010/4
+linear           neon   polarity=+1 response=+1 (score +0.609) floorN=(0.00,0.98,-0.19) conf=1.00 meanRGB [25.12, 24.58, 37.86] flicker 0.0022/2
+disparity        floor  polarity=+1 response=-1 (score -0.398) floorN=(0.00,0.91,-0.41) conf=1.00 meanRGB [162.44, 168.77, 177.3] flicker 0.0674/8
+disparity        water  polarity=+1 response=-1 (score -0.427) floorN=(0.00,0.91,-0.42) conf=1.00 meanRGB [91.62, 135.89, 142.6] flicker 0.1494/7
+disparity        neon   polarity=+1 response=-1 (score -0.806) floorN=(0.00,0.98,-0.19) conf=1.00 meanRGB [25.9, 24.72, 38.68] flicker 0.0381/21
+linear_inverted  floor  polarity=-1 response=+1 (score +0.550) floorN=(0.00,0.91,-0.41) conf=1.00 meanRGB [157.91, 164.25, 173.25] flicker 0.0045/1
+linear_inverted  water  polarity=-1 response=+1 (score +0.641) floorN=(0.00,0.93,-0.38) conf=1.00 meanRGB [89.4, 133.3, 139.66] flicker 0.0103/5
+linear_inverted  neon   polarity=-1 response=+1 (score +0.459) floorN=(0.00,0.93,-0.37) conf=0.80 meanRGB [23.69, 23.53, 35.76] flicker 0.0432/76
+floor: linear vs disparity: mean abs diff 2.120
+floor: linear vs linear_inverted: mean abs diff 2.481
+water: linear vs disparity: mean abs diff 3.396
+water: linear vs linear_inverted: mean abs diff 0.202
+neon: linear vs disparity: mean abs diff 1.280
+neon: linear vs linear_inverted: mean abs diff 1.893
