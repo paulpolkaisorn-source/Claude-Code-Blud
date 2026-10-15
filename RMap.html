@@ -88,37 +88,13 @@
     color: var(--text);
     font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
-  main {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 28px 16px 48px;
-  }
-  h1 {
-    margin: 0;
-    font-size: 28px;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-  }
-  h2 {
-    margin: 0 0 12px;
-    font-size: 18px;
-    line-height: 1.3;
-  }
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { margin: 0; font-size: 28px; line-height: 1.2; letter-spacing: -0.01em; }
+  h2 { margin: 0 0 12px; font-size: 18px; line-height: 1.3; }
   p { margin: 0; }
-  code, pre, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
-  .subtitle {
-    margin-top: 6px;
-    color: var(--muted);
-    max-width: 70ch;
-  }
-  .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 16px 0 20px;
-    padding: 0;
-    list-style: none;
-  }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  .subtitle { margin-top: 6px; color: var(--muted); max-width: 70ch; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 20px; padding: 0; list-style: none; }
   .stats li {
     padding: 5px 11px;
     border: 1px solid var(--border);
@@ -128,13 +104,9 @@
     color: var(--muted);
   }
   .stats strong { color: var(--text); font-weight: 600; }
-
   section { margin-top: 28px; }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .section-intro { margin: -4px 0 12px; color: var(--muted); font-size: 14px; }
 
   /* 3D preview */
   .viewer {
@@ -145,25 +117,11 @@
     overflow: hidden;
     border: 1px solid var(--border);
     background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+    scroll-margin-top: 12px;
   }
-  .viewer canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-    cursor: grab;
-  }
+  .viewer canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
   .viewer canvas.dragging { cursor: grabbing; }
-  .hint { transition: opacity 0.4s ease; }
-  .hint.used { opacity: 0; }
-  .toolbar {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  .toolbar { position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
   .segmented {
     display: inline-flex;
     padding: 3px;
@@ -185,21 +143,34 @@
     font-weight: 500;
     cursor: pointer;
   }
-  .segmented button[aria-pressed="true"] {
-    background: var(--accent);
-    color: var(--accent-text);
-  }
+  .segmented button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
   .ghost-button {
     background: var(--overlay);
     border: 1px solid var(--border);
     border-radius: 9px;
-    padding: 6px 12px;
     backdrop-filter: blur(6px);
   }
-  .segmented button:focus-visible, .ghost-button:focus-visible, .button:focus-visible, canvas:focus-visible {
+  .segmented button:focus-visible, .ghost-button:focus-visible, .button:focus-visible,
+  .area-card:focus-visible, canvas:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+  .focus-label {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    max-width: 45%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--overlay);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .focus-label.visible { opacity: 1; }
   .hint {
     position: absolute;
     left: 12px;
@@ -212,7 +183,9 @@
     color: var(--muted);
     font-size: 12px;
     pointer-events: none;
+    transition: opacity 0.4s ease;
   }
+  .hint.used { opacity: 0; }
   .fallback {
     position: absolute;
     inset: 0;
@@ -221,12 +194,10 @@
     justify-content: center;
     padding: 24px;
     text-align: center;
-    color: var(--text);
     background: var(--surface-2);
   }
   .viewer.no-webgl .fallback { display: flex; }
   .viewer.no-webgl canvas, .viewer.no-webgl .toolbar, .viewer.no-webgl .hint { display: none; }
-
   .legend {
     display: flex;
     flex-wrap: wrap;
@@ -238,18 +209,52 @@
     color: var(--muted);
   }
   .legend li { display: inline-flex; align-items: center; gap: 7px; }
-  .swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    border: 1px solid rgba(0, 0, 0, 0.25);
-    flex: none;
+  .swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0, 0, 0, 0.25); flex: none; }
+  .note { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+  /* Play areas */
+  .areas {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
-  .note {
-    margin-top: 8px;
+  .area-card {
+    appearance: none;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 12px;
+    align-content: start;
+    padding: 14px;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+  }
+  .area-card:hover { border-color: var(--accent); }
+  .area-card[aria-current="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .area-number {
+    grid-row: span 3;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-text);
+    display: grid;
+    place-items: center;
     font-size: 13px;
-    color: var(--muted);
+    font-weight: 700;
   }
+  .area-name { font-weight: 600; }
+  .area-text { color: var(--muted); font-size: 13.5px; }
+  .area-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
   /* Steps */
   .steps {
@@ -261,11 +266,7 @@
     gap: 12px;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
-  .steps li {
-    counter-increment: step;
-    padding: 16px 16px 16px 52px;
-    position: relative;
-  }
+  .steps li { counter-increment: step; padding: 16px 16px 16px 52px; position: relative; }
   .steps li::before {
     content: counter(step);
     position: absolute;
@@ -283,7 +284,8 @@
   }
   .steps strong { display: block; margin-bottom: 4px; }
   .steps p { color: var(--muted); font-size: 14px; }
-  .steps code, .callout code, .note code {
+  .steps .button { margin-top: 10px; }
+  .steps code, .note code, .callout code {
     font-size: 0.92em;
     padding: 1px 5px;
     border-radius: 4px;
@@ -314,7 +316,7 @@
     background: var(--surface-2);
   }
   .file-name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; }
-  .file-meta { color: var(--muted); font-size: 12px; margin-left: 8px; font-family: inherit; font-weight: 400; }
+  .file-meta { color: var(--muted); font-size: 12px; margin-left: 8px; font-weight: 400; }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .button {
     appearance: none;
@@ -331,11 +333,7 @@
     font-weight: 600;
     cursor: pointer;
   }
-  .button.primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--accent-text);
-  }
+  .button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
   .button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
   .button:not(.primary):hover { background: var(--surface-2); }
   pre.code {
@@ -359,8 +357,8 @@
     main { padding-top: 20px; }
     h1 { font-size: 24px; }
     .viewer { aspect-ratio: 4 / 5; }
-    pre.code { font-size: 12px; max-height: 480px; }
     .hint { font-size: 11px; }
+    pre.code { font-size: 12px; max-height: 480px; }
   }
 </style>
 </head>
@@ -368,14 +366,14 @@
 <main>
   <header>
     <h1>R Map</h1>
-    <p class="subtitle">A blocky Roblox map shaped like the letter R: green floor, grey walls with a red strap along the bottom, running along every edge of the shape, including around the hole in the R's loop. Below: a 3D preview drawn from the script, how to build it in Studio, and the full script.</p>
+    <p class="subtitle">A blocky Roblox map shaped like the letter R, with green floors, grey walls and a red strap, and a loop of play areas built inside it. Tap an area below to fly the camera there.</p>
     <ul class="stats" id="stats" aria-label="Map stats"></ul>
   </header>
 
   <section aria-labelledby="preview-heading">
     <h2 id="preview-heading">Preview</h2>
     <div class="viewer" id="viewer">
-      <canvas id="view" tabindex="0" role="img" aria-label="3D preview of the R-shaped map: green floor in the shape of an R, surrounded by grey walls with a red strap at the bottom, with a spawn pad at the bottom of the left stem."></canvas>
+      <canvas id="view" tabindex="0" role="img" aria-label="3D preview of the R-shaped map with its play areas."></canvas>
       <div class="toolbar">
         <div class="segmented" role="group" aria-label="Camera view">
           <button type="button" id="view-3d" aria-pressed="true">3D</button>
@@ -383,30 +381,38 @@
         </div>
         <button type="button" class="ghost-button" id="view-reset">Reset</button>
       </div>
+      <p class="focus-label" id="focus-label" aria-live="polite"></p>
       <p class="hint" id="hint">Drag to orbit · Right-drag or Shift-drag to pan · Scroll to zoom</p>
-      <div class="fallback" id="fallback"><p>Your browser can't show the 3D preview (WebGL 2 is unavailable). The script below still works.</p></div>
+      <div class="fallback" id="fallback"><p>Your browser can't show the 3D preview (WebGL 2 is unavailable). The downloads below still work.</p></div>
     </div>
     <ul class="legend" id="legend" aria-label="Legend"></ul>
-    <p class="note">The preview is generated from the script on this page, so the shape, sizes and block layout match what Studio builds. Lighting and the stud texture are an approximation of Roblox's look.</p>
+    <p class="note">The preview is drawn from the saved model file, part for part, so it matches what you insert into Studio. Lighting and the stud texture are an approximation of Roblox's look.</p>
+  </section>
+
+  <section aria-labelledby="areas-heading">
+    <h2 id="areas-heading">Play areas</h2>
+    <p class="section-intro">In loop order, starting at the spawn. Tap one to view it.</p>
+    <ol class="areas" id="areas"></ol>
   </section>
 
   <section aria-labelledby="setup-heading">
-    <h2 id="setup-heading">Build it in Roblox Studio</h2>
+    <h2 id="setup-heading">Put it in Roblox Studio</h2>
     <ol class="steps">
       <li class="card">
-        <strong>Keep it in your place (recommended)</strong>
-        <p>Open <code>View → Command Bar</code>, paste the whole script and press Enter. The map is saved with your place as the model <code>RMap</code>.</p>
+        <strong>Download the model</strong>
+        <p>Save <code>RMap.rbxm</code> on your PC. It holds the whole map as normal parts.</p>
+        <button type="button" class="button primary" id="download-rbxm">Download RMap.rbxm</button>
       </li>
       <li class="card">
-        <strong>Or build it when the server starts</strong>
-        <p>Add a Script to <code>ServerScriptService</code> and paste the script into it. The map is rebuilt every time a server starts.</p>
+        <strong>Clear the template</strong>
+        <p>In a new place, delete the <code>Baseplate</code> and <code>SpawnLocation</code> in Workspace. The baseplate sits right where the R's floor goes.</p>
       </li>
       <li class="card">
-        <strong>Change the shape</strong>
-        <p>Edit the <code>SHAPE</code> art at the top: <code>#</code> is floor, <code>.</code> is empty. Walls follow the new outline automatically. Running it again replaces the old map.</p>
+        <strong>Insert it</strong>
+        <p>Right-click <code>Workspace</code> in the Explorer, choose <code>Insert from File…</code> and pick <code>RMap.rbxm</code>. It lands centred at the origin, ready to play.</p>
       </li>
     </ol>
-    <p class="callout"><strong>Heads up:</strong> by default the script deletes the template <code>Baseplate</code> and <code>SpawnLocation</code> in Workspace, because the baseplate would fill the R's hole. Set <code>REMOVE_TEMPLATE_PARTS = false</code> to keep them.</p>
+    <p class="callout"><strong>Prefer a script?</strong> Paste the script below into Studio's <code>View → Command Bar</code> and press Enter. It builds the same map, and you can edit <code>SHAPE</code>, colours and areas first.</p>
   </section>
 
   <section aria-labelledby="script-heading">
@@ -424,6 +430,8 @@
   </section>
 </main>
 
+<script type="application/json" id="map-data">{"parts":[{"a":true,"c":"SpawnLocation","cf":[-80,0.5,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnLocation","p":"","rgb":[75,151,75],"s":[12,1,12],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-2,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor11","p":"Floor","rgb":[75,151,75],"s":[20,4,40],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-2,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor10","p":"Floor","rgb":[75,151,75],"s":[20,4,60],"top":"Studs"},{"a":true,"c":"Part","cf":[30,-2,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor9","p":"Floor","rgb":[75,151,75],"s":[20,4,20],"top":"Studs"},{"a":true,"c":"Part","cf":[20,-2,50,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor8","p":"Floor","rgb":[75,151,75],"s":[40,4,20],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,-2,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor7","p":"Floor","rgb":[75,151,75],"s":[40,4,80],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-2,10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor6","p":"Floor","rgb":[75,151,75],"s":[80,4,60],"top":"Studs"},{"a":true,"c":"Part","cf":[50,-2,20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor5","p":"Floor","rgb":[75,151,75],"s":[20,4,160],"top":"Studs"},{"a":true,"c":"Part","cf":[-70,-2,-10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor4","p":"Floor","rgb":[75,151,75],"s":[60,4,100],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-2,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor3","p":"Floor","rgb":[75,151,75],"s":[20,4,80],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-2,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor2","p":"Floor","rgb":[75,151,75],"s":[20,4,120],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,-2,-90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor1","p":"Floor","rgb":[75,151,75],"s":[160,4,60],"top":"Studs"},{"a":true,"c":"Part","cf":[100,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall30","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[100,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall29","p":"Walls","rgb":[99,95,98],"s":[2,21,78],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall28","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall27","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,-90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall26","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,13.5,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall25","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall24","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[60,13.5,-110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall23","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,13.5,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall22","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall21","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[20,13.5,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall20","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[0,13.5,50,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall19","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-40,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall18","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[-60,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall17","p":"Walls","rgb":[99,95,98],"s":[2,21,78],"top":"Studs"},{"a":true,"c":"Part","cf":[-100,13.5,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall16","p":"Walls","rgb":[99,95,98],"s":[2,21,238],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall15","p":"Walls","rgb":[99,95,98],"s":[42,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,13.5,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall14","p":"Walls","rgb":[99,95,98],"s":[42,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[50,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall13","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall12","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[30,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall11","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,13.5,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall10","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[10,13.5,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall9","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-30,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall8","p":"Walls","rgb":[99,95,98],"s":[62,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,13.5,20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall7","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,13.5,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall6","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,13.5,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall5","p":"Walls","rgb":[99,95,98],"s":[82,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall4","p":"Walls","rgb":[99,95,98],"s":[82,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,13.5,-80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall3","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,13.5,-100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall2","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,13.5,-120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall1","p":"Walls","rgb":[99,95,98],"s":[162,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[100,-0.6,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap30","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[100,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap29","p":"Straps","rgb":[196,40,28],"s":[2,7.2,78],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap28","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap27","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,-90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap26","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,-0.6,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap25","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,-0.6,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap24","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[60,-0.6,-110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap23","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,-0.6,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap22","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap21","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[20,-0.6,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap20","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-0.6,50,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap19","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-40,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap18","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[-60,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap17","p":"Straps","rgb":[196,40,28],"s":[2,7.2,78],"top":"Studs"},{"a":true,"c":"Part","cf":[-100,-0.6,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap16","p":"Straps","rgb":[196,40,28],"s":[2,7.2,238],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap15","p":"Straps","rgb":[196,40,28],"s":[42,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,-0.6,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap14","p":"Straps","rgb":[196,40,28],"s":[42,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[50,-0.6,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap13","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap12","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[30,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap11","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-0.6,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap10","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[10,-0.6,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap9","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-30,-0.6,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap8","p":"Straps","rgb":[196,40,28],"s":[62,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-0.6,20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap7","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-0.6,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap6","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-0.6,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap5","p":"Straps","rgb":[196,40,28],"s":[82,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-0.6,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap4","p":"Straps","rgb":[196,40,28],"s":[82,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-0.6,-80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap3","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-0.6,-100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap2","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,-0.6,-120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap1","p":"Straps","rgb":[196,40,28],"s":[162,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[86,1,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Third","p":"Sections/FinishPodium","rgb":[218,133,65],"s":[8,2,8],"top":"Studs"},{"a":true,"c":"Part","cf":[78,2.5,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"First","p":"Sections/FinishPodium","rgb":[245,205,48],"s":[8,5,8],"top":"Studs"},{"a":true,"c":"Part","cf":[70,1.5,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Second","p":"Sections/FinishPodium","rgb":[163,162,165],"s":[8,3,8],"top":"Studs"},{"a":true,"c":"Part","cf":[61.5277,3.5169,81.5277,0.7071,0.1822,0.6832,0,0.9662,-0.2577,-0.7071,0.1822,0.6832],"m":"Plastic","n":"RampDown","p":"Sections/SlopeHill","rgb":[218,133,65],"s":[10,1,31.0484],"top":"Studs"},{"a":true,"c":"Part","cf":[46.0625,4,66.0625,-0.7071,0,-0.7071,0,1,0,0.7071,0,-0.7071],"m":"Plastic","n":"Hill","p":"Sections/SlopeHill","rgb":[13,105,172],"s":[14,8,14],"top":"Studs"},{"a":true,"c":"Part","cf":[30.5972,3.5169,50.5972,-0.7071,-0.1822,-0.6832,0,0.9662,-0.2577,0.7071,-0.1822,-0.6832],"m":"Plastic","n":"RampUp","p":"Sections/SlopeHill","rgb":[218,133,65],"s":[10,1,31.0484],"top":"Studs"},{"a":true,"c":"Part","cf":[68,1.5,-32,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Step6","p":"Sections/SkySteps","rgb":[107,50,124],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[80,3.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Step5","p":"Sections/SkySteps","rgb":[13,105,172],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[88,5.5,-54,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Step4","p":"Sections/SkySteps","rgb":[0,255,0],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[84,7.5,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Step3","p":"Sections/SkySteps","rgb":[245,205,48],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[75,9.5,-81,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Step2","p":"Sections/SkySteps","rgb":[218,133,65],"s":[6,1,6],"top":"Studs"},{"a":true,"c":"Part","cf":[66,11.5,-93,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Step1","p":"Sections/SkySteps","rgb":[196,40,28],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[57,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar4","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[41,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar3","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[57,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar2","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[41,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar1","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[49,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatform","p":"Sections/SkyBridge","rgb":[13,105,172],"s":[18,1,18],"top":"Studs"},{"a":true,"c":"Part","cf":[10,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"DeckPillar3","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"DeckPillar2","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-50,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"DeckPillar1","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Deck","p":"Sections/SkyBridge","rgb":[13,105,172],"s":[120,1,6],"top":"Studs"},{"a":true,"c":"TrussPart","cf":[-89,7,-99,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Ladder","p":"Sections/LookoutTower","rgb":[245,205,48],"s":[2,14,2],"top":"Universal"},{"a":true,"c":"Part","cf":[-81,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar4","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-97,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar3","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-81,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar2","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-97,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar1","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-89,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Lookout","p":"Sections/LookoutTower","rgb":[13,105,172],"s":[18,1,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-63,10,-103,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Crate3_3","p":"Sections/CrateStairs","rgb":[105,64,40],"s":[6,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-63,6,-103,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Crate3_2","p":"Sections/CrateStairs","rgb":[105,64,40],"s":[6,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-63,2,-103,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Crate3_1","p":"Sections/CrateStairs","rgb":[105,64,40],"s":[6,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-63,6,-96,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Crate2_2","p":"Sections/CrateStairs","rgb":[105,64,40],"s":[6,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-63,2,-96,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Crate2_1","p":"Sections/CrateStairs","rgb":[105,64,40],"s":[6,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-63,2,-89,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Crate1_1","p":"Sections/CrateStairs","rgb":[105,64,40],"s":[6,4,6],"top":"Studs"},{"a":true,"c":"TrussPart","cf":[-3,7,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Ladder","p":"Sections/House","rgb":[245,205,48],"s":[2,14,2],"top":"Universal"},{"a":true,"c":"Part","cf":[-20,12.5,2,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Roof","p":"Sections/House","rgb":[196,40,28],"s":[32,1,32],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,6,14,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"MiddleWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,12,4],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,10.5,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"MiddleWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,3,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,6,-3,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"MiddleWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-5,6,10.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall4","p":"Sections/House","rgb":[248,248,248],"s":[2,12,11],"top":"Studs"},{"a":true,"c":"Part","cf":[-5,10,2,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-5,2,2,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-5,6,-6.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,11],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,6,10.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,12,11],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,10.5,2,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,3,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,6,-6.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,11],"top":"Studs"},{"a":true,"c":"Part","cf":[-6.5,6,17,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall6","p":"Sections/House","rgb":[248,248,248],"s":[5,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-12,10.5,17,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall5","p":"Sections/House","rgb":[248,248,248],"s":[6,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,6,17,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall4","p":"Sections/House","rgb":[248,248,248],"s":[10,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-28,10,17,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall3","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-28,2,17,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall2","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-33.5,6,17,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall1","p":"Sections/House","rgb":[248,248,248],"s":[5,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-7.5,6,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall7","p":"Sections/House","rgb":[248,248,248],"s":[7,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-14,10,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall6","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-14,2,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall5","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-21,6,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall4","p":"Sections/House","rgb":[248,248,248],"s":[8,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-28,10,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall3","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-28,2,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall2","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-33.5,6,-13,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall1","p":"Sections/House","rgb":[248,248,248],"s":[5,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-69,11,41,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-69,5,41,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampEastPost","p":"Sections/Tunnel","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-91,11,41,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-91,5,41,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampWestPost","p":"Sections/Tunnel","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"TrussPart","cf":[-95,6,43,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Ladder","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,12,2],"top":"Universal"},{"a":true,"c":"Part","cf":[-80,10.5,57,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"TunnelRoof","p":"Sections/Tunnel","rgb":[163,162,165],"s":[16,3,26],"top":"Studs"},{"a":true,"c":"Part","cf":[-66.5,6,57,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HillEast","p":"Sections/Tunnel","rgb":[163,162,165],"s":[11,12,26],"top":"Studs"},{"a":true,"c":"Part","cf":[-93.5,6,57,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HillWest","p":"Sections/Tunnel","rgb":[163,162,165],"s":[11,12,26],"top":"Studs"},{"a":true,"c":"Part","cf":[-66,11,90,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/SpawnPlaza","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,5,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampEastPost","p":"Sections/SpawnPlaza","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-94,11,90,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/SpawnPlaza","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-94,5,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampWestPost","p":"Sections/SpawnPlaza","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"}],"sections":[{"description":"Where players spawn, lit by two neon lamps.","name":"SpawnPlaza"},{"description":"A stone hill with a tunnel through it. Climb the ladder on its north side to stand on top.","name":"Tunnel"},{"description":"A two-room house with doors, windows and a ladder up to its flat roof.","name":"House"},{"description":"Wooden crates stacked one, two and three high. Hop up them onto the Sky Bridge.","name":"CrateStairs"},{"description":"A lookout platform 14 studs up in the north-west corner, reached by a ladder.","name":"LookoutTower"},{"description":"A long bridge across the top of the R, from the Lookout Tower to the east platform.","name":"SkyBridge"},{"description":"Six rainbow platforms floating down from the bridge's east platform to the courtyard.","name":"SkySteps"},{"description":"Ramps up and over a hill running down the R's leg.","name":"SlopeHill"},{"description":"A winners' podium for 1st, 2nd and 3rd place at the end of the leg.","name":"FinishPodium"}]}</script>
+<script type="text/plain" id="rbxm-data">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</script>
 <script type="text/plain" id="lua-source">
 --!strict
 --[[
@@ -470,6 +478,14 @@ type WallRun = {
 	to: number,
 }
 
+-- A rectangular gap in a wall (door or window): `from`/`to` along the wall, `bottom`/`top` above the floor.
+type Opening = {
+	from: number,
+	to: number,
+	bottom: number,
+	top: number,
+}
+
 -- // CONSTANTS
 -- '#' = floor, '.' = empty. The first line is the north end of the map (-Z), so the R
 -- reads correctly when viewed from above. Every line must be the same length, and two
@@ -512,6 +528,45 @@ local MODEL_NAME = "RMap"
 -- Workspace. The baseplate would fill the R's hole and z-fight with the R's floor, and
 -- the template spawn would sit on top of a wall. Set to false to keep them.
 local REMOVE_TEMPLATE_PARTS = true
+
+-- Play areas built inside the R. They are placed in world studs for the SHAPE above (cell size 20,
+-- map centred on the origin) with heights measured from the floor's top; if you reshape the R, move
+-- them too. Nothing walkable is higher than 14 studs, so players can't jump over the 24-stud walls.
+local BUILD_SECTIONS = true
+local RAMP_THICKNESS = 1
+local LAMP_HEIGHT = 10
+local LADDER_COLOR = BrickColor.new("Bright yellow")
+local LAMP_POST_COLOR = BrickColor.new("Black")
+local LAMP_LIGHT_COLOR = BrickColor.new("Bright yellow")
+local STONE_COLOR = BrickColor.new("Medium stone grey")
+local HOUSE_WALL_COLOR = BrickColor.new("Institutional white")
+local HOUSE_ROOF_COLOR = BrickColor.new("Bright red")
+local CRATE_COLOR = BrickColor.new("Reddish brown")
+local DECK_COLOR = BrickColor.new("Bright blue")
+local PILLAR_COLOR = BrickColor.new("Medium stone grey")
+local RAMP_COLOR = BrickColor.new("Bright orange")
+local PODIUM_FIRST_COLOR = BrickColor.new("Bright yellow")
+local PODIUM_SECOND_COLOR = BrickColor.new("Medium stone grey")
+local PODIUM_THIRD_COLOR = BrickColor.new("Bright orange")
+
+-- Sky Steps, from the bridge's east platform down to the courtyard: { minX, minZ, maxX, maxZ, top height }.
+-- Each is at most ~6 studs from the last and 2 studs lower, so they work going up or down.
+local SKY_STEPS: { { number } } = {
+	{ 62, -97, 70, -89, 12 },
+	{ 72, -84, 78, -78, 10 },
+	{ 80, -72, 88, -64, 8 },
+	{ 84, -58, 92, -50, 6 },
+	{ 76, -44, 84, -36, 4 },
+	{ 64, -36, 72, -28, 2 },
+}
+local SKY_STEP_COLORS: { BrickColor } = {
+	BrickColor.new("Bright red"),
+	BrickColor.new("Bright orange"),
+	BrickColor.new("Bright yellow"),
+	BrickColor.new("Lime green"),
+	BrickColor.new("Bright blue"),
+	BrickColor.new("Bright violet"),
+}
 
 local NEIGHBOUR_OFFSETS: { { number } } = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }
 
@@ -845,6 +900,324 @@ local function buildSpawn(grid: Grid, parent: Instance): SpawnLocation
 	return spawnLocation
 end
 
+--- Turns x, height above the floor and z into a world position.
+--- @return Vector3 -- World position
+local function at(x: number, height: number, z: number): Vector3
+	return Vector3.new(x, FLOOR_TOP_Y + height, z)
+end
+
+--- Creates a folder for one play area, with its description as an attribute (shown in Properties).
+--- @param parent Instance -- The Sections folder
+--- @param name string -- Area name
+--- @param description string -- One-line description
+--- @return Folder -- The area's folder
+local function newSection(parent: Instance, name: string, description: string): Folder
+	local folder = Instance.new("Folder")
+	folder.Name = name
+	folder:SetAttribute("Description", description)
+	folder.Parent = parent
+	return folder
+end
+
+--- Creates an axis-aligned block between two corners.
+--- @return Part -- The created block
+local function blockBetween(parent: Instance, name: string, minCorner: Vector3, maxCorner: Vector3, color: BrickColor): Part
+	local size = maxCorner - minCorner
+	assert(size.X > 0 and size.Y > 0 and size.Z > 0, `[RMapBuilder] {name} has a zero or negative size`)
+	return makeBlock(name, size, (minCorner + maxCorner) / 2, color, parent)
+end
+
+--- Builds a 1-stud-thick platform with its top at `topHeight`, optionally on four corner pillars.
+--- @return Part -- The platform deck
+local function platform(
+	parent: Instance,
+	name: string,
+	minX: number,
+	minZ: number,
+	maxX: number,
+	maxZ: number,
+	topHeight: number,
+	color: BrickColor,
+	withPillars: boolean
+): Part
+	local deck = blockBetween(parent, name, at(minX, topHeight - 1, minZ), at(maxX, topHeight, maxZ), color)
+	if withPillars then
+		local corners = { { minX, minZ }, { maxX - 2, minZ }, { minX, maxZ - 2 }, { maxX - 2, maxZ - 2 } }
+		for index, corner in corners do
+			blockBetween(
+				parent,
+				`{name}Pillar{index}`,
+				at(corner[1], 0, corner[2]),
+				at(corner[1] + 2, topHeight - 1, corner[2] + 2),
+				PILLAR_COLOR
+			)
+		end
+	end
+	return deck
+end
+
+--- Builds a climbable TrussPart ladder standing on the floor, centred on (x, z).
+--- @param height number -- Must be a multiple of 2 (a TrussPart rule)
+--- @return TrussPart -- The ladder
+local function ladder(parent: Instance, name: string, x: number, z: number, height: number): TrussPart
+	assert(height >= 2 and height % 2 == 0, `[RMapBuilder] {name} height must be a multiple of 2`)
+	local truss = Instance.new("TrussPart")
+	truss.Name = name
+	truss.Anchored = true
+	truss.Size = Vector3.new(2, height, 2)
+	truss.CFrame = CFrame.new(at(x, height / 2, z))
+	truss.BrickColor = LADDER_COLOR
+	truss.Parent = parent
+	return truss
+end
+
+--- Builds a CFrame at `position` whose front faces `direction`, with its up kept in the vertical plane.
+--- Written out as a rotation matrix (not CFrame.lookAt) so tools that export the model get it exactly.
+--- @return CFrame -- The facing CFrame
+local function facing(position: Vector3, direction: Vector3): CFrame
+	local look = direction.Unit
+	local right = look:Cross(Vector3.new(0, 1, 0)).Unit
+	local up = right:Cross(look)
+	-- Matrix columns are RightVector, UpVector and -LookVector.
+	return CFrame.new(
+		position.X,
+		position.Y,
+		position.Z,
+		right.X,
+		up.X,
+		-look.X,
+		right.Y,
+		up.Y,
+		-look.Y,
+		right.Z,
+		up.Z,
+		-look.Z
+	)
+end
+
+--- Builds a ramp whose walking surface runs in a straight line from `low` up to `high`.
+--- @return Part -- The ramp
+local function ramp(parent: Instance, name: string, low: Vector3, high: Vector3, width: number): Part
+	local surface = facing((low + high) / 2, high - low)
+	local part = makeBlock(name, Vector3.new(width, RAMP_THICKNESS, (high - low).Magnitude), surface.Position, RAMP_COLOR, parent)
+	part.CFrame = surface * CFrame.new(0, -RAMP_THICKNESS / 2, 0)
+	return part
+end
+
+--- Builds a lamp post with a glowing neon head and a warm light.
+local function lamp(parent: Instance, name: string, x: number, z: number): ()
+	blockBetween(parent, `{name}Post`, at(x - 0.5, 0, z - 0.5), at(x + 0.5, LAMP_HEIGHT, z + 0.5), LAMP_POST_COLOR)
+	local head = blockBetween(parent, `{name}Light`, at(x - 1, LAMP_HEIGHT, z - 1), at(x + 1, LAMP_HEIGHT + 2, z + 1), LAMP_LIGHT_COLOR)
+	head.Material = Enum.Material.Neon
+	head.TopSurface = Enum.SurfaceType.Smooth
+	head.BottomSurface = Enum.SurfaceType.Smooth
+	local light = Instance.new("PointLight")
+	light.Range = 18
+	light.Color = Color3.fromRGB(255, 214, 140)
+	light.Parent = head
+end
+
+--- Builds a straight wall split into blocks around its openings (doors and windows).
+--- @param axis "X" | "Z" -- Direction the wall runs in
+--- @param from number -- Start along the wall
+--- @param to number -- End along the wall
+--- @param side0 number -- Start across the wall (its thickness)
+--- @param side1 number -- End across the wall
+--- @param openings { Opening } -- Gaps, sorted along the wall
+local function wallWithOpenings(
+	parent: Instance,
+	name: string,
+	axis: "X" | "Z",
+	from: number,
+	to: number,
+	side0: number,
+	side1: number,
+	height: number,
+	openings: { Opening },
+	color: BrickColor
+): ()
+	local count = 0
+	local function piece(along0: number, along1: number, bottom: number, top: number): ()
+		if along1 <= along0 or top <= bottom then
+			return
+		end
+		count += 1
+		if axis == "X" then
+			blockBetween(parent, `{name}{count}`, at(along0, bottom, side0), at(along1, top, side1), color)
+		else
+			blockBetween(parent, `{name}{count}`, at(side0, bottom, along0), at(side1, top, along1), color)
+		end
+	end
+
+	local cursor = from
+	for _, opening in openings do
+		piece(cursor, opening.from, 0, height)
+		piece(opening.from, opening.to, 0, opening.bottom)
+		piece(opening.from, opening.to, opening.top, height)
+		cursor = opening.to
+	end
+	piece(cursor, to, 0, height)
+end
+
+--- Spawn Plaza: lamps either side of the spawn pad.
+local function buildSpawnPlaza(sections: Instance): ()
+	local folder = newSection(sections, "SpawnPlaza", "Where players spawn, lit by two neon lamps.")
+	lamp(folder, "LampWest", -94, 90)
+	lamp(folder, "LampEast", -66, 90)
+end
+
+--- Tunnel: a stone hill filling the stem, with a tunnel through it and a ladder onto its roof.
+local function buildTunnel(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"Tunnel",
+		"A stone hill with a tunnel through it. Climb the ladder on its north side to stand on top."
+	)
+	blockBetween(folder, "HillWest", at(-99, 0, 44), at(-88, 12, 70), STONE_COLOR)
+	blockBetween(folder, "HillEast", at(-72, 0, 44), at(-61, 12, 70), STONE_COLOR)
+	blockBetween(folder, "TunnelRoof", at(-88, 9, 44), at(-72, 12, 70), STONE_COLOR)
+	ladder(folder, "Ladder", -95, 43, 12)
+	lamp(folder, "LampWest", -91, 41)
+	lamp(folder, "LampEast", -69, 41)
+end
+
+--- House: two rooms joined by an inside door, with outside doors, windows and a roof ladder.
+local function buildHouse(sections: Instance): ()
+	local folder =
+		newSection(sections, "House", "A two-room house with doors, windows and a ladder up to its flat roof.")
+	local function window(from: number, to: number): Opening
+		return { from = from, to = to, bottom = 4, top = 8 }
+	end
+	local function door(from: number, to: number): Opening
+		return { from = from, to = to, bottom = 0, top = 9 }
+	end
+	wallWithOpenings(folder, "NorthWall", "X", -36, -4, -14, -12, 12, { window(-31, -25), window(-17, -11) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(folder, "SouthWall", "X", -36, -4, 16, 18, 12, { window(-31, -25), door(-15, -9) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(folder, "WestWall", "Z", -12, 16, -36, -34, 12, { door(-1, 5) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(folder, "EastWall", "Z", -12, 16, -6, -4, 12, { window(-1, 5) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(folder, "MiddleWall", "Z", -12, 16, -21, -19, 12, { door(6, 12) }, HOUSE_WALL_COLOR)
+	blockBetween(folder, "Roof", at(-36, 12, -14), at(-4, 13, 18), HOUSE_ROOF_COLOR)
+	ladder(folder, "Ladder", -3, -11, 14)
+end
+
+--- Crate Stairs: stacks of 1, 2 and 3 crates leading up to the Sky Bridge.
+local function buildCrateStairs(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"CrateStairs",
+		"Wooden crates stacked one, two and three high. Hop up them onto the Sky Bridge."
+	)
+	local stacks = { { z = -92, levels = 1 }, { z = -99, levels = 2 }, { z = -106, levels = 3 } }
+	for stackIndex, stack in stacks do
+		for level = 1, stack.levels do
+			blockBetween(
+				folder,
+				`Crate{stackIndex}_{level}`,
+				at(-66, (level - 1) * 4, stack.z),
+				at(-60, level * 4, stack.z + 6),
+				CRATE_COLOR
+			)
+		end
+	end
+end
+
+--- Lookout Tower: a platform on pillars in the north-west corner, with a ladder.
+local function buildLookoutTower(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"LookoutTower",
+		"A lookout platform 14 studs up in the north-west corner, reached by a ladder."
+	)
+	platform(folder, "Lookout", -98, -118, -80, -100, 14, DECK_COLOR, true)
+	ladder(folder, "Ladder", -89, -99, 14)
+end
+
+--- Sky Bridge: a long deck across the top of the R to an east platform.
+local function buildSkyBridge(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"SkyBridge",
+		"A long bridge across the top of the R, from the Lookout Tower to the east platform."
+	)
+	platform(folder, "Deck", -80, -112, 40, -106, 14, DECK_COLOR, false)
+	for index, x in { -50, -20, 10 } do
+		blockBetween(folder, `DeckPillar{index}`, at(x - 1, 0, -110), at(x + 1, 13, -108), PILLAR_COLOR)
+	end
+	platform(folder, "EastPlatform", 40, -118, 58, -100, 14, DECK_COLOR, true)
+end
+
+--- Sky Steps: rainbow floating platforms from the east platform down to the courtyard.
+local function buildSkySteps(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"SkySteps",
+		"Six rainbow platforms floating down from the bridge's east platform to the courtyard."
+	)
+	for index, step in SKY_STEPS do
+		platform(folder, `Step{index}`, step[1], step[2], step[3], step[4], step[5], SKY_STEP_COLORS[index], false)
+	end
+end
+
+--- Slope Hill: a ramp up, a hill and a ramp down, laid out along the leg's diagonal.
+local function buildSlopeHill(sections: Instance): ()
+	local folder = newSection(sections, "SlopeHill", "Ramps up and over a hill running down the R's leg.")
+	local origin = at(10, 0, 30)
+	local forward = Vector3.new(1, 0, 1).Unit -- down the leg (south-east)
+	local hillHeight = 8
+	local function along(distance: number, height: number): Vector3
+		return origin + forward * distance + Vector3.new(0, height, 0)
+	end
+	ramp(folder, "RampUp", along(14, 0), along(44, hillHeight), 10)
+	local hillCenter = along(51, hillHeight / 2)
+	local hill = makeBlock("Hill", Vector3.new(14, hillHeight, 14), hillCenter, DECK_COLOR, folder)
+	hill.CFrame = facing(hillCenter, forward)
+	ramp(folder, "RampDown", along(88, 0), along(58, hillHeight), 10)
+end
+
+--- Finish Podium: 1st, 2nd and 3rd place blocks at the end of the leg.
+local function buildFinishPodium(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"FinishPodium",
+		"A winners' podium for 1st, 2nd and 3rd place at the end of the leg."
+	)
+	blockBetween(folder, "Second", at(66, 0, 106), at(74, 3, 114), PODIUM_SECOND_COLOR)
+	blockBetween(folder, "First", at(74, 0, 106), at(82, 5, 114), PODIUM_FIRST_COLOR)
+	blockBetween(folder, "Third", at(82, 0, 106), at(90, 2, 114), PODIUM_THIRD_COLOR)
+end
+
+--- Builds every play area into a Sections folder, in the order players loop through them.
+--- @param model Model -- The map model
+--- @return (number, number) -- Number of areas and number of parts in them
+local function buildSections(model: Model): (number, number)
+	local sections = Instance.new("Folder")
+	sections.Name = "Sections"
+	sections.Parent = model
+
+	local builders: { (Instance) -> () } = {
+		buildSpawnPlaza,
+		buildTunnel,
+		buildHouse,
+		buildCrateStairs,
+		buildLookoutTower,
+		buildSkyBridge,
+		buildSkySteps,
+		buildSlopeHill,
+		buildFinishPodium,
+	}
+	for _, build in builders do
+		build(sections)
+	end
+
+	local partCount = 0
+	for _, descendant in sections:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			partCount += 1
+		end
+	end
+	return #builders, partCount
+end
+
 --- Removes the Baseplate template's own baseplate and spawn from Workspace.
 local function removeTemplateParts(): ()
 	local baseplate = Workspace:FindFirstChild("Baseplate")
@@ -960,12 +1333,18 @@ local function buildMap(): Model
 	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder)
 	buildSpawn(grid, model)
 
+	local sectionCount, sectionPartCount = 0, 0
+	if BUILD_SECTIONS then
+		sectionCount, sectionPartCount = buildSections(model)
+	end
+
 	model.WorldPivot = CFrame.new(0, FLOOR_TOP_Y, 0)
 	model.Parent = Workspace
 
 	print(
 		`[RMapBuilder] Built {MODEL_NAME}: {grid.width * CELL_SIZE} x {grid.height * CELL_SIZE} studs, `
-			.. `{floorCount} floor blocks, {wallCount} wall blocks, {strapCount} strap blocks`
+			.. `{floorCount} floor blocks, {wallCount} wall blocks, {strapCount} strap blocks, `
+			.. `{sectionCount} play areas ({sectionPartCount} parts)`
 	)
 	return model
 end
@@ -982,210 +1361,68 @@ respawnExistingCharacters()
 "use strict";
 
 // ---------------------------------------------------------------------------
-// Map settings, read from the embedded Luau script so the preview always
-// matches what the script builds.
+// Data: every part of the saved RMap.rbxm, plus the script and the file itself.
 // ---------------------------------------------------------------------------
 
+const MAP = JSON.parse(document.getElementById("map-data").textContent);
+const RBXM_BASE64 = document.getElementById("rbxm-data").textContent.trim();
 const LUA_SOURCE = document.getElementById("lua-source").textContent.replace(/^\r?\n/, "");
-const LUA_FILE_NAME = "RMapBuilder.server.lua";
+const SURFACE = { plain: 0, studs: 1, truss: 2, neon: 3 };
+const IDENTITY_AXES = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
-// Official BrickColor RGB values for the colours this map is likely to use.
-const BRICK_COLORS = {
-  "Medium stone grey": [163, 162, 165],
-  "Dark stone grey": [99, 95, 98],
-  "Light stone grey": [229, 228, 223],
-  "Institutional white": [248, 248, 248],
-  "Black": [27, 42, 53],
-  "Bright red": [196, 40, 28],
-  "Bright blue": [13, 105, 172],
-  "Bright green": [75, 151, 75],
-  "Dark green": [40, 127, 71],
-  "Bright yellow": [245, 205, 48],
-  "Brick yellow": [215, 197, 154],
-  "Reddish brown": [105, 64, 40],
-  "Br. yellowish green": [164, 189, 71],
-};
-const FALLBACK_COLOR = [163, 162, 165];
-
-function readMapConfig(source) {
-  const readNumber = (name) => {
-    const match = source.match(new RegExp("^local " + name + " = (-?\\d+(?:\\.\\d+)?)", "m"));
-    if (!match) throw new Error("Could not find " + name + " in the script");
-    return parseFloat(match[1]);
-  };
-  const readColor = (name) => {
-    const match = source.match(new RegExp("^local " + name + ' = BrickColor\\.new\\("([^"]+)"\\)', "m"));
-    return match ? match[1] : "Medium stone grey";
-  };
-
-  const shapeMatch = source.match(/^local SHAPE: \{ string \} = \{\r?\n([\s\S]*?)\r?\n\}/m);
-  if (!shapeMatch) throw new Error("Could not find SHAPE in the script");
-  const shape = Array.from(shapeMatch[1].matchAll(/"([^"]*)"/g), (match) => match[1]);
-  if (shape.length === 0 || shape[0].length === 0) throw new Error("SHAPE is empty");
-
-  const spawnMatch = source.match(/^local SPAWN_CELL = \{ row = (-?[\d.]+), col = (-?[\d.]+) \}/m);
-  const spawnSizeMatch = source.match(/^local SPAWN_SIZE = Vector3\.new\(([\d.]+), ([\d.]+), ([\d.]+)\)/m);
-  if (!spawnMatch || !spawnSizeMatch) throw new Error("Could not find the spawn settings in the script");
-  const studsMatch = source.match(/^local CLASSIC_STUDS = (true|false)/m);
-
+// A part becomes a box: centre, its three axes (right, up, back) and size.
+function partToBlock(part) {
+  const c = part.cf;
+  let surface = SURFACE.plain;
+  if (part.c === "TrussPart") surface = SURFACE.truss;
+  else if (part.m === "Neon") surface = SURFACE.neon;
+  else if (part.top === "Studs") surface = SURFACE.studs;
   return {
-    shape,
-    cellSize: readNumber("CELL_SIZE"),
-    floorThickness: readNumber("FLOOR_THICKNESS"),
-    floorTopY: readNumber("FLOOR_TOP_Y"),
-    wallHeight: readNumber("WALL_HEIGHT"),
-    wallThickness: readNumber("WALL_THICKNESS"),
-    wallSink: readNumber("WALL_SINK"),
-    spawnRow: parseFloat(spawnMatch[1]),
-    spawnCol: parseFloat(spawnMatch[2]),
-    spawnSize: [parseFloat(spawnSizeMatch[1]), parseFloat(spawnSizeMatch[2]), parseFloat(spawnSizeMatch[3])],
-    floorColorName: readColor("FLOOR_COLOR"),
-    wallColorName: readColor("WALL_COLOR"),
-    strapColorName: readColor("STRAP_COLOR"),
-    strapHeight: readNumber("STRAP_HEIGHT"),
-    studs: studsMatch ? studsMatch[1] === "true" : true,
+    center: [c[0], c[1], c[2]],
+    axes: [[c[3], c[6], c[9]], [c[4], c[7], c[10]], [c[5], c[8], c[11]]],
+    size: part.s,
+    color: part.rgb,
+    surface,
+    part,
   };
 }
 
-// ---------------------------------------------------------------------------
-// Geometry: a direct port of the script's floor meshing and wall placement.
-// Every block is { kind, name, min: [x, y, z], max: [x, y, z], color, studs }.
-// ---------------------------------------------------------------------------
-
-function buildMapGeometry(config) {
-  const height = config.shape.length;
-  const width = config.shape[0].length;
-  const cell = config.cellSize;
-  const isFloor = (row, col) =>
-    row >= 1 && row <= height && col >= 1 && col <= width && config.shape[row - 1][col - 1] === "#";
-  const gridLineX = (line) => (line - width / 2) * cell;
-  const gridLineZ = (line) => (line - height / 2) * cell;
-  const floorRgb = BRICK_COLORS[config.floorColorName] || FALLBACK_COLOR;
-  const wallRgb = BRICK_COLORS[config.wallColorName] || FALLBACK_COLOR;
-  const strapRgb = BRICK_COLORS[config.strapColorName] || FALLBACK_COLOR;
-  const blocks = [];
-
-  // Floor: greedy rectangles, same sweep order as meshFloor in the script.
-  const used = Array.from({ length: height + 1 }, () => new Array(width + 1).fill(false));
-  const isFree = (row, col) => isFloor(row, col) && !used[row][col];
-  let floorCount = 0;
-  for (let row = 1; row <= height; row++) {
-    for (let col = 1; col <= width; col++) {
-      if (!isFree(row, col)) continue;
-      let cols = 1;
-      while (col + cols <= width && isFree(row, col + cols)) cols++;
-      let rows = 1;
-      while (row + rows <= height) {
-        let rowIsFree = true;
-        for (let scanCol = col; scanCol < col + cols; scanCol++) {
-          if (!isFree(row + rows, scanCol)) { rowIsFree = false; break; }
-        }
-        if (!rowIsFree) break;
-        rows++;
-      }
-      for (let markRow = row; markRow < row + rows; markRow++) {
-        for (let markCol = col; markCol < col + cols; markCol++) used[markRow][markCol] = true;
-      }
-      floorCount++;
-      blocks.push({
-        kind: "floor",
-        name: "Floor" + floorCount,
-        min: [gridLineX(col - 1), config.floorTopY - config.floorThickness, gridLineZ(row - 1)],
-        max: [gridLineX(col - 1 + cols), config.floorTopY, gridLineZ(row - 1 + rows)],
-        color: floorRgb,
-        studs: config.studs,
-      });
-    }
+function blockCorners(block) {
+  const corners = [];
+  for (const a of [-1, 1]) for (const b of [-1, 1]) for (const c of [-1, 1]) {
+    const local = [a * block.size[0] / 2, b * block.size[1] / 2, c * block.size[2] / 2];
+    corners.push([0, 1, 2].map((i) => block.center[i] + local[0] * block.axes[0][i] + local[1] * block.axes[1][i] + local[2] * block.axes[2][i]));
   }
-
-  // Walls: straight runs on every floor/empty edge, same order as collectWallRuns.
-  const runs = [];
-  for (let line = 0; line <= height; line++) {
-    let runStart = null;
-    for (let col = 1; col <= width + 1; col++) {
-      const isWall = col <= width && isFloor(line, col) !== isFloor(line + 1, col);
-      if (isWall && runStart === null) runStart = col;
-      else if (!isWall && runStart !== null) {
-        runs.push({ axis: "X", line, from: runStart - 1, to: col - 1 });
-        runStart = null;
-      }
-    }
-  }
-  for (let line = 0; line <= width; line++) {
-    let runStart = null;
-    for (let row = 1; row <= height + 1; row++) {
-      const isWall = row <= height && isFloor(row, line) !== isFloor(row, line + 1);
-      if (isWall && runStart === null) runStart = row;
-      else if (!isWall && runStart !== null) {
-        runs.push({ axis: "Z", line, from: runStart - 1, to: row - 1 });
-        runStart = null;
-      }
-    }
-  }
-
-  const half = config.wallThickness / 2;
-  const bottomY = config.floorTopY - config.floorThickness - config.wallSink;
-  const topY = config.floorTopY + config.wallHeight;
-  const hasStrap = config.strapHeight > 0;
-  const strapTopY = config.floorTopY + config.strapHeight;
-  runs.forEach((run, index) => {
-    let minX, maxX, minZ, maxZ;
-    if (run.axis === "X") {
-      const z = gridLineZ(run.line);
-      [minX, maxX, minZ, maxZ] = [gridLineX(run.from) - half, gridLineX(run.to) + half, z - half, z + half];
-    } else {
-      const x = gridLineX(run.line);
-      [minX, maxX, minZ, maxZ] = [x - half, x + half, gridLineZ(run.from) + half, gridLineZ(run.to) - half];
-    }
-    // The strap is the bottom slice of the wall, exactly as buildWalls splits it.
-    blocks.push({
-      kind: "wall", name: "Wall" + (index + 1), color: wallRgb, studs: config.studs,
-      min: [minX, hasStrap ? strapTopY : bottomY, minZ], max: [maxX, topY, maxZ],
-    });
-    if (hasStrap) {
-      blocks.push({
-        kind: "strap", name: "Strap" + (index + 1), color: strapRgb, studs: config.studs,
-        min: [minX, bottomY, minZ], max: [maxX, strapTopY, maxZ],
-      });
-    }
-  });
-
-  // Spawn pad, exactly as buildSpawn places it.
-  const spawnX = gridLineX(config.spawnCol - 0.5);
-  const spawnZ = gridLineZ(config.spawnRow - 0.5);
-  const [spawnSizeX, spawnSizeY, spawnSizeZ] = config.spawnSize;
-  blocks.push({
-    kind: "spawn",
-    name: "SpawnLocation",
-    min: [spawnX - spawnSizeX / 2, config.floorTopY, spawnZ - spawnSizeZ / 2],
-    max: [spawnX + spawnSizeX / 2, config.floorTopY + spawnSizeY, spawnZ + spawnSizeZ / 2],
-    color: floorRgb,
-    studs: false,
-  });
-
-  return {
-    blocks,
-    floorCount,
-    wallCount: runs.length,
-    strapCount: hasStrap ? runs.length : 0,
-    widthStuds: width * cell,
-    depthStuds: height * cell,
-    spawn: [spawnX, config.floorTopY + spawnSizeY, spawnZ],
-  };
+  return corners;
 }
 
-// A classic blocky player standing on the spawn, for scale only (not built by the script).
-function buildScaleFigure(base) {
-  const [x, y, z] = base;
-  const yellow = BRICK_COLORS["Bright yellow"];
-  const blue = BRICK_COLORS["Bright blue"];
-  const green = BRICK_COLORS["Br. yellowish green"];
+function boundsOf(blocks) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  for (const block of blocks) {
+    for (const corner of blockCorners(block)) {
+      for (let i = 0; i < 3; i++) {
+        min[i] = Math.min(min[i], corner[i]);
+        max[i] = Math.max(max[i], corner[i]);
+      }
+    }
+  }
+  return { min, max, center: min.map((value, i) => (value + max[i]) / 2) };
+}
+
+// A classic blocky player standing on the spawn, for scale only (not part of the model).
+function buildScaleFigure(spawnBlock) {
+  const [x, , z] = spawnBlock.center;
+  const y = spawnBlock.center[1] + spawnBlock.size[1] / 2;
+  const yellow = [245, 205, 48];
+  const blue = [13, 105, 172];
+  const green = [164, 189, 71];
   const box = (minX, minY, minZ, maxX, maxY, maxZ, color) => ({
-    kind: "figure",
-    min: [x + minX, y + minY, z + minZ],
-    max: [x + maxX, y + maxY, z + maxZ],
+    center: [x + (minX + maxX) / 2, y + (minY + maxY) / 2, z + (minZ + maxZ) / 2],
+    axes: IDENTITY_AXES,
+    size: [maxX - minX, maxY - minY, maxZ - minZ],
     color,
-    studs: false,
+    surface: SURFACE.plain,
   });
   return [
     box(-1, 0, -0.5, 0, 2, 0.5, green),
@@ -1248,7 +1485,7 @@ function multiply(a, b) {
 }
 
 // ---------------------------------------------------------------------------
-// WebGL 2 renderer: lit blocks, stud texture on top faces, soft shadows.
+// WebGL 2 renderer: lit blocks, studs, open truss ladders, glowing neon, soft shadows.
 // ---------------------------------------------------------------------------
 
 const VERTEX_SHADER = `#version 300 es
@@ -1257,23 +1494,21 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec3 aColor;
 layout(location = 3) in vec2 aFaceUv;
 layout(location = 4) in vec2 aFaceSize;
-layout(location = 5) in float aStuds;
+layout(location = 5) in float aSurface;
 uniform mat4 uViewProjection;
 uniform mat4 uLightViewProjection;
-out vec3 vPosition;
 out vec3 vNormal;
 out vec3 vColor;
 out vec2 vFaceUv;
 out vec2 vFaceSize;
-out float vStuds;
+out float vSurface;
 out vec4 vLightPosition;
 void main() {
-  vPosition = aPosition;
   vNormal = aNormal;
   vColor = aColor;
   vFaceUv = aFaceUv;
   vFaceSize = aFaceSize;
-  vStuds = aStuds;
+  vSurface = aSurface;
   vLightPosition = uLightViewProjection * vec4(aPosition + aNormal * 0.2, 1.0);
   gl_Position = uViewProjection * vec4(aPosition, 1.0);
 }`;
@@ -1283,12 +1518,11 @@ precision highp float;
 precision highp sampler2DShadow;
 uniform sampler2DShadow uShadowMap;
 uniform vec3 uLightDirection;
-in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vColor;
 in vec2 vFaceUv;
 in vec2 vFaceSize;
-in float vStuds;
+in float vSurface;
 in vec4 vLightPosition;
 out vec4 outColor;
 
@@ -1306,26 +1540,44 @@ float sampleShadow() {
 }
 
 void main() {
+  // Neon glows and ignores lighting.
+  if (vSurface > 2.5) {
+    outColor = vec4(min(vColor * 1.2 + 0.08, vec3(1.0)), 1.0);
+    return;
+  }
+
   vec3 normal = normalize(vNormal);
   float shade = 1.0;
 
-  // Studs: one raised circle per stud, lit on the side facing the sun. Fades out when too small to see.
-  if (vStuds > 0.5 && normal.y > 0.5) {
-    vec2 g = fract(vPosition.xz) - 0.5;
-    float d = length(g);
-    float footprint = max(fwidth(vPosition.x), fwidth(vPosition.z));
-    float visible = 1.0 - smoothstep(0.12, 0.33, footprint);
-    float aa = max(footprint, 0.02);
-    float ring = smoothstep(0.22 - aa, 0.22, d) * (1.0 - smoothstep(0.31, 0.31 + aa, d));
-    float facing = dot(normalize(g + 1e-4), normalize(uLightDirection.xz + 1e-4));
-    shade += visible * ring * facing * 0.38;
+  if (vSurface > 1.5) {
+    // Truss ladder: rails, a rung every 2 studs and a diagonal brace; the rest is open.
+    bool alongU = vFaceSize.x > vFaceSize.y;
+    float along = alongU ? vFaceUv.x : vFaceUv.y;
+    float across = alongU ? vFaceUv.y : vFaceUv.x;
+    float width = alongU ? vFaceSize.y : vFaceSize.x;
+    float segment = mod(along, 2.0);
+    float bar = 0.3;
+    bool solid = across < bar || across > width - bar || segment < bar * 0.6 || segment > 2.0 - bar * 0.6
+      || abs(across - segment * width * 0.5) < bar * 0.75;
+    if (!solid) discard;
+  } else {
+    if (vSurface > 0.5) {
+      // Studs: one raised circle per stud, lit on the side facing the sun; fades out when tiny.
+      vec2 g = fract(vFaceUv) - 0.5;
+      float d = length(g);
+      float footprint = max(fwidth(vFaceUv.x), fwidth(vFaceUv.y));
+      float visible = 1.0 - smoothstep(0.12, 0.33, footprint);
+      float aa = max(footprint, 0.02);
+      float ring = smoothstep(0.22 - aa, 0.22, d) * (1.0 - smoothstep(0.31, 0.31 + aa, d));
+      float facing = dot(normalize(g + 1e-4), normalize(uLightDirection.xz + 1e-4));
+      shade += visible * ring * facing * 0.38;
+    }
+    // Thin darker line along every block edge so separate blocks read clearly.
+    vec2 toEdge = min(vFaceUv, vFaceSize - vFaceUv);
+    float edgeDistance = min(toEdge.x, toEdge.y);
+    float lineWidth = max(fwidth(edgeDistance) * 1.25, 0.05);
+    shade *= 1.0 - 0.22 * (1.0 - smoothstep(lineWidth * 0.5, lineWidth * 1.5, edgeDistance));
   }
-
-  // Thin darker line along every block edge so separate blocks read clearly.
-  vec2 toEdge = min(vFaceUv, vFaceSize - vFaceUv);
-  float edgeDistance = min(toEdge.x, toEdge.y);
-  float lineWidth = max(fwidth(edgeDistance) * 1.25, 0.05);
-  shade *= 1.0 - 0.22 * (1.0 - smoothstep(lineWidth * 0.5, lineWidth * 1.5, edgeDistance));
 
   vec3 albedo = pow(vColor, vec3(2.2)) * shade;
   float diffuse = max(dot(normal, uLightDirection), 0.0);
@@ -1355,6 +1607,7 @@ const MIN_PITCH = (6 * Math.PI) / 180;
 const MAX_PITCH = (89.5 * Math.PI) / 180;
 const DEFAULT_YAW = 0.3;
 const DEFAULT_PITCH = 0.9;
+const FOCUS_PITCH = 0.78;
 const OVERLAY_HEIGHT = 50; // CSS px taken by the toolbar and the hint
 
 function compileProgram(gl, vertexSource, fragmentSource) {
@@ -1380,33 +1633,36 @@ function compileProgram(gl, vertexSource, fragmentSource) {
 // Turns blocks into one interleaved vertex buffer (24 vertices and 36 indices per block).
 function buildMesh(blocks) {
   const vertices = new Float32Array(blocks.length * 24 * FLOATS_PER_VERTEX);
-  const indices = new Uint16Array(blocks.length * 36);
+  const indices = new Uint32Array(blocks.length * 36);
   let v = 0;
   let i = 0;
   let vertexCount = 0;
   for (const block of blocks) {
     const color = block.color.map((channel) => channel / 255);
-    const size = [block.max[0] - block.min[0], block.max[1] - block.min[1], block.max[2] - block.min[2]];
+    const half = block.size.map((value) => value / 2);
     for (let axis = 0; axis < 3; axis++) {
       const tangentA = axis === 0 ? 1 : 0;
       const tangentB = axis === 2 ? 1 : 2;
       for (const sign of [-1, 1]) {
-        const normal = [0, 0, 0];
-        normal[axis] = sign;
-        const studs = block.studs && axis === 1 && sign === 1 ? 1 : 0;
+        const normal = block.axes[axis].map((value) => value * sign);
+        let surface = block.surface;
+        if (surface === SURFACE.studs && !(axis === 1 && sign === 1)) surface = SURFACE.plain;
         for (const [u, w] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
-          const position = [0, 0, 0];
-          position[axis] = sign > 0 ? block.max[axis] : block.min[axis];
-          position[tangentA] = u ? block.max[tangentA] : block.min[tangentA];
-          position[tangentB] = w ? block.max[tangentB] : block.min[tangentB];
+          const local = [0, 0, 0];
+          local[axis] = sign * half[axis];
+          local[tangentA] = (u ? 1 : -1) * half[tangentA];
+          local[tangentB] = (w ? 1 : -1) * half[tangentB];
+          const position = [0, 1, 2].map((k) =>
+            block.center[k] + local[0] * block.axes[0][k] + local[1] * block.axes[1][k] + local[2] * block.axes[2][k]
+          );
           vertices.set(
             [
               ...position,
               ...normal,
               ...color,
-              u * size[tangentA], w * size[tangentB],
-              size[tangentA], size[tangentB],
-              studs,
+              u * block.size[tangentA], w * block.size[tangentB],
+              block.size[tangentA], block.size[tangentB],
+              surface,
             ],
             v
           );
@@ -1421,33 +1677,36 @@ function buildMesh(blocks) {
   return { vertices, indices };
 }
 
-function startViewer(geometry, figure) {
+function startViewer(blocks, mapBounds) {
   const viewer = document.getElementById("viewer");
   const canvas = document.getElementById("view");
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: true, premultipliedAlpha: true });
   if (!gl) {
     viewer.classList.add("no-webgl");
-    return;
+    return null;
   }
 
   const mainProgram = compileProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
   const depthProgram = compileProgram(gl, DEPTH_VERTEX_SHADER, DEPTH_FRAGMENT_SHADER);
-  const mesh = buildMesh(geometry.blocks.concat(figure));
+  const mesh = buildMesh(blocks);
 
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
-  const vertexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
-  const indexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
   const stride = FLOATS_PER_VERTEX * 4;
-  const attributes = [[0, 3, 0], [1, 3, 3], [2, 3, 6], [3, 2, 9], [4, 2, 11], [5, 1, 13]];
-  for (const [location, components, offset] of attributes) {
+  for (const [location, components, offset] of [[0, 3, 0], [1, 3, 3], [2, 3, 6], [3, 2, 9], [4, 2, 11], [5, 1, 13]]) {
     gl.enableVertexAttribArray(location);
     gl.vertexAttribPointer(location, components, gl.FLOAT, false, stride, offset * 4);
   }
+
+  const center = mapBounds.center;
+  const halfWidth = (mapBounds.max[0] - mapBounds.min[0]) / 2;
+  const halfDepth = (mapBounds.max[2] - mapBounds.min[2]) / 2;
+  const wallTop = mapBounds.max[1];
+  const floorY = center[1];
 
   // Sun from the south-west, so the faces the default camera sees are lit and shadows fall north-east.
   const lightDirection = (() => {
@@ -1455,12 +1714,9 @@ function startViewer(geometry, figure) {
     const length = Math.hypot(d[0], d[1], d[2]);
     return d.map((value) => value / length);
   })();
-  const halfWidth = geometry.widthStuds / 2;
-  const halfDepth = geometry.depthStuds / 2;
-  const wallTop = Math.max(...geometry.blocks.map((block) => block.max[1]));
   const sceneRadius = Math.hypot(halfWidth, halfDepth, 30) + 10;
   const lightDistance = sceneRadius * 2;
-  const lightView = lookAt(lightDirection.map((value) => value * lightDistance), [0, 0, 0], [0, 1, 0]);
+  const lightView = lookAt(lightDirection.map((value, i) => center[i] + value * lightDistance), center, [0, 1, 0]);
   const lightProjection = orthographic(
     -sceneRadius, sceneRadius, -sceneRadius, sceneRadius,
     lightDistance - sceneRadius, lightDistance + sceneRadius
@@ -1489,7 +1745,7 @@ function startViewer(geometry, figure) {
   gl.polygonOffset(2, 4);
   gl.useProgram(depthProgram);
   gl.uniformMatrix4fv(gl.getUniformLocation(depthProgram, "uLightViewProjection"), false, lightViewProjection);
-  gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+  gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_INT, 0);
   gl.disable(gl.POLYGON_OFFSET_FILL);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -1503,14 +1759,15 @@ function startViewer(geometry, figure) {
 
   // ---- camera ----
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const camera = { yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: 400, target: [0, 0, 0] };
+  const camera = { yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: 400, target: center.slice() };
   let animation = null;
   let frameRequested = false;
-
   const aspect = () => Math.max(canvas.width, 1) / Math.max(canvas.height, 1);
   const horizontalFov = () => 2 * Math.atan(Math.tan(FIELD_OF_VIEW / 2) * aspect());
-  const minDistance = 20;
+  const minDistance = 12;
   const maxDistance = sceneRadius * 6;
+  const focusLabel = document.getElementById("focus-label");
+  const listeners = [];
 
   function fitDistance(pitch) {
     if (pitch > MAX_PITCH - 0.01) {
@@ -1518,15 +1775,10 @@ function startViewer(geometry, figure) {
       const overlayScale = canvas.clientHeight / Math.max(canvas.clientHeight - 2 * OVERLAY_HEIGHT, 1);
       const byDepth = ((halfDepth + 2) / Math.tan(FIELD_OF_VIEW / 2)) * overlayScale;
       const byWidth = (halfWidth + 6) / Math.tan(horizontalFov() / 2);
-      return (Math.max(byDepth, byWidth) + wallTop) * 1.04;
+      return (Math.max(byDepth, byWidth) + (wallTop - floorY)) * 1.04;
     }
     const narrowest = Math.min(FIELD_OF_VIEW, horizontalFov());
     return ((Math.hypot(halfWidth, halfDepth) + 6) / Math.sin(narrowest / 2)) * (aspect() >= 1 ? 0.9 : 1);
-  }
-
-  function presetView(name) {
-    if (name === "top") return { yaw: 0, pitch: MAX_PITCH, distance: fitDistance(MAX_PITCH), target: [0, 0, 0] };
-    return { yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: fitDistance(DEFAULT_PITCH), target: [0, 0, 0] };
   }
 
   function requestFrame() {
@@ -1542,7 +1794,7 @@ function startViewer(geometry, figure) {
       const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       const from = animation.from;
       const to = animation.to;
-      let yawDelta = ((to.yaw - from.yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+      const yawDelta = ((to.yaw - from.yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
       camera.yaw = from.yaw + yawDelta * eased;
       camera.pitch = from.pitch + (to.pitch - from.pitch) * eased;
       camera.distance = from.distance + (to.distance - from.distance) * eased;
@@ -1557,7 +1809,7 @@ function startViewer(geometry, figure) {
       camera.target[1] + camera.distance * Math.sin(camera.pitch),
       camera.target[2] + camera.distance * cosPitch * Math.cos(camera.yaw),
     ];
-    const near = Math.max(0.5, camera.distance * 0.01);
+    const near = Math.max(0.3, camera.distance * 0.01);
     const projection = perspective(FIELD_OF_VIEW, aspect(), near, camera.distance + sceneRadius * 4);
     const view = lookAt(eye, camera.target, [0, 1, 0]);
 
@@ -1565,20 +1817,22 @@ function startViewer(geometry, figure) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniformMatrix4fv(viewProjectionLocation, false, multiply(projection, view));
-    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_INT, 0);
   }
 
-  function goTo(name, animate) {
-    const to = presetView(name);
-    document.getElementById("view-3d").setAttribute("aria-pressed", String(name !== "top"));
+  function setPreset(name) {
+    document.getElementById("view-3d").setAttribute("aria-pressed", String(name === "3d"));
     document.getElementById("view-top").setAttribute("aria-pressed", String(name === "top"));
+  }
+
+  function moveCamera(to, animate) {
     if (!animate || reduceMotion) {
       animation = null;
-      Object.assign(camera, to);
+      Object.assign(camera, to, { target: to.target.slice() });
     } else {
       animation = {
         start: performance.now(),
-        duration: 550,
+        duration: 650,
         from: { yaw: camera.yaw, pitch: camera.pitch, distance: camera.distance, target: camera.target.slice() },
         to,
       };
@@ -1586,29 +1840,49 @@ function startViewer(geometry, figure) {
     requestFrame();
   }
 
-  function clearPresetHighlight() {
-    document.getElementById("view-3d").setAttribute("aria-pressed", "false");
-    document.getElementById("view-top").setAttribute("aria-pressed", "false");
+  function showFocus(text) {
+    focusLabel.textContent = text;
+    focusLabel.classList.toggle("visible", Boolean(text));
+    for (const listener of listeners) listener(text);
+  }
+
+  function goTo(name, animate) {
+    setPreset(name);
+    showFocus("");
+    const pitch = name === "top" ? MAX_PITCH : DEFAULT_PITCH;
+    moveCamera({ yaw: name === "top" ? 0 : DEFAULT_YAW, pitch, distance: fitDistance(pitch), target: center.slice() }, animate);
+  }
+
+  function focusOn(bounds, label) {
+    setPreset("");
+    showFocus(label);
+    const radius = Math.hypot(bounds.max[0] - bounds.min[0], bounds.max[1] - bounds.min[1], bounds.max[2] - bounds.min[2]) / 2;
+    const narrowest = Math.min(FIELD_OF_VIEW, horizontalFov());
+    const distance = Math.min(maxDistance, Math.max(28, (radius + 6) / Math.sin(narrowest / 2)));
+    moveCamera({ yaw: DEFAULT_YAW, pitch: FOCUS_PITCH, distance, target: bounds.center }, true);
+  }
+
+  function userMoved() {
+    animation = null;
+    setPreset("");
   }
 
   function orbit(dx, dy) {
-    animation = null;
+    userMoved();
     camera.yaw -= dx * 0.006;
     camera.pitch = Math.min(MAX_PITCH, Math.max(MIN_PITCH, camera.pitch + dy * 0.006));
-    clearPresetHighlight();
     requestFrame();
   }
 
   function pan(dx, dy) {
-    animation = null;
+    userMoved();
     const scale = (camera.distance * Math.tan(FIELD_OF_VIEW / 2) * 2) / Math.max(canvas.clientHeight, 1);
     const right = [Math.cos(camera.yaw), 0, -Math.sin(camera.yaw)];
     const forward = [-Math.sin(camera.yaw), 0, -Math.cos(camera.yaw)];
     const limitX = halfWidth + 40;
     const limitZ = halfDepth + 40;
-    camera.target[0] = Math.min(limitX, Math.max(-limitX, camera.target[0] - right[0] * dx * scale + forward[0] * dy * scale));
-    camera.target[2] = Math.min(limitZ, Math.max(-limitZ, camera.target[2] - right[2] * dx * scale + forward[2] * dy * scale));
-    clearPresetHighlight();
+    camera.target[0] = Math.min(center[0] + limitX, Math.max(center[0] - limitX, camera.target[0] - right[0] * dx * scale + forward[0] * dy * scale));
+    camera.target[2] = Math.min(center[2] + limitZ, Math.max(center[2] - limitZ, camera.target[2] - right[2] * dx * scale + forward[2] * dy * scale));
     requestFrame();
   }
 
@@ -1619,14 +1893,11 @@ function startViewer(geometry, figure) {
   }
 
   // ---- input ----
+  const hint = document.getElementById("hint");
+  const hideHint = () => hint.classList.add("used");
   const pointers = new Map();
   let dragMode = "orbit";
   let lastPinch = null;
-
-  const hint = document.getElementById("hint");
-  const hideHint = () => hint.classList.add("used");
-  canvas.addEventListener("wheel", hideHint, { once: true });
-  canvas.addEventListener("keydown", hideHint, { once: true });
 
   canvas.addEventListener("pointerdown", (event) => {
     hideHint();
@@ -1636,20 +1907,16 @@ function startViewer(geometry, figure) {
     lastPinch = null;
     canvas.classList.add("dragging");
   });
-
   canvas.addEventListener("pointermove", (event) => {
     const previous = pointers.get(event.pointerId);
     if (!previous) return;
     const current = { x: event.clientX, y: event.clientY };
+    pointers.set(event.pointerId, current);
     if (pointers.size === 1) {
-      const dx = current.x - previous.x;
-      const dy = current.y - previous.y;
-      if (dragMode === "pan") pan(dx, dy);
-      else orbit(dx, dy);
-      pointers.set(event.pointerId, current);
+      if (dragMode === "pan") pan(current.x - previous.x, current.y - previous.y);
+      else orbit(current.x - previous.x, current.y - previous.y);
       return;
     }
-    pointers.set(event.pointerId, current);
     if (pointers.size === 2) {
       const [a, b] = Array.from(pointers.values());
       const pinch = { spread: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
@@ -1660,7 +1927,6 @@ function startViewer(geometry, figure) {
       lastPinch = pinch;
     }
   });
-
   const endPointer = (event) => {
     pointers.delete(event.pointerId);
     lastPinch = null;
@@ -1671,13 +1937,13 @@ function startViewer(geometry, figure) {
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
   canvas.addEventListener("wheel", (event) => {
     event.preventDefault();
+    hideHint();
     const pixels = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
     zoom(Math.exp(pixels * 0.0012));
   }, { passive: false });
-
   canvas.addEventListener("keydown", (event) => {
     const step = 18;
-    const handled = {
+    const action = {
       ArrowLeft: () => orbit(-step, 0),
       ArrowRight: () => orbit(step, 0),
       ArrowUp: () => orbit(0, -step),
@@ -1686,16 +1952,16 @@ function startViewer(geometry, figure) {
       "=": () => zoom(0.9),
       "-": () => zoom(1.1),
     }[event.key];
-    if (handled) {
+    if (action) {
       event.preventDefault();
-      handled();
+      hideHint();
+      action();
     }
   });
 
   document.getElementById("view-3d").addEventListener("click", () => goTo("3d", true));
   document.getElementById("view-top").addEventListener("click", () => goTo("top", true));
   document.getElementById("view-reset").addEventListener("click", () => goTo("3d", true));
-
   if (window.matchMedia("(pointer: coarse)").matches) {
     hint.textContent = "Drag to orbit · Pinch to zoom · Two-finger drag to pan";
   }
@@ -1718,17 +1984,19 @@ function startViewer(geometry, figure) {
   };
   new ResizeObserver(resize).observe(canvas);
   resize();
+
+  return { focusOn, onFocusChange: (listener) => listeners.push(listener) };
 }
 
 // ---------------------------------------------------------------------------
-// Page: stats, legend, highlighted script, copy and download.
+// Page: stats, legend, play areas, highlighted script, copy and downloads.
 // ---------------------------------------------------------------------------
 
 const LUA_KEYWORDS = new Set(
   "and break continue do else elseif end false for function if in local nil not or repeat return then true type until while".split(" ")
 );
 const LUA_BUILTINS = new Set(
-  "game workspace Instance Vector3 CFrame BrickColor Enum task math string table print warn assert error pcall".split(" ")
+  "game workspace Instance Vector3 CFrame Color3 BrickColor Enum task math string table print warn assert error pcall".split(" ")
 );
 
 function escapeHtml(text) {
@@ -1753,32 +2021,42 @@ function highlightLua(source) {
   return html + escapeHtml(source.slice(last));
 }
 
-function fillPage(config, geometry) {
-  const stats = [
-    [geometry.widthStuds + " × " + geometry.depthStuds, " studs"],
-    [String(geometry.floorCount), " floor blocks"],
-    [String(geometry.wallCount), " wall blocks"],
-    ["Walls " + config.wallHeight, " studs tall"],
-  ];
-  const statsList = document.getElementById("stats");
-  for (const [value, label] of stats) {
-    const item = document.createElement("li");
-    const strong = document.createElement("strong");
-    strong.textContent = value;
-    item.append(strong, label);
-    statsList.append(item);
-  }
+const spacedName = (name) => name.replace(/([a-z])([A-Z])/g, "$1 $2");
+const rgbCss = (color) => "rgb(" + color.join(",") + ")";
 
-  const rgb = (color) => "rgb(" + color.join(",") + ")";
-  const floorRgb = BRICK_COLORS[config.floorColorName] || FALLBACK_COLOR;
-  const wallRgb = BRICK_COLORS[config.wallColorName] || FALLBACK_COLOR;
+function addChip(list, value, label) {
+  const item = document.createElement("li");
+  const strong = document.createElement("strong");
+  strong.textContent = value;
+  item.append(strong, label);
+  list.append(item);
+}
+
+function fillPage(blocks, mapBounds, areas) {
+  const byGroup = (group) => blocks.filter((block) => block.part.p === group);
+  const walls = byGroup("Walls");
+  const wallHeight = Math.round(Math.max(...walls.map((block) => block.center[1] + block.size[1] / 2)));
+  const stats = document.getElementById("stats");
+  const floorBounds = boundsOf(byGroup("Floor"));
+  addChip(stats, Math.round(floorBounds.max[0] - floorBounds.min[0]) + " × " + Math.round(floorBounds.max[2] - floorBounds.min[2]), " studs");
+  addChip(stats, String(areas.length), " play areas");
+  addChip(stats, String(blocks.length), " parts");
+  addChip(stats, "Walls " + wallHeight, " studs tall");
+
+  const firstColor = (group) => (byGroup(group)[0] || { color: [163, 162, 165] }).color;
+  const ladder = blocks.find((block) => block.surface === SURFACE.truss);
+  const neon = blocks.find((block) => block.surface === SURFACE.neon);
   const legend = [
-    [rgb(floorRgb), "Floor (" + config.floorColorName + ")"],
-    [rgb(wallRgb), "Walls (" + config.wallColorName + ")"],
-    [rgb(BRICK_COLORS[config.strapColorName] || FALLBACK_COLOR), "Wall strap (" + config.strapColorName + ", " + config.strapHeight + " studs)"],
-    [rgb(floorRgb), "Spawn pad (floor colour, raised 1 stud)"],
-    ["linear-gradient(180deg," + rgb(BRICK_COLORS["Bright yellow"]) + " 33%," + rgb(BRICK_COLORS["Bright blue"]) + " 33% 66%," + rgb(BRICK_COLORS["Br. yellowish green"]) + " 66%)", "Player for scale (5 studs, preview only)"],
+    [rgbCss(firstColor("Floor")), "Floor"],
+    [rgbCss(firstColor("Walls")), "Walls"],
+    [rgbCss(firstColor("Straps")), "Wall strap"],
   ];
+  if (ladder) legend.push([rgbCss(ladder.color), "Ladder (climbable truss)"]);
+  if (neon) legend.push([rgbCss(neon.color), "Neon lamp"]);
+  legend.push([
+    "linear-gradient(180deg, rgb(245,205,48) 33%, rgb(13,105,172) 33% 66%, rgb(164,189,71) 66%)",
+    "Player for scale (5 studs, preview only)",
+  ]);
   const legendList = document.getElementById("legend");
   for (const [background, label] of legend) {
     const item = document.createElement("li");
@@ -1794,7 +2072,62 @@ function fillPage(config, geometry) {
   document.getElementById("code").innerHTML = highlightLua(LUA_SOURCE);
 }
 
-function setUpScriptButtons() {
+function fillAreas(areas, viewerApi) {
+  const list = document.getElementById("areas");
+  const cards = [];
+  areas.forEach((area, index) => {
+    const item = document.createElement("li");
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "area-card";
+    const number = document.createElement("span");
+    number.className = "area-number";
+    number.textContent = String(index + 1);
+    const name = document.createElement("span");
+    name.className = "area-name";
+    name.textContent = spacedName(area.name);
+    const text = document.createElement("span");
+    text.className = "area-text";
+    text.textContent = area.description;
+    const meta = document.createElement("span");
+    meta.className = "area-meta";
+    meta.textContent = area.blocks.length + " parts";
+    card.append(number, name, text, meta);
+    if (viewerApi) {
+      card.addEventListener("click", () => {
+        const viewer = document.getElementById("viewer");
+        const rect = viewer.getBoundingClientRect();
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+          viewer.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+        }
+        viewerApi.focusOn(area.bounds, spacedName(area.name));
+      });
+    } else {
+      card.disabled = true;
+    }
+    item.append(card);
+    list.append(item);
+    cards.push([card, spacedName(area.name)]);
+  });
+  if (viewerApi) {
+    viewerApi.onFocusChange((label) => {
+      for (const [card, name] of cards) card.setAttribute("aria-current", String(label === name));
+    });
+  }
+}
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function setUpButtons() {
   const copyButton = document.getElementById("copy-button");
   let resetTimer = 0;
   const flash = (text) => {
@@ -1823,41 +2156,37 @@ function setUpScriptButtons() {
       flash(legacyCopy() ? "Copied!" : "Copy failed: select the code instead");
     }
   });
-
   document.getElementById("download-button").addEventListener("click", () => {
-    const url = URL.createObjectURL(new Blob([LUA_SOURCE], { type: "text/plain;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = LUA_FILE_NAME;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBlob(new Blob([LUA_SOURCE], { type: "text/plain;charset=utf-8" }), "RMapBuilder.server.lua");
+  });
+  document.getElementById("download-rbxm").addEventListener("click", () => {
+    const binary = atob(RBXM_BASE64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    downloadBlob(new Blob([bytes], { type: "application/octet-stream" }), "RMap.rbxm");
   });
 }
 
 (function init() {
-  setUpScriptButtons();
-  let config;
-  let geometry;
+  setUpButtons();
+  const blocks = MAP.parts.map(partToBlock);
+  const mapBounds = boundsOf(blocks.filter((block) => block.part.p === "Floor" || block.part.p === "Walls"));
+  const areas = MAP.sections.map((section) => {
+    const areaBlocks = blocks.filter((block) => block.part.p === "Sections/" + section.name);
+    return { ...section, blocks: areaBlocks, bounds: boundsOf(areaBlocks) };
+  });
+  fillPage(blocks, mapBounds, areas);
+
+  let viewerApi = null;
   try {
-    config = readMapConfig(LUA_SOURCE);
-    geometry = buildMapGeometry(config);
+    const spawn = blocks.find((block) => block.part.c === "SpawnLocation");
+    const scene = spawn ? blocks.concat(buildScaleFigure(spawn)) : blocks;
+    viewerApi = startViewer(scene, mapBounds);
   } catch (error) {
-    document.getElementById("code").innerHTML = highlightLua(LUA_SOURCE);
-    const fallback = document.getElementById("fallback");
-    fallback.firstElementChild.textContent = "Preview unavailable: " + error.message;
-    document.getElementById("viewer").classList.add("no-webgl");
-    return;
-  }
-  fillPage(config, geometry);
-  try {
-    startViewer(geometry, buildScaleFigure(geometry.spawn));
-  } catch (error) {
-    const fallback = document.getElementById("fallback");
-    fallback.firstElementChild.textContent = "Preview unavailable: " + error.message;
+    document.getElementById("fallback").firstElementChild.textContent = "Preview unavailable: " + error.message;
     document.getElementById("viewer").classList.add("no-webgl");
   }
+  fillAreas(areas, viewerApi);
 })();
 </script>
 </body>
