@@ -69,8 +69,10 @@ local WALL_HEIGHT = 24 -- measured from the floor's top; too tall to jump over
 local WALL_THICKNESS = 2
 local WALL_SINK = 0.2 -- walls reach this far below the floor so their bottoms don't z-fight
 
-local FLOOR_COLOR = BrickColor.new("Medium stone grey")
+local FLOOR_COLOR = BrickColor.new("Bright green")
 local WALL_COLOR = BrickColor.new("Dark stone grey")
+local STRAP_COLOR = BrickColor.new("Bright red") -- band along the bottom of every wall
+local STRAP_HEIGHT = 3 -- studs of strap showing above the floor; 0 for no strap
 local CLASSIC_STUDS = true -- studs on top faces for the classic blocky look
 
 -- Grid position of the spawn (1-based; fractions allowed, col 1.5 = between cols 1 and 2).
@@ -344,38 +346,53 @@ local function buildFloor(grid: Grid, parent: Instance): number
 	return #rects
 end
 
---- Builds the wall blocks, centred on every floor/empty edge.
---- @param grid Grid -- Parsed grid (must have no pinch points)
---- @param parent Instance -- Folder for the wall blocks
---- @return number -- Number of blocks created
-local function buildWalls(grid: Grid, parent: Instance): number
-	local runs = collectWallRuns(grid)
+--- Works out the ground footprint of one wall run.
+--- @param grid Grid -- Parsed grid
+--- @param run WallRun -- The wall run
+--- @return (number, number, number, number) -- minX, maxX, minZ, maxZ in studs
+local function wallFootprint(grid: Grid, run: WallRun): (number, number, number, number)
 	local halfThickness = WALL_THICKNESS / 2
+	if run.axis == "X" then
+		-- X walls overshoot each end by half a thickness so they fill the corner squares.
+		local z = gridLineZ(grid, run.line)
+		return gridLineX(grid, run.from) - halfThickness, gridLineX(grid, run.to) + halfThickness, z - halfThickness, z + halfThickness
+	end
+	-- Z walls stop half a thickness short of each corner so they never overlap an X wall.
+	local x = gridLineX(grid, run.line)
+	return x - halfThickness, x + halfThickness, gridLineZ(grid, run.from) + halfThickness, gridLineZ(grid, run.to) - halfThickness
+end
+
+--- Builds the wall blocks, centred on every floor/empty edge, each with a strap block under it.
+--- @param grid Grid -- Parsed grid (must have no pinch points)
+--- @param wallParent Instance -- Folder for the wall blocks
+--- @param strapParent Instance? -- Folder for the strap blocks; nil when STRAP_HEIGHT is 0
+--- @return (number, number) -- Number of wall blocks and strap blocks created
+local function buildWalls(grid: Grid, wallParent: Instance, strapParent: Instance?): (number, number)
+	local runs = collectWallRuns(grid)
 	local bottomY = FLOOR_TOP_Y - FLOOR_THICKNESS - WALL_SINK
+	local strapTopY = FLOOR_TOP_Y + STRAP_HEIGHT
 	local topY = FLOOR_TOP_Y + WALL_HEIGHT
-	local centerY = (bottomY + topY) / 2
-	local height = topY - bottomY
+	-- The strap is the bottom slice of the wall, so both share one footprint and never overlap.
+	local wallBottomY = if strapParent then strapTopY else bottomY
 
 	for index, run in runs do
-		local size: Vector3
-		local position: Vector3
-		if run.axis == "X" then
-			-- X walls overshoot each end by half a thickness so they fill the corner squares.
-			local minX = gridLineX(grid, run.from) - halfThickness
-			local maxX = gridLineX(grid, run.to) + halfThickness
-			size = Vector3.new(maxX - minX, height, WALL_THICKNESS)
-			position = Vector3.new((minX + maxX) / 2, centerY, gridLineZ(grid, run.line))
-		else
-			-- Z walls stop half a thickness short of each corner so they never overlap an X wall.
-			local minZ = gridLineZ(grid, run.from) + halfThickness
-			local maxZ = gridLineZ(grid, run.to) - halfThickness
-			size = Vector3.new(WALL_THICKNESS, height, maxZ - minZ)
-			position = Vector3.new(gridLineX(grid, run.line), centerY, (minZ + maxZ) / 2)
+		local minX, maxX, minZ, maxZ = wallFootprint(grid, run)
+		local function makeSlice(name: string, fromY: number, toY: number, color: BrickColor, parent: Instance): ()
+			makeBlock(
+				name,
+				Vector3.new(maxX - minX, toY - fromY, maxZ - minZ),
+				Vector3.new((minX + maxX) / 2, (fromY + toY) / 2, (minZ + maxZ) / 2),
+				color,
+				parent
+			)
 		end
-		makeBlock(`Wall{index}`, size, position, WALL_COLOR, parent)
+		makeSlice(`Wall{index}`, wallBottomY, topY, WALL_COLOR, wallParent)
+		if strapParent then
+			makeSlice(`Strap{index}`, bottomY, strapTopY, STRAP_COLOR, strapParent)
+		end
 	end
 
-	return #runs
+	return #runs, if strapParent then #runs else 0
 end
 
 --- Builds the spawn pad on top of the floor at SPAWN_CELL.
@@ -422,6 +439,10 @@ local function validate(grid: Grid): ()
 	assert(CELL_SIZE > 0, "[RMapBuilder] CELL_SIZE must be greater than 0")
 	assert(FLOOR_THICKNESS > 0, "[RMapBuilder] FLOOR_THICKNESS must be greater than 0")
 	assert(WALL_HEIGHT > 0, "[RMapBuilder] WALL_HEIGHT must be greater than 0")
+	assert(
+		STRAP_HEIGHT >= 0 and STRAP_HEIGHT < WALL_HEIGHT,
+		"[RMapBuilder] STRAP_HEIGHT must be 0 or more and smaller than WALL_HEIGHT"
+	)
 	assert(
 		WALL_THICKNESS > 0 and WALL_THICKNESS < CELL_SIZE,
 		"[RMapBuilder] WALL_THICKNESS must be greater than 0 and smaller than CELL_SIZE"
@@ -500,8 +521,16 @@ local function buildMap(): Model
 	wallFolder.Name = "Walls"
 	wallFolder.Parent = model
 
+	local strapFolder: Folder? = nil
+	if STRAP_HEIGHT > 0 then
+		local folder = Instance.new("Folder")
+		folder.Name = "Straps"
+		folder.Parent = model
+		strapFolder = folder
+	end
+
 	local floorCount = buildFloor(grid, floorFolder)
-	local wallCount = buildWalls(grid, wallFolder)
+	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder)
 	buildSpawn(grid, model)
 
 	model.WorldPivot = CFrame.new(0, FLOOR_TOP_Y, 0)
@@ -509,7 +538,7 @@ local function buildMap(): Model
 
 	print(
 		`[RMapBuilder] Built {MODEL_NAME}: {grid.width * CELL_SIZE} x {grid.height * CELL_SIZE} studs, `
-			.. `{floorCount} floor blocks, {wallCount} wall blocks`
+			.. `{floorCount} floor blocks, {wallCount} wall blocks, {strapCount} strap blocks`
 	)
 	return model
 end
