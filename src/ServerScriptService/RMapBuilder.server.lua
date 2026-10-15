@@ -100,13 +100,12 @@ local REMOVE_TEMPLATE_PARTS = true
 local BUILD_SECTIONS = true
 local RAMP_THICKNESS = 1
 local LAMP_HEIGHT = 10
-local LADDER_COLOR = BrickColor.new("Bright yellow")
+local RAMP_ANGLE = 20 -- degrees; every raised platform is reached by walking up a ramp, no jumping needed
 local LAMP_POST_COLOR = BrickColor.new("Black")
 local LAMP_LIGHT_COLOR = BrickColor.new("Bright yellow")
 local STONE_COLOR = BrickColor.new("Medium stone grey")
 local HOUSE_WALL_COLOR = BrickColor.new("Institutional white")
 local HOUSE_ROOF_COLOR = BrickColor.new("Bright red")
-local CRATE_COLOR = BrickColor.new("Reddish brown")
 local DECK_COLOR = BrickColor.new("Bright blue")
 local PILLAR_COLOR = BrickColor.new("Medium stone grey")
 local RAMP_COLOR = BrickColor.new("Bright orange")
@@ -114,17 +113,8 @@ local PODIUM_FIRST_COLOR = BrickColor.new("Bright yellow")
 local PODIUM_SECOND_COLOR = BrickColor.new("Medium stone grey")
 local PODIUM_THIRD_COLOR = BrickColor.new("Bright orange")
 
--- Sky Steps, from the bridge's east platform down to the courtyard: { minX, minZ, maxX, maxZ, top height }.
--- Each is at most ~6 studs from the last and 2 studs lower, so they work going up or down.
-local SKY_STEPS: { { number } } = {
-	{ 62, -97, 70, -89, 12 },
-	{ 72, -84, 78, -78, 10 },
-	{ 80, -72, 88, -64, 8 },
-	{ 84, -58, 92, -50, 6 },
-	{ 76, -44, 84, -36, 4 },
-	{ 64, -36, 72, -28, 2 },
-}
-local SKY_STEP_COLORS: { BrickColor } = {
+-- Rainbow Ramp stripes, from the top of the ramp to the bottom.
+local RAINBOW_COLORS: { BrickColor } = {
 	BrickColor.new("Bright red"),
 	BrickColor.new("Bright orange"),
 	BrickColor.new("Bright yellow"),
@@ -521,21 +511,6 @@ local function platform(
 	return deck
 end
 
---- Builds a climbable TrussPart ladder standing on the floor, centred on (x, z).
---- @param height number -- Must be a multiple of 2 (a TrussPart rule)
---- @return TrussPart -- The ladder
-local function ladder(parent: Instance, name: string, x: number, z: number, height: number): TrussPart
-	assert(height >= 2 and height % 2 == 0, `[RMapBuilder] {name} height must be a multiple of 2`)
-	local truss = Instance.new("TrussPart")
-	truss.Name = name
-	truss.Anchored = true
-	truss.Size = Vector3.new(2, height, 2)
-	truss.CFrame = CFrame.new(at(x, height / 2, z))
-	truss.BrickColor = LADDER_COLOR
-	truss.Parent = parent
-	return truss
-end
-
 --- Builds a CFrame at `position` whose front faces `direction`, with its up kept in the vertical plane.
 --- Written out as a rotation matrix (not CFrame.lookAt) so tools that export the model get it exactly.
 --- @return CFrame -- The facing CFrame
@@ -562,11 +537,40 @@ end
 
 --- Builds a ramp whose walking surface runs in a straight line from `low` up to `high`.
 --- @return Part -- The ramp
-local function ramp(parent: Instance, name: string, low: Vector3, high: Vector3, width: number): Part
+local function ramp(
+	parent: Instance,
+	name: string,
+	low: Vector3,
+	high: Vector3,
+	width: number,
+	color: BrickColor?
+): Part
 	local surface = facing((low + high) / 2, high - low)
-	local part = makeBlock(name, Vector3.new(width, RAMP_THICKNESS, (high - low).Magnitude), surface.Position, RAMP_COLOR, parent)
+	local part = makeBlock(
+		name,
+		Vector3.new(width, RAMP_THICKNESS, (high - low).Magnitude),
+		surface.Position,
+		color or RAMP_COLOR,
+		parent
+	)
 	part.CFrame = surface * CFrame.new(0, -RAMP_THICKNESS / 2, 0)
 	return part
+end
+
+--- Works out where a RAMP_ANGLE ramp must start on the floor to reach `top`.
+--- @param top Vector3 -- Centre of the ramp's top edge, where it meets the platform
+--- @param downhill Vector3 -- Flat direction the ramp runs down towards
+--- @return Vector3 -- Centre of the ramp's bottom edge, on the floor
+local function rampFoot(top: Vector3, downhill: Vector3): Vector3
+	local rise = top.Y - FLOOR_TOP_Y
+	local run = rise / math.tan(math.rad(RAMP_ANGLE))
+	return top + downhill.Unit * run - Vector3.new(0, rise, 0)
+end
+
+--- Builds a RAMP_ANGLE ramp from the floor up to `top`.
+--- @return Part -- The ramp
+local function rampFromFloor(parent: Instance, name: string, top: Vector3, downhill: Vector3, width: number): Part
+	return ramp(parent, name, rampFoot(top, downhill), top, width)
 end
 
 --- Builds a lamp post with a glowing neon head and a warm light.
@@ -627,29 +631,29 @@ end
 --- Spawn Plaza: lamps either side of the spawn pad.
 local function buildSpawnPlaza(sections: Instance): ()
 	local folder = newSection(sections, "SpawnPlaza", "Where players spawn, lit by two neon lamps.")
-	lamp(folder, "LampWest", -94, 90)
-	lamp(folder, "LampEast", -66, 90)
+	lamp(folder, "LampWest", -86, 102)
+	lamp(folder, "LampEast", -74, 102)
 end
 
---- Tunnel: a stone hill filling the stem, with a tunnel through it and a ladder onto its roof.
+--- Tunnel: a stone hill filling the stem, with a tunnel through it and a ramp onto its roof.
 local function buildTunnel(sections: Instance): ()
 	local folder = newSection(
 		sections,
 		"Tunnel",
-		"A stone hill with a tunnel through it. Climb the ladder on its north side to stand on top."
+		"A stone hill with a tunnel through it. Walk up the ramp beside the spawn to stand on top."
 	)
 	blockBetween(folder, "HillWest", at(-99, 0, 44), at(-88, 12, 70), STONE_COLOR)
 	blockBetween(folder, "HillEast", at(-72, 0, 44), at(-61, 12, 70), STONE_COLOR)
 	blockBetween(folder, "TunnelRoof", at(-88, 9, 44), at(-72, 12, 70), STONE_COLOR)
-	ladder(folder, "Ladder", -95, 43, 12)
+	rampFromFloor(folder, "Ramp", at(-94, 12, 70), Vector3.new(0, 0, 1), 8)
 	lamp(folder, "LampWest", -91, 41)
 	lamp(folder, "LampEast", -69, 41)
 end
 
---- House: two rooms joined by an inside door, with outside doors, windows and a roof ladder.
+--- House: two rooms joined by an inside door, with outside doors, windows and a ramp to the roof.
 local function buildHouse(sections: Instance): ()
 	local folder =
-		newSection(sections, "House", "A two-room house with doors, windows and a ladder up to its flat roof.")
+		newSection(sections, "House", "A two-room house with doors and windows, and a ramp up to its flat roof.")
 	local function window(from: number, to: number): Opening
 		return { from = from, to = to, bottom = 4, top = 8 }
 	end
@@ -662,39 +666,18 @@ local function buildHouse(sections: Instance): ()
 	wallWithOpenings(folder, "EastWall", "Z", -12, 16, -6, -4, 12, { window(-1, 5) }, HOUSE_WALL_COLOR)
 	wallWithOpenings(folder, "MiddleWall", "Z", -12, 16, -21, -19, 12, { door(6, 12) }, HOUSE_WALL_COLOR)
 	blockBetween(folder, "Roof", at(-36, 12, -14), at(-4, 13, 18), HOUSE_ROOF_COLOR)
-	ladder(folder, "Ladder", -3, -11, 14)
+	rampFromFloor(folder, "RoofRamp", at(-4, 13, 10), Vector3.new(1, 0, 0), 8)
 end
 
---- Crate Stairs: stacks of 1, 2 and 3 crates leading up to the Sky Bridge.
-local function buildCrateStairs(sections: Instance): ()
-	local folder = newSection(
-		sections,
-		"CrateStairs",
-		"Wooden crates stacked one, two and three high. Hop up them onto the Sky Bridge."
-	)
-	local stacks = { { z = -92, levels = 1 }, { z = -99, levels = 2 }, { z = -106, levels = 3 } }
-	for stackIndex, stack in stacks do
-		for level = 1, stack.levels do
-			blockBetween(
-				folder,
-				`Crate{stackIndex}_{level}`,
-				at(-66, (level - 1) * 4, stack.z),
-				at(-60, level * 4, stack.z + 6),
-				CRATE_COLOR
-			)
-		end
-	end
-end
-
---- Lookout Tower: a platform on pillars in the north-west corner, with a ladder.
+--- Lookout Tower: a platform on pillars in the north-west corner, with a ramp up to it.
 local function buildLookoutTower(sections: Instance): ()
 	local folder = newSection(
 		sections,
 		"LookoutTower",
-		"A lookout platform 14 studs up in the north-west corner, reached by a ladder."
+		"A lookout platform 14 studs up in the north-west corner, reached by a long ramp. It leads onto the Sky Bridge."
 	)
 	platform(folder, "Lookout", -98, -118, -80, -100, 14, DECK_COLOR, true)
-	ladder(folder, "Ladder", -89, -99, 14)
+	rampFromFloor(folder, "Ramp", at(-92, 14, -100), Vector3.new(0, 0, 1), 8)
 end
 
 --- Sky Bridge: a long deck across the top of the R to an east platform.
@@ -711,15 +694,21 @@ local function buildSkyBridge(sections: Instance): ()
 	platform(folder, "EastPlatform", 40, -118, 58, -100, 14, DECK_COLOR, true)
 end
 
---- Sky Steps: rainbow floating platforms from the east platform down to the courtyard.
-local function buildSkySteps(sections: Instance): ()
+--- Rainbow Ramp: a striped ramp from the bridge's east platform down to the courtyard.
+local function buildRainbowRamp(sections: Instance): ()
 	local folder = newSection(
 		sections,
-		"SkySteps",
-		"Six rainbow platforms floating down from the bridge's east platform to the courtyard."
+		"RainbowRamp",
+		"A rainbow-striped ramp from the bridge's east platform down to the courtyard."
 	)
-	for index, step in SKY_STEPS do
-		platform(folder, `Step{index}`, step[1], step[2], step[3], step[4], step[5], SKY_STEP_COLORS[index], false)
+	local top = at(49, 14, -100)
+	local foot = rampFoot(top, Vector3.new(0, 0, 1))
+	local stripes = #RAINBOW_COLORS
+	for index, color in RAINBOW_COLORS do
+		-- Every stripe is a slice of the same slope, so the walking surface stays smooth.
+		local high = top + (foot - top) * ((index - 1) / stripes)
+		local low = top + (foot - top) * (index / stripes)
+		ramp(folder, `Stripe{index}`, low, high, 10, color)
 	end
 end
 
@@ -739,16 +728,22 @@ local function buildSlopeHill(sections: Instance): ()
 	ramp(folder, "RampDown", along(88, 0), along(58, hillHeight), 10)
 end
 
---- Finish Podium: 1st, 2nd and 3rd place blocks at the end of the leg.
+--- Finish Podium: 1st, 2nd and 3rd place blocks at the end of the leg, each with its own ramp.
 local function buildFinishPodium(sections: Instance): ()
 	local folder = newSection(
 		sections,
 		"FinishPodium",
-		"A winners' podium for 1st, 2nd and 3rd place at the end of the leg."
+		"A winners' podium for 1st, 2nd and 3rd place at the end of the leg, each with its own ramp."
 	)
-	blockBetween(folder, "Second", at(66, 0, 106), at(74, 3, 114), PODIUM_SECOND_COLOR)
-	blockBetween(folder, "First", at(74, 0, 106), at(82, 5, 114), PODIUM_FIRST_COLOR)
-	blockBetween(folder, "Third", at(82, 0, 106), at(90, 2, 114), PODIUM_THIRD_COLOR)
+	local places = {
+		{ name = "Second", minX = 66, height = 3, color = PODIUM_SECOND_COLOR },
+		{ name = "First", minX = 74, height = 5, color = PODIUM_FIRST_COLOR },
+		{ name = "Third", minX = 82, height = 2, color = PODIUM_THIRD_COLOR },
+	}
+	for _, place in places do
+		blockBetween(folder, place.name, at(place.minX, 0, 106), at(place.minX + 8, place.height, 114), place.color)
+		rampFromFloor(folder, `{place.name}Ramp`, at(place.minX + 4, place.height, 106), Vector3.new(0, 0, -1), 6)
+	end
 end
 
 --- Builds every play area into a Sections folder, in the order players loop through them.
@@ -763,10 +758,9 @@ local function buildSections(model: Model): (number, number)
 		buildSpawnPlaza,
 		buildTunnel,
 		buildHouse,
-		buildCrateStairs,
 		buildLookoutTower,
 		buildSkyBridge,
-		buildSkySteps,
+		buildRainbowRamp,
 		buildSlopeHill,
 		buildFinishPodium,
 	}
