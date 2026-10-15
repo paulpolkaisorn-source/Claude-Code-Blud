@@ -51,6 +51,18 @@ type Opening = {
 	top: number,
 }
 
+-- A wall between two play areas with one big door. It runs along `axis` on world line `line`
+-- (z for "X", x for "Z"), from `from` to `to`, with the door between `doorFrom` and `doorTo`.
+type Divider = {
+	name: string,
+	axis: "X" | "Z",
+	line: number,
+	from: number,
+	to: number,
+	doorFrom: number,
+	doorTo: number,
+}
+
 -- // CONSTANTS
 -- '#' = floor, '.' = empty. The first line is the north end of the map (-Z), so the R
 -- reads correctly when viewed from above. Every line must be the same length, and two
@@ -121,6 +133,17 @@ local RAINBOW_COLORS: { BrickColor } = {
 	BrickColor.new("Lime green"),
 	BrickColor.new("Bright blue"),
 	BrickColor.new("Bright violet"),
+}
+
+-- Walls that split the map into rooms, styled like the outer walls, each with a big door.
+-- Every door lines up with the path or ramp that goes through it.
+local DOOR_HEIGHT = 16
+local DIVIDERS: { Divider } = {
+	{ name = "SpawnGate", axis = "X", line = 40, from = -99, to = -61, doorFrom = -88, doorTo = -72 },
+	{ name = "LookoutGate", axis = "X", line = -60, from = -99, to = -41, doorFrom = -96, doorTo = -80 },
+	{ name = "RainbowGate", axis = "X", line = -60, from = 41, to = 99, doorFrom = 41, doorTo = 57 },
+	{ name = "SlopeGate", axis = "X", line = 40, from = 1, to = 59, doorFrom = 14, doorTo = 30 },
+	{ name = "PodiumGate", axis = "X", line = 100, from = 61, to = 99, doorFrom = 66, doorTo = 90 },
 }
 
 local NEIGHBOUR_OFFSETS: { { number } } = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }
@@ -646,8 +669,8 @@ local function buildTunnel(sections: Instance): ()
 	blockBetween(folder, "HillEast", at(-72, 0, 44), at(-61, 12, 70), STONE_COLOR)
 	blockBetween(folder, "TunnelRoof", at(-88, 9, 44), at(-72, 12, 70), STONE_COLOR)
 	rampFromFloor(folder, "Ramp", at(-94, 12, 70), Vector3.new(0, 0, 1), 8)
-	lamp(folder, "LampWest", -91, 41)
-	lamp(folder, "LampEast", -69, 41)
+	lamp(folder, "LampWest", -91, 36)
+	lamp(folder, "LampEast", -69, 36)
 end
 
 --- House: two rooms joined by an inside door, with outside doors, windows and a ramp to the roof.
@@ -744,6 +767,40 @@ local function buildFinishPodium(sections: Instance): ()
 		blockBetween(folder, place.name, at(place.minX, 0, 106), at(place.minX + 8, place.height, 114), place.color)
 		rampFromFloor(folder, `{place.name}Ramp`, at(place.minX + 4, place.height, 106), Vector3.new(0, 0, -1), 6)
 	end
+end
+
+--- Builds one divider wall: a red strap and grey wall either side of the door, and a lintel above it.
+local function buildDivider(parent: Instance, divider: Divider): ()
+	local half = WALL_THICKNESS / 2
+	local function slab(name: string, from: number, to: number, bottom: number, top: number, color: BrickColor): ()
+		if to <= from or top <= bottom then
+			return
+		end
+		if divider.axis == "X" then
+			blockBetween(parent, name, at(from, bottom, divider.line - half), at(to, top, divider.line + half), color)
+		else
+			blockBetween(parent, name, at(divider.line - half, bottom, from), at(divider.line + half, top, to), color)
+		end
+	end
+
+	for side, span in { { divider.from, divider.doorFrom }, { divider.doorTo, divider.to } } do
+		slab(`{divider.name}Strap{side}`, span[1], span[2], 0, STRAP_HEIGHT, STRAP_COLOR)
+		slab(`{divider.name}Wall{side}`, span[1], span[2], STRAP_HEIGHT, WALL_HEIGHT, WALL_COLOR)
+	end
+	slab(`{divider.name}Lintel`, divider.doorFrom, divider.doorTo, DOOR_HEIGHT, WALL_HEIGHT, WALL_COLOR)
+end
+
+--- Builds the walls that split the map into rooms.
+--- @param model Model -- The map model
+--- @return number -- Number of divider walls
+local function buildDividers(model: Model): number
+	local folder = Instance.new("Folder")
+	folder.Name = "Dividers"
+	folder.Parent = model
+	for _, divider in DIVIDERS do
+		buildDivider(folder, divider)
+	end
+	return #DIVIDERS
 end
 
 --- Builds every play area into a Sections folder, in the order players loop through them.
@@ -892,9 +949,10 @@ local function buildMap(): Model
 	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder)
 	buildSpawn(grid, model)
 
-	local sectionCount, sectionPartCount = 0, 0
+	local sectionCount, sectionPartCount, dividerCount = 0, 0, 0
 	if BUILD_SECTIONS then
 		sectionCount, sectionPartCount = buildSections(model)
+		dividerCount = buildDividers(model)
 	end
 
 	model.WorldPivot = CFrame.new(0, FLOOR_TOP_Y, 0)
@@ -903,7 +961,7 @@ local function buildMap(): Model
 	print(
 		`[RMapBuilder] Built {MODEL_NAME}: {grid.width * CELL_SIZE} x {grid.height * CELL_SIZE} studs, `
 			.. `{floorCount} floor blocks, {wallCount} wall blocks, {strapCount} strap blocks, `
-			.. `{sectionCount} play areas ({sectionPartCount} parts)`
+			.. `{sectionCount} play areas ({sectionPartCount} parts), {dividerCount} walls with doors`
 	)
 	return model
 end
