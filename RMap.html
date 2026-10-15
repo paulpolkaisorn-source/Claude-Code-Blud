@@ -1,0 +1,1820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R Map Builder</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f3f4f6;
+    --surface: #ffffff;
+    --surface-2: #eef0f3;
+    --border: #dcdfe4;
+    --text: #1b1e23;
+    --muted: #5b636e;
+    --accent: #1f5fd6;
+    --accent-hover: #194fb4;
+    --accent-text: #ffffff;
+    --sky-top: #8fc1ee;
+    --sky-bottom: #e4f0fb;
+    --overlay: rgba(255, 255, 255, 0.86);
+    --code-bg: #f8f9fb;
+    --tk-comment: #6b7480;
+    --tk-string: #0b7a3b;
+    --tk-number: #a14a00;
+    --tk-keyword: #b0247a;
+    --tk-builtin: #1f5fd6;
+    --warn-bg: #fff6e0;
+    --warn-border: #f0d48a;
+    --warn-text: #5c4300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121418;
+      --surface: #1b1e24;
+      --surface-2: #242830;
+      --border: #333843;
+      --text: #e8eaee;
+      --muted: #a0a8b4;
+      --accent: #5b93f5;
+      --accent-hover: #79a8f8;
+      --accent-text: #0d1117;
+      --sky-top: #2b4566;
+      --sky-bottom: #6d8aa8;
+      --overlay: rgba(27, 30, 36, 0.86);
+      --code-bg: #16191e;
+      --tk-comment: #8b94a1;
+      --tk-string: #7fd49b;
+      --tk-number: #f0a868;
+      --tk-keyword: #f08ac4;
+      --tk-builtin: #86b4ff;
+      --warn-bg: #2e2715;
+      --warn-border: #6b5a26;
+      --warn-text: #f3dc9b;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121418;
+    --surface: #1b1e24;
+    --surface-2: #242830;
+    --border: #333843;
+    --text: #e8eaee;
+    --muted: #a0a8b4;
+    --accent: #5b93f5;
+    --accent-hover: #79a8f8;
+    --accent-text: #0d1117;
+    --sky-top: #2b4566;
+    --sky-bottom: #6d8aa8;
+    --overlay: rgba(27, 30, 36, 0.86);
+    --code-bg: #16191e;
+    --tk-comment: #8b94a1;
+    --tk-string: #7fd49b;
+    --tk-number: #f0a868;
+    --tk-keyword: #f08ac4;
+    --tk-builtin: #86b4ff;
+    --warn-bg: #2e2715;
+    --warn-border: #6b5a26;
+    --warn-text: #f3dc9b;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 16px 48px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    line-height: 1.3;
+  }
+  p { margin: 0; }
+  code, pre, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  .subtitle {
+    margin-top: 6px;
+    color: var(--muted);
+    max-width: 70ch;
+  }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 20px;
+    padding: 0;
+    list-style: none;
+  }
+  .stats li {
+    padding: 5px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .stats strong { color: var(--text); font-weight: 600; }
+
+  section { margin-top: 28px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  /* 3D preview */
+  .viewer {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    min-height: 320px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+  }
+  .viewer canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+  }
+  .viewer canvas.dragging { cursor: grabbing; }
+  .hint { transition: opacity 0.4s ease; }
+  .hint.used { opacity: 0; }
+  .toolbar {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .segmented {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 9px;
+    background: var(--overlay);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  .segmented button, .ghost-button {
+    appearance: none;
+    border: 0;
+    margin: 0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .segmented button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-text);
+  }
+  .ghost-button {
+    background: var(--overlay);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 6px 12px;
+    backdrop-filter: blur(6px);
+  }
+  .segmented button:focus-visible, .ghost-button:focus-visible, .button:focus-visible, canvas:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .hint {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: var(--overlay);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    pointer-events: none;
+  }
+  .fallback {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    color: var(--text);
+    background: var(--surface-2);
+  }
+  .viewer.no-webgl .fallback { display: flex; }
+  .viewer.no-webgl canvas, .viewer.no-webgl .toolbar, .viewer.no-webgl .hint { display: none; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 12px 2px 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .legend li { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    flex: none;
+  }
+  .note {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* Steps */
+  .steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .steps li {
+    counter-increment: step;
+    padding: 16px 16px 16px 52px;
+    position: relative;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 13px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+  }
+  .steps strong { display: block; margin-bottom: 4px; }
+  .steps p { color: var(--muted); font-size: 14px; }
+  .steps code, .callout code, .note code {
+    font-size: 0.92em;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .callout {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--warn-border);
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    font-size: 14px;
+  }
+  .callout code { background: rgba(0, 0, 0, 0.08); color: inherit; }
+
+  /* Script */
+  .code-card { overflow: hidden; }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .file-name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; font-weight: 600; }
+  .file-meta { color: var(--muted); font-size: 12px; margin-left: 8px; font-family: inherit; font-weight: 400; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .button {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+  }
+  .button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .button:not(.primary):hover { background: var(--surface-2); }
+  pre.code {
+    margin: 0;
+    max-height: 560px;
+    overflow: auto;
+    padding: 14px 16px;
+    background: var(--code-bg);
+    font-size: 12.5px;
+    line-height: 1.55;
+    tab-size: 4;
+    -moz-tab-size: 4;
+  }
+  .tk-c { color: var(--tk-comment); font-style: italic; }
+  .tk-s { color: var(--tk-string); }
+  .tk-n { color: var(--tk-number); }
+  .tk-k { color: var(--tk-keyword); font-weight: 600; }
+  .tk-b { color: var(--tk-builtin); }
+
+  @media (max-width: 640px) {
+    main { padding-top: 20px; }
+    h1 { font-size: 24px; }
+    .viewer { aspect-ratio: 4 / 5; }
+    pre.code { font-size: 12px; max-height: 480px; }
+    .hint { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>R Map</h1>
+    <p class="subtitle">A plain, blocky Roblox map shaped like the letter R, with a wall running along every edge of the shape, including around the hole in the R's loop. Below: a 3D preview drawn from the script, how to build it in Studio, and the full script.</p>
+    <ul class="stats" id="stats" aria-label="Map stats"></ul>
+  </header>
+
+  <section aria-labelledby="preview-heading">
+    <h2 id="preview-heading">Preview</h2>
+    <div class="viewer" id="viewer">
+      <canvas id="view" tabindex="0" role="img" aria-label="3D preview of the R-shaped map: grey floor in the shape of an R, surrounded by dark grey walls, with a spawn pad at the bottom of the left stem."></canvas>
+      <div class="toolbar">
+        <div class="segmented" role="group" aria-label="Camera view">
+          <button type="button" id="view-3d" aria-pressed="true">3D</button>
+          <button type="button" id="view-top" aria-pressed="false">Top</button>
+        </div>
+        <button type="button" class="ghost-button" id="view-reset">Reset</button>
+      </div>
+      <p class="hint" id="hint">Drag to orbit · Right-drag or Shift-drag to pan · Scroll to zoom</p>
+      <div class="fallback" id="fallback"><p>Your browser can't show the 3D preview (WebGL 2 is unavailable). The script below still works.</p></div>
+    </div>
+    <ul class="legend" id="legend" aria-label="Legend"></ul>
+    <p class="note">The preview is generated from the script on this page, so the shape, sizes and block layout match what Studio builds. Lighting and the stud texture are an approximation of Roblox's look.</p>
+  </section>
+
+  <section aria-labelledby="setup-heading">
+    <h2 id="setup-heading">Build it in Roblox Studio</h2>
+    <ol class="steps">
+      <li class="card">
+        <strong>Keep it in your place (recommended)</strong>
+        <p>Open <code>View → Command Bar</code>, paste the whole script and press Enter. The map is saved with your place as the model <code>RMap</code>.</p>
+      </li>
+      <li class="card">
+        <strong>Or build it when the server starts</strong>
+        <p>Add a Script to <code>ServerScriptService</code> and paste the script into it. The map is rebuilt every time a server starts.</p>
+      </li>
+      <li class="card">
+        <strong>Change the shape</strong>
+        <p>Edit the <code>SHAPE</code> art at the top: <code>#</code> is floor, <code>.</code> is empty. Walls follow the new outline automatically. Running it again replaces the old map.</p>
+      </li>
+    </ol>
+    <p class="callout"><strong>Heads up:</strong> by default the script deletes the template <code>Baseplate</code> and <code>SpawnLocation</code> in Workspace, because the baseplate would fill the R's hole. Set <code>REMOVE_TEMPLATE_PARTS = false</code> to keep them.</p>
+  </section>
+
+  <section aria-labelledby="script-heading">
+    <h2 id="script-heading">The script</h2>
+    <div class="card code-card">
+      <div class="code-header">
+        <span class="file-name">RMapBuilder.server.lua<span class="file-meta" id="file-meta"></span></span>
+        <div class="actions">
+          <button type="button" class="button primary" id="copy-button">Copy script</button>
+          <button type="button" class="button" id="download-button">Download .lua</button>
+        </div>
+      </div>
+      <pre class="code" tabindex="0" aria-label="RMapBuilder script"><code id="code"></code></pre>
+    </div>
+  </section>
+</main>
+
+<script type="text/plain" id="lua-source">
+--!strict
+--[[
+	RMapBuilder
+	Builds a plain, blocky R-shaped map: a floor in the shape of the letter R with a
+	wall running along every edge of the shape, including the hole inside the R's bowl.
+
+	HOW TO USE
+	  Permanent map (recommended): open Studio's Command Bar (View > Command Bar),
+	  paste this whole file in and press Enter. The parts are saved with your place.
+	  Runtime map: put this file in ServerScriptService as a Script. The map is built
+	  every time a server starts.
+
+	Running it again replaces the previous map (the Workspace model named MODEL_NAME).
+	Reshape the map by editing SHAPE below.
+]]
+
+-- // SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+-- // TYPES
+type Grid = {
+	cells: { { boolean } },
+	width: number,
+	height: number,
+}
+
+-- A rectangle of floor cells (1-based grid coordinates).
+type FloorRect = {
+	row: number,
+	col: number,
+	rows: number,
+	cols: number,
+}
+
+-- A straight wall lying on a grid line. `line` is the index of the grid line the wall
+-- sits on; `from` and `to` are grid-line indices along the wall's length.
+type WallRun = {
+	axis: "X" | "Z",
+	line: number,
+	from: number,
+	to: number,
+}
+
+-- // CONSTANTS
+-- '#' = floor, '.' = empty. The first line is the north end of the map (-Z), so the R
+-- reads correctly when viewed from above. Every line must be the same length, and two
+-- floor cells may not touch only at a corner (that would leave a zero-width gap).
+local SHAPE: { string } = {
+	"########..",
+	"#########.",
+	"##.....###",
+	"##......##",
+	"##......##",
+	"##.....###",
+	"#########.",
+	"########..",
+	"##...###..",
+	"##....###.",
+	"##.....###",
+	"##......##",
+}
+
+local CELL_SIZE = 20 -- studs per grid cell; the R's strokes are 2 cells wide
+local FLOOR_THICKNESS = 4
+local FLOOR_TOP_Y = 0
+local WALL_HEIGHT = 24 -- measured from the floor's top; too tall to jump over
+local WALL_THICKNESS = 2
+local WALL_SINK = 0.2 -- walls reach this far below the floor so their bottoms don't z-fight
+
+local FLOOR_COLOR = BrickColor.new("Medium stone grey")
+local WALL_COLOR = BrickColor.new("Dark stone grey")
+local CLASSIC_STUDS = true -- studs on top faces for the classic blocky look
+
+-- Grid position of the spawn (1-based; fractions allowed, col 1.5 = between cols 1 and 2).
+local SPAWN_CELL = { row = 11, col = 1.5 }
+local SPAWN_SIZE = Vector3.new(12, 1, 12)
+
+local MODEL_NAME = "RMap"
+
+-- Removes the "Baseplate" and "SpawnLocation" that Studio's Baseplate template puts in
+-- Workspace. The baseplate would fill the R's hole and z-fight with the R's floor, and
+-- the template spawn would sit on top of a wall. Set to false to keep them.
+local REMOVE_TEMPLATE_PARTS = true
+
+local NEIGHBOUR_OFFSETS: { { number } } = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }
+
+-- // STATE
+-- None: every run rebuilds the map from the constants above.
+
+-- // PRIVATE FUNCTIONS
+
+--- Parses the ASCII art into a grid of floor flags.
+--- @param shape { string } -- Lines of '#' and '.'
+--- @return Grid -- Parsed grid; errors with a readable message on bad input
+local function parseShape(shape: { string }): Grid
+	assert(#shape > 0, "[RMapBuilder] SHAPE is empty")
+	local width = #shape[1]
+	assert(width > 0, "[RMapBuilder] SHAPE lines are empty")
+
+	local cells: { { boolean } } = {}
+	for rowIndex, line in shape do
+		assert(#line == width, `[RMapBuilder] SHAPE line {rowIndex} has {#line} characters, expected {width}`)
+		local row = table.create(width, false)
+		for colIndex = 1, width do
+			local char = string.sub(line, colIndex, colIndex)
+			assert(
+				char == "#" or char == ".",
+				`[RMapBuilder] SHAPE line {rowIndex}, column {colIndex}: '{char}' must be '#' or '.'`
+			)
+			row[colIndex] = char == "#"
+		end
+		cells[rowIndex] = row
+	end
+
+	return { cells = cells, width = width, height = #shape }
+end
+
+--- Checks whether a grid cell is floor. Cells outside the grid count as empty.
+--- @param grid Grid -- Parsed grid
+--- @param row number -- 1-based row
+--- @param col number -- 1-based column
+--- @return boolean -- True if the cell is floor
+local function isFloor(grid: Grid, row: number, col: number): boolean
+	local cellRow = grid.cells[row]
+	if cellRow == nil then
+		return false
+	end
+	return cellRow[col] == true
+end
+
+--- Finds two floor cells that touch only at a corner, which would make a zero-width gap.
+--- @param grid Grid -- Parsed grid
+--- @return (number?, number?) -- Top-left row and column of the offending 2x2 block, or nil
+local function findPinchPoint(grid: Grid): (number?, number?)
+	for row = 1, grid.height - 1 do
+		for col = 1, grid.width - 1 do
+			local topLeft = isFloor(grid, row, col)
+			local topRight = isFloor(grid, row, col + 1)
+			local bottomLeft = isFloor(grid, row + 1, col)
+			local bottomRight = isFloor(grid, row + 1, col + 1)
+			if topLeft == bottomRight and topRight == bottomLeft and topLeft ~= topRight then
+				return row, col
+			end
+		end
+	end
+	return nil, nil
+end
+
+--- Counts every floor cell in the grid.
+--- @param grid Grid -- Parsed grid
+--- @return number -- Number of floor cells
+local function countFloorCells(grid: Grid): number
+	local count = 0
+	for row = 1, grid.height do
+		for col = 1, grid.width do
+			if isFloor(grid, row, col) then
+				count += 1
+			end
+		end
+	end
+	return count
+end
+
+--- Counts the floor cells reachable from a start cell by walking between edge-sharing cells.
+--- @param grid Grid -- Parsed grid
+--- @param startRow number -- 1-based row to start from
+--- @param startCol number -- 1-based column to start from
+--- @return number -- Number of reachable floor cells
+local function countReachableCells(grid: Grid, startRow: number, startCol: number): number
+	local stride = grid.width + 2
+	local visited: { [number]: boolean } = {}
+	local pendingRows: { number } = { startRow }
+	local pendingCols: { number } = { startCol }
+	local count = 0
+
+	while #pendingRows > 0 do
+		local row = table.remove(pendingRows) :: number
+		local col = table.remove(pendingCols) :: number
+		local key = row * stride + col
+		if isFloor(grid, row, col) and not visited[key] then
+			visited[key] = true
+			count += 1
+			for _, offset in NEIGHBOUR_OFFSETS do
+				table.insert(pendingRows, row + offset[1])
+				table.insert(pendingCols, col + offset[2])
+			end
+		end
+	end
+
+	return count
+end
+
+--- Covers the floor cells with as few rectangles as a greedy sweep finds, to keep part count low.
+--- @param grid Grid -- Parsed grid
+--- @return { FloorRect } -- Non-overlapping rectangles covering every floor cell exactly once
+local function meshFloor(grid: Grid): { FloorRect }
+	local used: { { boolean } } = {}
+	for row = 1, grid.height do
+		used[row] = table.create(grid.width, false)
+	end
+
+	local function isFree(row: number, col: number): boolean
+		return isFloor(grid, row, col) and not used[row][col]
+	end
+
+	local rects: { FloorRect } = {}
+	for row = 1, grid.height do
+		for col = 1, grid.width do
+			if isFree(row, col) then
+				local cols = 1
+				while col + cols <= grid.width and isFree(row, col + cols) do
+					cols += 1
+				end
+
+				local rows = 1
+				while row + rows <= grid.height do
+					local rowIsFree = true
+					for scanCol = col, col + cols - 1 do
+						if not isFree(row + rows, scanCol) then
+							rowIsFree = false
+							break
+						end
+					end
+					if not rowIsFree then
+						break
+					end
+					rows += 1
+				end
+
+				for markRow = row, row + rows - 1 do
+					for markCol = col, col + cols - 1 do
+						used[markRow][markCol] = true
+					end
+				end
+				table.insert(rects, { row = row, col = col, rows = rows, cols = cols })
+			end
+		end
+	end
+
+	return rects
+end
+
+--- Finds every edge between a floor cell and an empty cell, merged into straight runs.
+--- @param grid Grid -- Parsed grid (must have no pinch points)
+--- @return { WallRun } -- Wall runs along X (between rows) and along Z (between columns)
+local function collectWallRuns(grid: Grid): { WallRun }
+	local runs: { WallRun } = {}
+
+	-- Walls along X lie on grid line `line`, between row `line` and row `line + 1`.
+	for line = 0, grid.height do
+		local runStart: number? = nil
+		for col = 1, grid.width + 1 do
+			local isWall = col <= grid.width and isFloor(grid, line, col) ~= isFloor(grid, line + 1, col)
+			if isWall and runStart == nil then
+				runStart = col
+			elseif not isWall and runStart ~= nil then
+				table.insert(runs, { axis = "X", line = line, from = runStart - 1, to = col - 1 })
+				runStart = nil
+			end
+		end
+	end
+
+	-- Walls along Z lie on grid line `line`, between column `line` and column `line + 1`.
+	for line = 0, grid.width do
+		local runStart: number? = nil
+		for row = 1, grid.height + 1 do
+			local isWall = row <= grid.height and isFloor(grid, row, line) ~= isFloor(grid, row, line + 1)
+			if isWall and runStart == nil then
+				runStart = row
+			elseif not isWall and runStart ~= nil then
+				table.insert(runs, { axis = "Z", line = line, from = runStart - 1, to = row - 1 })
+				runStart = nil
+			end
+		end
+	end
+
+	return runs
+end
+
+--- Converts a vertical grid line index to a world X coordinate (map centred on the origin).
+--- @param grid Grid -- Parsed grid
+--- @param line number -- Grid line index, 0 = west edge of the grid
+--- @return number -- World X in studs
+local function gridLineX(grid: Grid, line: number): number
+	return (line - grid.width / 2) * CELL_SIZE
+end
+
+--- Converts a horizontal grid line index to a world Z coordinate (map centred on the origin).
+--- @param grid Grid -- Parsed grid
+--- @param line number -- Grid line index, 0 = north edge of the grid
+--- @return number -- World Z in studs
+local function gridLineZ(grid: Grid, line: number): number
+	return (line - grid.height / 2) * CELL_SIZE
+end
+
+--- Creates one anchored block in the map's style.
+--- @param name string -- Instance name
+--- @param size Vector3 -- Block size in studs
+--- @param position Vector3 -- Block centre in world space
+--- @param color BrickColor -- Block colour
+--- @param parent Instance -- Where to put the block
+--- @return Part -- The created block
+local function makeBlock(name: string, size: Vector3, position: Vector3, color: BrickColor, parent: Instance): Part
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Anchored = true
+	part.Size = size
+	part.CFrame = CFrame.new(position)
+	part.BrickColor = color
+	if CLASSIC_STUDS then
+		part.Material = Enum.Material.Plastic
+		part.TopSurface = Enum.SurfaceType.Studs
+		part.BottomSurface = Enum.SurfaceType.Inlet
+	else
+		part.Material = Enum.Material.SmoothPlastic
+		part.TopSurface = Enum.SurfaceType.Smooth
+		part.BottomSurface = Enum.SurfaceType.Smooth
+	end
+	part.Parent = parent
+	return part
+end
+
+--- Builds the floor blocks.
+--- @param grid Grid -- Parsed grid
+--- @param parent Instance -- Folder for the floor blocks
+--- @return number -- Number of blocks created
+local function buildFloor(grid: Grid, parent: Instance): number
+	local rects = meshFloor(grid)
+	for index, rect in rects do
+		local minX = gridLineX(grid, rect.col - 1)
+		local maxX = gridLineX(grid, rect.col - 1 + rect.cols)
+		local minZ = gridLineZ(grid, rect.row - 1)
+		local maxZ = gridLineZ(grid, rect.row - 1 + rect.rows)
+		makeBlock(
+			`Floor{index}`,
+			Vector3.new(maxX - minX, FLOOR_THICKNESS, maxZ - minZ),
+			Vector3.new((minX + maxX) / 2, FLOOR_TOP_Y - FLOOR_THICKNESS / 2, (minZ + maxZ) / 2),
+			FLOOR_COLOR,
+			parent
+		)
+	end
+	return #rects
+end
+
+--- Builds the wall blocks, centred on every floor/empty edge.
+--- @param grid Grid -- Parsed grid (must have no pinch points)
+--- @param parent Instance -- Folder for the wall blocks
+--- @return number -- Number of blocks created
+local function buildWalls(grid: Grid, parent: Instance): number
+	local runs = collectWallRuns(grid)
+	local halfThickness = WALL_THICKNESS / 2
+	local bottomY = FLOOR_TOP_Y - FLOOR_THICKNESS - WALL_SINK
+	local topY = FLOOR_TOP_Y + WALL_HEIGHT
+	local centerY = (bottomY + topY) / 2
+	local height = topY - bottomY
+
+	for index, run in runs do
+		local size: Vector3
+		local position: Vector3
+		if run.axis == "X" then
+			-- X walls overshoot each end by half a thickness so they fill the corner squares.
+			local minX = gridLineX(grid, run.from) - halfThickness
+			local maxX = gridLineX(grid, run.to) + halfThickness
+			size = Vector3.new(maxX - minX, height, WALL_THICKNESS)
+			position = Vector3.new((minX + maxX) / 2, centerY, gridLineZ(grid, run.line))
+		else
+			-- Z walls stop half a thickness short of each corner so they never overlap an X wall.
+			local minZ = gridLineZ(grid, run.from) + halfThickness
+			local maxZ = gridLineZ(grid, run.to) - halfThickness
+			size = Vector3.new(WALL_THICKNESS, height, maxZ - minZ)
+			position = Vector3.new(gridLineX(grid, run.line), centerY, (minZ + maxZ) / 2)
+		end
+		makeBlock(`Wall{index}`, size, position, WALL_COLOR, parent)
+	end
+
+	return #runs
+end
+
+--- Builds the spawn pad on top of the floor at SPAWN_CELL.
+--- @param grid Grid -- Parsed grid
+--- @param parent Instance -- Map model
+--- @return SpawnLocation -- The created spawn
+local function buildSpawn(grid: Grid, parent: Instance): SpawnLocation
+	local spawnLocation = Instance.new("SpawnLocation")
+	spawnLocation.Name = "SpawnLocation"
+	spawnLocation.Anchored = true
+	spawnLocation.Neutral = true
+	spawnLocation.Size = SPAWN_SIZE
+	spawnLocation.CFrame = CFrame.new(
+		gridLineX(grid, SPAWN_CELL.col - 0.5),
+		FLOOR_TOP_Y + SPAWN_SIZE.Y / 2,
+		gridLineZ(grid, SPAWN_CELL.row - 0.5)
+	)
+	spawnLocation.BrickColor = FLOOR_COLOR
+	spawnLocation.Material = if CLASSIC_STUDS then Enum.Material.Plastic else Enum.Material.SmoothPlastic
+	spawnLocation.TopSurface = Enum.SurfaceType.Smooth
+	spawnLocation.BottomSurface = Enum.SurfaceType.Smooth
+	spawnLocation.Parent = parent
+	return spawnLocation
+end
+
+--- Removes the Baseplate template's own baseplate and spawn from Workspace.
+local function removeTemplateParts(): ()
+	local baseplate = Workspace:FindFirstChild("Baseplate")
+	if baseplate and baseplate:IsA("BasePart") then
+		baseplate:Destroy()
+		print("[RMapBuilder] Removed the template Baseplate")
+	end
+
+	local templateSpawn = Workspace:FindFirstChild("SpawnLocation")
+	if templateSpawn and templateSpawn:IsA("SpawnLocation") then
+		templateSpawn:Destroy()
+		print("[RMapBuilder] Removed the template SpawnLocation")
+	end
+end
+
+--- Checks the settings and the shape before anything in Workspace is touched.
+--- @param grid Grid -- Parsed grid
+local function validate(grid: Grid): ()
+	assert(CELL_SIZE > 0, "[RMapBuilder] CELL_SIZE must be greater than 0")
+	assert(FLOOR_THICKNESS > 0, "[RMapBuilder] FLOOR_THICKNESS must be greater than 0")
+	assert(WALL_HEIGHT > 0, "[RMapBuilder] WALL_HEIGHT must be greater than 0")
+	assert(
+		WALL_THICKNESS > 0 and WALL_THICKNESS < CELL_SIZE,
+		"[RMapBuilder] WALL_THICKNESS must be greater than 0 and smaller than CELL_SIZE"
+	)
+	assert(
+		math.max(grid.width, grid.height) * CELL_SIZE <= 2048,
+		"[RMapBuilder] Map is wider than 2048 studs (the max part size); lower CELL_SIZE or shrink SHAPE"
+	)
+
+	local pinchRow, pinchCol = findPinchPoint(grid)
+	if pinchRow ~= nil and pinchCol ~= nil then
+		error(
+			`[RMapBuilder] SHAPE lines {pinchRow}-{pinchRow + 1}, columns {pinchCol}-{pinchCol + 1}: `
+				.. "two floor cells touch only at a corner. Fill one of the empty cells there."
+		)
+	end
+
+	local spawnRow = math.floor(SPAWN_CELL.row)
+	local spawnCol = math.floor(SPAWN_CELL.col)
+	for _, row in { spawnRow, math.ceil(SPAWN_CELL.row) } do
+		for _, col in { spawnCol, math.ceil(SPAWN_CELL.col) } do
+			assert(isFloor(grid, row, col), `[RMapBuilder] SPAWN_CELL touches line {row}, column {col}, which is not floor`)
+		end
+	end
+
+	local totalCells = countFloorCells(grid)
+	local reachableCells = countReachableCells(grid, spawnRow, spawnCol)
+	if reachableCells < totalCells then
+		warn(
+			`[RMapBuilder] {totalCells - reachableCells} floor cells are walled off from the spawn and can't be reached on foot`
+		)
+	end
+end
+
+--- Respawns players who already have a character, so nobody is left on the old map.
+local function respawnExistingCharacters(): ()
+	if not (RunService:IsRunning() and RunService:IsServer()) then
+		return
+	end
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			task.spawn(function(): ()
+				local ok, err = pcall(player.LoadCharacterAsync, player)
+				if not ok then
+					warn(`[RMapBuilder] Could not respawn {player.Name}: {err}`)
+				end
+			end)
+		end
+	end
+end
+
+-- // PUBLIC FUNCTIONS
+
+--- Builds (or rebuilds) the R map in Workspace.
+--- @return Model -- The map model
+local function buildMap(): Model
+	local grid = parseShape(SHAPE)
+	validate(grid)
+
+	local existing = Workspace:FindFirstChild(MODEL_NAME)
+	if existing and existing:IsA("Model") then
+		existing:Destroy()
+	end
+	if REMOVE_TEMPLATE_PARTS then
+		removeTemplateParts()
+	end
+
+	local model = Instance.new("Model")
+	model.Name = MODEL_NAME
+
+	local floorFolder = Instance.new("Folder")
+	floorFolder.Name = "Floor"
+	floorFolder.Parent = model
+
+	local wallFolder = Instance.new("Folder")
+	wallFolder.Name = "Walls"
+	wallFolder.Parent = model
+
+	local floorCount = buildFloor(grid, floorFolder)
+	local wallCount = buildWalls(grid, wallFolder)
+	buildSpawn(grid, model)
+
+	model.WorldPivot = CFrame.new(0, FLOOR_TOP_Y, 0)
+	model.Parent = Workspace
+
+	print(
+		`[RMapBuilder] Built {MODEL_NAME}: {grid.width * CELL_SIZE} x {grid.height * CELL_SIZE} studs, `
+			.. `{floorCount} floor blocks, {wallCount} wall blocks`
+	)
+	return model
+end
+
+-- // CONNECTIONS
+-- None: the map is static once built.
+
+-- // INIT
+buildMap()
+respawnExistingCharacters()
+</script>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// Map settings, read from the embedded Luau script so the preview always
+// matches what the script builds.
+// ---------------------------------------------------------------------------
+
+const LUA_SOURCE = document.getElementById("lua-source").textContent.replace(/^\r?\n/, "");
+const LUA_FILE_NAME = "RMapBuilder.server.lua";
+
+// Official BrickColor RGB values for the colours this map is likely to use.
+const BRICK_COLORS = {
+  "Medium stone grey": [163, 162, 165],
+  "Dark stone grey": [99, 95, 98],
+  "Light stone grey": [229, 228, 223],
+  "Institutional white": [248, 248, 248],
+  "Black": [27, 42, 53],
+  "Bright red": [196, 40, 28],
+  "Bright blue": [13, 105, 172],
+  "Bright green": [75, 151, 75],
+  "Dark green": [40, 127, 71],
+  "Bright yellow": [245, 205, 48],
+  "Brick yellow": [215, 197, 154],
+  "Reddish brown": [105, 64, 40],
+  "Br. yellowish green": [164, 189, 71],
+};
+const FALLBACK_COLOR = [163, 162, 165];
+
+function readMapConfig(source) {
+  const readNumber = (name) => {
+    const match = source.match(new RegExp("^local " + name + " = (-?\\d+(?:\\.\\d+)?)", "m"));
+    if (!match) throw new Error("Could not find " + name + " in the script");
+    return parseFloat(match[1]);
+  };
+  const readColor = (name) => {
+    const match = source.match(new RegExp("^local " + name + ' = BrickColor\\.new\\("([^"]+)"\\)', "m"));
+    return match ? match[1] : "Medium stone grey";
+  };
+
+  const shapeMatch = source.match(/^local SHAPE: \{ string \} = \{\r?\n([\s\S]*?)\r?\n\}/m);
+  if (!shapeMatch) throw new Error("Could not find SHAPE in the script");
+  const shape = Array.from(shapeMatch[1].matchAll(/"([^"]*)"/g), (match) => match[1]);
+  if (shape.length === 0 || shape[0].length === 0) throw new Error("SHAPE is empty");
+
+  const spawnMatch = source.match(/^local SPAWN_CELL = \{ row = (-?[\d.]+), col = (-?[\d.]+) \}/m);
+  const spawnSizeMatch = source.match(/^local SPAWN_SIZE = Vector3\.new\(([\d.]+), ([\d.]+), ([\d.]+)\)/m);
+  if (!spawnMatch || !spawnSizeMatch) throw new Error("Could not find the spawn settings in the script");
+  const studsMatch = source.match(/^local CLASSIC_STUDS = (true|false)/m);
+
+  return {
+    shape,
+    cellSize: readNumber("CELL_SIZE"),
+    floorThickness: readNumber("FLOOR_THICKNESS"),
+    floorTopY: readNumber("FLOOR_TOP_Y"),
+    wallHeight: readNumber("WALL_HEIGHT"),
+    wallThickness: readNumber("WALL_THICKNESS"),
+    wallSink: readNumber("WALL_SINK"),
+    spawnRow: parseFloat(spawnMatch[1]),
+    spawnCol: parseFloat(spawnMatch[2]),
+    spawnSize: [parseFloat(spawnSizeMatch[1]), parseFloat(spawnSizeMatch[2]), parseFloat(spawnSizeMatch[3])],
+    floorColorName: readColor("FLOOR_COLOR"),
+    wallColorName: readColor("WALL_COLOR"),
+    studs: studsMatch ? studsMatch[1] === "true" : true,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Geometry: a direct port of the script's floor meshing and wall placement.
+// Every block is { kind, name, min: [x, y, z], max: [x, y, z], color, studs }.
+// ---------------------------------------------------------------------------
+
+function buildMapGeometry(config) {
+  const height = config.shape.length;
+  const width = config.shape[0].length;
+  const cell = config.cellSize;
+  const isFloor = (row, col) =>
+    row >= 1 && row <= height && col >= 1 && col <= width && config.shape[row - 1][col - 1] === "#";
+  const gridLineX = (line) => (line - width / 2) * cell;
+  const gridLineZ = (line) => (line - height / 2) * cell;
+  const floorRgb = BRICK_COLORS[config.floorColorName] || FALLBACK_COLOR;
+  const wallRgb = BRICK_COLORS[config.wallColorName] || FALLBACK_COLOR;
+  const blocks = [];
+
+  // Floor: greedy rectangles, same sweep order as meshFloor in the script.
+  const used = Array.from({ length: height + 1 }, () => new Array(width + 1).fill(false));
+  const isFree = (row, col) => isFloor(row, col) && !used[row][col];
+  let floorCount = 0;
+  for (let row = 1; row <= height; row++) {
+    for (let col = 1; col <= width; col++) {
+      if (!isFree(row, col)) continue;
+      let cols = 1;
+      while (col + cols <= width && isFree(row, col + cols)) cols++;
+      let rows = 1;
+      while (row + rows <= height) {
+        let rowIsFree = true;
+        for (let scanCol = col; scanCol < col + cols; scanCol++) {
+          if (!isFree(row + rows, scanCol)) { rowIsFree = false; break; }
+        }
+        if (!rowIsFree) break;
+        rows++;
+      }
+      for (let markRow = row; markRow < row + rows; markRow++) {
+        for (let markCol = col; markCol < col + cols; markCol++) used[markRow][markCol] = true;
+      }
+      floorCount++;
+      blocks.push({
+        kind: "floor",
+        name: "Floor" + floorCount,
+        min: [gridLineX(col - 1), config.floorTopY - config.floorThickness, gridLineZ(row - 1)],
+        max: [gridLineX(col - 1 + cols), config.floorTopY, gridLineZ(row - 1 + rows)],
+        color: floorRgb,
+        studs: config.studs,
+      });
+    }
+  }
+
+  // Walls: straight runs on every floor/empty edge, same order as collectWallRuns.
+  const runs = [];
+  for (let line = 0; line <= height; line++) {
+    let runStart = null;
+    for (let col = 1; col <= width + 1; col++) {
+      const isWall = col <= width && isFloor(line, col) !== isFloor(line + 1, col);
+      if (isWall && runStart === null) runStart = col;
+      else if (!isWall && runStart !== null) {
+        runs.push({ axis: "X", line, from: runStart - 1, to: col - 1 });
+        runStart = null;
+      }
+    }
+  }
+  for (let line = 0; line <= width; line++) {
+    let runStart = null;
+    for (let row = 1; row <= height + 1; row++) {
+      const isWall = row <= height && isFloor(row, line) !== isFloor(row, line + 1);
+      if (isWall && runStart === null) runStart = row;
+      else if (!isWall && runStart !== null) {
+        runs.push({ axis: "Z", line, from: runStart - 1, to: row - 1 });
+        runStart = null;
+      }
+    }
+  }
+
+  const half = config.wallThickness / 2;
+  const bottomY = config.floorTopY - config.floorThickness - config.wallSink;
+  const topY = config.floorTopY + config.wallHeight;
+  runs.forEach((run, index) => {
+    let min, max;
+    if (run.axis === "X") {
+      const z = gridLineZ(run.line);
+      min = [gridLineX(run.from) - half, bottomY, z - half];
+      max = [gridLineX(run.to) + half, topY, z + half];
+    } else {
+      const x = gridLineX(run.line);
+      min = [x - half, bottomY, gridLineZ(run.from) + half];
+      max = [x + half, topY, gridLineZ(run.to) - half];
+    }
+    blocks.push({ kind: "wall", name: "Wall" + (index + 1), min, max, color: wallRgb, studs: config.studs });
+  });
+
+  // Spawn pad, exactly as buildSpawn places it.
+  const spawnX = gridLineX(config.spawnCol - 0.5);
+  const spawnZ = gridLineZ(config.spawnRow - 0.5);
+  const [spawnSizeX, spawnSizeY, spawnSizeZ] = config.spawnSize;
+  blocks.push({
+    kind: "spawn",
+    name: "SpawnLocation",
+    min: [spawnX - spawnSizeX / 2, config.floorTopY, spawnZ - spawnSizeZ / 2],
+    max: [spawnX + spawnSizeX / 2, config.floorTopY + spawnSizeY, spawnZ + spawnSizeZ / 2],
+    color: floorRgb,
+    studs: false,
+  });
+
+  return {
+    blocks,
+    floorCount,
+    wallCount: runs.length,
+    widthStuds: width * cell,
+    depthStuds: height * cell,
+    spawn: [spawnX, config.floorTopY + spawnSizeY, spawnZ],
+  };
+}
+
+// A classic blocky player standing on the spawn, for scale only (not built by the script).
+function buildScaleFigure(base) {
+  const [x, y, z] = base;
+  const yellow = BRICK_COLORS["Bright yellow"];
+  const blue = BRICK_COLORS["Bright blue"];
+  const green = BRICK_COLORS["Br. yellowish green"];
+  const box = (minX, minY, minZ, maxX, maxY, maxZ, color) => ({
+    kind: "figure",
+    min: [x + minX, y + minY, z + minZ],
+    max: [x + maxX, y + maxY, z + maxZ],
+    color,
+    studs: false,
+  });
+  return [
+    box(-1, 0, -0.5, 0, 2, 0.5, green),
+    box(0, 0, -0.5, 1, 2, 0.5, green),
+    box(-1, 2, -0.5, 1, 4, 0.5, blue),
+    box(-2, 2, -0.5, -1, 4, 0.5, yellow),
+    box(1, 2, -0.5, 2, 4, 0.5, yellow),
+    box(-0.6, 4, -0.6, 0.6, 5.2, 0.6, yellow),
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Matrix helpers (column-major, like WebGL expects).
+// ---------------------------------------------------------------------------
+
+function perspective(fovY, aspect, near, far) {
+  const f = 1 / Math.tan(fovY / 2);
+  const nf = 1 / (near - far);
+  return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+}
+
+function orthographic(left, right, bottom, top, near, far) {
+  return new Float32Array([
+    2 / (right - left), 0, 0, 0,
+    0, 2 / (top - bottom), 0, 0,
+    0, 0, -2 / (far - near), 0,
+    -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far + near) / (far - near), 1,
+  ]);
+}
+
+function lookAt(eye, target, up) {
+  let zx = eye[0] - target[0], zy = eye[1] - target[1], zz = eye[2] - target[2];
+  let length = Math.hypot(zx, zy, zz);
+  zx /= length; zy /= length; zz /= length;
+  let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+  length = Math.hypot(xx, xy, xz);
+  xx /= length; xy /= length; xz /= length;
+  const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  return new Float32Array([
+    xx, yx, zx, 0,
+    xy, yy, zy, 0,
+    xz, yz, zz, 0,
+    -(xx * eye[0] + xy * eye[1] + xz * eye[2]),
+    -(yx * eye[0] + yy * eye[1] + yz * eye[2]),
+    -(zx * eye[0] + zy * eye[1] + zz * eye[2]),
+    1,
+  ]);
+}
+
+function multiply(a, b) {
+  const out = new Float32Array(16);
+  for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < 4; row++) {
+      let sum = 0;
+      for (let k = 0; k < 4; k++) sum += a[k * 4 + row] * b[col * 4 + k];
+      out[col * 4 + row] = sum;
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// WebGL 2 renderer: lit blocks, stud texture on top faces, soft shadows.
+// ---------------------------------------------------------------------------
+
+const VERTEX_SHADER = `#version 300 es
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec3 aColor;
+layout(location = 3) in vec2 aFaceUv;
+layout(location = 4) in vec2 aFaceSize;
+layout(location = 5) in float aStuds;
+uniform mat4 uViewProjection;
+uniform mat4 uLightViewProjection;
+out vec3 vPosition;
+out vec3 vNormal;
+out vec3 vColor;
+out vec2 vFaceUv;
+out vec2 vFaceSize;
+out float vStuds;
+out vec4 vLightPosition;
+void main() {
+  vPosition = aPosition;
+  vNormal = aNormal;
+  vColor = aColor;
+  vFaceUv = aFaceUv;
+  vFaceSize = aFaceSize;
+  vStuds = aStuds;
+  vLightPosition = uLightViewProjection * vec4(aPosition + aNormal * 0.2, 1.0);
+  gl_Position = uViewProjection * vec4(aPosition, 1.0);
+}`;
+
+const FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+precision highp sampler2DShadow;
+uniform sampler2DShadow uShadowMap;
+uniform vec3 uLightDirection;
+in vec3 vPosition;
+in vec3 vNormal;
+in vec3 vColor;
+in vec2 vFaceUv;
+in vec2 vFaceSize;
+in float vStuds;
+in vec4 vLightPosition;
+out vec4 outColor;
+
+float sampleShadow() {
+  vec3 p = vLightPosition.xyz / vLightPosition.w * 0.5 + 0.5;
+  if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
+  vec2 texel = 1.0 / vec2(textureSize(uShadowMap, 0));
+  float lit = 0.0;
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      lit += texture(uShadowMap, vec3(p.xy + vec2(float(x), float(y)) * texel, p.z - 0.0006));
+    }
+  }
+  return lit / 9.0;
+}
+
+void main() {
+  vec3 normal = normalize(vNormal);
+  float shade = 1.0;
+
+  // Studs: one raised circle per stud, lit on the side facing the sun. Fades out when too small to see.
+  if (vStuds > 0.5 && normal.y > 0.5) {
+    vec2 g = fract(vPosition.xz) - 0.5;
+    float d = length(g);
+    float footprint = max(fwidth(vPosition.x), fwidth(vPosition.z));
+    float visible = 1.0 - smoothstep(0.12, 0.33, footprint);
+    float aa = max(footprint, 0.02);
+    float ring = smoothstep(0.22 - aa, 0.22, d) * (1.0 - smoothstep(0.31, 0.31 + aa, d));
+    float facing = dot(normalize(g + 1e-4), normalize(uLightDirection.xz + 1e-4));
+    shade += visible * ring * facing * 0.38;
+  }
+
+  // Thin darker line along every block edge so separate blocks read clearly.
+  vec2 toEdge = min(vFaceUv, vFaceSize - vFaceUv);
+  float edgeDistance = min(toEdge.x, toEdge.y);
+  float lineWidth = max(fwidth(edgeDistance) * 1.25, 0.05);
+  shade *= 1.0 - 0.22 * (1.0 - smoothstep(lineWidth * 0.5, lineWidth * 1.5, edgeDistance));
+
+  vec3 albedo = pow(vColor, vec3(2.2)) * shade;
+  float diffuse = max(dot(normal, uLightDirection), 0.0);
+  float shadow = diffuse > 0.0 ? sampleShadow() : 0.0;
+  vec3 skyLight = vec3(0.56, 0.63, 0.76);
+  vec3 groundLight = vec3(0.32, 0.30, 0.28);
+  vec3 ambient = mix(groundLight, skyLight, normal.y * 0.5 + 0.5) * 0.62;
+  vec3 color = albedo * (ambient + vec3(1.0, 0.96, 0.88) * diffuse * shadow * 0.9);
+  outColor = vec4(pow(color, vec3(1.0 / 2.2)), 1.0);
+}`;
+
+const DEPTH_VERTEX_SHADER = `#version 300 es
+layout(location = 0) in vec3 aPosition;
+uniform mat4 uLightViewProjection;
+void main() {
+  gl_Position = uLightViewProjection * vec4(aPosition, 1.0);
+}`;
+
+const DEPTH_FRAGMENT_SHADER = `#version 300 es
+precision mediump float;
+void main() {}`;
+
+const FLOATS_PER_VERTEX = 14;
+const SHADOW_MAP_SIZE = 2048;
+const FIELD_OF_VIEW = (45 * Math.PI) / 180;
+const MIN_PITCH = (6 * Math.PI) / 180;
+const MAX_PITCH = (89.5 * Math.PI) / 180;
+const DEFAULT_YAW = 0.3;
+const DEFAULT_PITCH = 0.9;
+const OVERLAY_HEIGHT = 50; // CSS px taken by the toolbar and the hint
+
+function compileProgram(gl, vertexSource, fragmentSource) {
+  const compile = (type, source) => {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error("Shader compile failed: " + gl.getShaderInfoLog(shader));
+    }
+    return shader;
+  };
+  const program = gl.createProgram();
+  gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+  gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    throw new Error("Program link failed: " + gl.getProgramInfoLog(program));
+  }
+  return program;
+}
+
+// Turns blocks into one interleaved vertex buffer (24 vertices and 36 indices per block).
+function buildMesh(blocks) {
+  const vertices = new Float32Array(blocks.length * 24 * FLOATS_PER_VERTEX);
+  const indices = new Uint16Array(blocks.length * 36);
+  let v = 0;
+  let i = 0;
+  let vertexCount = 0;
+  for (const block of blocks) {
+    const color = block.color.map((channel) => channel / 255);
+    const size = [block.max[0] - block.min[0], block.max[1] - block.min[1], block.max[2] - block.min[2]];
+    for (let axis = 0; axis < 3; axis++) {
+      const tangentA = axis === 0 ? 1 : 0;
+      const tangentB = axis === 2 ? 1 : 2;
+      for (const sign of [-1, 1]) {
+        const normal = [0, 0, 0];
+        normal[axis] = sign;
+        const studs = block.studs && axis === 1 && sign === 1 ? 1 : 0;
+        for (const [u, w] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+          const position = [0, 0, 0];
+          position[axis] = sign > 0 ? block.max[axis] : block.min[axis];
+          position[tangentA] = u ? block.max[tangentA] : block.min[tangentA];
+          position[tangentB] = w ? block.max[tangentB] : block.min[tangentB];
+          vertices.set(
+            [
+              ...position,
+              ...normal,
+              ...color,
+              u * size[tangentA], w * size[tangentB],
+              size[tangentA], size[tangentB],
+              studs,
+            ],
+            v
+          );
+          v += FLOATS_PER_VERTEX;
+        }
+        indices.set([vertexCount, vertexCount + 1, vertexCount + 2, vertexCount, vertexCount + 2, vertexCount + 3], i);
+        i += 6;
+        vertexCount += 4;
+      }
+    }
+  }
+  return { vertices, indices };
+}
+
+function startViewer(geometry, figure) {
+  const viewer = document.getElementById("viewer");
+  const canvas = document.getElementById("view");
+  const gl = canvas.getContext("webgl2", { antialias: true, alpha: true, premultipliedAlpha: true });
+  if (!gl) {
+    viewer.classList.add("no-webgl");
+    return;
+  }
+
+  const mainProgram = compileProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
+  const depthProgram = compileProgram(gl, DEPTH_VERTEX_SHADER, DEPTH_FRAGMENT_SHADER);
+  const mesh = buildMesh(geometry.blocks.concat(figure));
+
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
+  const indexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+  const stride = FLOATS_PER_VERTEX * 4;
+  const attributes = [[0, 3, 0], [1, 3, 3], [2, 3, 6], [3, 2, 9], [4, 2, 11], [5, 1, 13]];
+  for (const [location, components, offset] of attributes) {
+    gl.enableVertexAttribArray(location);
+    gl.vertexAttribPointer(location, components, gl.FLOAT, false, stride, offset * 4);
+  }
+
+  // Sun from the south-west, so the faces the default camera sees are lit and shadows fall north-east.
+  const lightDirection = (() => {
+    const d = [-0.55, 1.0, 0.45];
+    const length = Math.hypot(d[0], d[1], d[2]);
+    return d.map((value) => value / length);
+  })();
+  const halfWidth = geometry.widthStuds / 2;
+  const halfDepth = geometry.depthStuds / 2;
+  const wallTop = Math.max(...geometry.blocks.map((block) => block.max[1]));
+  const sceneRadius = Math.hypot(halfWidth, halfDepth, 30) + 10;
+  const lightDistance = sceneRadius * 2;
+  const lightView = lookAt(lightDirection.map((value) => value * lightDistance), [0, 0, 0], [0, 1, 0]);
+  const lightProjection = orthographic(
+    -sceneRadius, sceneRadius, -sceneRadius, sceneRadius,
+    lightDistance - sceneRadius, lightDistance + sceneRadius
+  );
+  const lightViewProjection = multiply(lightProjection, lightView);
+
+  // The scene never moves, so the shadow map is drawn once.
+  const shadowTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, shadowTexture);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+  const shadowFramebuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, shadowFramebuffer);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, shadowTexture, 0);
+  gl.drawBuffers([gl.NONE]);
+  gl.readBuffer(gl.NONE);
+  gl.viewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+  gl.enable(gl.DEPTH_TEST);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.POLYGON_OFFSET_FILL);
+  gl.polygonOffset(2, 4);
+  gl.useProgram(depthProgram);
+  gl.uniformMatrix4fv(gl.getUniformLocation(depthProgram, "uLightViewProjection"), false, lightViewProjection);
+  gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  gl.useProgram(mainProgram);
+  const viewProjectionLocation = gl.getUniformLocation(mainProgram, "uViewProjection");
+  gl.uniformMatrix4fv(gl.getUniformLocation(mainProgram, "uLightViewProjection"), false, lightViewProjection);
+  gl.uniform3fv(gl.getUniformLocation(mainProgram, "uLightDirection"), lightDirection);
+  gl.uniform1i(gl.getUniformLocation(mainProgram, "uShadowMap"), 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, shadowTexture);
+
+  // ---- camera ----
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const camera = { yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: 400, target: [0, 0, 0] };
+  let animation = null;
+  let frameRequested = false;
+
+  const aspect = () => Math.max(canvas.width, 1) / Math.max(canvas.height, 1);
+  const horizontalFov = () => 2 * Math.atan(Math.tan(FIELD_OF_VIEW / 2) * aspect());
+  const minDistance = 20;
+  const maxDistance = sceneRadius * 6;
+
+  function fitDistance(pitch) {
+    if (pitch > MAX_PITCH - 0.01) {
+      // Keep the map clear of the toolbar (top) and hint (bottom); wall tops sit closer to the camera than the floor.
+      const overlayScale = canvas.clientHeight / Math.max(canvas.clientHeight - 2 * OVERLAY_HEIGHT, 1);
+      const byDepth = ((halfDepth + 2) / Math.tan(FIELD_OF_VIEW / 2)) * overlayScale;
+      const byWidth = (halfWidth + 6) / Math.tan(horizontalFov() / 2);
+      return (Math.max(byDepth, byWidth) + wallTop) * 1.04;
+    }
+    const narrowest = Math.min(FIELD_OF_VIEW, horizontalFov());
+    return ((Math.hypot(halfWidth, halfDepth) + 6) / Math.sin(narrowest / 2)) * (aspect() >= 1 ? 0.9 : 1);
+  }
+
+  function presetView(name) {
+    if (name === "top") return { yaw: 0, pitch: MAX_PITCH, distance: fitDistance(MAX_PITCH), target: [0, 0, 0] };
+    return { yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: fitDistance(DEFAULT_PITCH), target: [0, 0, 0] };
+  }
+
+  function requestFrame() {
+    if (frameRequested) return;
+    frameRequested = true;
+    requestAnimationFrame(drawFrame);
+  }
+
+  function drawFrame(now) {
+    frameRequested = false;
+    if (animation) {
+      const t = Math.min((now - animation.start) / animation.duration, 1);
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const from = animation.from;
+      const to = animation.to;
+      let yawDelta = ((to.yaw - from.yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+      camera.yaw = from.yaw + yawDelta * eased;
+      camera.pitch = from.pitch + (to.pitch - from.pitch) * eased;
+      camera.distance = from.distance + (to.distance - from.distance) * eased;
+      camera.target = from.target.map((value, index) => value + (to.target[index] - value) * eased);
+      if (t < 1) requestFrame();
+      else animation = null;
+    }
+
+    const cosPitch = Math.cos(camera.pitch);
+    const eye = [
+      camera.target[0] + camera.distance * cosPitch * Math.sin(camera.yaw),
+      camera.target[1] + camera.distance * Math.sin(camera.pitch),
+      camera.target[2] + camera.distance * cosPitch * Math.cos(camera.yaw),
+    ];
+    const near = Math.max(0.5, camera.distance * 0.01);
+    const projection = perspective(FIELD_OF_VIEW, aspect(), near, camera.distance + sceneRadius * 4);
+    const view = lookAt(eye, camera.target, [0, 1, 0]);
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.uniformMatrix4fv(viewProjectionLocation, false, multiply(projection, view));
+    gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+  }
+
+  function goTo(name, animate) {
+    const to = presetView(name);
+    document.getElementById("view-3d").setAttribute("aria-pressed", String(name !== "top"));
+    document.getElementById("view-top").setAttribute("aria-pressed", String(name === "top"));
+    if (!animate || reduceMotion) {
+      animation = null;
+      Object.assign(camera, to);
+    } else {
+      animation = {
+        start: performance.now(),
+        duration: 550,
+        from: { yaw: camera.yaw, pitch: camera.pitch, distance: camera.distance, target: camera.target.slice() },
+        to,
+      };
+    }
+    requestFrame();
+  }
+
+  function clearPresetHighlight() {
+    document.getElementById("view-3d").setAttribute("aria-pressed", "false");
+    document.getElementById("view-top").setAttribute("aria-pressed", "false");
+  }
+
+  function orbit(dx, dy) {
+    animation = null;
+    camera.yaw -= dx * 0.006;
+    camera.pitch = Math.min(MAX_PITCH, Math.max(MIN_PITCH, camera.pitch + dy * 0.006));
+    clearPresetHighlight();
+    requestFrame();
+  }
+
+  function pan(dx, dy) {
+    animation = null;
+    const scale = (camera.distance * Math.tan(FIELD_OF_VIEW / 2) * 2) / Math.max(canvas.clientHeight, 1);
+    const right = [Math.cos(camera.yaw), 0, -Math.sin(camera.yaw)];
+    const forward = [-Math.sin(camera.yaw), 0, -Math.cos(camera.yaw)];
+    const limitX = halfWidth + 40;
+    const limitZ = halfDepth + 40;
+    camera.target[0] = Math.min(limitX, Math.max(-limitX, camera.target[0] - right[0] * dx * scale + forward[0] * dy * scale));
+    camera.target[2] = Math.min(limitZ, Math.max(-limitZ, camera.target[2] - right[2] * dx * scale + forward[2] * dy * scale));
+    clearPresetHighlight();
+    requestFrame();
+  }
+
+  function zoom(factor) {
+    animation = null;
+    camera.distance = Math.min(maxDistance, Math.max(minDistance, camera.distance * factor));
+    requestFrame();
+  }
+
+  // ---- input ----
+  const pointers = new Map();
+  let dragMode = "orbit";
+  let lastPinch = null;
+
+  const hint = document.getElementById("hint");
+  const hideHint = () => hint.classList.add("used");
+  canvas.addEventListener("wheel", hideHint, { once: true });
+  canvas.addEventListener("keydown", hideHint, { once: true });
+
+  canvas.addEventListener("pointerdown", (event) => {
+    hideHint();
+    canvas.setPointerCapture(event.pointerId);
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    dragMode = event.button === 2 || event.shiftKey ? "pan" : "orbit";
+    lastPinch = null;
+    canvas.classList.add("dragging");
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    const previous = pointers.get(event.pointerId);
+    if (!previous) return;
+    const current = { x: event.clientX, y: event.clientY };
+    if (pointers.size === 1) {
+      const dx = current.x - previous.x;
+      const dy = current.y - previous.y;
+      if (dragMode === "pan") pan(dx, dy);
+      else orbit(dx, dy);
+      pointers.set(event.pointerId, current);
+      return;
+    }
+    pointers.set(event.pointerId, current);
+    if (pointers.size === 2) {
+      const [a, b] = Array.from(pointers.values());
+      const pinch = { spread: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      if (lastPinch && pinch.spread > 0) {
+        zoom(lastPinch.spread / pinch.spread);
+        pan(pinch.x - lastPinch.x, pinch.y - lastPinch.y);
+      }
+      lastPinch = pinch;
+    }
+  });
+
+  const endPointer = (event) => {
+    pointers.delete(event.pointerId);
+    lastPinch = null;
+    if (pointers.size === 0) canvas.classList.remove("dragging");
+  };
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+  canvas.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const pixels = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+    zoom(Math.exp(pixels * 0.0012));
+  }, { passive: false });
+
+  canvas.addEventListener("keydown", (event) => {
+    const step = 18;
+    const handled = {
+      ArrowLeft: () => orbit(-step, 0),
+      ArrowRight: () => orbit(step, 0),
+      ArrowUp: () => orbit(0, -step),
+      ArrowDown: () => orbit(0, step),
+      "+": () => zoom(0.9),
+      "=": () => zoom(0.9),
+      "-": () => zoom(1.1),
+    }[event.key];
+    if (handled) {
+      event.preventDefault();
+      handled();
+    }
+  });
+
+  document.getElementById("view-3d").addEventListener("click", () => goTo("3d", true));
+  document.getElementById("view-top").addEventListener("click", () => goTo("top", true));
+  document.getElementById("view-reset").addEventListener("click", () => goTo("3d", true));
+
+  if (window.matchMedia("(pointer: coarse)").matches) {
+    hint.textContent = "Drag to orbit · Pinch to zoom · Two-finger drag to pan";
+  }
+
+  // ---- sizing ----
+  let firstLayout = true;
+  const resize = () => {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.max(1, Math.round(canvas.clientWidth * ratio));
+    const height = Math.max(1, Math.round(canvas.clientHeight * ratio));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    if (firstLayout) {
+      firstLayout = false;
+      goTo("3d", false);
+    }
+    requestFrame();
+  };
+  new ResizeObserver(resize).observe(canvas);
+  resize();
+}
+
+// ---------------------------------------------------------------------------
+// Page: stats, legend, highlighted script, copy and download.
+// ---------------------------------------------------------------------------
+
+const LUA_KEYWORDS = new Set(
+  "and break continue do else elseif end false for function if in local nil not or repeat return then true type until while".split(" ")
+);
+const LUA_BUILTINS = new Set(
+  "game workspace Instance Vector3 CFrame BrickColor Enum task math string table print warn assert error pcall".split(" ")
+);
+
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function highlightLua(source) {
+  const tokens = /(--\[(=*)\[[\s\S]*?\]\2\]|--[^\n]*)|("(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)/g;
+  let html = "";
+  let last = 0;
+  let match;
+  while ((match = tokens.exec(source)) !== null) {
+    html += escapeHtml(source.slice(last, match.index));
+    if (match[1]) html += '<span class="tk-c">' + escapeHtml(match[1]) + "</span>";
+    else if (match[3]) html += '<span class="tk-s">' + escapeHtml(match[3]) + "</span>";
+    else if (match[4]) html += '<span class="tk-n">' + match[4] + "</span>";
+    else if (LUA_KEYWORDS.has(match[5])) html += '<span class="tk-k">' + match[5] + "</span>";
+    else if (LUA_BUILTINS.has(match[5])) html += '<span class="tk-b">' + match[5] + "</span>";
+    else html += match[5];
+    last = tokens.lastIndex;
+  }
+  return html + escapeHtml(source.slice(last));
+}
+
+function fillPage(config, geometry) {
+  const stats = [
+    [geometry.widthStuds + " × " + geometry.depthStuds, " studs"],
+    [String(geometry.floorCount), " floor blocks"],
+    [String(geometry.wallCount), " wall blocks"],
+    ["Walls " + config.wallHeight, " studs tall"],
+  ];
+  const statsList = document.getElementById("stats");
+  for (const [value, label] of stats) {
+    const item = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = value;
+    item.append(strong, label);
+    statsList.append(item);
+  }
+
+  const rgb = (color) => "rgb(" + color.join(",") + ")";
+  const floorRgb = BRICK_COLORS[config.floorColorName] || FALLBACK_COLOR;
+  const wallRgb = BRICK_COLORS[config.wallColorName] || FALLBACK_COLOR;
+  const legend = [
+    [rgb(floorRgb), "Floor (" + config.floorColorName + ")"],
+    [rgb(wallRgb), "Walls (" + config.wallColorName + ")"],
+    [rgb(floorRgb), "Spawn pad (floor colour, raised 1 stud)"],
+    ["linear-gradient(180deg," + rgb(BRICK_COLORS["Bright yellow"]) + " 33%," + rgb(BRICK_COLORS["Bright blue"]) + " 33% 66%," + rgb(BRICK_COLORS["Br. yellowish green"]) + " 66%)", "Player for scale (5 studs, preview only)"],
+  ];
+  const legendList = document.getElementById("legend");
+  for (const [background, label] of legend) {
+    const item = document.createElement("li");
+    const swatch = document.createElement("span");
+    swatch.className = "swatch";
+    swatch.style.background = background;
+    item.append(swatch, label);
+    legendList.append(item);
+  }
+
+  const lineCount = LUA_SOURCE.split("\n").length - (LUA_SOURCE.endsWith("\n") ? 1 : 0);
+  document.getElementById("file-meta").textContent = lineCount + " lines · Luau";
+  document.getElementById("code").innerHTML = highlightLua(LUA_SOURCE);
+}
+
+function setUpScriptButtons() {
+  const copyButton = document.getElementById("copy-button");
+  let resetTimer = 0;
+  const flash = (text) => {
+    copyButton.textContent = text;
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { copyButton.textContent = "Copy script"; }, 1600);
+  };
+  const legacyCopy = () => {
+    const area = document.createElement("textarea");
+    area.value = LUA_SOURCE;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.append(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (error) { ok = false; }
+    area.remove();
+    return ok;
+  };
+  copyButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(LUA_SOURCE);
+      flash("Copied!");
+    } catch (error) {
+      flash(legacyCopy() ? "Copied!" : "Copy failed: select the code instead");
+    }
+  });
+
+  document.getElementById("download-button").addEventListener("click", () => {
+    const url = URL.createObjectURL(new Blob([LUA_SOURCE], { type: "text/plain;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = LUA_FILE_NAME;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+}
+
+(function init() {
+  setUpScriptButtons();
+  let config;
+  let geometry;
+  try {
+    config = readMapConfig(LUA_SOURCE);
+    geometry = buildMapGeometry(config);
+  } catch (error) {
+    document.getElementById("code").innerHTML = highlightLua(LUA_SOURCE);
+    const fallback = document.getElementById("fallback");
+    fallback.firstElementChild.textContent = "Preview unavailable: " + error.message;
+    document.getElementById("viewer").classList.add("no-webgl");
+    return;
+  }
+  fillPage(config, geometry);
+  try {
+    startViewer(geometry, buildScaleFigure(geometry.spawn));
+  } catch (error) {
+    const fallback = document.getElementById("fallback");
+    fallback.firstElementChild.textContent = "Preview unavailable: " + error.message;
+    document.getElementById("viewer").classList.add("no-webgl");
+  }
+})();
+</script>
+</body>
+</html>
