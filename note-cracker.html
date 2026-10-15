@@ -243,10 +243,11 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     1px 3px 4px rgba(0, 0, 0, 0.4);
 }
 .tool:disabled .ico { filter: none; opacity: 0.7; }
-.tool:focus-visible, .mini:focus-visible, .sheet-scroll:focus-visible, #noteText:focus-visible {
+.tool:focus-visible, .mini:focus-visible, .sheet-scroll:focus-visible, #noteText:focus-visible, #tempo:focus-visible {
   outline: 3px solid var(--cream);
   outline-offset: 3px;
 }
+.card .tool:focus-visible { outline-color: var(--ink); }
 .tool .ico-off { display: none; }
 .tool[aria-pressed="true"] .ico-on { display: none; }
 .tool[aria-pressed="true"] .ico-off { display: block; }
@@ -313,6 +314,94 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   text-align: right;
 }
 
+/* small paper windows set into the wood or the brass (octave, tempo, clock) */
+.readwin {
+  display: inline-block;
+  min-width: 2.3ch; padding: 3px 8px 2px; text-align: center;
+  font: 700 17px / 1.1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  border-radius: 4px;
+  background-color: var(--paper);
+  background-image: var(--fibers);
+  box-shadow: inset 1px 2px 3px rgba(70, 45, 12, 0.55), 0 0 0 1px var(--brass-deep), 1px 1px 0 1px rgba(255, 240, 205, 0.55);
+  white-space: nowrap;
+}
+
+/* ---------- transport: the player deck ---------- */
+.transport {
+  display: flex; align-items: center; gap: 10px 18px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background-color: rgba(30, 17, 8, 0.55);
+  background-image: var(--grain);
+  box-shadow:
+    inset 3px 4px 9px rgba(0, 0, 0, 0.55),
+    inset -1px -1px 0 rgba(255, 214, 160, 0.14),
+    0 1px 0 rgba(255, 214, 160, 0.12);
+}
+.deck { display: flex; gap: 8px; flex: none; }
+.transport .tool { flex-direction: row; gap: 8px; min-width: 0; min-height: 46px; padding: 0 14px; font-size: 11px; }
+.transport .tool .ico { width: 20px; height: 20px; }
+#playBtn { min-width: 110px; padding-right: 20px; }
+#playBtn .ico { fill: currentColor; stroke-width: 1.4; }
+.lbl-dark { font: 700 10.5px / 1 var(--font-ui); letter-spacing: 0.18em; text-transform: uppercase; color: var(--cream); flex: none; }
+.tempo { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
+.tempo .readwin { flex: none; min-width: 3.4ch; }
+.tempo .unit { font: 600 11px / 1 var(--font-ui); letter-spacing: 0.1em; color: var(--cream); flex: none; }
+#tempo {
+  --fill: 30%;
+  flex: 1 1 auto; min-width: 48px; max-width: 360px; height: 30px; margin: 0;
+  background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  touch-action: pan-y;
+}
+#tempo::-webkit-slider-runnable-track {
+  height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, #C8A66A 0, var(--brass) var(--fill), #170D06 var(--fill));
+  box-shadow: inset 1px 2px 3px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 214, 160, 0.2);
+}
+#tempo::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 24px; height: 24px; margin-top: -8px; border: 0; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #F3E1B0 0%, #CDAA6E 40%, #9C7A45 100%);
+  box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), inset -1px -1px 1px rgba(91, 67, 31, 0.6), 0 2px 0 var(--brass-deep), 1px 4px 5px rgba(0, 0, 0, 0.55);
+}
+#tempo::-moz-range-track { height: 8px; border-radius: 4px; background: #170D06; box-shadow: inset 1px 2px 3px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 214, 160, 0.2); }
+#tempo::-moz-range-progress { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #C8A66A, var(--brass)); }
+#tempo::-moz-range-thumb {
+  width: 24px; height: 24px; border: 0; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #F3E1B0 0%, #CDAA6E 40%, #9C7A45 100%);
+  box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), 0 2px 0 var(--brass-deep), 1px 4px 5px rgba(0, 0, 0, 0.55);
+}
+#tempo:focus-visible { outline-offset: 2px; border-radius: 8px; }
+.counter { display: flex; align-items: center; gap: 10px; flex: none; }
+.counter .readwin { font: 600 13px / 1.35 var(--font-ui); letter-spacing: 0.02em; padding: 4px 10px 3px; min-width: 15ch; }
+.counter .readwin b { font-weight: 700; }
+
+/* ---------- shortcuts card ---------- */
+.card {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 18px 22px 16px;
+  border: 0; border-radius: 10px;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%), var(--fibers);
+  box-shadow: 0 0 0 3px var(--brass), 0 0 0 4px var(--brass-deep), 6px 14px 30px rgba(0, 0, 0, 0.6);
+}
+.card::backdrop { background: rgba(20, 10, 4, 0.62); }
+.card h2 { margin: 0 0 12px; font: 700 28px / 1.1 var(--font-display); letter-spacing: 0.04em; }
+.card dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0 0 16px; font: 500 13.5px / 1.35 var(--font-ui); }
+.card dt { white-space: nowrap; font-weight: 600; }
+.card dd { margin: 0; color: var(--ink-soft); }
+.card kbd { font: 700 12px / 1 var(--font-ui); padding: 3px 6px 2px; border-radius: 4px; background: rgba(176, 141, 87, 0.3); box-shadow: inset 0 -1px 0 rgba(91, 67, 31, 0.5); }
+.card .row { display: flex; justify-content: flex-end; margin: 0; }
+.card .tool { flex-direction: row; min-height: 42px; padding: 0 20px; }
+
 /* ---------- music desk with the manuscript sheet ---------- */
 .desk {
   position: relative;
@@ -371,10 +460,21 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 #sheet .acc { fill: var(--ink); }
 #sheet .stem { stroke: var(--ink); stroke-linecap: round; }
 #sheet .ledger { fill: none; stroke: var(--ink); stroke-linecap: round; }
+#sheet .flag, #sheet .dot, #sheet .tie { fill: var(--ink); }
+#sheet .barno { fill: var(--ink-soft); font-family: var(--font-display); font-style: italic; font-weight: 600; }
+#sheet .note { cursor: pointer; }
+#sheet .hit { fill: transparent; stroke: none; pointer-events: all; }
 #sheet .cursor { fill: url(#cursorGrad); stroke: none; }
-#sheet .note.is-latest .head { fill: #3a2a0f; stroke: #3a2a0f; }
+#sheet.has-mark .cursor { display: none; }
+#sheet .selmark { fill: rgba(176, 141, 87, 0.2); stroke: #8B6A39; stroke-width: 1.3; stroke-dasharray: 4 3; }
+#sheet .playmark { fill: url(#playGrad); stroke: none; }
+#sheet .note.is-latest .head, #sheet .note.is-latest .flag, #sheet .note.is-latest .dot, #sheet .note.is-latest .tie { fill: #3a2a0f; stroke: #3a2a0f; }
 #sheet .note.is-latest .acc { fill: #3a2a0f; }
 #sheet .note.is-latest .stem, #sheet .note.is-latest .ledger { stroke: #3a2a0f; }
+#sheet .note.is-sel .head, #sheet .note.is-sel .flag, #sheet .note.is-sel .dot, #sheet .note.is-sel .tie, #sheet .note.is-sel .acc { fill: #6E4410; stroke: #6E4410; }
+#sheet .note.is-sel .stem, #sheet .note.is-sel .ledger { stroke: #6E4410; }
+#sheet .note.is-play .head, #sheet .note.is-play .flag, #sheet .note.is-play .dot, #sheet .note.is-play .tie, #sheet .note.is-play .acc { fill: #8E2F12; stroke: #8E2F12; }
+#sheet .note.is-play .stem, #sheet .note.is-play .ledger { stroke: #8E2F12; }
 #sheet .note.ink-in { animation: inkIn 0.17s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 @keyframes inkIn {
   from { opacity: 0; transform: scale(0.55); }
@@ -424,7 +524,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   z-index: 3;
 }
 .octave { display: flex; align-items: center; gap: 8px; }
-.octave .lbl { font: 700 10.5px / 1 var(--font-ui); letter-spacing: 0.18em; text-transform: uppercase; text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.6); }
+.octave .lbl, .lengths .lbl { font: 700 10.5px / 1 var(--font-ui); letter-spacing: 0.18em; text-transform: uppercase; text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.6); }
 .octave .val {
   min-width: 2.3ch; padding: 3px 8px 2px; text-align: center;
   font: 700 17px / 1.1 var(--font-display);
@@ -451,6 +551,25 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 .mini svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
 .mini:active:not(:disabled) { transform: translateY(2px); transition: none; box-shadow: inset 1px 1px 3px rgba(91, 67, 31, 0.6), 0 1px 0 var(--brass-deep), 1px 2px 3px rgba(0, 0, 0, 0.4); }
 .mini:disabled { cursor: default; opacity: 0.55; transform: translateY(1px); box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.5), 0 2px 0 var(--brass-deep); }
+.mini[aria-pressed="true"] {
+  transform: translateY(2px);
+  transition: none;
+  background-image: radial-gradient(circle at 62% 68%, #E6CB92 0%, #BE9A5E 52%, #9E7C47 100%);
+  box-shadow:
+    inset 1px 2px 3px rgba(91, 67, 31, 0.75),
+    inset -1px -1px 0 rgba(255, 247, 222, 0.4),
+    0 1px 0 var(--brass-deep),
+    0 0 0 2px rgba(255, 214, 130, 0.7),
+    0 0 8px 2px rgba(255, 200, 110, 0.45);
+}
+.mini svg.nico { width: 20px; height: 20px; fill: currentColor; stroke: none; }
+.mini svg.nico .o { fill: none; stroke: currentColor; stroke-width: 1.8; }
+.mini svg.nico .st { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: butt; }
+.lengths { display: flex; align-items: center; gap: 6px; }
+.lengths .lbl { min-width: 7.2em; text-align: right; margin-right: 2px; }
+.lengths .sep { width: 1px; height: 22px; margin: 0 3px; background: rgba(91, 67, 31, 0.5); box-shadow: 1px 0 0 rgba(255, 240, 205, 0.5); }
+#helpBtn { flex: none; font: 700 19px / 1 var(--font-display); }
+.rail-end { display: flex; align-items: center; gap: 12px; margin-left: auto; min-width: 0; }
 .rail-hint { margin: 0; font: 600 11.5px / 1.3 var(--font-ui); text-align: right; text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.5); }
 .rail-hint kbd { font: inherit; font-weight: 700; padding: 0 4px; border-radius: 3px; background: rgba(255, 244, 214, 0.55); box-shadow: inset 0 -1px 0 rgba(91, 67, 31, 0.5); }
 
@@ -559,8 +678,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 }
 
 /* pressed: the key sinks, the front lip and the shadow collapse */
-.key.is-down { transition: none; }
-.key.white.is-down {
+.key.is-down, .key.is-auto { transition: none; }
+.key.white.is-down, .key.white.is-auto {
   transform: translateY(4px);
   background-image:
     linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0, rgba(0, 0, 0, 0) 22px),
@@ -573,7 +692,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     0 2px 0 var(--ivory-edge),
     0 3px 3px rgba(0, 0, 0, 0.5);
 }
-.key.black.is-down {
+.key.black.is-down, .key.black.is-auto {
   transform: translateY(3px);
   background-image:
     linear-gradient(103deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.04) 24%, rgba(255, 255, 255, 0) 46%),
@@ -591,11 +710,19 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 @media (hover: hover) {
   .tool:hover:not(:disabled):not(:active):not([aria-pressed="true"]) { filter: brightness(1.06) saturate(1.05); }
   .mini:hover:not(:disabled):not(:active) { filter: brightness(1.07); }
-  .key.white:hover:not(.is-down) { filter: brightness(1.035); }
-  .key.black:hover:not(.is-down) { filter: brightness(1.25); }
+  .key.white:hover:not(.is-down):not(.is-auto) { filter: brightness(1.035); }
+  .key.black:hover:not(.is-down):not(.is-auto) { filter: brightness(1.25); }
 }
 
 /* ---------- responsive ---------- */
+@media (max-width: 1060px) {
+  .rail-hint { display: none; }
+  .tempo > .lbl-dark { display: none; }
+}
+@media (max-width: 940px) {
+  .transport .tool:not(#playBtn) { min-width: 46px; padding: 0 12px; }
+  .transport .tool:not(#playBtn) span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 @media (max-width: 760px) {
   .panel { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 9px 10px; }
   .toolbar { gap: 6px; }
@@ -610,10 +737,23 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .desk { padding: 8px; min-height: 200px; }
   .desk::after { inset: 8px; }
   .piano { padding: 0 8px 10px; }
-  .rail { margin: 0 -8px; padding: 5px 12px; min-height: 44px; }
+  .rail { margin: 0 -8px; padding: 5px 12px; min-height: 44px; gap: 10px; }
+  .transport { gap: 8px; padding: 7px 8px; }
+  .deck { gap: 6px; }
+  .transport .tool, .transport .tool:not(#playBtn) { min-width: 44px; padding: 0 10px; }
+  #playBtn { min-width: 58px; padding: 0 12px; }
+  .transport .tool span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .counter, .tempo .unit { display: none; }
+  .tempo { gap: 8px; }
+  .octave .lbl, .lengths .lbl { display: none; }
+  .lengths { gap: 5px; margin-left: auto; }
+  .rail-end { margin-left: 0; }
+}
+@media (max-width: 520px) {
+  #helpBtn { display: none; }
 }
 /* short portrait phones: tighten the chrome so the sheet and the piano both stay on screen */
-@media (max-width: 760px) and (max-height: 720px) {
+@media (max-width: 760px) and (max-height: 820px) {
   :root { --wkh: clamp(104px, 19vh, 160px); }
   .app { gap: 8px; padding-top: max(8px, env(safe-area-inset-top)); }
   .nameplate { padding: 5px 34px; }
@@ -627,6 +767,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .desk { min-height: 168px; }
   .rail { min-height: 40px; padding-top: 4px; padding-bottom: 4px; }
   .mini { width: 34px; height: 34px; }
+  .transport { padding: 5px 8px; }
+  .transport .tool { min-height: 40px; }
 }
 /* short laptop windows */
 @media (min-width: 761px) and (max-height: 740px) {
@@ -640,6 +782,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   #copyBtn { height: 46px; }
   .desk { min-height: 190px; }
   .rail { min-height: 40px; padding-top: 4px; padding-bottom: 4px; }
+  .transport { padding: 6px 12px; }
+  .transport .tool { min-height: 40px; }
 }
 @media (max-height: 560px) {
   .nameplate .tagline { display: none; }
@@ -652,7 +796,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .app {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: auto minmax(120px, 1fr) auto;
+    grid-template-rows: auto auto minmax(96px, 1fr) auto;
     gap: 6px 10px;
     padding-top: max(6px, env(safe-area-inset-top));
     padding-bottom: max(6px, env(safe-area-inset-bottom));
@@ -672,9 +816,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   #noteText { height: 34px; padding: 0 10px; font-size: 14px; line-height: 34px; }
   #copyBtn { height: 38px; min-width: 84px; padding: 0 12px; }
   .status { font-size: 11.5px; min-height: 1.2em; }
-  .desk { grid-column: 1 / -1; grid-row: 2; min-height: 120px; padding: 8px; }
+  .transport { grid-column: 1 / -1; grid-row: 2; padding: 3px 8px; gap: 8px 14px; }
+  .transport .tool, .transport .tool:not(#playBtn) { min-height: 34px; min-width: 42px; padding: 0 10px; }
+  #playBtn { min-width: 52px; }
+  .transport .tool span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .desk { grid-column: 1 / -1; grid-row: 3; min-height: 96px; padding: 8px; }
   .desk::after { inset: 8px; }
-  .piano { grid-column: 1 / -1; grid-row: 3; padding: 0 8px 8px; }
+  .piano { grid-column: 1 / -1; grid-row: 4; padding: 0 8px 8px; }
   .rail { min-height: 36px; padding: 3px 12px; margin: 0 -8px; }
   .mini { width: 30px; height: 30px; }
   .key .kl { bottom: 22px; } .key .kn { bottom: 8px; }
@@ -686,9 +834,11 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .nameplate { padding: 4px 24px; }
   .nameplate h1 { font-size: 21px; }
   .toolbar .tool { min-height: 38px; }
+  .transport { padding: 3px 8px; }
+  .transport .tool, .transport .tool:not(#playBtn) { min-height: 32px; }
   #copyBtn { height: 36px; }
   #noteText { height: 32px; line-height: 32px; }
-  .desk { min-height: 100px; padding: 6px; }
+  .desk { min-height: 90px; padding: 6px; }
   .desk::after { inset: 6px; }
   .rail { min-height: 32px; padding-top: 2px; padding-bottom: 2px; }
   .mini { width: 26px; height: 26px; }
@@ -702,15 +852,32 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .toolbar { gap: 5px; }
   .toolbar .tool { min-width: 38px; min-height: 38px; padding: 0 6px; }
   #copyBtn { min-width: 44px; padding: 0 10px; }
+  .counter { display: none; }
   #copyBtn span, .cap label {
     position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
   }
+}
+/* the smallest landscape phones: every pixel of height counts */
+@media (max-height: 340px) and (min-width: 480px) {
+  :root { --wkh: 62px; }
+  .app { gap: 4px; grid-template-rows: auto auto minmax(72px, 1fr) auto; }
+  .panel { padding: 3px 8px; }
+  .toolbar .tool { min-height: 34px; }
+  #copyBtn { height: 34px; }
+  #noteText { height: 30px; line-height: 30px; }
+  .transport { padding: 2px 8px; }
+  .transport .tool, .transport .tool:not(#playBtn) { min-height: 30px; }
+  .desk { min-height: 72px; padding: 5px; }
+  .desk::after { inset: 5px; }
+  .rail { min-height: 30px; padding-top: 1px; padding-bottom: 1px; }
+  .keys { height: calc(var(--wkh) + 20px); }
+  .key .kl { bottom: 14px; } .key .kn { bottom: 4px; }
 }
 @media (pointer: coarse) {
   #noteText { font-size: 16px; }
   .mini { width: 38px; height: 38px; }
 }
-@media (pointer: coarse) and (max-width: 760px) and (max-height: 720px) {
+@media (pointer: coarse) and (max-width: 760px) and (max-height: 820px) {
   .mini { width: 34px; height: 34px; }
 }
 @media (pointer: coarse) and (max-height: 520px) and (min-width: 480px) {
@@ -719,6 +886,29 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 }
 @media (pointer: coarse) and (max-height: 400px) and (min-width: 480px) {
   .mini { width: 28px; height: 28px; }
+}
+@media (max-width: 420px) {
+  .mini { width: 32px; height: 32px; }
+  .transport .tool, .transport .tool:not(#playBtn) { min-width: 42px; padding: 0 8px; }
+  #playBtn { min-width: 50px; padding: 0 10px; }
+  .tempo { gap: 6px; }
+  .tempo .readwin { min-width: 0; padding: 3px 5px 2px; font-size: 15px; }
+  #tempo { min-width: 40px; }
+  .rail { gap: 8px; }
+  .octave { gap: 5px; }
+  .lengths { gap: 3px; }
+  .lengths .sep { margin: 0 1px; }
+}
+@media (max-width: 370px) {
+  .mini { width: 30px; height: 30px; }
+  .octave .val { padding-left: 6px; padding-right: 6px; }
+}
+@media (max-width: 340px) {
+  .deck { gap: 4px; }
+  .transport { gap: 6px; }
+  .transport .tool, .transport .tool:not(#playBtn) { min-width: 38px; padding: 0 6px; }
+  #playBtn { min-width: 44px; padding: 0 8px; }
+  .desk { min-height: 150px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -739,6 +929,12 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       <stop offset="0.78" stop-color="#C79B4E" stop-opacity="0.34"/>
       <stop offset="1" stop-color="#C79B4E" stop-opacity="0"/>
     </linearGradient>
+    <linearGradient id="playGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9772E" stop-opacity="0"/>
+      <stop offset="0.2" stop-color="#D9772E" stop-opacity="0.36"/>
+      <stop offset="0.8" stop-color="#D9772E" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#D9772E" stop-opacity="0"/>
+    </linearGradient>
   </defs>
   <defs id="glyphDefs"></defs>
 </svg>
@@ -749,7 +945,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     <div class="nameplate">
       <i class="screw tl" aria-hidden="true"></i><i class="screw tr" aria-hidden="true"></i>
       <h1>Note Cracker</h1>
-      <p class="tagline">Play it &middot; Ink it &middot; Copy it</p>
+      <p class="tagline">Play it &middot; Ink it &middot; Hear it &middot; Copy it</p>
     </div>
   </header>
 
@@ -763,18 +959,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
         <span>Redo</span>
       </button>
-      <button id="deleteBtn" class="tool" type="button" disabled aria-label="Delete last note" aria-keyshortcuts="Backspace" title="Delete last note (Backspace)">
+      <button id="deleteBtn" class="tool" type="button" disabled aria-label="Delete last note" aria-keyshortcuts="Backspace Delete" title="Delete last note (Backspace)">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><path d="m12.5 9.5 5 5"/><path d="m17.5 9.5-5 5"/></svg>
         <span>Delete</span>
       </button>
       <button id="clearBtn" class="tool" type="button" disabled aria-label="Clear all notes" title="Clear all notes">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
         <span>Clear</span>
-      </button>
-      <button id="muteBtn" class="tool has-lamp" type="button" aria-pressed="false" aria-label="Mute sound" title="Mute sound">
-        <svg class="ico ico-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
-        <svg class="ico ico-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
-        <span>Mute</span>
       </button>
     </div>
 
@@ -792,12 +983,44 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     </div>
   </section>
 
+  <section class="transport" aria-label="Playback">
+    <div class="deck" role="toolbar" aria-label="Play the song">
+      <button id="playBtn" class="tool has-lamp" type="button" aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space" title="Play the song (Space)">
+        <svg class="ico ico-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15l12-7.5Z"/></svg>
+        <svg class="ico ico-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        <span id="playLbl">Play</span>
+      </button>
+      <button id="stopBtn" class="tool" type="button" disabled aria-label="Stop" aria-keyshortcuts="Escape" title="Stop and go back to the start (Esc)">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+        <span>Stop</span>
+      </button>
+      <button id="loopBtn" class="tool has-lamp" type="button" aria-pressed="false" aria-label="Loop" title="Loop: start again when the song ends">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+        <span>Loop</span>
+      </button>
+    </div>
+    <div class="tempo">
+      <label class="lbl-dark" for="tempo">Tempo</label>
+      <input id="tempo" type="range" min="40" max="240" step="1" value="100" aria-keyshortcuts="[ ]" title="Tempo in beats per minute ([ and ] change it by 5)">
+      <output id="tempoVal" class="readwin" for="tempo" aria-hidden="true">100</output>
+      <span class="unit" aria-hidden="true">BPM</span>
+    </div>
+    <div class="counter">
+      <span id="clock" class="readwin" role="timer" aria-label="Playback position">Bar 1 &middot; 0:00 / 0:00</span>
+    </div>
+    <button id="muteBtn" class="tool has-lamp" type="button" aria-pressed="false" aria-label="Mute sound" title="Mute sound">
+      <svg class="ico ico-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+      <svg class="ico ico-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+      <span>Mute</span>
+    </button>
+  </section>
+
   <main class="desk">
     <div id="sheetScroll" class="sheet-scroll" role="region" aria-label="Music sheet" tabindex="0">
       <div id="paper" class="paper">
         <svg id="sheet" role="img" aria-label="Empty grand staff" xmlns="http://www.w3.org/2000/svg" width="300" height="240"></svg>
-        <p id="emptyHint" class="empty-hint">Press a piano key to write your first note
-          <small>Your computer keyboard works too: A S D F G H J play C to B</small>
+        <p id="emptyHint" class="empty-hint">Pick a note length, then press a piano key to write your first note
+          <small>Your computer keyboard works too: A S D F G H J play C to B, 1&ndash;4 pick the length</small>
         </p>
       </div>
     </div>
@@ -815,7 +1038,29 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/><path d="M12 6v12"/></svg>
         </button>
       </div>
-      <p class="rail-hint"><kbd>A</kbd>&ndash;<kbd>K</kbd> play C to C &middot; <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> are the black keys &middot; <kbd>Z</kbd>/<kbd>X</kbd> shift octave</p>
+      <div class="lengths" role="group" aria-label="Note length">
+        <span id="lenLbl" class="lbl" aria-hidden="true">Next note</span>
+        <button class="mini len" type="button" data-len="4" aria-pressed="false" aria-label="Whole note" aria-keyshortcuts="1" title="Whole note, 4 beats (1)">
+          <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse class="o" cx="12" cy="12" rx="6.2" ry="4.3"/></svg>
+        </button>
+        <button class="mini len" type="button" data-len="2" aria-pressed="false" aria-label="Half note" aria-keyshortcuts="2" title="Half note, 2 beats (2)">
+          <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse class="o" cx="9.6" cy="17.4" rx="4.3" ry="3.1" transform="rotate(-22 9.6 17.4)"/><path class="st" d="M13.9 16.6V2.5"/></svg>
+        </button>
+        <button class="mini len" type="button" data-len="1" aria-pressed="false" aria-label="Quarter note" aria-keyshortcuts="3" title="Quarter note, 1 beat (3)">
+          <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="9.6" cy="17.4" rx="4.6" ry="3.4" transform="rotate(-22 9.6 17.4)"/><path class="st" d="M13.9 16.6V2.5"/></svg>
+        </button>
+        <button class="mini len" type="button" data-len="0.5" aria-pressed="false" aria-label="Eighth note" aria-keyshortcuts="4" title="Eighth note, half a beat (4)">
+          <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="8.4" cy="17.4" rx="4.6" ry="3.4" transform="rotate(-22 8.4 17.4)"/><path class="st" d="M12.7 16.6V2.5"/><path d="M12 2.5h1.5c.4 2.2 1.9 3.6 3.3 5.1 1.6 1.7 2.4 3.6 1.6 6.4-.3-2.5-1.6-3.9-3.4-4.8-.9-.4-1.7-.6-2.3-.6Z"/></svg>
+        </button>
+        <span class="sep" aria-hidden="true"></span>
+        <button id="dotBtn" class="mini" type="button" aria-pressed="false" aria-label="Dotted note, one and a half times as long" aria-keyshortcuts="." title="Dotted: one and a half times as long (.)">
+          <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3.4"/></svg>
+        </button>
+      </div>
+      <div class="rail-end">
+        <p class="rail-hint"><kbd>A</kbd>&ndash;<kbd>K</kbd> play C to C &middot; <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys &middot; <kbd>Space</kbd> play song</p>
+        <button id="helpBtn" class="mini" type="button" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-keyshortcuts="?" title="Keyboard shortcuts (?)">?</button>
+      </div>
     </div>
     <div id="keyboard" class="keyboard" role="group" aria-label="Piano keys, C3 to C6">
       <div class="keybed">
@@ -827,6 +1072,24 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   </section>
 
 </div>
+
+<dialog id="helpDlg" class="card" aria-labelledby="helpTitle">
+  <h2 id="helpTitle">Shortcuts</h2>
+  <dl>
+    <dt><kbd>A</kbd> &ndash; <kbd>'</kbd></dt><dd>Play white keys from C (<kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> <kbd>O</kbd> <kbd>P</kbd> are the black keys)</dd>
+    <dt><kbd>Z</kbd> / <kbd>X</kbd></dt><dd>Octave down / up</dd>
+    <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Whole, half, quarter, eighth note</dd>
+    <dt><kbd>.</kbd></dt><dd>Dotted note (one and a half times as long)</dd>
+    <dt><kbd>Space</kbd></dt><dd>Play / pause the whole song</dd>
+    <dt><kbd>Esc</kbd></dt><dd>Stop, or unselect a note</dd>
+    <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>Tempo down / up by 5 BPM</dd>
+    <dt>Click a note</dt><dd>Select it: change its length, delete it, or play from there</dd>
+    <dt><kbd>&larr;</kbd> / <kbd>&rarr;</kbd></dt><dd>Move the selection (with the sheet focused)</dd>
+    <dt><kbd>Backspace</kbd></dt><dd>Delete the selected note, or the last one</dd>
+    <dt><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>Y</kbd></dt><dd>Undo / redo</dd>
+  </dl>
+  <form method="dialog" class="row"><button class="tool" type="submit">Got it</button></form>
+</dialog>
 
 <noscript><p style="position:fixed;inset:auto 16px 16px;margin:0;padding:12px;background:#F3EAD3;color:#1C1A17;border-radius:8px">Note Cracker needs JavaScript to play and write notes.</p></noscript>
 
@@ -944,10 +1207,16 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       var l = u.map(function (p) { return [p[0], -15.2 - p[1]]; });
       return ribbon(u, w) + ribbon(l, w);
     }
+    // eighth-note flag, origin at the tip of an up stem (the left edge of the stem), hanging down to the right
+    function flag() {
+      var s = [[0.06, 0.0], [0.16, -0.55], [0.55, -1.12], [0.98, -1.7], [1.14, -2.35], [1.0, -2.95], [0.78, -3.3]];
+      var w = [0.16, 0.36, 0.38, 0.32, 0.24, 0.14, 0.05];
+      return ribbon(s, w);
+    }
     var sharp = 'M-0.33 -1.05h0.12v2.5h-0.12ZM0.21 -1.45h0.12v2.5h-0.12ZM-0.55 -0.45L0.55 -0.77V-0.45L-0.55 -0.13ZM-0.55 0.45L0.55 0.13V0.45L-0.55 0.77Z';
     var four = 'M0.86 0H1.2V1.28H1.5V1.52H1.2V1.86L1.5 1.88V2H0.56V1.88L0.86 1.86V1.52H0V1.34ZM0.86 0.4L0.3 1.28H0.86Z';
 
-    return { treble: treble, bass: bass, brace: brace, sharp: sharp, four: four };
+    return { treble: treble, bass: bass, brace: brace, flag: flag, sharp: sharp, four: four };
   })();
 
   (function installGlyphs() {
@@ -956,73 +1225,139 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         '<path id="g-treble" d="' + Glyphs.treble() + '"/>' +
         '<path id="g-bass" d="' + Glyphs.bass() + '"/>' +
         '<path id="g-brace" d="' + Glyphs.brace() + '"/>' +
+        '<path id="g-flag" d="' + Glyphs.flag() + '"/>' +
         '<path id="g-sharp" d="' + Glyphs.sharp + '"/>' +
         '<path id="g-four" d="' + Glyphs.four + '"/>';
     } catch (e) { /* the staff still renders without glyphs */ }
   })();
 
   /* ====================================================================
-     Document state: notes + undo/redo (operation log, unlimited depth)
+     Document state: notes (pitch + length) + undo/redo (operation log, unlimited depth)
      ==================================================================== */
-  var STORE_KEY = 'noteCracker.notes.v1';
-  var notes = [];
+  var STORE_KEY = 'noteCracker.song.v2';
+  var OLD_KEY = 'noteCracker.notes.v1';             // songs saved before note lengths existed (pitches only)
+  var PREF_KEY = 'noteCracker.prefs.v1';
+  var LENGTHS = [6, 4, 3, 2, 1.5, 1, 0.5];          // in beats; 6, 3 and 1.5 are the dotted lengths
+  var LEN_NAMES = { 6: 'dotted whole', 4: 'whole', 3: 'dotted half', 2: 'half', 1.5: 'dotted quarter', 1: 'quarter', 0.5: 'eighth' };
+  var notes = [];                                   // [{ n: 'C4', d: 1 }], entries are never mutated in place
   var past = [];
   var future = [];
+  var sel = -1;                                     // selected note, -1 = none
+
+  // settings that survive a reload
+  var nextLen = 1, nextDot = false, bpm = 100, loopOn = false;
+
+  function isLen(d) { return LENGTHS.indexOf(d) >= 0; }
+  function isEntry(e) { return !!e && typeof e === 'object' && isValidNote(e.n) && isLen(e.d); }
+  function lenParts(d) { return d === 6 || d === 3 || d === 1.5 ? { base: d / 1.5, dot: true } : { base: d, dot: false }; }
+  function lenName(d) { return LEN_NAMES[d] || 'quarter'; }
+  function withArticle(word) { return (/^[aeiou]/.test(word) ? 'an ' : 'a ') + word; }
+  function fmtTime(sec) {
+    sec = Math.max(0, Math.floor(sec + 1e-6));
+    var m = Math.floor(sec / 60), r = sec % 60;
+    return m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function beatsBefore(i) { var b = 0; for (var j = 0; j < i && j < notes.length; j++) b += notes[j].d; return b; }
+  function secPerBeat() { return 60 / bpm; }
 
   function loadNotes() {
     try {
       var raw = window.localStorage.getItem(STORE_KEY);
-      if (!raw) return [];
-      var arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr.filter(isValidNote) : [];
-    } catch (e) { return []; }
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr.filter(isEntry).map(function (e) { return { n: e.n, d: e.d }; });
+      }
+      var old = window.localStorage.getItem(OLD_KEY);
+      if (old) {
+        var list = JSON.parse(old);
+        if (Array.isArray(list)) return list.filter(isValidNote).map(function (n) { return { n: n, d: 1 }; });
+      }
+    } catch (e) { /* storage unavailable or unreadable */ }
+    return [];
   }
   function saveNotes() {
     try { window.localStorage.setItem(STORE_KEY, JSON.stringify(notes)); } catch (e) { /* storage unavailable */ }
   }
+  function loadPrefs() {
+    try {
+      var p = JSON.parse(window.localStorage.getItem(PREF_KEY) || 'null');
+      if (!p || typeof p !== 'object') return;
+      if ([4, 2, 1, 0.5].indexOf(p.len) >= 0) nextLen = p.len;
+      nextDot = p.dot === true && nextLen !== 0.5;
+      if (typeof p.bpm === 'number' && p.bpm >= 40 && p.bpm <= 240) bpm = Math.round(p.bpm);
+      loopOn = p.loop === true;
+    } catch (e) { /* defaults */ }
+  }
+  function savePrefs() {
+    try { window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn })); } catch (e) { /* ignore */ }
+  }
 
   function applyOp(op) {
-    if (op.t === 'add') notes.push(op.n);
-    else if (op.t === 'del') notes.pop();
+    if (op.t === 'add') notes.push(op.e);
+    else if (op.t === 'del') notes.splice(op.i, 1);
     else if (op.t === 'clr') notes.length = 0;
+    else if (op.t === 'len') notes[op.i] = { n: notes[op.i].n, d: op.to };
   }
   function revertOp(op) {
     if (op.t === 'add') notes.pop();
-    else if (op.t === 'del') notes.push(op.n);
+    else if (op.t === 'del') notes.splice(op.i, 0, op.e);
     else if (op.t === 'clr') { for (var i = 0; i < op.list.length; i++) notes.push(op.list[i]); }
+    else if (op.t === 'len') notes[op.i] = { n: notes[op.i].n, d: op.from };
   }
   function record(op) { past.push(op); future.length = 0; }
 
+  function nextLength() { return nextLen * (nextDot ? 1.5 : 1); }
+
   function addNote(name) {
     if (!isValidNote(name)) return false;
-    var op = { t: 'add', n: name };
-    applyOp(op); record(op); changed(1, 'add');
+    var op = { t: 'add', e: { n: name, d: nextLength() } };
+    applyOp(op); record(op);
+    sel = -1;                                       // playing the piano always writes at the end
+    changed('add', op);
     return true;
   }
-  function deleteLast() {
+  // deletes note i (the selection), or the last note when i is not a valid index
+  function deleteNote(i) {
     if (!notes.length) return false;
-    var op = { t: 'del', n: notes[notes.length - 1] };
-    applyOp(op); record(op); changed(0, 'del', op.n);
+    var hadSel = typeof i === 'number' && i >= 0 && i < notes.length;
+    if (!hadSel) i = notes.length - 1;
+    var op = { t: 'del', i: i, e: notes[i] };
+    applyOp(op); record(op);
+    sel = hadSel && notes.length ? Math.max(0, i - 1) : -1;   // like Backspace: the selection steps back
+    changed('del', op);
     return true;
   }
   function clearAll() {
     if (!notes.length) return false;
     var op = { t: 'clr', list: notes.slice() };
-    applyOp(op); record(op); changed(0, 'clr', op.list.length);
+    applyOp(op); record(op);
+    sel = -1;
+    changed('clr', op);
+    return true;
+  }
+  function setLength(i, d) {
+    if (i < 0 || i >= notes.length || !isLen(d) || notes[i].d === d) return false;
+    var op = { t: 'len', i: i, from: notes[i].d, to: d };
+    applyOp(op); record(op);
+    changed('len', op);
     return true;
   }
   function undo() {
     if (!past.length) return false;
-    var before = notes.length, op = past.pop();
+    var op = past.pop();
     revertOp(op); future.push(op);
-    changed(notes.length - before, 'undo');
+    if (op.t === 'len') sel = op.i;
+    else if (op.t === 'del' && op.i < notes.length - 1) sel = op.i;   // a note came back in the middle: show it
+    else sel = -1;
+    changed('undo', op);
     return true;
   }
   function redo() {
     if (!future.length) return false;
-    var before = notes.length, op = future.pop();
+    var op = future.pop();
     applyOp(op); past.push(op);
-    changed(notes.length - before, 'redo');
+    sel = op.t === 'len' ? op.i : -1;
+    changed('redo', op);
     return true;
   }
 
@@ -1031,7 +1366,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
      ==================================================================== */
   var Sound = (function () {
     var ctx = null, out = null, wave = null, broken = false, muted = false;
-    var voices = new Map();
+    var voices = new Map();                         // live notes from the keys: id -> voice
+    var queued = new Set();                         // notes scheduled by the player
 
     // browsers only let audio start after a real user gesture; scripted events must not even try (it only logs warnings)
     function activated() {
@@ -1065,43 +1401,61 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
     function running() { return !!ctx && ctx.state === 'running'; }
 
+    // one struck note starting at audio time t; it rings out on its own unless released earlier
+    function makeVoice(name, t) {
+      var p = parseNote(name);
+      if (!p) return null;
+      var f = 440 * Math.pow(2, (p.midi - 69) / 12);
+      var tau = 1.15 * Math.pow(2, -(p.midi - 48) / 20);             // lower notes ring longer
+      var peak = 0.34 * (1.05 - (p.midi - 48) / 90);
+
+      var g = ctx.createGain();
+      var lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.Q.value = 0.5;
+      lp.frequency.setValueAtTime(Math.min(f * 10, 9000), t);          // bright hammer attack...
+      lp.frequency.setTargetAtTime(Math.min(f * 2.4, 3200), t, 0.16);   // ...that mellows quickly
+      var mix = ctx.createGain(); mix.gain.value = 0.5;
+      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+      o1.setPeriodicWave(wave); o2.setPeriodicWave(wave);
+      o1.frequency.value = f; o2.frequency.value = f;
+      o1.detune.value = -3.5; o2.detune.value = 3.5;                    // two "strings"
+      o1.connect(mix); o2.connect(mix); mix.connect(lp); lp.connect(g); g.connect(out);
+
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(peak, t + 0.006);                  // fast attack
+      g.gain.setTargetAtTime(0, t + 0.006, tau);                        // exponential decay
+      var stopAt = t + 0.006 + tau * 7;
+      o1.start(t); o2.start(t);
+      o1.stop(stopAt); o2.stop(stopAt);
+      var voice = { id: null, g: g, o1: o1, o2: o2, t: t, nodes: [o1, o2, mix, lp, g] };
+      o1.onended = function () {
+        try { voice.nodes.forEach(function (n) { n.disconnect(); }); } catch (e) { /* ignore */ }
+        if (voice.id !== null && voices.get(voice.id) === voice) voices.delete(voice.id);
+        queued.delete(voice);
+      };
+      return voice;
+    }
+    // fade a voice out; one that has not started yet is simply cut off before it makes a sound
+    function release(v, rel) {
+      try {
+        var now = ctx.currentTime;
+        if (v.t > now + 0.002) { v.g.disconnect(); v.o1.stop(now); v.o2.stop(now); return; }
+        v.g.gain.cancelScheduledValues(Math.max(now, v.t + 0.007));
+        v.g.gain.setTargetAtTime(0, now, rel);
+        v.o1.stop(now + rel * 8); v.o2.stop(now + rel * 8);
+      } catch (e) { /* ignore */ }
+    }
+
     function on(id, name) {
       if (muted) return;
       try {
         unlock();
         if (!ctx || !wave) return;
         off(id, true);
-        var p = parseNote(name);
-        if (!p) return;
-        var f = 440 * Math.pow(2, (p.midi - 69) / 12);
-        var t = ctx.currentTime + 0.005;
-        var tau = 1.15 * Math.pow(2, -(p.midi - 48) / 20);           // lower notes ring longer
-        var peak = 0.34 * (1.05 - (p.midi - 48) / 90);
-
-        var g = ctx.createGain();
-        var lp = ctx.createBiquadFilter();
-        lp.type = 'lowpass'; lp.Q.value = 0.5;
-        lp.frequency.setValueAtTime(Math.min(f * 10, 9000), t);        // bright hammer attack...
-        lp.frequency.setTargetAtTime(Math.min(f * 2.4, 3200), t, 0.16); // ...that mellows quickly
-        var mix = ctx.createGain(); mix.gain.value = 0.5;
-        var o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
-        o1.setPeriodicWave(wave); o2.setPeriodicWave(wave);
-        o1.frequency.value = f; o2.frequency.value = f;
-        o1.detune.value = -3.5; o2.detune.value = 3.5;                  // two "strings"
-        o1.connect(mix); o2.connect(mix); mix.connect(lp); lp.connect(g); g.connect(out);
-
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(peak, t + 0.006);                // fast attack
-        g.gain.setTargetAtTime(0, t + 0.006, tau);                      // exponential decay
-        var stopAt = t + 0.006 + tau * 7;
-        o1.start(t); o2.start(t);
-        o1.stop(stopAt); o2.stop(stopAt);
-        var voice = { g: g, o1: o1, o2: o2, t: t, nodes: [o1, o2, mix, lp, g] };
-        o1.onended = function () {
-          try { voice.nodes.forEach(function (n) { n.disconnect(); }); } catch (e) { /* ignore */ }
-          if (voices.get(id) === voice) voices.delete(id);
-        };
-        voices.set(id, voice);
+        var v = makeVoice(name, ctx.currentTime + 0.005);
+        if (!v) return;
+        v.id = id;
+        voices.set(id, v);
         if (voices.size > 24) { off(voices.keys().next().value, true); }
       } catch (e) { /* sound must never break note entry */ }
     }
@@ -1109,29 +1463,61 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       var v = voices.get(id);
       if (!v) return;
       voices.delete(id);
-      try {
-        var now = ctx.currentTime, rel = fast ? 0.03 : 0.4;
-        v.g.gain.cancelScheduledValues(Math.max(now, v.t + 0.007));
-        v.g.gain.setTargetAtTime(0, now, rel);
-        v.o1.stop(now + rel * 8); v.o2.stop(now + rel * 8);
-      } catch (e) { /* ignore */ }
+      release(v, fast ? 0.03 : 0.4);
     }
-    function allOff() { Array.from(voices.keys()).forEach(function (id) { off(id, true); }); }
+    // a note of the song: starts `delay` seconds from now and is let go after `dur` seconds
+    function play(name, delay, dur) {
+      if (muted) return;
+      try {
+        unlock();
+        if (!ctx || !wave) return;
+        var t = ctx.currentTime + 0.01 + Math.max(0, delay);
+        var v = makeVoice(name, t);
+        if (!v) return;
+        var end = t + Math.max(0.06, dur);
+        v.g.gain.setTargetAtTime(0, end, 0.06);
+        v.o1.stop(end + 0.5); v.o2.stop(end + 0.5);
+        queued.add(v);
+      } catch (e) { /* the player keeps going silently */ }
+    }
+    function stopQueued() {
+      if (!ctx) { queued.clear(); return; }
+      queued.forEach(function (v) { release(v, 0.03); });
+      queued.clear();
+    }
+    function allOff() { Array.from(voices.keys()).forEach(function (id) { off(id, true); }); stopQueued(); }
     function setMuted(m) { muted = !!m; if (muted) allOff(); }
 
-    return { unlock: unlock, running: running, on: on, off: off, setMuted: setMuted, isMuted: function () { return muted; } };
+    return { unlock: unlock, running: running, on: on, off: off, play: play, stopQueued: stopQueued, setMuted: setMuted, isMuted: function () { return muted; } };
   })();
 
   /* ====================================================================
-     Sheet: SVG grand staff
+     Sheet: SVG grand staff in 4/4 with real note lengths
      ==================================================================== */
   var Sheet = (function () {
     var NS = 'http://www.w3.org/2000/svg';
     var svg = $('sheet'), scroller = $('sheetScroll'), paper = $('paper'), hint = $('emptyHint');
     var L = null, lastW = 0, lastVh = 0;
-    var sysEls = [], sysKeys = [], layoutSig = '';
+    var sysEls = [], sysHtml = [];
+    var info = [];                                   // per note: { k: system, x: head of its first piece, bar: 1-based }
+    var marks = { sel: -1, play: -1 };
+    var pickHandler = null;
 
+    // highlight boxes live behind every system
+    var marksG = document.createElementNS(NS, 'g');
+    marksG.setAttribute('class', 'marks');
+    var selRect = markRect('selmark'), playRect = markRect('playmark');
+    marksG.appendChild(playRect); marksG.appendChild(selRect);
+    svg.appendChild(marksG);
+
+    function markRect(cls) {
+      var el = document.createElementNS(NS, 'rect');
+      el.setAttribute('class', cls);
+      el.setAttribute('display', 'none');
+      return el;
+    }
     function r1(n) { return Math.round(n * 10) / 10; }
+    function r2(n) { return Math.round(n * 100) / 100; }
 
     function layout(W, vh) {
       var s = W >= 1080 ? 12 : W >= 780 ? 11 : W >= 520 ? 10 : 9;
@@ -1144,13 +1530,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       o.m2 = Math.round(3.0 * s);                       // below the bass staff
       o.H = o.m1 + 8 * s + o.gap + o.m2;
       o.topPad = Math.round(0.6 * s);
-      o.plB = 2.3 * s; o.prB = 1.1 * s; o.dMin = 3.0 * s;
       o.xs1 = o.padL + Math.round(6.2 * s);             // first bar starts after clef + time signature
       o.xs = o.padL + Math.round(3.8 * s);              // later systems: after the clef only
       o.R = W - o.padR;
-      var minBar = o.plB + 3 * o.dMin + o.prB;
-      o.bars = Math.max(1, Math.floor((o.R - o.xs1) / minBar));
-      o.perSys = o.bars * 4;
       return o;
     }
 
@@ -1165,37 +1547,153 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       return (treble ? a.tB : a.bB) - (p.dia - (treble ? 30 : 18)) * L.s / 2;
     }
 
-    function noteMarkup(name, idx, x, a, flags) {
-      var s = L.s, p = parseNote(name), treble = p.midi >= 60;
+    /* ---- rhythm: notes -> 4-beat bars -> systems ---- */
+    var PIECES = [4, 3, 2, 1.5, 1, 0.5];             // lengths one notehead can show
+    var ROOM = { 0.5: 2.85, 1: 3.0, 1.5: 3.5, 2: 3.9, 3: 4.6, 4: 5.4 };   // staff spaces a piece needs after its head (eighths: room for the flag)
+    var BAR_IN = 1.4, HEAD_IN = 0.75, BAR_OUT = 0.5, SHARP_ROOM = 1.2, BEAT_ROOM = 3.0;
+
+    function split(x) {
+      var out = [], k = 0;
+      while (x > 1e-6 && k < PIECES.length) {
+        if (PIECES[k] <= x + 1e-6) { out.push(PIECES[k]); x -= PIECES[k]; } else k++;
+      }
+      return out;
+    }
+    // a note that crosses a barline is written as tied pieces, exactly like printed music
+    function measure() {
+      var bars = [], cur = { segs: [], used: 0, full: false }, prev = null, i, k;
+      for (i = 0; i < notes.length; i++) {
+        var left = notes[i].d, first = true;
+        while (left > 1e-6) {
+          var take = Math.min(left, 4 - cur.used), parts = split(take);
+          for (k = 0; k < parts.length; k++) {
+            var sg = { i: i, d: parts[k], cont: !first, tie: false, next: null, prev: null, x: 0, k: 0 };
+            if (!first) { prev.tie = true; prev.next = sg; sg.prev = prev; }
+            cur.segs.push(sg); cur.used += parts[k];
+            prev = sg; first = false;
+          }
+          left -= take;
+          if (cur.used > 4 - 1e-6) { cur.full = true; bars.push(cur); cur = { segs: [], used: 0, full: false }; }
+        }
+      }
+      if (cur.segs.length) bars.push(cur);
+      return bars;
+    }
+    function hasSharp(sg) { return !sg.cont && notes[sg.i].n.indexOf('#') > 0; }
+    function barMin(b) {
+      var w = BAR_IN + BAR_OUT, j;
+      for (j = 0; j < b.segs.length; j++) w += (hasSharp(b.segs[j]) ? SHARP_ROOM : 0) + ROOM[b.segs[j].d];
+      if (!b.full) w += (4 - b.used) * BEAT_ROOM;     // keep room for the rest of the bar that is being written
+      return w * L.s;
+    }
+    // bars flow into systems (lines); every full line is stretched to the right edge
+    function arrange() {
+      var bars = measure(), systems = [], cur = { bars: [], min: 0 }, b, k, j;
+      for (b = 0; b < bars.length; b++) {
+        bars[b].min = barMin(bars[b]);
+        var avail = systems.length ? L.R - L.xs : L.R - L.xs1;
+        if (cur.bars.length && cur.min + bars[b].min > avail) { systems.push(cur); cur = { bars: [], min: 0 }; }
+        cur.bars.push(bars[b]); cur.min += bars[b].min;
+      }
+      if (cur.bars.length) systems.push(cur);
+
+      info = new Array(notes.length);
+      var barNo = 0, s = L.s;
+      for (k = 0; k < systems.length; k++) {
+        var sy = systems[k], x0 = k ? L.xs : L.xs1;
+        var f = (L.R - x0) / sy.min;
+        if (k === systems.length - 1) f = Math.min(f, 1.45);   // the line being written is not stretched all the way
+        sy.first = barNo + 1;
+        var bx = x0;
+        for (b = 0; b < sy.bars.length; b++) {
+          var bar = sy.bars[b], c = BAR_IN * s;
+          barNo++;
+          for (j = 0; j < bar.segs.length; j++) {
+            var sg = bar.segs[j];
+            if (hasSharp(sg)) c += SHARP_ROOM * s;
+            sg.x = bx + (c + HEAD_IN * s) * f;
+            sg.k = k;
+            c += ROOM[sg.d] * s;
+            if (!info[sg.i]) info[sg.i] = { k: k, x: sg.x, bar: barNo };
+          }
+          bx += bar.min * f;
+          bar.end = bx;
+        }
+      }
+      return systems;
+    }
+
+    /* ---- drawing ---- */
+    // a closed ellipse path (two arcs) rotated by deg degrees, so hollow heads can use even-odd fill
+    function ellipseD(cx, cy, rx, ry, deg) {
+      var a = deg * Math.PI / 180, dx = rx * Math.cos(a), dy = rx * Math.sin(a);
+      var arc = 'A' + r2(rx) + ' ' + r2(ry) + ' ' + r2(deg) + ' 1 0 ';
+      return 'M' + r2(cx - dx) + ' ' + r2(cy - dy) + arc + r2(cx + dx) + ' ' + r2(cy + dy) + arc + r2(cx - dx) + ' ' + r2(cy - dy) + 'Z';
+    }
+    // a tie: a thin crescent, under the heads when the stems go up, over them when they go down
+    function tieD(x1, x2, y, dir) {
+      var s = L.s, w = x2 - x1;
+      if (w < 2) return '';
+      var h = Math.min(0.85 * s, 0.12 * w + 0.3 * s) * dir, t = Math.max(0.6, 0.13 * s) * dir, mx = (x1 + x2) / 2;
+      return 'M' + r1(x1) + ' ' + r1(y) + 'Q' + r1(mx) + ' ' + r1(y + 2 * h) + ' ' + r1(x2) + ' ' + r1(y) +
+        'Q' + r1(mx) + ' ' + r1(y + 2 * h - 2 * t) + ' ' + r1(x1) + ' ' + r1(y) + 'Z';
+    }
+
+    function pieceMarkup(sg, a, flags) {
+      var s = L.s, e = notes[sg.i], p = parseNote(e.n), treble = p.midi >= 60;
       var base = treble ? a.tB : a.bB;
       var step = p.dia - (treble ? 30 : 18);            // half-spaces above the staff's bottom line
-      var cy = noteCy(p, a);
+      var cy = base - step * s / 2, x = sg.x, d = sg.d;
+      var whole = d === 4, hollow = d >= 2, eighth = d === 0.5, dotted = d === 3 || d === 1.5;
       var up = step < 4;                                // below the middle line: stem up
       var endStep = up ? Math.max(step + 7, 4) : Math.min(step - 7, 4);
       var ey = base - endStep * s / 2;
-      var hw = 0.62 * s, sw = Math.max(1, 0.115 * s);
-      var sx = up ? x + hw - sw / 2 : x - hw + sw / 2;
-      var k, d = '';
-      if (step <= -2) { for (k = -2; k >= step; k -= 2) d += 'M' + r1(x - 1.05 * s) + ' ' + r1(base - k * s / 2) + 'H' + r1(x + 1.05 * s); }
-      if (step >= 10) { for (k = 10; k <= step; k += 2) d += 'M' + r1(x - 1.05 * s) + ' ' + r1(base - k * s / 2) + 'H' + r1(x + 1.05 * s); }
+      var hw = 0.62 * s, sw = Math.max(1, 0.115 * s), lw = (whole ? 1.3 : 1.05) * s;
+      var k, led = '';
+      if (step <= -2) { for (k = -2; k >= step; k -= 2) led += 'M' + r1(x - lw) + ' ' + r1(base - k * s / 2) + 'H' + r1(x + lw); }
+      if (step >= 10) { for (k = 10; k <= step; k += 2) led += 'M' + r1(x - lw) + ' ' + r1(base - k * s / 2) + 'H' + r1(x + lw); }
+
       var style = flags.anim ? ' style="transform-origin:' + r1(x) + 'px ' + r1(cy) + 'px"' : '';
       var out = '<g class="note' + (flags.latest ? ' is-latest' : '') + (flags.anim ? ' ink-in' : '') +
-        '" data-note="' + name + '" data-i="' + idx + '"' + style + '><title>' + name + '</title>';
-      if (d) out += '<path class="ledger" stroke-width="' + r1(Math.max(1.2, 0.14 * s)) + '" d="' + d + '"/>';
-      out += '<line class="stem" stroke-width="' + r1(sw) + '" x1="' + r1(sx) + '" y1="' + r1(cy) + '" x2="' + r1(sx) + '" y2="' + r1(ey) + '"/>';
-      if (p.sharp) out += '<use class="acc" href="#g-sharp" transform="translate(' + r1(x - 1.42 * s) + ' ' + r1(cy) + ') scale(' + s + ')"/>';
-      out += '<ellipse class="head" cx="' + r1(x) + '" cy="' + r1(cy) + '" rx="' + r1(0.64 * s) + '" ry="' + r1(0.47 * s) +
-        '" transform="rotate(' + (-20 + ((idx * 37) % 5 - 2) * 0.9) + ' ' + r1(x) + ' ' + r1(cy) + ')"/></g>';
-      return out;
+        '" data-note="' + e.n + '" data-i="' + sg.i + '"' + style + '><title>' + e.n + ', ' + lenName(e.d) + ' note</title>';
+      var top = Math.min(cy, whole ? cy : ey) - 0.9 * s, bot = Math.max(cy, whole ? cy : ey) + 0.9 * s;
+      out += '<rect class="hit" x="' + r1(x - 1.3 * s) + '" y="' + r1(top) + '" width="' + r1(2.6 * s) + '" height="' + r1(bot - top) + '"/>';
+      if (led) out += '<path class="ledger" stroke-width="' + r1(Math.max(1.2, 0.14 * s)) + '" d="' + led + '"/>';
+      if (!whole) {
+        var sx = up ? x + hw - sw / 2 : x - hw + sw / 2;
+        out += '<line class="stem" stroke-width="' + r1(sw) + '" x1="' + r1(sx) + '" y1="' + r1(cy) + '" x2="' + r1(sx) + '" y2="' + r1(ey) + '"/>';
+        if (eighth) {
+          out += '<use class="flag" href="#g-flag" transform="translate(' + r1(sx - sw / 2) + ' ' + r1(ey) + ') scale(' + s + (up ? '' : ' ' + (-s)) + ')"/>';
+        }
+      }
+      if (p.sharp && !sg.cont) out += '<use class="acc" href="#g-sharp" transform="translate(' + r1(x - (whole ? 1.62 : 1.42) * s) + ' ' + r1(cy) + ') scale(' + s + ')"/>';
+      var rot = -20 + ((sg.i * 37) % 5 - 2) * 0.9;
+      if (!hollow) {
+        out += '<ellipse class="head" cx="' + r1(x) + '" cy="' + r1(cy) + '" rx="' + r1(0.64 * s) + '" ry="' + r1(0.47 * s) +
+          '" transform="rotate(' + rot + ' ' + r1(x) + ' ' + r1(cy) + ')"/>';
+      } else if (!whole) {
+        out += '<path class="head" fill-rule="evenodd" d="' + ellipseD(x, cy, 0.64 * s, 0.47 * s, rot) + ellipseD(x, cy, 0.5 * s, 0.2 * s, rot - 14) + '"/>';
+      } else {
+        out += '<path class="head" fill-rule="evenodd" d="' + ellipseD(x, cy, 0.84 * s, 0.53 * s, 0) + ellipseD(x, cy, 0.4 * s, 0.27 * s, 58) + '"/>';
+      }
+      if (dotted) {
+        var dy = step % 2 === 0 ? cy - s / 2 : cy;      // a note on a line puts its dot in the space above
+        out += '<circle class="dot" cx="' + r1(x + 1.08 * s) + '" cy="' + r1(dy) + '" r="' + r1(Math.max(1.2, 0.19 * s)) + '"/>';
+      }
+      // ties: to the next piece on this line, or out to the edge when the line breaks in the middle of the note
+      var dir = up ? 1 : -1, ty = cy + dir * 0.72 * s, gapX = (whole ? 0.95 : 0.72) * s;
+      if (sg.tie && sg.next) {
+        var x2 = sg.next.k === sg.k ? sg.next.x - (sg.next.d === 4 ? 0.95 : 0.72) * s : L.R - 0.2 * s;
+        out += '<path class="tie" d="' + tieD(x + gapX, x2, ty, dir) + '"/>';
+      }
+      if (sg.prev && sg.prev.k !== sg.k) out += '<path class="tie" d="' + tieD(x - 2.4 * s, x - gapX, ty, dir) + '"/>';
+      return out + '</g>';
     }
 
-    // markup of system k (its staves, clefs, barlines and the notes that live on it)
-    function system(k, count, animIdx) {
+    // markup of system k (its staves, clefs, barlines and the notes that live on it); sy is null for a blank system
+    function system(k, sy, animIdx) {
       var s = L.s, a = anchors(k), tT = a.tT, tB = a.tB, bT = a.bT, bB = a.bB;
-      var first = k === 0, xs = first ? L.xs1 : L.xs;
-      var B = (L.R - xs) / L.bars, d = (B - L.plB - L.prB) / 3;
-      var from = k * L.perSys, to = Math.min(count, from + L.perSys);
-      var i, out = '', staff = '';
+      var first = k === 0, i, out = '', staff = '';
       var padX = L.padL + 0.5;
 
       for (i = 0; i < 5; i++) {
@@ -1204,15 +1702,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       out += '<path class="staff" d="' + staff + '"/>';
       out += '<path class="sysline" d="M' + padX + ' ' + r1(tT - 0.5) + 'V' + r1(bB + 0.5) + '"/>';
 
-      // barlines after every completed bar (4 notes), joining both staves
-      var bl = '', bars = Math.floor((to - from) / 4);
-      for (i = 1; i <= bars; i++) {
-        var bx = Math.round(xs + i * B) + 0.5;
-        bl += 'M' + bx + ' ' + r1(tT - 0.5) + 'V' + r1(bB + 0.5);
-      }
-      if (bl) out += '<path class="barline" d="' + bl + '"/>';
-
-      // brace, clefs, time signature
+      // brace, clefs, time signature, bar number
       var hb = (bB - tT) / 15.2;
       out += '<use class="glyph" href="#g-brace" transform="translate(' + r1(L.padL - 1.78 * s) + ' ' + r1(tT) + ') scale(' + s + ' ' + r1(hb) + ')"/>';
       out += '<use class="glyph" href="#g-treble" transform="translate(' + r1(L.padL + 1.61 * s) + ' ' + r1(tB - s) + ') scale(' + s + ')"/>';
@@ -1224,25 +1714,38 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         out += '<use class="glyph" href="#g-four" transform="translate(' + r1(tx) + ' ' + r1(bT) + ') scale(' + s + ')"/>';
         out += '<use class="glyph" href="#g-four" transform="translate(' + r1(tx) + ' ' + r1(bT + 2 * s) + ') scale(' + s + ')"/>';
       }
+      if (!sy) return out;
+      if (!first) out += '<text class="barno" x="' + r1(L.padL + 0.1 * s) + '" y="' + r1(tT - 1.3 * s) + '" font-size="' + r1(1.3 * s) + '">' + sy.first + '</text>';
 
-      // notes (with the reading cursor behind the latest one)
-      var notesOut = '', latest = count - 1;
-      for (i = from; i < to; i++) {
-        var local = i - from, bar = Math.floor(local / 4), j = local % 4;
-        var x = xs + bar * B + L.plB + j * d;
-        notesOut += noteMarkup(notes[i], i, x, a, { latest: i === latest, anim: i === animIdx });
-        if (i === latest) {
-          var p = parseNote(notes[i]), cy = noteCy(p, a), tr = p.midi >= 60;
-          var stTop = tr ? tT : bT, stBot = tr ? tB : bB;
-          var cTop = Math.min(stTop - 0.9 * s, cy - 1.7 * s), cBot = Math.max(stBot + 0.9 * s, cy + 1.7 * s);
-          out += '<rect class="cursor" x="' + r1(x - 1.05 * s) + '" y="' + r1(cTop) + '" width="' + r1(2.1 * s) + '" height="' + r1(cBot - cTop) +
-            '" rx="' + r1(0.5 * s) + '"/>';
+      // barlines after every completed bar, joining both staves
+      var bl = '', b, j;
+      for (b = 0; b < sy.bars.length; b++) {
+        if (!sy.bars[b].full) continue;
+        var bx = Math.min(Math.round(sy.bars[b].end), L.R) + 0.5;
+        bl += 'M' + bx + ' ' + r1(tT - 0.5) + 'V' + r1(bB + 0.5);
+      }
+      if (bl) out += '<path class="barline" d="' + bl + '"/>';
+
+      // notes, with the reading cursor behind the newest one
+      var latest = notes.length - 1, notesOut = '';
+      for (b = 0; b < sy.bars.length; b++) {
+        var segs = sy.bars[b].segs;
+        for (j = 0; j < segs.length; j++) {
+          var sg = segs[j];
+          notesOut += pieceMarkup(sg, a, { latest: sg.i === latest, anim: sg.i === animIdx });
+          if (sg.i === latest && !sg.cont) {
+            var p = parseNote(notes[sg.i].n), cy = noteCy(p, a), tr = p.midi >= 60;
+            var stTop = tr ? tT : bT, stBot = tr ? tB : bB;
+            var cTop = Math.min(stTop - 0.9 * s, cy - 1.7 * s), cBot = Math.max(stBot + 0.9 * s, cy + 1.7 * s);
+            out += '<rect class="cursor" x="' + r1(sg.x - 1.05 * s) + '" y="' + r1(cTop) + '" width="' + r1(2.1 * s) + '" height="' + r1(cBot - cTop) +
+              '" rx="' + r1(0.5 * s) + '"/>';
+          }
         }
       }
       return out + notesOut;
     }
 
-    // Only the systems whose content changed are rebuilt, so adding a note stays cheap however long the piece gets.
+    // Systems are rebuilt only when their markup changes, so editing stays cheap however long the piece gets.
     function render(opts) {
       opts = opts || {};
       var W = Math.floor(paper.clientWidth);
@@ -1250,33 +1753,30 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       lastW = W;
       lastVh = scroller.clientHeight;
       L = layout(W, lastVh);
-      var sig = W + '|' + L.s + '|' + L.bars;
-      if (sig !== layoutSig) { layoutSig = sig; sysKeys.length = 0; }
-      var count = notes.length, latest = count - 1, animIdx = opts.animateLast ? latest : -1;
-      var nSys = Math.max(1, Math.ceil(count / L.perSys));
+      var systems = arrange();
+      var count = notes.length, animIdx = typeof opts.anim === 'number' ? opts.anim : -1;
+      var nSys = Math.max(1, systems.length);
       // keep blank staves below the notes: the next system is ready to be written on, and the newest system can scroll to the top
       var extra = Math.max(1, Math.ceil((lastVh - Math.round(L.s * 0.5)) / L.H) - 1);
       var total = nSys + extra, k;
       for (k = 0; k < total; k++) {
-        var from = k * L.perSys, to = Math.min(count, from + L.perSys);
-        var key = (to > from ? notes.slice(from, to).join(',') : '') + '|' +
-          (latest >= from && latest < to ? latest : -1) + '|' + (animIdx >= from && animIdx < to ? animIdx : -1);
+        var html = system(k, systems[k] || null, animIdx);
         var g = sysEls[k];
         if (!g) {
           g = document.createElementNS(NS, 'g');
           g.setAttribute('class', 'sys');
           svg.appendChild(g);
-          sysEls[k] = g; sysKeys[k] = null;
+          sysEls[k] = g; sysHtml[k] = null;
         }
-        if (sysKeys[k] !== key) { g.innerHTML = system(k, count, animIdx); sysKeys[k] = key; }
+        if (sysHtml[k] !== html) { g.innerHTML = html; sysHtml[k] = html; }
       }
-      while (sysEls.length > total) { svg.removeChild(sysEls.pop()); sysKeys.pop(); }
+      while (sysEls.length > total) { svg.removeChild(sysEls.pop()); sysHtml.pop(); }
 
       var H = L.topPad + total * L.H;
       svg.setAttribute('width', W);
       svg.setAttribute('height', H);
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-      svg.setAttribute('aria-label', count ? 'Grand staff with ' + count + (count === 1 ? ' note' : ' notes') + ', last note ' + notes[count - 1] : 'Empty grand staff');
+      svg.setAttribute('aria-label', count ? 'Grand staff with ' + count + (count === 1 ? ' note' : ' notes') + ', last note ' + notes[count - 1].n : 'Empty grand staff');
 
       // empty-state hint sits between the two staves
       hint.hidden = count > 0;
@@ -1287,28 +1787,67 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         hint.style.top = Math.round(svgTop + L.topPad + L.m1 + 4 * L.s + 0.5 * L.s) + 'px';
         hint.style.height = Math.round(L.gap - L.s) + 'px';
       }
-      if (opts.reveal) reveal();
+      applyMarks();
+      if (typeof opts.focus === 'number') revealNote(opts.focus);
     }
 
-    // keep the newest note on screen (instant, so it is deterministic): snap to whole systems
-    function reveal() {
+    /* ---- selection + playhead ---- */
+    function placeRect(rect, i) {
+      if (!L || i < 0 || i >= notes.length || !info[i]) { rect.setAttribute('display', 'none'); return; }
+      var s = L.s, inf = info[i], a = anchors(inf.k), p = parseNote(notes[i].n), cy = noteCy(p, a), tr = p.midi >= 60;
+      var stTop = tr ? a.tT : a.bT, stBot = tr ? a.tB : a.bB;
+      var cTop = Math.min(stTop - 1.1 * s, cy - 1.9 * s), cBot = Math.max(stBot + 1.1 * s, cy + 1.9 * s), w = 2.5 * s;
+      rect.setAttribute('x', r1(inf.x - w / 2));
+      rect.setAttribute('y', r1(cTop));
+      rect.setAttribute('width', r1(w));
+      rect.setAttribute('height', r1(cBot - cTop));
+      rect.setAttribute('rx', r1(0.55 * s));
+      rect.removeAttribute('display');
+    }
+    function tag(i, cls) {
+      if (i < 0) return;
+      var els = svg.querySelectorAll('.note[data-i="' + i + '"]');
+      for (var j = 0; j < els.length; j++) els[j].classList.add(cls);
+    }
+    function applyMarks() {
+      placeRect(selRect, marks.sel);
+      placeRect(playRect, marks.play);
+      var old = svg.querySelectorAll('.note.is-sel, .note.is-play'), j;
+      for (j = 0; j < old.length; j++) old[j].classList.remove('is-sel', 'is-play');
+      tag(marks.sel, 'is-sel');
+      tag(marks.play, 'is-play');
+      svg.classList.toggle('has-mark', marks.sel >= 0 || marks.play >= 0);
+    }
+    function mark(kind, i) {
+      if (marks[kind] === i) return;
+      marks[kind] = i;
+      applyMarks();
+    }
+
+    // bring note i on screen (instant, so it is deterministic): whole systems where they fit
+    function revealNote(i) {
       if (!L) return;
-      var count = notes.length;
-      if (!count) { scroller.scrollTop = 0; return; }
-      var k = Math.floor((count - 1) / L.perSys);
+      if (!notes.length) { scroller.scrollTop = 0; return; }
+      if (i < 0 || i >= notes.length || !info[i]) return;
+      var k = info[i].k;
       var sr = scroller.getBoundingClientRect(), pr = svg.getBoundingClientRect();
       var base = pr.top - sr.top + scroller.scrollTop;          // top of the SVG inside the scrollable content
       var vt = scroller.scrollTop, vh = scroller.clientHeight, margin = Math.round(L.s * 0.5);
       var top = base + L.topPad + k * L.H, bottom = top + L.H - Math.round(L.m2 * 0.6), target;   // the last bit of bottom margin may be cut
       if (bottom - top + margin <= vh) {
-        if (top - margin >= vt && bottom <= vt + vh) return;      // latest system is already fully in view
-        var fit = Math.max(1, Math.floor((vh - margin) / L.H));   // whole systems that fit in the viewport
-        target = base + L.topPad + Math.max(0, k - fit + 1) * L.H - margin;
+        if (top - margin >= vt && bottom <= vt + vh) return;      // that system is already fully in view
+        if (top - margin < vt) target = top - margin;             // scrolling back up: put it at the top
+        else {
+          var fit = Math.max(1, Math.floor((vh - margin) / L.H));  // whole systems that fit in the viewport
+          target = base + L.topPad + Math.max(0, k - fit + 1) * L.H - margin;
+        }
       } else {
-        target = base + noteCy(parseNote(notes[count - 1]), anchors(k)) - vh / 2;   // tiny viewport: centre the note itself
+        target = base + noteCy(parseNote(notes[i].n), anchors(k)) - vh / 2;   // tiny viewport: centre the note itself
       }
       scroller.scrollTop = Math.max(0, Math.round(target));
     }
+
+    function focusIndex() { return marks.play >= 0 ? marks.play : marks.sel >= 0 ? marks.sel : notes.length - 1; }
 
     var rafId = 0, burst = 0, burstAt = 0;
     function onResize() {
@@ -1319,12 +1858,25 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       burstAt = now;
       if (++burst > 8) return;                         // guard against scrollbar-induced resize loops
       cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(function () { render({ reveal: true }); });
+      rafId = requestAnimationFrame(function () { render({ focus: focusIndex() }); });
     }
     if (typeof ResizeObserver === 'function') new ResizeObserver(onResize).observe(scroller);
     window.addEventListener('resize', onResize);
 
-    return { render: render, reveal: reveal };
+    // clicking a note selects it; clicking blank paper clears the selection
+    svg.addEventListener('click', function (e) {
+      if (!pickHandler) return;
+      var g = e.target.closest ? e.target.closest('.note') : null;
+      pickHandler(g ? +g.getAttribute('data-i') : -1);
+    });
+
+    return {
+      render: render,
+      revealNote: revealNote,
+      mark: mark,
+      info: function (i) { return info[i] || null; },
+      onPick: function (fn) { pickHandler = fn; }
+    };
   })();
 
   /* ====================================================================
@@ -1332,7 +1884,11 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
      ==================================================================== */
   var undoBtn = $('undoBtn'), redoBtn = $('redoBtn'), deleteBtn = $('deleteBtn'), clearBtn = $('clearBtn');
   var muteBtn = $('muteBtn'), copyBtn = $('copyBtn');
+  var playBtn = $('playBtn'), playLbl = $('playLbl'), stopBtn = $('stopBtn'), loopBtn = $('loopBtn');
+  var tempoIn = $('tempo'), tempoVal = $('tempoVal'), clockEl = $('clock');
+  var lenBtns = Array.prototype.slice.call(document.querySelectorAll('.len')), dotBtn = $('dotBtn'), lenLbl = $('lenLbl');
   var noteText = $('noteText'), noteCount = $('noteCount'), statusEl = $('status');
+  var sheetScroll = $('sheetScroll'), helpDlg = $('helpDlg');
   var statusTimer = 0;
 
   function say(msg, ms) {
@@ -1341,31 +1897,40 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     statusTimer = setTimeout(function () { statusEl.textContent = ''; }, ms || 3200);
   }
 
-  function copyText() { return notes.join(' '); }
+  // the text that gets copied: note names only, one space between them (e.g. "C4 D4 F#4")
+  function copyText() { return notes.map(function (e) { return e.n; }).join(' '); }
 
   // The tape is a read-only <textarea> (selectable, scrolls). Make value, textContent and innerText all report the same text
   // so scripts and assistive tools can read it whichever way they prefer.
   try { Object.defineProperty(noteText, 'innerText', { configurable: true, get: function () { return noteText.value; }, set: function () {} }); } catch (e) { /* ignore */ }
 
   function updateUI() {
-    var text = copyText();
+    var text = copyText(), n = notes.length;
     noteText.value = text;
     noteText.textContent = text;                     // keep textContent in sync with value
     noteText.scrollTop = noteText.scrollHeight;
-    noteCount.textContent = notes.length + (notes.length === 1 ? ' note' : ' notes');
+    noteCount.textContent = n + (n === 1 ? ' note' : ' notes') + (n ? ' · ' + fmtTime(beatsBefore(n) * secPerBeat()) : '');
     undoBtn.disabled = !past.length;
     redoBtn.disabled = !future.length;
-    deleteBtn.disabled = !notes.length;
-    clearBtn.disabled = !notes.length;
+    deleteBtn.disabled = !n;
+    clearBtn.disabled = !n;
   }
 
   // called after every document change
-  function changed(delta, kind, info) {
-    try { Sheet.render({ animateLast: delta === 1, reveal: true }); } catch (e) { /* keep the rest of the UI in sync */ }
+  function changed(kind, op) {
+    var n = notes.length, t = op.t, anim = -1, focus = n - 1;
+    if (kind === 'add' || (kind === 'redo' && t === 'add')) anim = n - 1;
+    else if (kind === 'undo' && t === 'del') { anim = op.i; focus = op.i; }
+    else if (t === 'len') focus = op.i;
+    else if (t === 'del') focus = Math.min(op.i, n - 1);
+    try { Sheet.render({ anim: anim, focus: focus }); } catch (e) { /* keep the rest of the UI in sync */ }
     updateUI();
     saveNotes();
-    if (kind === 'del') say('Removed ' + info);
-    else if (kind === 'clr') say('Sheet cleared (' + info + (info === 1 ? ' note' : ' notes') + ')');
+    Player.songChanged();
+    select(sel, true);
+    if (kind === 'del') say('Removed ' + op.e.n);
+    else if (kind === 'clr') say('Sheet cleared (' + op.list.length + (op.list.length === 1 ? ' note' : ' notes') + ')');
+    else if (kind === 'len') say(notes[op.i].n + ' is now ' + withArticle(lenName(op.to)) + ' note');
     else if (kind === 'undo') say('Undone');
     else if (kind === 'redo') say('Redone');
   }
@@ -1408,6 +1973,211 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     } else {
       done(legacyCopy(text));
     }
+  }
+
+  /* ====================================================================
+     Player: plays the whole song in time, following it on the sheet and the keys
+     ==================================================================== */
+  var Player = (function () {
+    var state = 'stopped';                          // 'stopped' | 'playing' | 'paused'
+    var pos = 0;                                    // where the next Play starts
+    var from = 0;                                   // where this run started: Stop and Loop come back here
+    var idx = 0, cur = -1, nextAt = 0, timer = 0, ending = false;
+    var pending = new Set();                        // timeouts that sync the picture with the sound
+    var lit = new Map();                            // key element -> number of song notes holding it down
+    var LOOKAHEAD = 0.15, TICK = 25;
+
+    function clock() { return performance.now() / 1000; }
+    function clampIdx(i) { return Math.max(0, Math.min(notes.length - 1, i | 0)); }
+    function later(fn, ms) {
+      var id = setTimeout(function () { pending.delete(id); fn(); }, Math.max(0, ms));
+      pending.add(id);
+    }
+
+    function light(name, ms) {
+      var el = keyEls.get(name);
+      if (!el) return;
+      lit.set(el, (lit.get(el) || 0) + 1);
+      el.classList.add('is-auto');
+      showKey(el);
+      later(function () {
+        var c = (lit.get(el) || 1) - 1;
+        if (c > 0) lit.set(el, c);
+        else { lit.delete(el); el.classList.remove('is-auto'); }
+      }, ms);
+    }
+    function halt() {                               // stop scheduling and silence everything, keep the position
+      clearInterval(timer); timer = 0;
+      pending.forEach(clearTimeout); pending.clear();
+      Sound.stopQueued();
+      lit.forEach(function (c, el) { el.classList.remove('is-auto'); });
+      lit.clear();
+      ending = false;
+    }
+
+    function start(i) {
+      if (!notes.length) { say('Write a few notes first, then press Play'); return; }
+      Sound.unlock();
+      halt();
+      from = clampIdx(i); pos = from; idx = from; cur = -1;
+      nextAt = clock() + 0.06;
+      state = 'playing';
+      timer = setInterval(tick, TICK);
+      tick();
+      ui();
+    }
+    // schedule every note that starts within the look-ahead window; the tempo is read live
+    function tick() {
+      if (state !== 'playing' || ending) return;
+      var horizon = clock() + LOOKAHEAD, guard = 0;
+      while (nextAt < horizon && guard++ < 256) {
+        if (idx >= notes.length) {
+          if (loopOn && notes.length) { idx = Math.min(from, notes.length - 1); continue; }
+          ending = true;
+          later(finish, (nextAt - clock()) * 1000);
+          return;
+        }
+        var e = notes[idx], dur = e.d * secPerBeat();
+        schedule(idx, e, nextAt, dur);
+        nextAt += dur;
+        idx++;
+      }
+    }
+    function schedule(i, e, at, dur) {
+      var delay = at - clock();
+      Sound.play(e.n, delay, dur * 0.94);           // a hair shorter than the beat, so repeated notes re-strike
+      later(function () {
+        if (state !== 'playing') return;
+        cur = i;
+        Sheet.mark('play', i);
+        Sheet.revealNote(i);
+        light(e.n, Math.max(60, dur * 900));
+        ui();
+      }, delay * 1000);
+    }
+    function finish() {
+      if (state !== 'playing') return;
+      halt();
+      state = 'stopped'; pos = from; cur = -1;
+      Sheet.mark('play', -1);
+      say('End of the song');
+      ui();
+    }
+    function pause() {
+      if (state !== 'playing') return false;
+      halt();
+      state = 'paused';
+      pos = cur >= 0 ? cur : from;
+      Sheet.mark('play', pos);
+      ui();
+      return true;
+    }
+    function stop() {
+      if (state === 'stopped') return false;
+      halt();
+      state = 'stopped'; pos = from; cur = -1;
+      Sheet.mark('play', -1);
+      ui();
+      return true;
+    }
+    function toggle() {
+      if (state === 'playing') pause();
+      else start(state === 'paused' ? pos : (sel >= 0 ? sel : pos));
+    }
+    // a note was picked on the sheet
+    function picked(i) {
+      if (state === 'playing') { if (i >= 0) start(i); return; }
+      if (state === 'paused') { if (i >= 0) { pos = i; cur = i; Sheet.mark('play', i); } }
+      else pos = i >= 0 ? i : 0;
+      ui();
+    }
+    function songChanged() {
+      if (!notes.length) { stop(); pos = 0; from = 0; }
+      else {
+        pos = clampIdx(pos); from = clampIdx(from);
+        if (cur >= notes.length) cur = -1;
+        if (state === 'paused') Sheet.mark('play', pos);
+      }
+      ui();
+    }
+
+    function ui() {
+      var playing = state === 'playing', word = playing ? 'Pause' : state === 'paused' ? 'Resume' : 'Play';
+      playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+      playBtn.setAttribute('aria-label', word);
+      playBtn.title = word + (playing ? '' : ' the song') + ' (Space)';
+      playLbl.textContent = word;
+      stopBtn.disabled = state === 'stopped';
+      var n = notes.length;
+      var at = !n ? 0 : playing ? (cur >= 0 ? cur : from) : state === 'paused' ? pos : (sel >= 0 ? sel : pos);
+      at = n ? clampIdx(at) : 0;
+      var inf = n ? Sheet.info(at) : null, spb = secPerBeat();
+      clockEl.innerHTML = 'Bar <b>' + (inf ? inf.bar : 1) + '</b> · ' + fmtTime(n ? beatsBefore(at) * spb : 0) + ' / ' + fmtTime(beatsBefore(n) * spb);
+    }
+
+    return {
+      start: start, pause: pause, stop: stop, toggle: toggle, picked: picked, songChanged: songChanged, ui: ui,
+      state: function () { return state; }
+    };
+  })();
+
+  /* ====================================================================
+     Selection + note lengths
+     ==================================================================== */
+  function select(i, quiet) {
+    if (typeof i !== 'number' || i < 0 || i >= notes.length) i = -1;
+    var was = sel;
+    sel = i;
+    Sheet.mark('sel', i);
+    deleteBtn.setAttribute('aria-label', i >= 0 ? 'Delete selected note' : 'Delete last note');
+    deleteBtn.title = i >= 0 ? 'Delete the selected note (Backspace)' : 'Delete last note (Backspace)';
+    syncLenUI();
+    if (!quiet && i >= 0 && i !== was) {
+      var inf = Sheet.info(i);
+      say('Selected ' + notes[i].n + ', ' + withArticle(lenName(notes[i].d)) + ' note' + (inf ? ' in bar ' + inf.bar : '') + '. Pick a length to change it.', 4200);
+    }
+  }
+  function pick(i) {
+    var playing = Player.state() === 'playing';
+    if (i >= 0 && i === sel && !playing) i = -1;      // clicking the selected note again unselects it
+    select(i);
+    Player.picked(i);
+    if (i >= 0 && !playing && !Sound.isMuted()) {    // let the picked note sound briefly
+      Sound.on('pick', notes[i].n);
+      setTimeout(function () { Sound.off('pick'); }, 260);
+    }
+  }
+  Sheet.onPick(pick);
+
+  function syncLenUI() {
+    var cur = sel >= 0 ? lenParts(notes[sel].d) : { base: nextLen, dot: nextDot };
+    lenBtns.forEach(function (b) { b.setAttribute('aria-pressed', +b.getAttribute('data-len') === cur.base ? 'true' : 'false'); });
+    dotBtn.setAttribute('aria-pressed', cur.dot ? 'true' : 'false');
+    dotBtn.disabled = cur.base === 0.5;               // no dotted eighths: their pieces would need sixteenth notes
+    lenLbl.textContent = sel >= 0 ? 'Note ' + notes[sel].n : 'Next note';
+  }
+  // with a note selected the length buttons change that note, otherwise they set the length of the next note
+  function chooseLen(base) {
+    if (sel >= 0) {
+      var cur = lenParts(notes[sel].d);
+      setLength(sel, base * (cur.dot && base !== 0.5 ? 1.5 : 1));
+      return;
+    }
+    nextLen = base;
+    if (base === 0.5) nextDot = false;
+    savePrefs(); syncLenUI();
+    say('Next notes: ' + lenName(nextLength()));
+  }
+  function toggleDot() {
+    if (sel >= 0) {
+      var cur = lenParts(notes[sel].d);
+      if (cur.base !== 0.5) setLength(sel, cur.dot ? cur.base : cur.base * 1.5);
+      return;
+    }
+    if (nextLen === 0.5) return;
+    nextDot = !nextDot;
+    savePrefs(); syncLenUI();
+    say('Next notes: ' + lenName(nextLength()));
   }
 
   /* ====================================================================
@@ -1576,7 +2346,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     e.preventDefault();
   }, { passive: false });
 
-  // ---- keyboard scrolling: start on middle C, follow octave changes
+  // ---- keyboard scrolling: start on middle C, follow octave changes and the song
   var userScrolled = false;
   ['touchstart', 'pointerdown'].forEach(function (ev) {
     keyboard.addEventListener(ev, function () { userScrolled = true; }, { passive: true });
@@ -1594,9 +2364,18 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (animate && !(reduceMotion && reduceMotion.matches) && keyboard.scrollTo) keyboard.scrollTo({ left: target, behavior: 'smooth' });
     else keyboard.scrollLeft = target;
   }
+  // during playback, slide the keys along when the song walks off the visible part of the keyboard
+  function showKey(el) {
+    if (keyboard.scrollWidth <= keyboard.clientWidth) return;
+    var r = el.getBoundingClientRect(), kr = keyboard.getBoundingClientRect();
+    if (r.left >= kr.left - 1 && r.right <= kr.right + 1) return;
+    var name = el.getAttribute('data-note'), p = parseNote(name);
+    var c = 'C' + p.oct;
+    scrollKeyboardTo(keyEls.has(c) && p.letter !== 'A' && p.letter !== 'B' ? c : name, true);
+  }
 
   /* ====================================================================
-     Computer keyboard: play + octave
+     Computer keyboard: play, octave, lengths, transport
      ==================================================================== */
   // semitones above the C of the current octave
   var KEY_CODES = {
@@ -1607,6 +2386,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, ';': 16, "'": 17
   };
   var KEY_LABELS = ['A', 'W', 'S', 'E', 'D', 'F', 'T', 'G', 'Y', 'H', 'U', 'J', 'K', 'O', 'L', 'P', ';', "'"];
+  var LEN_CODES = { Digit1: 4, Digit2: 2, Digit3: 1, Digit4: 0.5, Numpad1: 4, Numpad2: 2, Numpad3: 1, Numpad4: 0.5 };
+  var LEN_CHARS = { 1: 4, 2: 2, 3: 1, 4: 0.5 };
   var OCT_MIN = 3, OCT_MAX = 5;
   var octave = 4;
   var kbHeld = new Map();          // event.code -> note
@@ -1641,19 +2422,25 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   $('octDown').addEventListener('click', function () { setOctave(octave - 1, true); });
   $('octUp').addEventListener('click', function () { setOctave(octave + 1, true); });
 
+  // text fields swallow typing; sliders, buttons and checkboxes do not
   function isTypingTarget(t) {
     if (!t || !t.tagName) return false;
     var tag = t.tagName;
-    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || !!t.isContentEditable;
+    if (tag === 'INPUT') return !/^(range|button|checkbox|radio|submit|reset|color)$/i.test(t.type || '');
+    return tag === 'TEXTAREA' || tag === 'SELECT' || !!t.isContentEditable;
   }
   function isEditableTarget(t) {
     if (!t || !t.tagName) return false;
     var tag = t.tagName;
-    return ((tag === 'INPUT' || tag === 'TEXTAREA') && !t.readOnly) || tag === 'SELECT' || !!t.isContentEditable;
+    return (isTypingTarget(t) && tag !== 'SELECT' && !t.readOnly) || tag === 'SELECT' || !!t.isContentEditable;
+  }
+  function isButtonTarget(t) {
+    return !!t && !!t.closest && !!t.closest('button, a[href], summary, [role="button"]');
   }
 
   document.addEventListener('keydown', function (e) {
     if (e.defaultPrevented || e.isComposing) return;
+    if (helpDlg.open) return;                      // the shortcuts card handles its own keys (Esc closes it)
     var mod = e.ctrlKey || e.metaKey;
 
     // undo / redo (never steal real text editing)
@@ -1665,10 +2452,27 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       return;                                      // leave every other browser shortcut alone
     }
     if (e.altKey) return;
-    if (e.key === 'Escape' && isTypingTarget(e.target) && e.target.blur) { e.target.blur(); return; }
+    if (e.key === 'Escape') {
+      if (isTypingTarget(e.target) && e.target.blur) { e.target.blur(); return; }
+      if (Player.stop()) { e.preventDefault(); say('Stopped'); return; }
+      if (sel >= 0) { e.preventDefault(); select(-1, true); Player.picked(-1); }
+      return;
+    }
     if (isTypingTarget(e.target)) return;
 
-    if (e.key === 'Backspace') { e.preventDefault(); if (!e.repeat) deleteLast(); return; }
+    if (e.key === ' ' || e.code === 'Space') {
+      if (isButtonTarget(e.target)) return;        // Space presses the focused button instead
+      e.preventDefault();
+      if (!e.repeat) Player.toggle();
+      return;
+    }
+    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); if (!e.repeat) deleteNote(sel); return; }
+
+    var len = LEN_CODES[e.code] || LEN_CHARS[e.key];
+    if (len) { e.preventDefault(); if (!e.repeat) chooseLen(len); return; }
+    if (e.key === '.' || e.code === 'NumpadDecimal') { e.preventDefault(); if (!e.repeat) toggleDot(); return; }
+    if (e.key === '[' || e.key === ']') { e.preventDefault(); setTempo(bpm + (e.key === ']' ? 5 : -5)); return; }
+    if (e.key === '?') { e.preventDefault(); openHelp(); return; }
 
     var semi = semitoneFor(e);
     if (semi !== undefined) {
@@ -1695,14 +2499,34 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     releaseNote(name, 'k:' + code);
   });
   window.addEventListener('blur', releaseAll);
-  document.addEventListener('visibilitychange', function () { if (document.hidden) releaseAll(); });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) return;
+    releaseAll();
+    if (Player.pause()) say('Paused');             // background tabs throttle timers, so the song would stumble
+  });
+
+  // arrow keys walk the selection along the song while the sheet has focus
+  sheetScroll.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || !notes.length) return;
+    var i = null, last = notes.length - 1;
+    if (e.key === 'ArrowRight') i = sel < 0 ? 0 : Math.min(last, sel + 1);
+    else if (e.key === 'ArrowLeft') i = sel < 0 ? last : Math.max(0, sel - 1);
+    else if (e.key === 'Home') i = 0;
+    else if (e.key === 'End') i = last;
+    if (i === null) return;
+    e.preventDefault();
+    if (i === sel) return;
+    select(i);
+    if (Player.state() !== 'playing') Player.picked(i);   // clicking jumps the playback, arrows only move the selection
+    Sheet.revealNote(i);
+  });
 
   /* ====================================================================
-     Wire up the toolbar
+     Wire up the controls
      ==================================================================== */
   undoBtn.addEventListener('click', function () { undo(); });
   redoBtn.addEventListener('click', function () { redo(); });
-  deleteBtn.addEventListener('click', function () { deleteLast(); });
+  deleteBtn.addEventListener('click', function () { deleteNote(sel); });
   clearBtn.addEventListener('click', function () { clearAll(); });
   copyBtn.addEventListener('click', copyNotes);
   // one click on the note tape selects it all, ready for a manual copy
@@ -1716,6 +2540,45 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!on) Sound.unlock();
   });
 
+  playBtn.addEventListener('click', function () { Player.toggle(); });
+  stopBtn.addEventListener('click', function () { if (Player.stop()) say('Stopped'); });
+  loopBtn.addEventListener('click', function () { setLoop(!loopOn); say(loopOn ? 'Loop on' : 'Loop off'); });
+  lenBtns.forEach(function (b) { b.addEventListener('click', function () { chooseLen(+b.getAttribute('data-len')); }); });
+  dotBtn.addEventListener('click', toggleDot);
+
+  function setTempo(v, fromSlider) {
+    v = Math.max(40, Math.min(240, Math.round(+v || 100)));
+    bpm = v;
+    if (!fromSlider) tempoIn.value = String(v);
+    tempoVal.textContent = String(v);
+    tempoIn.setAttribute('aria-valuetext', v + ' beats per minute');
+    tempoIn.style.setProperty('--fill', ((v - 40) / 2) + '%');
+    savePrefs();
+    updateUI();
+    Player.ui();
+  }
+  tempoIn.addEventListener('input', function () { setTempo(tempoIn.value, true); });
+  function setLoop(on) {
+    loopOn = !!on;
+    loopBtn.setAttribute('aria-pressed', loopOn ? 'true' : 'false');
+    savePrefs();
+  }
+
+  // shortcuts card
+  function openHelp() {
+    releaseAll();
+    try {
+      if (typeof helpDlg.showModal === 'function') { if (!helpDlg.open) helpDlg.showModal(); }
+      else helpDlg.setAttribute('open', '');
+    } catch (e) { helpDlg.setAttribute('open', ''); }
+  }
+  $('helpBtn').addEventListener('click', openHelp);
+  helpDlg.addEventListener('click', function (e) {          // a click on the dimmed backdrop closes it
+    if (e.target !== helpDlg) return;
+    var r = helpDlg.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) helpDlg.close();
+  });
+
   // audio needs a user gesture; try on every kind of first gesture until the context is running
   var unlockEvents = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
   function unlockAudio() {
@@ -1727,17 +2590,22 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   /* ====================================================================
      Start up
      ==================================================================== */
+  loadPrefs();
   notes = loadNotes();
   updateKeyLabels();
+  setTempo(bpm);
+  setLoop(loopOn);
   updateUI();
-  Sheet.render({ reveal: true });
+  Sheet.render({ focus: notes.length - 1 });
+  select(-1, true);
+  Player.ui();
   scrollKeyboardTo('C4', false);
 
   window.addEventListener('resize', function () {
     if (!userScrolled) scrollKeyboardTo('C' + octave, false);
   });
   window.addEventListener('load', function () {
-    Sheet.render({ reveal: true });                // web fonts / scrollbars may have changed the width
+    Sheet.render({ focus: notes.length - 1 });     // web fonts / scrollbars may have changed the width
     if (!userScrolled) scrollKeyboardTo('C' + octave, false);
   });
 })();
