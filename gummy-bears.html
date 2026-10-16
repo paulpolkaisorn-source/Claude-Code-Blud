@@ -42,7 +42,7 @@
   .hint { display: inline-block; margin: 8px 0 0; padding: 6px 12px; font-size: 13.5px; line-height: 1.35; font-weight: 500; background: var(--chip); border-radius: 999px; box-shadow: var(--shadow); color: var(--ink); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   .bar { pointer-events: auto; align-self: center; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; padding: 10px 12px; max-width: 100%; background: var(--chip); border-radius: 22px; box-shadow: var(--shadow); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .btns { display: flex; gap: 8px; }
-  .btn { appearance: none; font: 600 15px/1 'Inter', system-ui, sans-serif; color: var(--ink); background: var(--chip-solid); border: 1.5px solid var(--line); border-radius: 999px; padding: 11px 18px; min-height: 44px; cursor: pointer; transition: transform .12s ease, background .12s ease, box-shadow .12s ease; touch-action: manipulation; }
+  .btn { appearance: none; white-space: nowrap; font: 600 15px/1 'Inter', system-ui, sans-serif; color: var(--ink); background: var(--chip-solid); border: 1.5px solid var(--line); border-radius: 999px; padding: 11px 18px; min-height: 44px; cursor: pointer; transition: transform .12s ease, background .12s ease, box-shadow .12s ease; touch-action: manipulation; }
   .btn:hover { background: #fff; box-shadow: 0 2px 8px rgba(120, 52, 30, 0.18); }
   .btn:active { transform: scale(0.96); }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -69,6 +69,7 @@
     .slider input { flex: 1; width: auto; min-width: 0; }
   }
   @media (max-width: 360px) { .slider .end { display: none; } }
+  @media (max-width: 340px) { .btn { padding: 11px 4px; font-size: 13.5px; } }
   @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 </style>
 </head>
@@ -542,6 +543,8 @@ const VMAX = 24; // per-particle speed cap (units/s): < radius / substep * 0.9
 const SLEEP_T = 0.5, CALM_D = 0.03; // asleep once no particle has moved farther than CALM_D for SLEEP_T seconds (velocities jitter, positions don't)
 const HASH_SIZE = 8192;
 const PAIR_CAP = 60000;
+const STRETCH_MIN = 0.55, STRETCH_MAX = 1.5; // axis scale of the whole bear that its shape-matching goal will follow
+const DEV_SOFT = 0.4, DEV_HARD = 0.85; // deviation from a pure rotation (Frobenius) where a local cluster's goal starts / finishes fading back to rigid
 
 const sstep = (a, b, x) => { const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a); return t * t * (3 - 2 * t); };
 function mat3mul(a, b) {
@@ -654,8 +657,12 @@ class World {
     this.live = [];
     this.touch = new Uint8Array(S); // bear currently in contact (floor / another bear)
     this.cell = 2 * rig.rMax + 0.16; // >= largest contact distance + pair-list margin
-    this.gravScaleGrab = 1; // a held bear hangs from the pointer under its own weight, so it visibly stretches
+    this.gravScaleGrab = 1.3; // a held bear hangs a little heavier from the pointer, so it visibly sags and stretches
     this.grabSoft = 0.4; // stiffness multiplier while a bear is held
+    // pointer grab: a smooth, head-sized patch of particles (compact kernel of `radius` around the touched point, total stiffness
+    // `wsum`) is pulled toward the pointer; the pull saturates at `dmax`, the whole bear is dragged along at the pointer's velocity
+    // (`cAll`), and while held the bear's global cluster follows the stretch more freely (`betaG`) so it elongates as one piece
+    this.grabCfg = { radius: 1.1, power: 3, wsum: 9, dmax: 0.5, betaG: 0.8, cAll: 12 };
     this.grav = GRAV;
     this.onChange = null; // (slot) => void : render layer hook when a bear is created / removed
   }
@@ -794,6 +801,7 @@ class World {
     const baseP = s * N, baseR = s * R;
     const regStart = rig.regStart, regMem = rig.regMem, regQ = rig.regQ, Qinv = rig.regQinv, Mass = rig.M;
     const prm = this.params, regW = this.regW, regGlobal = rig.regGlobal;
+    const held = this.bears[s].grabbed > 0; // a bear in the pointer's hand may stretch as a whole (global cluster more permissive)
     if (withGoals) G.fill(0, 3 * baseP, 3 * (baseP + N));
     for (let g = 0; g < R; g++) {
       const m0 = regStart[g], m1 = regStart[g + 1];
@@ -848,7 +856,7 @@ class World {
           GR[i + 2] = cz + r20 * qx2 + r21 * qy2 + r22 * qz2;
         }
       }
-      const isG = regGlobal[g], beta = isG ? prm.betaG : prm.beta, rw = regW[g];
+      const isG = regGlobal[g], beta = isG ? (held ? this.grabCfg.betaG : prm.betaG) : prm.beta, rw = regW[g];
       // volume-normalised affine part, blended with the pure rotation by beta (smoothly faded out when degenerate)
       const det = A00 * (A11 * A22 - A12 * A21) - A01 * (A10 * A22 - A12 * A20) + A02 * (A10 * A21 - A11 * A20);
       const wA = sstep(0.12, 0.35, det) * (1 - sstep(4, 7, det)) * beta;
@@ -857,16 +865,22 @@ class World {
       if (isG) {
         // global cluster: only axis-aligned squash / stretch of the bear's own frame is allowed (no shear / bend),
         // so lean and bending are resisted with full stiffness while squash-and-bulge stays soft
-        const s0 = (r00 * A00 + r10 * A10 + r20 * A20) * sc, s1 = (r01 * A01 + r11 * A11 + r21 * A21) * sc, s2 = (r02 * A02 + r12 * A12 + r22 * A22) * sc;
+        // (the followed stretch saturates, so a violent yank meets a growing restoring force instead of stretching the bear like taffy)
+        const s0 = clamp((r00 * A00 + r10 * A10 + r20 * A20) * sc, STRETCH_MIN, STRETCH_MAX), s1 = clamp((r01 * A01 + r11 * A11 + r21 * A21) * sc, STRETCH_MIN, STRETCH_MAX), s2 = clamp((r02 * A02 + r12 * A12 + r22 * A22) * sc, STRETCH_MIN, STRETCH_MAX);
         const d0 = 1 + wA * (s0 - 1), d1 = 1 + wA * (s1 - 1), d2 = 1 + wA * (s2 - 1);
         M00 = r00 * d0; M01 = r01 * d1; M02 = r02 * d2;
         M10 = r10 * d0; M11 = r11 * d1; M12 = r12 * d2;
         M20 = r20 * d0; M21 = r21 * d1; M22 = r22 * d2;
       } else {
-        const ib = 1 - wA;
-        M00 = ib * r00 + wA * A00 * sc; M01 = ib * r01 + wA * A01 * sc; M02 = ib * r02 + wA * A02 * sc;
-        M10 = ib * r10 + wA * A10 * sc; M11 = ib * r11 + wA * A11 * sc; M12 = ib * r12 + wA * A12 * sc;
-        M20 = ib * r20 + wA * A20 * sc; M21 = ib * r21 + wA * A21 * sc; M22 = ib * r22 + wA * A22 * sc;
+        // strain stiffening: the farther the (volume-normalised) fit is from a pure rotation, the less of it the goal follows,
+        // so a region cannot be stretched into taffy however hard it is pulled (restoring force grows instead)
+        const e0 = A00 * sc - r00, e1 = A01 * sc - r01, e2 = A02 * sc - r02, e3 = A10 * sc - r10, e4 = A11 * sc - r11, e5 = A12 * sc - r12, e6 = A20 * sc - r20, e7 = A21 * sc - r21, e8 = A22 * sc - r22;
+        const dev = Math.sqrt(e0 * e0 + e1 * e1 + e2 * e2 + e3 * e3 + e4 * e4 + e5 * e5 + e6 * e6 + e7 * e7 + e8 * e8);
+        const wAe = wA * (1 - sstep(DEV_SOFT, DEV_HARD, dev));
+        const ib = 1 - wAe;
+        M00 = ib * r00 + wAe * A00 * sc; M01 = ib * r01 + wAe * A01 * sc; M02 = ib * r02 + wAe * A02 * sc;
+        M10 = ib * r10 + wAe * A10 * sc; M11 = ib * r11 + wAe * A11 * sc; M12 = ib * r12 + wAe * A12 * sc;
+        M20 = ib * r20 + wAe * A20 * sc; M21 = ib * r21 + wAe * A21 * sc; M22 = ib * r22 + wAe * A22 * sc;
       }
       for (let m = m0; m < m1; m++) {
         const i = 3 * (baseP + regMem[m]), o = 3 * m;
@@ -920,19 +934,32 @@ class World {
     for (let a = 0; a < awake.length; a++) this.computeRegions(awake[a], true, 2);
     // pointer grabs (a spring from the pointer to a few particles, applied as a velocity change)
     if (this.grabs.size) {
-      const kg = p.kGrab, cg = p.cGrab, amax = p.aGrabMax;
+      const kg = p.kGrab, cg = p.cGrab, amax = p.aGrabMax, dmax = this.grabCfg.dmax;
       for (const [id, gr] of this.grabs) {
         const b = this.bears[gr.slot];
         if (!b.alive || b.dying) { this.grabs.delete(id); continue; }
         gr.vx *= 0.985; gr.vy *= 0.985; gr.vz *= 0.985;
         for (let q = 0; q < gr.items.length; q++) {
           const it = gr.items[q], i = 3 * it.gi, w = it.w;
-          let ax = kg * w * (gr.tx + it.ox - X[i]) + cg * w * (gr.vx - V[i]);
-          let ay = kg * w * (gr.ty + it.oy - X[i + 1]) + cg * w * (gr.vy - V[i + 1]);
-          let az = kg * w * (gr.tz + it.oz - X[i + 2]) + cg * w * (gr.vz - V[i + 2]);
+          // spring toward the pointer; the pull saturates at dmax so a far-away pointer cannot stretch the patch out of the body
+          let dx = gr.tx + it.ox - X[i], dy = gr.ty + it.oy - X[i + 1], dz = gr.tz + it.oz - X[i + 2];
+          const dl = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          if (dl > dmax) { const f = dmax / dl; dx *= f; dy *= f; dz *= f; }
+          let ax = kg * w * dx + cg * w * (gr.vx - V[i]);
+          let ay = kg * w * dy + cg * w * (gr.vy - V[i + 1]);
+          let az = kg * w * dz + cg * w * (gr.vz - V[i + 2]);
           const am = Math.sqrt(ax * ax + ay * ay + az * az);
           if (am > amax) { const f = amax / am; ax *= f; ay *= f; az *= f; }
           V[i] += ax * h; V[i + 1] += ay * h; V[i + 2] += az * h;
+        }
+        // the whole bear is also dragged along with the pointer's velocity (like the fluid around a hand), so a quick sweep
+        // carries the body with the head instead of leaving it behind to be stretched into a blade
+        const ca = this.grabCfg.cAll * h;
+        if (ca > 0) {
+          const o = 3 * gr.slot * N;
+          for (let i = 0; i < 3 * N; i += 3) {
+            V[o + i] += ca * (gr.vx - V[o + i]); V[o + i + 1] += ca * (gr.vy - V[o + i + 1]); V[o + i + 2] += ca * (gr.vz - V[o + i + 2]);
+          }
         }
       }
     }
@@ -1191,6 +1218,16 @@ class World {
     let dt = dtReal;
     if (!(dt > 0)) dt = 0;
     if (dt > MAX_FRAME_DT) dt = MAX_FRAME_DT;
+    // pointer velocity in *simulated* time: how far each grab target moved during the time this frame simulates
+    // (so a slow frame rate, where the sim advances less than the wall clock, cannot make a fast drag look slow)
+    if (this.grabs.size && dt > 1e-4) {
+      for (const g of this.grabs.values()) {
+        let vx = (g.tx - g.px) / dt, vy = (g.ty - g.py) / dt, vz = (g.tz - g.pz) / dt;
+        const sp = Math.hypot(vx, vy, vz), f = sp > 30 ? 30 / sp : 1;
+        g.vx = 0.5 * g.vx + 0.5 * vx * f; g.vy = 0.5 * g.vy + 0.5 * vy * f; g.vz = 0.5 * g.vz + 0.5 * vz * f;
+        g.px = g.tx; g.py = g.ty; g.pz = g.tz;
+      }
+    }
     this.acc += dt;
     let n = 0;
     while (this.acc >= H && n < MAX_SUB) { this.step(); this.acc -= H; n++; }
@@ -1205,34 +1242,32 @@ class World {
     const b = this.bears[s];
     if (!b || !b.alive || b.dying) return false;
     this.endGrab(id);
-    const N = this.N, base = s * N, X = this.X, cand = [];
+    const N = this.N, base = s * N, X = this.X, cfg = this.grabCfg;
+    // smooth compact kernel (1 - (d/R)^2)^p around the hit point: the pull fades to exactly zero at R
+    const items = [];
+    let sw = 0;
     for (let i = 0; i < N; i++) {
       const gi = 3 * (base + i);
-      cand.push([Math.hypot(X[gi] - hx, X[gi + 1] - hy, X[gi + 2] - hz), base + i]);
+      const d = Math.hypot(X[gi] - hx, X[gi + 1] - hy, X[gi + 2] - hz);
+      if (d >= cfg.radius) continue;
+      const t = 1 - (d * d) / (cfg.radius * cfg.radius), w = Math.pow(t, cfg.power);
+      sw += w;
+      items.push({ gi: base + i, w, ox: X[gi] - hx, oy: X[gi + 1] - hy, oz: X[gi + 2] - hz });
     }
-    cand.sort((p, q) => p[0] - q[0]);
-    const items = [];
-    for (let k = 0; k < Math.min(cand.length, 10); k++) {
-      const d = cand[k][0];
-      if (k > 0 && d > 0.65) break;
-      const gi = 3 * cand[k][1];
-      items.push({ gi: cand[k][1], w: k === 0 ? 1 : Math.exp(-(d * d) / 0.3), ox: X[gi] - hx, oy: X[gi + 1] - hy, oz: X[gi + 2] - hz });
-    }
+    if (!items.length) return false;
+    const norm = cfg.wsum / sw; // constant total pulling stiffness whatever the patch size
+    for (const it of items) it.w *= norm;
     // the grabbed patch follows the pointer: target is where the pointer is, offsets keep the patch shape
-    this.grabs.set(id, { slot: s, items, tx, ty, tz, vx: 0, vy: 0, vz: 0 });
+    this.grabs.set(id, { slot: s, items, tx, ty, tz, px: tx, py: ty, pz: tz, vx: 0, vy: 0, vz: 0 });
     b.grabbed++;
     this.wake(s);
     return true;
   }
 
-  moveGrab(id, tx, ty, tz, dt) {
+  moveGrab(id, tx, ty, tz) {
     const g = this.grabs.get(id);
     if (!g) return;
-    const d = Math.max(dt, 1 / 120);
-    const vx = (tx - g.tx) / d, vy = (ty - g.ty) / d, vz = (tz - g.tz) / d;
-    const sp = Math.hypot(vx, vy, vz), f = sp > 30 ? 30 / sp : 1;
-    g.vx = 0.5 * g.vx + 0.5 * vx * f; g.vy = 0.5 * g.vy + 0.5 * vy * f; g.vz = 0.5 * g.vz + 0.5 * vz * f;
-    g.tx = tx; g.ty = ty; g.tz = tz;
+    g.tx = tx; g.ty = ty; g.tz = tz; // the pointer velocity is derived from these per simulated frame (see frame())
     this.wake(g.slot);
   }
 
@@ -1784,6 +1819,7 @@ world.onChange = (s, kind) => {
 
 /* ---------- layout: camera framing + physical arena follow the viewport ---------- */
 const tmpV = new THREE.Vector3();
+let layoutPt = 0; // 0 = landscape ... 1 = tall phone (the opening layout reads it)
 function layout() {
   const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
   renderer.setPixelRatio(dpr);
@@ -1791,10 +1827,12 @@ function layout() {
   const aspect = w / h;
   camera.aspect = aspect;
   const pt = clamp((1.3 - aspect) / (1.3 - 0.5), 0, 1); // 0 = landscape, 1 = tall phone
+  layoutPt = pt;
   camera.fov = lerp(26, 34, pt);
-  const pitch = lerp(26, 38, pt) * DEG;
+  const pitch = lerp(26, 43, pt) * DEG;
   const hx = lerp(clamp(2.25 * aspect, 2.05, 5.0), 2.4, pt);
-  const zf = lerp(1.9, 3.9, pt), zb = lerp(2.4, 4.5, pt);
+  // a tall phone gets a deep, narrow arena: the bears stack up the screen (more height to fill) instead of leaving empty bands
+  const zf = lerp(1.9, 5.2, pt), zb = lerp(2.4, 6.0, pt);
   const arena = { xmin: -hx, xmax: hx, zmin: -zb, zmax: zf, floor: 0, ceil: 22 };
   world.setArena(arena);
   // safe rectangle in NDC (keep clear of the title and the control bar)
@@ -1807,8 +1845,11 @@ function layout() {
   const corners = [];
   for (const x of [-hx, hx]) for (const z of [-zb, zf]) { corners.push([x, 0, z]); corners.push([x, bearH, z]); }
   const dir = new THREE.Vector3(0, Math.sin(pitch), Math.cos(pitch));
-  const tgt = new THREE.Vector3(0, bearH * 0.38, (zf - zb) * 0.5);
-  const fits = (d) => {
+  const tgt = new THREE.Vector3();
+  const tanH = Math.tan(0.5 * camera.fov * DEG);
+  // put the camera `d` away from a look-at point at height ty and test whether the whole arena box lands inside the safe rectangle
+  const place = (d, ty) => {
+    tgt.set(0, ty, (zf - zb) * 0.5);
     camera.position.copy(tgt).addScaledVector(dir, d);
     camera.lookAt(tgt);
     camera.updateProjectionMatrix();
@@ -1817,19 +1858,27 @@ function layout() {
     for (const c of corners) { tmpV.set(c[0], c[1], c[2]).project(camera); minX = Math.min(minX, tmpV.x); maxX = Math.max(maxX, tmpV.x); minY = Math.min(minY, tmpV.y); maxY = Math.max(maxY, tmpV.y); }
     return { ok: maxX <= xs && minX >= -xs && maxY <= yTop && minY >= yBot, minY, maxY };
   };
-  let lo = 6, hi = 90;
-  for (let i = 0; i < 40; i++) { const mid = 0.5 * (lo + hi); if (fits(mid).ok) hi = mid; else lo = mid; }
-  const d = hi * 1.015;
-  // center the arena vertically inside the safe rectangle by sliding the target
-  const f = fits(d);
-  const midNdc = 0.5 * (f.minY + f.maxY), wantNdc = 0.5 * (yTop + yBot);
-  if (Math.abs(midNdc - wantNdc) > 1e-3) {
-    // vertical NDC shift approx = dy / (d * tan(fov/2)); move the look-at point the other way
-    const shiftWorld = (wantNdc - midNdc) * d * Math.tan(0.5 * camera.fov * DEG) * 0.9;
-    tgt.y -= shiftWorld;
-    tgt.y = clamp(tgt.y, -2, 4);
-    fits(d);
+  // slide the look-at point so the box sits in the middle of the safe rectangle (vertical NDC shift ~ dy / (d * tan(fov/2)), so a few steps)
+  const centre = (d, steps) => {
+    let ty = bearH * 0.38, f = place(d, ty);
+    for (let i = 0; i < steps; i++) {
+      const mid = 0.5 * (f.minY + f.maxY), want = 0.5 * (yTop + yBot);
+      if (Math.abs(mid - want) < 1e-4) break;
+      ty = clamp(ty - (want - mid) * d * tanH * 0.9, -2, 4);
+      f = place(d, ty);
+    }
+    return f;
+  };
+  let lo = 6, hi = 120;
+  for (let i = 0; i < 40; i++) { const mid = 0.5 * (lo + hi); if (place(mid, bearH * 0.38).ok) hi = mid; else lo = mid; }
+  const dFixed = hi; // closest distance when the look-at point stays put (the landscape framing)
+  let dCentred = dFixed;
+  if (pt > 0) { // portrait: search with the box re-centred at every distance, which lets the camera come closer
+    lo = 6; hi = dFixed;
+    for (let i = 0; i < 40; i++) { const mid = 0.5 * (lo + hi); if (centre(mid, 6).ok) hi = mid; else lo = mid; }
+    dCentred = hi;
   }
+  centre(lerp(dFixed, dCentred, pt) * 1.015, pt > 0 ? 6 : 1);
   cmDirty = true;
   // key light shadow frustum hugging the arena
   const half = Math.hypot(hx, Math.max(zf, zb)) + 3.2;
@@ -1841,7 +1890,7 @@ function layout() {
 }
 
 /* ---------- contact map: soft, shape-accurate contact shadow + colored light pool, splatted from the particles ---------- */
-const CM_W = 128, CM_H = 80;
+const CM_W = 128, CM_H = 96;
 const cmData = new Uint8Array(CM_W * CM_H * 4);
 const mkLayer = () => ({ occ: new Float32Array(CM_W * CM_H), tint: new Float32Array(CM_W * CM_H * 3), wt: new Float32Array(CM_W * CM_H) });
 const cmStatic = mkLayer(), cmDyn = mkLayer(); // sleeping bears are splatted once, awake bears every frame
@@ -1977,9 +2026,10 @@ function initialBears() {
   const counts = cols === 2 ? [2, 1, 2, 2] : cols === 3 ? [2, 3, 2] : [3, 4];
   const maxCount = Math.max(...counts);
   const sx = Math.min(2.45, (W - 1.9) / Math.max(1, maxCount - 1));
+  const inset = lerp(1.0, 0.6, layoutPt); // the near and far rows sit this far inside the walls
   const pts = [];
   counts.forEach((count, r) => {
-    const z = counts.length > 1 ? lerp(a.zmin + 1.0, a.zmax - 1.0, r / (counts.length - 1)) : 0.5 * (a.zmin + a.zmax);
+    const z = counts.length > 1 ? lerp(a.zmin + inset, a.zmax - inset, r / (counts.length - 1)) : 0.5 * (a.zmin + a.zmax);
     for (let i = 0; i < count; i++) pts.push([(i - (count - 1) / 2) * sx + (rnd() - 0.5) * 0.3, z + (rnd() - 0.5) * 0.3]);
   });
   pts.sort((p, q) => p[1] - q[1]); // far row first
@@ -2000,7 +2050,7 @@ const plane = new THREE.Plane();
 const hitV = new THREE.Vector3();
 const camDir = new THREE.Vector3();
 const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-const pointers = new Map(); // pointerId -> { grabbing, startX, startY, t0, moved, lastT }
+const pointers = new Map(); // pointerId -> { grabbing, startX, startY, t0, moved }
 function setRay(e) {
   const r = canvas.getBoundingClientRect();
   ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1));
@@ -2030,7 +2080,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== undefined && e.button > 0) return;
   setRay(e);
   const hit = pickBear();
-  const st = { grabbing: false, startX: e.clientX, startY: e.clientY, t0: performance.now(), moved: 0, lastT: performance.now() };
+  const st = { grabbing: false, startX: e.clientX, startY: e.clientY, t0: performance.now(), moved: 0 };
   pointers.set(e.pointerId, st);
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   if (hit) {
@@ -2050,9 +2100,7 @@ canvas.addEventListener('pointermove', (e) => {
   if (!st.grabbing) return;
   setRay(e);
   if (raycaster.ray.intersectPlane(st.plane, hitV)) {
-    const now = performance.now();
-    world.moveGrab(e.pointerId, hitV.x, hitV.y, hitV.z, (now - st.lastT) / 1000);
-    st.lastT = now;
+    world.moveGrab(e.pointerId, hitV.x, hitV.y, hitV.z);
   }
   e.preventDefault();
 });
