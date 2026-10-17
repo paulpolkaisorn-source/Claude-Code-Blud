@@ -606,6 +606,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 #sheet .stem { stroke: var(--ink); stroke-linecap: round; }
 #sheet .ledger { fill: none; stroke: var(--ink); stroke-linecap: round; }
 #sheet .flag, #sheet .dot, #sheet .tie, #sheet .rglyph { fill: var(--ink); }   /* glyphs drawn with <use> are scaled: never give them a stroke */
+#sheet .rlabel { fill: var(--ink-soft); font-family: var(--font-ui); font-weight: 700; }
 #sheet .barno { fill: var(--ink-soft); font-family: var(--font-display); font-style: italic; font-weight: 600; }
 #sheet .note { cursor: pointer; }
 #sheet .hit { fill: transparent; stroke: none; pointer-events: all; }
@@ -715,6 +716,55 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 .mini svg.nico .st { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: butt; }
 .lengths { display: flex; align-items: center; gap: 6px; }
 .lengths .lbl { min-width: 7.2em; text-align: right; margin-right: 2px; }
+.restctl { position: relative; display: flex; align-items: center; gap: 4px; }
+.rlen {
+  min-width: 30px; height: 26px; padding: 0 8px; border: 0; border-radius: 13px; cursor: pointer;
+  font: 700 12px / 1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--ink);
+  background-color: var(--paper); background-image: var(--fibers);
+  box-shadow: inset 1px 2px 3px rgba(70, 45, 12, 0.5), 0 0 0 1px var(--brass-deep), 1px 1px 0 1px rgba(255, 240, 205, 0.55);
+}
+.rlen[aria-expanded="true"] { box-shadow: inset 1px 2px 3px rgba(70, 45, 12, 0.5), 0 0 0 1px var(--brass-deep), 0 0 0 3px rgba(255, 214, 130, 0.75); }
+.rlen:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.pop {
+  position: absolute; right: -6px; bottom: calc(100% + 14px); z-index: 20;
+  width: 264px; padding: 12px 14px 12px;
+  border-radius: 9px; text-align: left; color: var(--ink);
+  background-color: var(--paper);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%), var(--fibers);
+  box-shadow: 0 0 0 2px var(--brass), 0 0 0 3px var(--brass-deep), 4px 10px 22px rgba(0, 0, 0, 0.55);
+}
+.pop[hidden] { display: none; }
+.pop::after { /* little pointer down to the tag */
+  content: ""; position: absolute; right: 16px; bottom: -8px; width: 14px; height: 14px; transform: rotate(45deg);
+  background: var(--paper); box-shadow: 2px 2px 0 0 var(--brass), 3px 3px 0 0 var(--brass-deep);
+}
+.pop-title { margin: 0 0 10px; font: 700 18px / 1.15 var(--font-display); letter-spacing: 0.02em; }
+.pop-row { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font: 600 12.5px / 1.2 var(--font-ui); color: var(--ink-soft); }
+.pop-row label { color: var(--ink); }
+.chip {
+  flex: 1 1 0; height: 36px; padding: 0 10px; border: 0; border-radius: 18px; cursor: pointer;
+  font: 700 12px / 1 var(--font-ui); color: var(--ink);
+  background-color: var(--brass); background-image: var(--brass-face);
+  box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), inset -1px -1px 0 rgba(91, 67, 31, 0.55), 0 3px 0 var(--brass-deep), 1px 5px 6px rgba(0, 0, 0, 0.35);
+  text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.55);
+}
+.chip[aria-pressed="true"] {
+  transform: translateY(2px);
+  background-image: var(--brass-face-down);
+  box-shadow: inset 1px 2px 3px rgba(91, 67, 31, 0.7), 0 1px 0 var(--brass-deep), 0 0 0 2px rgba(255, 214, 130, 0.75);
+}
+.chip:focus-visible, #restIn:focus-visible, .pop .tool:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+#restIn {
+  width: 74px; height: 36px; padding: 0 10px; border: 0; border-radius: 6px;
+  font: 600 16px / 1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--ink);
+  background: #FFFDF5;
+  box-shadow: inset 1px 2px 3px rgba(70, 45, 12, 0.45), 0 0 0 1px var(--brass-deep);
+  -webkit-user-select: text; user-select: text;
+}
+#restIn[aria-invalid="true"] { box-shadow: inset 1px 2px 3px rgba(70, 45, 12, 0.45), 0 0 0 2px #A8371F; }
+.pop-err { min-height: 1.25em; margin: -4px 0 8px; font: 600 12px / 1.25 var(--font-ui); color: #97301A; }
+.pop-end { justify-content: flex-end; margin: 0; }
+.pop .tool { flex-direction: row; min-width: 0; min-height: 38px; padding: 0 16px; font-size: 11px; }
 .lengths .sep { width: 1px; height: 22px; margin: 0 3px; background: rgba(91, 67, 31, 0.5); box-shadow: 1px 0 0 rgba(255, 240, 205, 0.5); }
 #helpBtn { flex: none; font: 700 19px / 1 var(--font-display); }
 .rail-end { display: flex; align-items: center; gap: 12px; margin-left: auto; min-width: 0; }
@@ -1037,6 +1087,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 @media (pointer: coarse) and (max-height: 400px) and (min-width: 480px) {
   .mini { width: 28px; height: 28px; }
 }
+@media (max-width: 420px) and (pointer: coarse) {
+  .octave { display: none; }
+}
 @media (max-width: 420px) {
   .mini { width: 32px; height: 32px; }
   .rail { padding-left: 8px; padding-right: 8px; }
@@ -1257,9 +1310,29 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3.4"/></svg>
         </button>
         <span class="sep" aria-hidden="true"></span>
-        <button id="restBtn" class="mini" type="button" aria-label="Add a rest" aria-keyshortcuts="R" title="Add a rest (a silence) of the chosen length (R)">
-          <svg class="nico" viewBox="-1.3 -1.8 2.6 3.6" aria-hidden="true" focusable="false"><use href="#g-qrest"/></svg>
-        </button>
+        <div class="restctl">
+          <button id="restBtn" class="mini" type="button" aria-label="Add a rest" aria-keyshortcuts="R" title="Add a rest (a silence) of the length on the tag (R)">
+            <svg class="nico" viewBox="-1.3 -1.8 2.6 3.6" aria-hidden="true" focusable="false"><use href="#g-qrest"/></svg>
+          </button>
+          <button id="restLenBtn" class="rlen" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="restPop" title="Rest length in beats: 1, 0.5 or anything from 0.1 to 10">1</button>
+          <div id="restPop" class="pop" role="dialog" aria-labelledby="restPopTitle" hidden>
+            <p id="restPopTitle" class="pop-title"><span id="restPopFor">Next rest</span>: how long?</p>
+            <div class="pop-row">
+              <button class="chip" type="button" data-rl="1" aria-pressed="false">1 beat</button>
+              <button class="chip" type="button" data-rl="0.5" aria-pressed="false">0.5 beat</button>
+            </div>
+            <div class="pop-row">
+              <label for="restIn">Custom</label>
+              <input id="restIn" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="6" aria-describedby="restErr restHint">
+              <span id="restHint">beats (0.1&ndash;10)</span>
+            </div>
+            <p id="restErr" class="pop-err" aria-live="polite"></p>
+            <div class="pop-row pop-end">
+              <button id="restSetBtn" class="tool" type="button">Set</button>
+              <button id="restAddBtn" class="tool" type="button">Add rest</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="rail-end">
         <p class="rail-hint"><kbd>A</kbd>&ndash;<kbd>K</kbd> play C to C &middot; <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys &middot; <kbd>R</kbd> rest &middot; <kbd>Space</kbd> play song</p>
@@ -1284,7 +1357,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     <dt><kbd>Z</kbd> / <kbd>X</kbd></dt><dd>Octave down / up</dd>
     <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Whole, half, quarter, eighth note</dd>
     <dt><kbd>.</kbd></dt><dd>Dotted note (one and a half times as long)</dd>
-    <dt><kbd>R</kbd></dt><dd>Add a rest (a silence) of the chosen length; it copies as <code>R</code></dd>
+    <dt><kbd>R</kbd></dt><dd>Add a rest (a silence); the tag next to the rest button sets its length: 1 beat, 0.5 beat or anything from 0.1 to 10. It copies as <code>R</code></dd>
     <dt><kbd>Space</kbd></dt><dd>Play / pause the whole song (in the beat maker: loop the beat)</dd>
     <dt><kbd>Esc</kbd></dt><dd>Stop, or unselect a note</dd>
     <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>Tempo down / up by 5 BPM</dd>
@@ -1431,7 +1504,12 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       'M-0.24 -0.23Q0.1 -0.16 0.41 -0.62L0.48 -0.55Q0.2 -0.04 -0.26 -0.13Z' +
       'M0.41 -0.62L0.49 -0.57L0.07 0.98L-0.04 0.95Z';
 
-    return { treble: treble, bass: bass, brace: brace, flag: flag, sharp: sharp, four: four, qrest: qrest, erest: erest };
+    var srest = dot(-0.08, 0.97, 0.23) +
+      'M-0.12 -0.73Q0.22 -0.66 0.53 -1.12L0.6 -1.05Q0.32 -0.54 -0.14 -0.63Z' +
+      dot(-0.32, -0.03, 0.23) +
+      'M-0.36 0.27Q-0.02 0.34 0.31 -0.12L0.38 -0.05Q0.08 0.46 -0.38 0.37Z' +
+      'M0.53 -1.12L0.61 -1.07L0.05 1.48L-0.06 1.45Z';
+    return { treble: treble, bass: bass, brace: brace, flag: flag, sharp: sharp, four: four, qrest: qrest, erest: erest, srest: srest };
   })();
 
   (function installGlyphs() {
@@ -1444,7 +1522,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         '<path id="g-sharp" d="' + Glyphs.sharp + '"/>' +
         '<path id="g-four" d="' + Glyphs.four + '"/>' +
         '<path id="g-qrest" d="' + Glyphs.qrest + '"/>' +
-        '<path id="g-erest" d="' + Glyphs.erest + '"/>';
+        '<path id="g-erest" d="' + Glyphs.erest + '"/>' +
+        '<path id="g-srest" d="' + Glyphs.srest + '"/>';
     } catch (e) { /* the staff still renders without glyphs */ }
   })();
 
@@ -1456,7 +1535,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   var PREF_KEY = 'noteCracker.prefs.v1';
   var BEAT_KEY = 'noteCracker.beat.v1';
   var LENGTHS = [6, 4, 3, 2, 1.5, 1, 0.5];          // in beats; 6, 3 and 1.5 are the dotted lengths
-  var LEN_NAMES = { 6: 'dotted whole', 4: 'whole', 3: 'dotted half', 2: 'half', 1.5: 'dotted quarter', 1: 'quarter', 0.5: 'eighth' };
+  var LEN_NAMES = { 6: 'dotted whole', 4: 'whole', 3: 'dotted half', 2: 'half', 1.5: 'dotted quarter', 1: 'quarter', 0.75: 'dotted eighth', 0.5: 'eighth', 0.25: 'sixteenth' };
+  var REST_MIN = 0.1, REST_MAX = 10;                // rests can be any length in between (in beats)
   var notes = [];                                   // [{ n: 'C4', d: 1 }], entries are never mutated in place
   var past = [];
   var future = [];
@@ -1489,15 +1569,20 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 
   // settings that survive a reload
   var nextLen = 1, nextDot = false, bpm = 100, loopOn = false;
-  var swing = 0, drumsOn = true, view = 'sheet';
+  var swing = 0, drumsOn = true, view = 'sheet', restLen = 1;
 
   function isLen(d) { return LENGTHS.indexOf(d) >= 0; }
-  function isEntry(e) { return !!e && typeof e === 'object' && (isValidNote(e.n) || isRest(e.n)) && isLen(e.d); }
+  function isRestLen(d) { return typeof d === 'number' && isFinite(d) && d >= REST_MIN - 1e-9 && d <= REST_MAX + 1e-9; }
+  function cleanRest(v) { return Math.round(v * 100) / 100; }
+  function fmtBeats(d) { return String(Math.round(d * 100) / 100); }
+  function isEntry(e) { return !!e && typeof e === 'object' && ((isValidNote(e.n) && isLen(e.d)) || (isRest(e.n) && isRestLen(e.d))); }
   // how a note reads in messages: "E4", or "a quarter rest"
-  function noteLabel(e) { return isRest(e.n) ? withArticle(lenName(e.d)) + ' rest' : e.n; }
+  function noteLabel(e) { return isRest(e.n) ? withArticle(restName(e.d)) + ' rest' : e.n; }
+  // "quarter" for the lengths music has a name for, otherwise "0.3-beat"
+  function restName(d) { return LEN_NAMES[d] || fmtBeats(d) + '-beat'; }
   function lenParts(d) { return d === 6 || d === 3 || d === 1.5 ? { base: d / 1.5, dot: true } : { base: d, dot: false }; }
   function lenName(d) { return LEN_NAMES[d] || 'quarter'; }
-  function withArticle(word) { return (/^[aeiou]/.test(word) ? 'an ' : 'a ') + word; }
+  function withArticle(word) { return (/^([aeiou]|8)/.test(word) ? 'an ' : 'a ') + word; }
   function fmtTime(sec) {
     sec = Math.max(0, Math.floor(sec + 1e-6));
     var m = Math.floor(sec / 60), r = sec % 60;
@@ -1555,11 +1640,12 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       if (typeof p.swing === 'number' && p.swing >= 0 && p.swing <= 100) swing = Math.round(p.swing / 5) * 5;
       drumsOn = p.drums !== false;
       view = p.view === 'beat' ? 'beat' : 'sheet';
+      if (isRestLen(p.rest)) restLen = cleanRest(p.rest);
     } catch (e) { /* defaults */ }
   }
   function savePrefs() {
     try {
-      window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn, swing: swing, drums: drumsOn, view: view }));
+      window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn, swing: swing, drums: drumsOn, view: view, rest: restLen }));
     } catch (e) { /* ignore */ }
   }
 
@@ -1583,7 +1669,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 
   function addNote(name) {
     if (!isValidNote(name) && !isRest(name)) return false;
-    var op = { t: 'add', e: { n: name, d: nextLength() } };
+    var op = { t: 'add', e: { n: name, d: isRest(name) ? restLen : nextLength() } };   // rests have their own length
     applyOp(op); record(op);
     sel = -1;                                       // playing the piano always writes at the end
     changed('add', op);
@@ -1617,7 +1703,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     return true;
   }
   function setLength(i, d) {
-    if (i < 0 || i >= notes.length || !isLen(d) || notes[i].d === d) return false;
+    if (i < 0 || i >= notes.length || !(isRest(notes[i].n) ? isRestLen(d) : isLen(d)) || notes[i].d === d) return false;
     var op = { t: 'len', i: i, from: notes[i].d, to: d };
     applyOp(op); record(op);
     changed('len', op);
@@ -1682,6 +1768,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       } catch (e) { /* ignore */ }
     }
     function running() { return !!ctx && ctx.state === 'running'; }
+    // audio time for "delay seconds from now" on one steady clock mapping, so the gaps between song notes stay exact
+    // (ctx.currentTime only moves in ~3 ms steps; reading it fresh for every note would add that jitter)
+    var clockOffset = null;
+    function audioAt(delay) {
+      var perf = performance.now() / 1000, off = ctx.currentTime - perf;
+      if (clockOffset === null || Math.abs(off - clockOffset) > 0.03) clockOffset = off;   // re-sync after a suspend or a long stall
+      return Math.max(ctx.currentTime, perf + clockOffset + Math.max(0, delay || 0)) + 0.01;
+    }
 
     // one struck note starting at audio time t; it rings out on its own unless released earlier
     function makeVoice(name, t) {
@@ -1817,7 +1911,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       try {
         unlock();
         if (!ctx) return;
-        var v = makeDrum(id, ctx.currentTime + 0.01 + Math.max(0, delay || 0), vel == null ? 1 : vel);
+        var v = makeDrum(id, audioAt(delay), vel == null ? 1 : vel);
         if (v) queued.add(v);
       } catch (e) { /* the beat keeps going silently */ }
     }
@@ -1847,7 +1941,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       try {
         unlock();
         if (!ctx || !wave) return;
-        var t = ctx.currentTime + 0.01 + Math.max(0, delay);
+        var t = audioAt(delay);
         var v = makeVoice(name, t);
         if (!v) return;
         var end = t + Math.max(0.06, dur);
@@ -1947,17 +2041,23 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
 
     /* ---- rhythm: notes -> 4-beat bars -> systems ---- */
-    var PIECES = [4, 3, 2, 1.5, 1, 0.5];             // lengths one notehead can show
-    var ROOM = { 0.5: 2.85, 1: 3.0, 1.5: 3.5, 2: 3.9, 3: 4.6, 4: 5.4 };   // staff spaces a piece needs after its head (eighths: room for the flag)
+    var PIECES = [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25];  // lengths one symbol can show
+    var ROOM = { 0.25: 2.7, 0.5: 2.85, 0.75: 3.2, 1: 3.0, 1.5: 3.5, 2: 3.9, 3: 4.6, 4: 5.4 };   // staff spaces a piece needs after its head (flags need room)
     var BAR_IN = 1.4, HEAD_IN = 0.75, BAR_OUT = 0.5, SHARP_ROOM = 1.2, BEAT_ROOM = 3.0;
 
+    // pieces: { d: exact length, v: the symbol drawn }
     function split(x) {
       var out = [], k = 0;
       while (x > 1e-6 && k < PIECES.length) {
-        if (PIECES[k] <= x + 1e-6) { out.push(PIECES[k]); x -= PIECES[k]; } else k++;
+        if (PIECES[k] <= x + 1e-6) { out.push({ d: PIECES[k], v: PIECES[k] }); x -= PIECES[k]; } else k++;
+      }
+      if (x > 1e-6) {                               // a length no symbol shows exactly (custom rests): keep the exact time,
+        if (out.length && x < 0.125) out[out.length - 1].d += x;   // folding a sliver into the piece before it,
+        else out.push({ d: x, v: 0.25 });           // or drawing it with the shortest symbol
       }
       return out;
     }
+    function odd(d) { return Math.abs(d * 4 - Math.round(d * 4)) > 1e-6; }   // not a whole number of sixteenths
     // a note that crosses a barline is written as tied pieces, exactly like printed music
     function measure() {
       var bars = [], cur = { segs: [], used: 0, full: false }, prev = null, i, k;
@@ -1966,12 +2066,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         while (left > 1e-6) {
           var take = Math.min(left, 4 - cur.used), parts = split(take);
           for (k = 0; k < parts.length; k++) {
-            var sg = { i: i, d: parts[k], cont: !first, tie: false, next: null, prev: null, x: 0, k: 0 };
+            var sg = { i: i, d: parts[k].d, v: parts[k].v, cont: !first, tie: false, next: null, prev: null, x: 0, k: 0 };
             if (!first && !isRest(notes[i].n)) { prev.tie = true; prev.next = sg; sg.prev = prev; }   // rests are never tied
-            cur.segs.push(sg); cur.used += parts[k];
+            cur.segs.push(sg);
             prev = sg; first = false;
           }
-          left -= take;
+          cur.used = Math.round((cur.used + take) * 1e6) / 1e6;   // no drift from lengths like 0.1
+          left = Math.round((left - take) * 1e6) / 1e6;
           if (cur.used > 4 - 1e-6) { cur.full = true; bars.push(cur); cur = { segs: [], used: 0, full: false }; }
         }
       }
@@ -1981,7 +2082,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     function hasSharp(sg) { return !sg.cont && notes[sg.i].n.indexOf('#') > 0; }
     function barMin(b) {
       var w = BAR_IN + BAR_OUT, j;
-      for (j = 0; j < b.segs.length; j++) w += (hasSharp(b.segs[j]) ? SHARP_ROOM : 0) + ROOM[b.segs[j].d];
+      for (j = 0; j < b.segs.length; j++) w += (hasSharp(b.segs[j]) ? SHARP_ROOM : 0) + ROOM[b.segs[j].v];
       if (!b.full) w += (4 - b.used) * BEAT_ROOM;     // keep room for the rest of the bar that is being written
       return w * L.s;
     }
@@ -2013,10 +2114,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
             if (hasSharp(sg)) c += SHARP_ROOM * s;
             sg.x = bx + (c + HEAD_IN * s) * f;
             sg.k = k;
-            c += ROOM[sg.d] * s;
+            c += ROOM[sg.v] * s;
             if (!info[sg.i]) info[sg.i] = { k: k, x: sg.x, bar: barNo };
           }
-          var whole = bar.segs.length === 1 && bar.full && bar.segs[0].d === 4 && isRest(notes[bar.segs[0].i].n);
+          var whole = bar.segs.length === 1 && bar.full && bar.segs[0].v === 4 && isRest(notes[bar.segs[0].i].n);
           bx += bar.min * f;
           bar.end = bx;
           if (whole) {                                // a rest that fills the whole bar sits in its middle
@@ -2046,9 +2147,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
 
     function restMarkup(sg, a, flags) {
-      var s = L.s, e = notes[sg.i], mid = geom(sg.i, a).cy, x = sg.x, d = sg.d;
+      var s = L.s, e = notes[sg.i], gm = geom(sg.i, a), mid = gm.cy, x = sg.x, d = sg.v;
       var style = flags.anim ? ' style="transform-origin:' + r1(x) + 'px ' + r1(mid) + 'px"' : '';
-      var name = lenName(e.d);
+      var name = restName(e.d);
       var out = '<g class="note is-rest' + (flags.latest ? ' is-latest' : '') + (flags.anim ? ' ink-in' : '') +
         '" data-note="' + REST + '" data-i="' + sg.i + '"' + style + '><title>' + name.charAt(0).toUpperCase() + name.slice(1) + ' rest</title>';
       out += '<rect class="hit" x="' + r1(x - 1.3 * s) + '" y="' + r1(mid - 2.2 * s) + '" width="' + r1(2.6 * s) + '" height="' + r1(4.4 * s) + '"/>';
@@ -2056,9 +2157,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         // whole rest hangs from the fourth line, half rest sits on the middle line
         out += '<rect class="head" x="' + r1(x - 0.62 * s) + '" y="' + r1(d === 4 ? mid - s : mid - 0.5 * s) + '" width="' + r1(1.24 * s) + '" height="' + r1(0.5 * s) + '"/>';
       } else {
-        out += '<use class="rglyph" href="#g-' + (d >= 1 ? 'q' : 'e') + 'rest" transform="translate(' + r1(x) + ' ' + r1(mid) + ') scale(' + s + ')"/>';
+        out += '<use class="rglyph" href="#g-' + (d >= 1 ? 'q' : d >= 0.5 ? 'e' : 's') + 'rest" transform="translate(' + r1(x) + ' ' + r1(mid) + ') scale(' + s + ')"/>';
       }
-      if (d === 3 || d === 1.5) out += '<circle class="dot" cx="' + r1(x + (d === 3 ? 1.05 : 0.9) * s) + '" cy="' + r1(mid - 0.5 * s) + '" r="' + r1(Math.max(1.2, 0.19 * s)) + '"/>';
+      if (d === 3 || d === 1.5 || d === 0.75) out += '<circle class="dot" cx="' + r1(x + (d === 3 ? 1.05 : 0.9) * s) + '" cy="' + r1(mid - 0.5 * s) + '" r="' + r1(Math.max(1.2, 0.19 * s)) + '"/>';
+      // a length music has no symbol for: the closest symbol, with the exact beats written above it
+      if (!sg.cont && odd(e.d)) {
+        out += '<text class="rlabel" x="' + r1(x) + '" y="' + r1(gm.top - 0.8 * s) + '" font-size="' + r1(Math.max(10, 1.1 * s)) + '" text-anchor="middle">' + fmtBeats(e.d) + '</text>';
+      }
       return out + '</g>';
     }
 
@@ -2067,8 +2172,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       var s = L.s, e = notes[sg.i], p = parseNote(e.n), treble = p.midi >= 60;
       var base = treble ? a.tB : a.bB;
       var step = p.dia - (treble ? 30 : 18);            // half-spaces above the staff's bottom line
-      var cy = base - step * s / 2, x = sg.x, d = sg.d;
-      var whole = d === 4, hollow = d >= 2, eighth = d === 0.5, dotted = d === 3 || d === 1.5;
+      var cy = base - step * s / 2, x = sg.x, d = sg.v;
+      var whole = d === 4, hollow = d >= 2, eighth = d === 0.5 || d === 0.75, sixteenth = d === 0.25, dotted = d === 3 || d === 1.5 || d === 0.75;
       var up = step < 4;                                // below the middle line: stem up
       var endStep = up ? Math.max(step + 7, 4) : Math.min(step - 7, 4);
       var ey = base - endStep * s / 2;
@@ -2086,8 +2191,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       if (!whole) {
         var sx = up ? x + hw - sw / 2 : x - hw + sw / 2;
         out += '<line class="stem" stroke-width="' + r1(sw) + '" x1="' + r1(sx) + '" y1="' + r1(cy) + '" x2="' + r1(sx) + '" y2="' + r1(ey) + '"/>';
-        if (eighth) {
+        if (eighth || sixteenth) {
           out += '<use class="flag" href="#g-flag" transform="translate(' + r1(sx - sw / 2) + ' ' + r1(ey) + ') scale(' + s + (up ? '' : ' ' + (-s)) + ')"/>';
+          if (sixteenth) out += '<use class="flag" href="#g-flag" transform="translate(' + r1(sx - sw / 2) + ' ' + r1(ey + (up ? 0.85 : -0.85) * s) + ') scale(' + s + (up ? '' : ' ' + (-s)) + ')"/>';
         }
       }
       if (p.sharp && !sg.cont) out += '<use class="acc" href="#g-sharp" transform="translate(' + r1(x - (whole ? 1.62 : 1.42) * s) + ' ' + r1(cy) + ') scale(' + s + ')"/>';
@@ -2107,7 +2213,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       // ties: to the next piece on this line, or out to the edge when the line breaks in the middle of the note
       var dir = up ? 1 : -1, ty = cy + dir * 0.72 * s, gapX = (whole ? 0.95 : 0.72) * s;
       if (sg.tie && sg.next) {
-        var x2 = sg.next.k === sg.k ? sg.next.x - (sg.next.d === 4 ? 0.95 : 0.72) * s : L.R - 0.2 * s;
+        var x2 = sg.next.k === sg.k ? sg.next.x - (sg.next.v === 4 ? 0.95 : 0.72) * s : L.R - 0.2 * s;
         out += '<path class="tie" d="' + tieD(x + gapX, x2, ty, dir) + '"/>';
       }
       if (sg.prev && sg.prev.k !== sg.k) out += '<path class="tie" d="' + tieD(x - 2.4 * s, x - gapX, ty, dir) + '"/>';
@@ -2359,7 +2465,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     select(sel, true);
     if (kind === 'del') say('Removed ' + noteLabel(op.e));
     else if (kind === 'clr') say('Sheet cleared (' + op.list.length + (op.list.length === 1 ? ' note' : ' notes') + ')');
-    else if (kind === 'len') say((isRest(notes[op.i].n) ? 'The rest' : notes[op.i].n) + ' is now ' + withArticle(lenName(op.to)) + (isRest(notes[op.i].n) ? ' rest' : ' note'));
+    else if (kind === 'len') say(isRest(notes[op.i].n) ? 'The rest is now ' + withArticle(restName(op.to)) + ' rest' : notes[op.i].n + ' is now ' + withArticle(lenName(op.to)) + ' note');
     else if (kind === 'undo') say('Undone');
     else if (kind === 'redo') say('Redone');
   }
@@ -2413,14 +2519,18 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     var pos = 0;                                    // where the next Play starts
     var from = 0;                                   // where this run started: Stop and Loop come back here
     var cur = -1, timer = 0, ending = false;
-    var stepTime = 0, stepBeat = 0;                 // the next sixteenth step: when it sounds, and which beat of the song it is
-    var noteIdx = 0, noteBeat = 0;                  // the next note to start, and the beat it starts on
+    var anchorTime = 0, anchorBeat = 0, curSpb = 0.6;   // beat -> time: anchorTime + (beat - anchorBeat) * curSpb
+    var noteIdx = 0, noteBeat = 0;                  // the next note to start, and the beat it starts on (any beat, not just the grid)
+    var dBeat = 0;                                  // the next drum step, always on the sixteenth grid
+    var finBeat = -1;                               // once the melody is over: the beat where playback ends
     var pending = new Set();                        // timeouts that sync the picture with the sound
     var lit = new Map();                            // key element -> number of song notes holding it down
     var LOOKAHEAD = 0.15, TICK = 25;
 
     function clock() { return performance.now() / 1000; }
     function clampIdx(i) { return Math.max(0, Math.min(notes.length - 1, i | 0)); }
+    function timeOf(b) { return anchorTime + (b - anchorBeat) * curSpb; }
+    function gridUp(b) { return Math.ceil(b * 4 - 1e-6) / 4; }
     function later(fn, ms) {
       var id = setTimeout(function () { pending.delete(id); fn(); }, Math.max(0, ms));
       pending.add(id);
@@ -2459,52 +2569,72 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       Sound.unlock();
       halt();
       mode = m;
-      if (mode === 'song') {
-        from = clampIdx(i); pos = from;
-        noteIdx = from; stepBeat = noteBeat = beatsBefore(from);   // drums line up with the bar the start note is in
-      } else {
-        noteIdx = notes.length; stepBeat = noteBeat = 0;
-      }
+      var b0 = 0;
+      if (mode === 'song') { from = clampIdx(i); pos = from; noteIdx = from; b0 = beatsBefore(from); }
+      else noteIdx = notes.length;
+      noteBeat = anchorBeat = b0;
+      anchorTime = clock() + 0.06;
+      curSpb = secPerBeat();
+      dBeat = gridUp(b0);                           // the drums line up with the bar the start note is in
+      finBeat = -1;
       cur = -1;
-      stepTime = clock() + 0.06;
       state = 'playing';
       timer = setInterval(tick, TICK);
       tick();
       ui();
     }
-    // schedule every step that starts within the look-ahead window; the tempo is read live
+    // a tempo change takes effect from the first event that has not been scheduled yet
+    function retime(song, drums, endBeat) {
+      var spb = secPerBeat();
+      if (Math.abs(spb - curSpb) < 1e-9) return;
+      var eb = Infinity;
+      if (song && finBeat < 0) eb = noteIdx < notes.length ? noteBeat : endBeat;
+      if (drums) eb = Math.min(eb, dBeat);
+      if (finBeat >= 0) eb = Math.min(eb, finBeat);
+      if (isFinite(eb)) { anchorTime = timeOf(eb); anchorBeat = eb; }
+      curSpb = spb;
+    }
+    // schedule every note and drum step that starts within the look-ahead window, in time order
     function tick() {
       if (state !== 'playing' || ending) return;
+      var song = mode === 'song', endBeat = song ? beatsBefore(notes.length) : 0;
+      var drums = (!song || drumsOn) && beatHasHits();
+      retime(song, drums, endBeat);
       var horizon = clock() + LOOKAHEAD, guard = 0;
-      var endBeat = mode === 'song' ? beatsBefore(notes.length) : 0;
-      var drums = mode === 'beat' || drumsOn;
-      while (stepTime < horizon && guard++ < 512) {
-        var spb = secPerBeat();
-        if (mode === 'song') {
-          if (noteIdx >= notes.length && stepBeat >= endBeat - 1e-6) {
-            if (loopOn && notes.length) {
+      while (guard++ < 2048) {
+        var tD = drums ? timeOf(dBeat) : Infinity;
+        if (song && finBeat < 0 && noteIdx >= notes.length) {       // the last note has started: the song ends at endBeat
+          var tE = timeOf(endBeat);
+          if (tE >= horizon && tD >= horizon) break;
+          if (tE <= tD) {
+            if (loopOn && notes.length) {                           // jump back to where this run started
               noteIdx = Math.min(from, notes.length - 1);
-              stepBeat = noteBeat = beatsBefore(noteIdx);
+              anchorTime = tE;
+              anchorBeat = noteBeat = beatsBefore(noteIdx);
+              dBeat = gridUp(anchorBeat);
               continue;
             }
-            // the last note is over: the drums finish their bar, then the song ends
-            var barEnd = Math.ceil(endBeat / 4 - 1e-6) * 4;
-            if (!drums || !beatHasHits() || stepBeat >= barEnd - 1e-6) {
-              ending = true;
-              later(finish, (stepTime - clock()) * 1000);
-              return;
-            }
-          }
-          while (noteIdx < notes.length && noteBeat <= stepBeat + 1e-6) {
-            var e = notes[noteIdx];
-            if (noteBeat >= stepBeat - 1e-6) schedule(noteIdx, e, stepTime, e.d * spb);
-            noteBeat += e.d;
-            noteIdx++;
+            finBeat = drums ? Math.max(endBeat, Math.ceil(endBeat / 4 - 1e-6) * 4) : endBeat;   // the drums finish their bar
           }
         }
-        if (drums) drumStep(stepBeat, stepTime, spb);
-        stepTime += spb / 4;
-        stepBeat += 0.25;
+        if (finBeat >= 0) {
+          var tF = timeOf(finBeat);
+          if (tF <= tD) {
+            if (tF < horizon) { ending = true; later(finish, (tF - clock()) * 1000); return; }
+            break;
+          }
+        }
+        var tN = song && finBeat < 0 && noteIdx < notes.length ? timeOf(noteBeat) : Infinity;
+        if (!(Math.min(tN, tD) < horizon)) break;
+        if (tN <= tD) {
+          var e = notes[noteIdx];
+          schedule(noteIdx, e, tN, e.d * curSpb);
+          noteBeat += e.d;
+          noteIdx++;
+        } else {
+          drumStep(dBeat, tD);
+          dBeat += 0.25;
+        }
       }
     }
     function schedule(i, e, at, dur) {
@@ -2520,9 +2650,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       }, delay * 1000);
     }
     // one sixteenth of the beat; swing pushes every second sixteenth late (up to a triplet feel)
-    function drumStep(beatPos, time, spb) {
+    function drumStep(beatPos, time) {
       var step = Math.round(beatPos * 4) % STEPS;
-      var at = time + (step % 2 ? (swing / 100) * (spb / 4) / 3 : 0);
+      var at = time + (step % 2 ? (swing / 100) * (curSpb / 4) / 3 : 0);
       for (var r = 0; r < DRUMS.length; r++) if (beat[r][step]) Sound.drum(DRUMS[r].id, at - clock());
       later(function () { if (state === 'playing') Beat.showStep(step); }, (time - clock()) * 1000);
     }
@@ -2954,7 +3084,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     syncLenUI();
     if (!quiet && i >= 0 && i !== was) {
       var inf = Sheet.info(i);
-      var what = isRest(notes[i].n) ? withArticle(lenName(notes[i].d)) + ' rest' : notes[i].n + ', ' + withArticle(lenName(notes[i].d)) + ' note';
+      var what = isRest(notes[i].n) ? withArticle(restName(notes[i].d)) + ' rest' : notes[i].n + ', ' + withArticle(lenName(notes[i].d)) + ' note';
       say('Selected ' + what + (inf ? ' in bar ' + inf.bar : '') + '. Pick a length to change it.', 4200);
     }
   }
@@ -2976,6 +3106,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     dotBtn.setAttribute('aria-pressed', cur.dot ? 'true' : 'false');
     dotBtn.disabled = cur.base === 0.5;               // no dotted eighths: their pieces would need sixteenth notes
     lenLbl.textContent = sel < 0 ? 'Next note' : isRest(notes[sel].n) ? 'Rest' : 'Note ' + notes[sel].n;
+    syncRestUI();
   }
   // with a note selected the length buttons change that note, otherwise they set the length of the next note
   function chooseLen(base) {
@@ -3274,6 +3405,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
     if (e.altKey) return;
     if (e.key === 'Escape') {
+      if (closeRestPop(true)) { e.preventDefault(); return; }
       if (isTypingTarget(e.target) && e.target.blur) { e.target.blur(); return; }
       if (Player.stop()) { e.preventDefault(); say('Stopped'); return; }
       if (sel >= 0) { e.preventDefault(); select(-1, true); Player.picked(-1); }
@@ -3371,6 +3503,81 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   lenBtns.forEach(function (b) { b.addEventListener('click', function () { chooseLen(+b.getAttribute('data-len')); }); });
   dotBtn.addEventListener('click', toggleDot);
   $('restBtn').addEventListener('click', function () { addNote(REST); });
+
+  /* ---- rest length: the tag next to the rest button (1 beat, 0.5 beat, or anything from 0.1 to 10) ---- */
+  var restLenBtn = $('restLenBtn'), restPop = $('restPop'), restIn = $('restIn'), restErr = $('restErr'), restPopFor = $('restPopFor');
+  var restChips = Array.prototype.slice.call(document.querySelectorAll('.chip[data-rl]'));
+  function beatsWord(v) { return fmtBeats(v) + (v === 1 ? ' beat' : ' beats'); }
+  // with a rest selected the tag edits that rest, otherwise it sets the length of the next rest
+  function restTarget() { return sel >= 0 && sel < notes.length && isRest(notes[sel].n) ? sel : -1; }
+  function syncRestUI() {
+    var t = restTarget(), v = t >= 0 ? notes[t].d : restLen;
+    restLenBtn.textContent = fmtBeats(v);
+    restLenBtn.setAttribute('aria-label', (t >= 0 ? 'Selected rest length: ' : 'Rest length: ') + beatsWord(v) + '. Change it');
+    restChips.forEach(function (c) { c.setAttribute('aria-pressed', +c.getAttribute('data-rl') === v ? 'true' : 'false'); });
+    restPopFor.textContent = t >= 0 ? 'Selected rest' : 'Next rest';
+  }
+  function openRestPop() {
+    var t = restTarget();
+    syncRestUI();
+    restIn.value = fmtBeats(t >= 0 ? notes[t].d : restLen);
+    restErr.textContent = '';
+    restIn.removeAttribute('aria-invalid');
+    restPop.hidden = false;
+    restLenBtn.setAttribute('aria-expanded', 'true');
+    var on = restChips.filter(function (c) { return c.getAttribute('aria-pressed') === 'true'; })[0];
+    (on || restIn).focus({ preventScroll: true });
+  }
+  function closeRestPop(focusBack) {
+    if (restPop.hidden) return false;
+    restPop.hidden = true;
+    restLenBtn.setAttribute('aria-expanded', 'false');
+    if (focusBack) restLenBtn.focus({ preventScroll: true });
+    return true;
+  }
+  function readRestInput() {
+    var raw = String(restIn.value).trim().replace(',', '.'), v = raw === '' ? NaN : Number(raw);
+    if (!isRestLen(v)) {
+      restErr.textContent = 'Type a length from ' + REST_MIN + ' to ' + REST_MAX + ' beats';
+      restIn.setAttribute('aria-invalid', 'true');
+      restIn.focus();
+      return null;
+    }
+    restErr.textContent = '';
+    restIn.removeAttribute('aria-invalid');
+    return cleanRest(v);
+  }
+  function setRestLen(v) {
+    var t = restTarget();
+    if (t >= 0) { if (!setLength(t, v)) say('The rest is already ' + beatsWord(v) + ' long'); }
+    else { restLen = v; savePrefs(); say('Next rests: ' + beatsWord(v)); }
+    syncRestUI();
+  }
+  restLenBtn.addEventListener('click', function () { if (!closeRestPop(false)) openRestPop(); });
+  restChips.forEach(function (c) {
+    c.addEventListener('click', function () { setRestLen(+c.getAttribute('data-rl')); closeRestPop(true); });
+  });
+  $('restSetBtn').addEventListener('click', function () {
+    var v = readRestInput();
+    if (v === null) return;
+    setRestLen(v);
+    closeRestPop(true);
+  });
+  $('restAddBtn').addEventListener('click', function () {
+    var v = readRestInput();
+    if (v === null) return;
+    restLen = v; savePrefs();
+    closeRestPop(true);
+    addNote(REST);                                  // a new rest at the end, with this length
+  });
+  restIn.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('restSetBtn').click(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeRestPop(true); }
+  });
+  restIn.addEventListener('input', function () { if (restIn.getAttribute('aria-invalid')) readRestInput(); });
+  document.addEventListener('pointerdown', function (e) {
+    if (!restPop.hidden && !(e.target.closest && e.target.closest('.restctl'))) closeRestPop(false);
+  }, true);
 
   function setTempo(v, fromSlider) {
     v = Math.max(40, Math.min(240, Math.round(+v || 100)));
