@@ -243,7 +243,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     1px 3px 4px rgba(0, 0, 0, 0.4);
 }
 .tool:disabled .ico { filter: none; opacity: 0.7; }
-.tool:focus-visible, .mini:focus-visible, .sheet-scroll:focus-visible, #noteText:focus-visible, #tempo:focus-visible {
+.tool:focus-visible, .mini:focus-visible, .sheet-scroll:focus-visible, #noteText:focus-visible, .fader:focus-visible, .dtab:focus-visible, .pad:focus-visible, .bg-name:focus-visible, .bselect:focus-visible {
   outline: 3px solid var(--cream);
   outline-offset: 3px;
 }
@@ -350,32 +350,32 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 .tempo { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
 .tempo .readwin { flex: none; min-width: 3.4ch; }
 .tempo .unit { font: 600 11px / 1 var(--font-ui); letter-spacing: 0.1em; color: var(--cream); flex: none; }
-#tempo {
+.fader {
   --fill: 30%;
   flex: 1 1 auto; min-width: 48px; max-width: 360px; height: 30px; margin: 0;
   background: transparent; cursor: pointer;
   -webkit-appearance: none; appearance: none;
   touch-action: pan-y;
 }
-#tempo::-webkit-slider-runnable-track {
+.fader::-webkit-slider-runnable-track {
   height: 8px; border-radius: 4px;
   background: linear-gradient(90deg, #C8A66A 0, var(--brass) var(--fill), #170D06 var(--fill));
   box-shadow: inset 1px 2px 3px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 214, 160, 0.2);
 }
-#tempo::-webkit-slider-thumb {
+.fader::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 24px; height: 24px; margin-top: -8px; border: 0; border-radius: 50%;
   background: radial-gradient(circle at 32% 28%, #F3E1B0 0%, #CDAA6E 40%, #9C7A45 100%);
   box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), inset -1px -1px 1px rgba(91, 67, 31, 0.6), 0 2px 0 var(--brass-deep), 1px 4px 5px rgba(0, 0, 0, 0.55);
 }
-#tempo::-moz-range-track { height: 8px; border-radius: 4px; background: #170D06; box-shadow: inset 1px 2px 3px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 214, 160, 0.2); }
-#tempo::-moz-range-progress { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #C8A66A, var(--brass)); }
-#tempo::-moz-range-thumb {
+.fader::-moz-range-track { height: 8px; border-radius: 4px; background: #170D06; box-shadow: inset 1px 2px 3px rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 214, 160, 0.2); }
+.fader::-moz-range-progress { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #C8A66A, var(--brass)); }
+.fader::-moz-range-thumb {
   width: 24px; height: 24px; border: 0; border-radius: 50%;
   background: radial-gradient(circle at 32% 28%, #F3E1B0 0%, #CDAA6E 40%, #9C7A45 100%);
   box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), 0 2px 0 var(--brass-deep), 1px 4px 5px rgba(0, 0, 0, 0.55);
 }
-#tempo:focus-visible { outline-offset: 2px; border-radius: 8px; }
+.fader:focus-visible { outline-offset: 2px; border-radius: 8px; }
 .counter { display: flex; align-items: center; gap: 10px; flex: none; }
 .counter .readwin { font: 600 13px / 1.35 var(--font-ui); letter-spacing: 0.02em; padding: 4px 10px 3px; min-width: 15ch; }
 .counter .readwin b { font-weight: 700; }
@@ -404,6 +404,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 
 /* ---------- music desk with the manuscript sheet ---------- */
 .desk {
+  --tabs: 32px;                                     /* the Sheet / Beat maker tab strip */
   position: relative;
   flex: 1 1 0;
   min-height: 214px;
@@ -422,9 +423,153 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     4px 9px 16px rgba(0, 0, 0, 0.5);
 }
 .desk::after { /* the paper sits under the frame: inner shadow from the top-left lip */
-  content: ""; position: absolute; inset: 10px; border-radius: 5px; pointer-events: none;
+  content: ""; position: absolute; inset: calc(10px + var(--tabs)) 10px 10px; border-radius: 5px; pointer-events: none;
   box-shadow: inset 4px 5px 10px rgba(30, 15, 4, 0.42), inset -2px -2px 5px rgba(30, 15, 4, 0.18);
 }
+/* tabs set into the top of the desk frame */
+.desk-tabs { position: relative; z-index: 1; display: flex; gap: 6px; height: 26px; margin: -2px 0 8px; }
+.dtab {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 0 14px; border: 0; border-radius: 6px; cursor: pointer;
+  font: 700 10.5px / 1 var(--font-ui); letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--cream);
+  background: rgba(20, 10, 4, 0.38);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 214, 160, 0.16);
+}
+.dtab svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dtab[aria-selected="true"] {
+  color: var(--ink);
+  background-color: var(--brass);
+  background-image: var(--brass-face);
+  box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), inset -1px -1px 0 rgba(91, 67, 31, 0.55), 0 2px 0 var(--brass-deep), 1px 3px 4px rgba(0, 0, 0, 0.45);
+  text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.55);
+}
+
+/* ---------- beat maker: a step sequencer set into the desk ---------- */
+.app.beat-mode .piano { display: none; }
+.beat-view {
+  --namew: 104px;
+  flex: 1 1 0; min-height: 0;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 10px 12px 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: 5px;
+  background-color: #2B1A0D;
+  background-image: linear-gradient(180deg, rgba(255, 206, 150, 0.07), rgba(0, 0, 0, 0.22)), var(--grain);
+  box-shadow: 0 0 0 2px var(--brass), 0 0 0 3px var(--brass-deep), inset 3px 4px 10px rgba(0, 0, 0, 0.6);
+  scrollbar-width: thin; scrollbar-color: var(--brass-lo) transparent;
+}
+.beat-view[hidden] { display: none; }
+.beat-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.beat-head .tool { flex-direction: row; gap: 7px; min-width: 0; min-height: 40px; padding: 0 13px; font-size: 10.5px; }
+.beat-head .tool .ico { width: 18px; height: 18px; }
+#beatPlayBtn { min-width: 98px; }
+#beatPlayBtn .ico { fill: currentColor; stroke-width: 1.4; }
+.bselect {
+  height: 36px; padding: 0 32px 0 12px; border: 0; border-radius: 6px; cursor: pointer;
+  font: 600 13px / 1 var(--font-ui); color: var(--ink);
+  -webkit-appearance: none; appearance: none;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%),
+    var(--fibers);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%, 0 0;
+  background-size: 5px 5px, 5px 5px, auto;
+  background-repeat: no-repeat, no-repeat, repeat;
+  box-shadow: inset 1px 2px 3px rgba(70, 45, 12, 0.45), 0 0 0 2px var(--brass), 0 0 0 3px var(--brass-deep), 2px 4px 6px rgba(0, 0, 0, 0.4);
+}
+.swing { display: flex; align-items: center; gap: 9px; flex: 1 1 200px; min-width: 150px; max-width: 340px; }
+.swing .readwin { flex: none; min-width: 4.2ch; font-size: 15px; }
+.pager { display: none; gap: 6px; margin-left: auto; }
+.pager .mini { width: auto; height: 32px; padding: 0 10px; border-radius: 16px; font: 700 11px / 1 var(--font-ui); letter-spacing: 0.04em; }
+.pager .mini.is-live::after {
+  content: ""; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFF6D8, #FFD27A 45%, #C98F2B 100%);
+  box-shadow: 0 0 5px 1px rgba(255, 210, 120, 0.8);
+}
+.beat-grid { flex: 1 1 auto; display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+.bg-row { display: flex; align-items: stretch; gap: 10px; flex: 1 1 0; min-height: 30px; max-height: 64px; }
+.bg-ruler { flex: none; min-height: 0; height: 14px; }
+.bg-group { flex: 1 1 0; display: flex; gap: 4px; min-width: 0; }
+.bg-ruler .bg-group span { flex: 1 1 0; min-width: 0; font: 700 10px / 14px var(--font-ui); color: rgba(243, 234, 211, 0.75); padding-left: 3px; }
+.bg-ruler .bg-group span:not(:first-child) { color: rgba(243, 234, 211, 0.3); }
+.bg-ruler .bg-name { visibility: hidden; height: 0; }
+.bg-name {
+  flex: none; width: var(--namew);
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 10px; border: 0; border-radius: 6px; cursor: pointer;
+  font: 700 10.5px / 1.1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; text-align: left;
+  color: var(--ink);
+  background-color: var(--brass);
+  background-image: var(--brass-face);
+  box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.8), inset -1px -1px 0 rgba(91, 67, 31, 0.5), 0 2px 0 var(--brass-deep), 1px 3px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.5);
+  transition: transform 0.08s ease-out;
+}
+.bg-name:active { transform: translateY(2px); box-shadow: inset 1px 1px 3px rgba(91, 67, 31, 0.6), 0 0 0 var(--brass-deep); transition: none; }
+.bg-name .sw { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(40, 25, 5, 0.45); }
+.pad {
+  flex: 1 1 0; min-width: 0; padding: 0; border: 0; border-radius: 5px; cursor: pointer;
+  touch-action: none;
+  background-color: var(--ivory);
+  background-image: linear-gradient(180deg, var(--ivory-hi) 0%, var(--ivory) 55%, var(--ivory-lo) 100%);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.85), inset -1px -1px 0 rgba(120, 100, 60, 0.3), 0 3px 0 var(--ivory-edge), 1px 4px 5px rgba(0, 0, 0, 0.5);
+  transition: transform 0.06s ease-out, background-color 0.06s ease-out;
+}
+.bg-group.alt .pad {
+  background-color: #DCCDA6;
+  background-image: linear-gradient(180deg, #EADFC2 0%, #DCCDA6 55%, #CDBC92 100%);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.6), inset -1px -1px 0 rgba(120, 100, 60, 0.35), 0 3px 0 #A8976E, 1px 4px 5px rgba(0, 0, 0, 0.5);
+}
+.pad[aria-pressed="true"], .bg-group.alt .pad[aria-pressed="true"] {
+  transform: translateY(2px);
+  background-color: #F2A93B;
+  background-image: radial-gradient(120% 140% at 50% 30%, #FFF0C2 0%, #FFC861 38%, #E8902A 100%);
+  box-shadow: inset 0 0 0 1px rgba(120, 60, 0, 0.45), inset 0 -3px 6px rgba(150, 70, 0, 0.35), 0 1px 0 #9C5A12, 0 0 10px 2px rgba(255, 180, 70, 0.55);
+}
+.pad.is-now { filter: brightness(1.12); outline: 2px solid rgba(255, 246, 216, 0.95); outline-offset: 1px; }
+.pad[aria-pressed="true"].is-now { filter: brightness(1.25) saturate(1.1); }
+@media (hover: hover) {
+  .pad:hover:not([aria-pressed="true"]) { filter: brightness(1.05); }
+  .bg-name:hover { filter: brightness(1.06); }
+  .dtab:not([aria-selected="true"]):hover { background: rgba(20, 10, 4, 0.55); }
+}
+@media (max-width: 760px) {
+  .beat-view { --namew: 78px; padding: 8px 8px 10px; gap: 8px; }
+  .beat-head { gap: 8px; }
+  .beat-head .tool { padding: 0 10px; }
+  .beat-head .tool:not(#beatPlayBtn) span {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .beat-head .tool:not(#beatPlayBtn) { min-width: 42px; }
+  .swing .lbl-dark { display: none; }
+  .bg-row { gap: 6px; min-height: 34px; }
+  .bg-group { gap: 3px; }
+  .bg-name { padding: 0 6px; gap: 5px; font-size: 9.5px; letter-spacing: 0.04em; }
+}
+/* phones: eight steps at a time, flip between 1-8 and 9-16 */
+@media (max-width: 560px) {
+  .pager { display: flex; order: 6; }
+  .swing { order: 5; flex: 1 1 120px; min-width: 0; }
+  .beat-grid.on-1 .h2, .beat-grid.on-2 .h1 { display: none; }
+  .bselect { flex: 1 1 auto; min-width: 0; max-width: 150px; }
+  #beatPlayBtn { min-width: 78px; }
+}
+/* landscape phones: squeeze the beat maker so all eight drums show */
+@media (max-height: 520px) and (min-width: 480px) {
+  .beat-view { gap: 6px; padding: 6px 8px 8px; }
+  .beat-head { gap: 6px 10px; }
+  .beat-head .tool { min-height: 32px; }
+  .bselect { height: 30px; }
+  .beat-grid { gap: 3px; }
+  .bg-row { min-height: 18px; }
+  .bg-ruler { display: none; }
+  .beat-head .tool { min-height: 30px; }
+  .bg-name { font-size: 9.5px; }
+  .pad { box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.85), 0 2px 0 var(--ivory-edge), 1px 2px 3px rgba(0, 0, 0, 0.45); }
+}
+
 .sheet-scroll {
   position: relative;
   flex: 1 1 0; min-height: 0;
@@ -735,7 +880,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .empty-hint small { display: none; }
   #copyBtn { min-width: 88px; padding: 0 12px; }
   .desk { padding: 8px; min-height: 200px; }
-  .desk::after { inset: 8px; }
+  .desk::after { inset: calc(8px + var(--tabs)) 8px 8px; }
   .piano { padding: 0 8px 10px; }
   .rail { margin: 0 -8px; padding: 5px 12px; min-height: 44px; gap: 10px; }
   .transport { gap: 8px; padding: 7px 8px; }
@@ -820,8 +965,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .transport .tool, .transport .tool:not(#playBtn) { min-height: 34px; min-width: 42px; padding: 0 10px; }
   #playBtn { min-width: 52px; }
   .transport .tool span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .desk { grid-column: 1 / -1; grid-row: 3; min-height: 96px; padding: 8px; }
-  .desk::after { inset: 8px; }
+  .desk { grid-column: 1 / -1; grid-row: 3; min-height: 96px; padding: 8px; --tabs: 28px; }
+  .desk::after { inset: calc(8px + var(--tabs)) 8px 8px; }
+  .desk-tabs { height: 22px; margin-bottom: 6px; }
+  .dtab { padding: 0 10px; }
   .piano { grid-column: 1 / -1; grid-row: 4; padding: 0 8px 8px; }
   .rail { min-height: 36px; padding: 3px 12px; margin: 0 -8px; }
   .mini { width: 30px; height: 30px; }
@@ -839,7 +986,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   #copyBtn { height: 36px; }
   #noteText { height: 32px; line-height: 32px; }
   .desk { min-height: 90px; padding: 6px; }
-  .desk::after { inset: 6px; }
+  .desk::after { inset: calc(6px + var(--tabs)) 6px 6px; }
   .rail { min-height: 32px; padding-top: 2px; padding-bottom: 2px; }
   .mini { width: 26px; height: 26px; }
   .octave .val { padding: 1px 8px 0; font-size: 15px; }
@@ -868,7 +1015,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .transport { padding: 2px 8px; }
   .transport .tool, .transport .tool:not(#playBtn) { min-height: 30px; }
   .desk { min-height: 72px; padding: 5px; }
-  .desk::after { inset: 5px; }
+  .desk::after { inset: calc(5px + var(--tabs)) 5px 5px; }
   .rail { min-height: 30px; padding-top: 1px; padding-bottom: 1px; }
   .keys { height: calc(var(--wkh) + 20px); }
   .key .kl { bottom: 14px; } .key .kn { bottom: 4px; }
@@ -889,11 +1036,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 }
 @media (max-width: 420px) {
   .mini { width: 32px; height: 32px; }
+  .bg-row { min-height: 28px; }
+  .beat-grid { gap: 4px; }
+  .beat-view { gap: 6px; }
   .transport .tool, .transport .tool:not(#playBtn) { min-width: 42px; padding: 0 8px; }
   #playBtn { min-width: 50px; padding: 0 10px; }
   .tempo { gap: 6px; }
   .tempo .readwin { min-width: 0; padding: 3px 5px 2px; font-size: 15px; }
-  #tempo { min-width: 40px; }
+  .fader { min-width: 40px; }
   .rail { gap: 8px; }
   .octave { gap: 5px; }
   .lengths { gap: 3px; }
@@ -967,6 +1117,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
         <span>Clear</span>
       </button>
+      <button id="midiBtn" class="tool" type="button" disabled aria-label="Download MIDI file" title="Download the song and the beat as a MIDI file">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg>
+        <span>MIDI</span>
+      </button>
     </div>
 
     <div class="readout">
@@ -1001,7 +1155,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     </div>
     <div class="tempo">
       <label class="lbl-dark" for="tempo">Tempo</label>
-      <input id="tempo" type="range" min="40" max="240" step="1" value="100" aria-keyshortcuts="[ ]" title="Tempo in beats per minute ([ and ] change it by 5)">
+      <input id="tempo" class="fader" type="range" min="40" max="240" step="1" value="100" aria-keyshortcuts="[ ]" title="Tempo in beats per minute ([ and ] change it by 5)">
       <output id="tempoVal" class="readwin" for="tempo" aria-hidden="true">100</output>
       <span class="unit" aria-hidden="true">BPM</span>
     </div>
@@ -1016,13 +1170,53 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   </section>
 
   <main class="desk">
-    <div id="sheetScroll" class="sheet-scroll" role="region" aria-label="Music sheet" tabindex="0">
+    <div class="desk-tabs" role="tablist" aria-label="View">
+      <button id="tabSheet" class="dtab" type="button" role="tab" aria-selected="true" aria-controls="sheetScroll" aria-keyshortcuts="B" title="The music sheet (B switches views)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        Sheet
+      </button>
+      <button id="tabBeat" class="dtab" type="button" role="tab" aria-selected="false" aria-controls="beatView" tabindex="-1" aria-keyshortcuts="B" title="Make a drum beat (B switches views)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="9" rx="8" ry="3.5"/><path d="M4 9v6c0 1.9 3.6 3.5 8 3.5s8-1.6 8-3.5V9"/><path d="m15 3 4-2"/><path d="m9 3-4-2"/></svg>
+        Beat maker
+      </button>
+    </div>
+    <div id="sheetScroll" class="sheet-scroll" role="tabpanel" aria-labelledby="tabSheet" tabindex="0">
       <div id="paper" class="paper">
         <svg id="sheet" role="img" aria-label="Empty grand staff" xmlns="http://www.w3.org/2000/svg" width="300" height="240"></svg>
         <p id="emptyHint" class="empty-hint">Pick a note length, then press a piano key to write your first note
           <small>Your computer keyboard works too: A S D F G H J play C to B, 1&ndash;4 pick the length</small>
         </p>
       </div>
+    </div>
+    <div id="beatView" class="beat-view" role="tabpanel" aria-labelledby="tabBeat" hidden>
+      <div class="beat-head">
+        <button id="beatPlayBtn" class="tool has-lamp" type="button" aria-pressed="false" aria-label="Play the beat" title="Loop the beat on its own (Space)">
+          <svg class="ico ico-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5v15l12-7.5Z"/></svg>
+          <svg class="ico ico-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+          <span id="beatPlayLbl">Beat</span>
+        </button>
+        <select id="presetSel" class="bselect" aria-label="Load a preset beat">
+          <option value="">Presets&hellip;</option>
+        </select>
+        <div class="swing">
+          <label class="lbl-dark" for="swing">Swing</label>
+          <input id="swing" class="fader" type="range" min="0" max="100" step="5" value="0" title="Swing: push every second 16th note late for a shuffled groove">
+          <output id="swingVal" class="readwin" for="swing" aria-hidden="true">0%</output>
+        </div>
+        <button id="withSongBtn" class="tool has-lamp" type="button" aria-pressed="true" aria-label="Play the beat with the song" title="Play the beat under the song (and put it in the MIDI file)">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span>With song</span>
+        </button>
+        <button id="beatClearBtn" class="tool" type="button" aria-label="Clear the beat" title="Clear the beat">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Clear</span>
+        </button>
+        <div class="pager" role="group" aria-label="Steps shown">
+          <button class="mini pg" type="button" data-page="1" aria-pressed="true">1&ndash;8</button>
+          <button class="mini pg" type="button" data-page="2" aria-pressed="false">9&ndash;16</button>
+        </div>
+      </div>
+      <div id="beatGrid" class="beat-grid on-1" role="group" aria-label="Drum pattern: 8 drums, 16 steps (one bar)"></div>
     </div>
   </main>
 
@@ -1080,12 +1274,15 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     <dt><kbd>Z</kbd> / <kbd>X</kbd></dt><dd>Octave down / up</dd>
     <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Whole, half, quarter, eighth note</dd>
     <dt><kbd>.</kbd></dt><dd>Dotted note (one and a half times as long)</dd>
-    <dt><kbd>Space</kbd></dt><dd>Play / pause the whole song</dd>
+    <dt><kbd>Space</kbd></dt><dd>Play / pause the whole song (in the beat maker: loop the beat)</dd>
     <dt><kbd>Esc</kbd></dt><dd>Stop, or unselect a note</dd>
     <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>Tempo down / up by 5 BPM</dd>
     <dt>Click a note</dt><dd>Select it: change its length, delete it, or play from there</dd>
     <dt><kbd>&larr;</kbd> / <kbd>&rarr;</kbd></dt><dd>Move the selection (with the sheet focused)</dd>
     <dt><kbd>Backspace</kbd></dt><dd>Delete the selected note, or the last one</dd>
+    <dt><kbd>B</kbd></dt><dd>Switch between the sheet and the beat maker</dd>
+    <dt>Beat maker</dt><dd>Tap or drag across pads to place drum hits, tap a drum name to hear it, <kbd>Space</kbd> loops the beat</dd>
+    <dt>MIDI</dt><dd>Downloads the song (piano) and the beat (drums) as a <code>.mid</code> file</dd>
     <dt><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>Y</kbd></dt><dd>Undo / redo</dd>
   </dl>
   <form method="dialog" class="row"><button class="tool" type="submit">Got it</button></form>
@@ -1237,6 +1434,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   var STORE_KEY = 'noteCracker.song.v2';
   var OLD_KEY = 'noteCracker.notes.v1';             // songs saved before note lengths existed (pitches only)
   var PREF_KEY = 'noteCracker.prefs.v1';
+  var BEAT_KEY = 'noteCracker.beat.v1';
   var LENGTHS = [6, 4, 3, 2, 1.5, 1, 0.5];          // in beats; 6, 3 and 1.5 are the dotted lengths
   var LEN_NAMES = { 6: 'dotted whole', 4: 'whole', 3: 'dotted half', 2: 'half', 1.5: 'dotted quarter', 1: 'quarter', 0.5: 'eighth' };
   var notes = [];                                   // [{ n: 'C4', d: 1 }], entries are never mutated in place
@@ -1244,8 +1442,34 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   var future = [];
   var sel = -1;                                     // selected note, -1 = none
 
+  // the beat: one bar of 16 sixteenth-note steps for each drum (General MIDI drum numbers for the export)
+  var STEPS = 16;
+  var DRUMS = [
+    { id: 'kick',  name: 'Kick',     midi: 36, vel: 112, c: '#C9572E' },
+    { id: 'snare', name: 'Snare',    midi: 38, vel: 104, c: '#D98A2B' },
+    { id: 'clap',  name: 'Clap',     midi: 39, vel: 100, c: '#E3B23C' },
+    { id: 'hat',   name: 'Hi-hat',   midi: 42, vel: 82,  c: '#9BB04A' },
+    { id: 'ohat',  name: 'Open hat', midi: 46, vel: 86,  c: '#5FA27F' },
+    { id: 'tom',   name: 'Tom',      midi: 47, vel: 100, c: '#4F8DB0' },
+    { id: 'rim',   name: 'Rim',      midi: 37, vel: 92,  c: '#8A72B8' },
+    { id: 'crash', name: 'Crash',    midi: 49, vel: 96,  c: '#B86B9A' }
+  ];
+  // preset beats: x = hit; tempo is only applied while the song is empty
+  var PRESETS = [
+    { id: 'rock', name: 'Rock', bpm: 112, p: { kick: 'x.......x.x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x.x.', crash: 'x...............' } },
+    { id: 'hiphop', name: 'Hip-hop', bpm: 90, swing: 25, p: { kick: 'x......x..x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x...', ohat: '..............x.' } },
+    { id: 'house', name: 'House', bpm: 124, p: { kick: 'x...x...x...x...', clap: '....x.......x...', hat: 'xx.xxx.xxx.xxx.x', ohat: '..x...x...x...x.' } },
+    { id: 'trap', name: 'Trap', bpm: 140, p: { kick: 'x.....x...x..x..', clap: '........x.......', hat: 'x.x.x.xxx.x.x.xx', rim: '...............x' } },
+    { id: 'reggaeton', name: 'Reggaeton', bpm: 95, p: { kick: 'x...x...x...x...', rim: '...x..x....x..x.', hat: 'x.x.x.x.x.x.x.x.' } },
+    { id: 'funk', name: 'Funk', bpm: 104, swing: 10, p: { kick: 'x.x.......x..x..', snare: '....x..x.x..x...', hat: 'xxxxxxxxxxxxxxxx' } },
+    { id: 'disco', name: 'Disco', bpm: 118, p: { kick: 'x...x...x...x...', snare: '....x.......x...', hat: 'x...x...x...x...', ohat: '..x...x...x...x.' } },
+    { id: 'rockfill', name: 'Rock + tom fill', bpm: 112, p: { kick: 'x.......x.x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.....', tom: '............xxxx', crash: 'x...............' } }
+  ];
+  var beat = emptyBeat();                           // beat[drum][step] = 0 | 1
+
   // settings that survive a reload
   var nextLen = 1, nextDot = false, bpm = 100, loopOn = false;
+  var swing = 0, drumsOn = true, view = 'sheet';
 
   function isLen(d) { return LENGTHS.indexOf(d) >= 0; }
   function isEntry(e) { return !!e && typeof e === 'object' && isValidNote(e.n) && isLen(e.d); }
@@ -1257,6 +1481,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     var m = Math.floor(sec / 60), r = sec % 60;
     return m + ':' + (r < 10 ? '0' : '') + r;
   }
+  function emptyBeat() { return DRUMS.map(function () { var r = []; for (var s = 0; s < STEPS; s++) r.push(0); return r; }); }
+  function cloneBeat(b) { return b.map(function (r) { return r.slice(); }); }
+  function sameBeat(a, b) { return a.every(function (r, i) { return r.every(function (v, s) { return v === b[i][s]; }); }); }
+  function beatHasHits() { return beat.some(function (r) { return r.some(function (v) { return v === 1; }); }); }
   function beatsBefore(i) { var b = 0; for (var j = 0; j < i && j < notes.length; j++) b += notes[j].d; return b; }
   function secPerBeat() { return 60 / bpm; }
 
@@ -1278,6 +1506,22 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   function saveNotes() {
     try { window.localStorage.setItem(STORE_KEY, JSON.stringify(notes)); } catch (e) { /* storage unavailable */ }
   }
+  function loadBeat() {
+    try {
+      var o = JSON.parse(window.localStorage.getItem(BEAT_KEY) || 'null');
+      if (!o || typeof o !== 'object') return;
+      DRUMS.forEach(function (d, r) {
+        var row = o[d.id];
+        if (typeof row !== 'string') return;
+        for (var s = 0; s < STEPS; s++) beat[r][s] = row.charAt(s) === '1' ? 1 : 0;
+      });
+    } catch (e) { /* empty beat */ }
+  }
+  function saveBeat() {
+    var o = {};
+    DRUMS.forEach(function (d, r) { o[d.id] = beat[r].join(''); });
+    try { window.localStorage.setItem(BEAT_KEY, JSON.stringify(o)); } catch (e) { /* ignore */ }
+  }
   function loadPrefs() {
     try {
       var p = JSON.parse(window.localStorage.getItem(PREF_KEY) || 'null');
@@ -1286,10 +1530,15 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       nextDot = p.dot === true && nextLen !== 0.5;
       if (typeof p.bpm === 'number' && p.bpm >= 40 && p.bpm <= 240) bpm = Math.round(p.bpm);
       loopOn = p.loop === true;
+      if (typeof p.swing === 'number' && p.swing >= 0 && p.swing <= 100) swing = Math.round(p.swing / 5) * 5;
+      drumsOn = p.drums !== false;
+      view = p.view === 'beat' ? 'beat' : 'sheet';
     } catch (e) { /* defaults */ }
   }
   function savePrefs() {
-    try { window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn })); } catch (e) { /* ignore */ }
+    try {
+      window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn, swing: swing, drums: drumsOn, view: view }));
+    } catch (e) { /* ignore */ }
   }
 
   function applyOp(op) {
@@ -1297,12 +1546,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     else if (op.t === 'del') notes.splice(op.i, 1);
     else if (op.t === 'clr') notes.length = 0;
     else if (op.t === 'len') notes[op.i] = { n: notes[op.i].n, d: op.to };
+    else if (op.t === 'beat') beat = cloneBeat(op.to);
   }
   function revertOp(op) {
     if (op.t === 'add') notes.pop();
     else if (op.t === 'del') notes.splice(op.i, 0, op.e);
     else if (op.t === 'clr') { for (var i = 0; i < op.list.length; i++) notes.push(op.list[i]); }
     else if (op.t === 'len') notes[op.i] = { n: notes[op.i].n, d: op.from };
+    else if (op.t === 'beat') beat = cloneBeat(op.from);
   }
   function record(op) { past.push(op); future.length = 0; }
 
@@ -1335,6 +1586,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     changed('clr', op);
     return true;
   }
+  // beat edits go through the same undo log as the notes; `before` is the pattern as it was when the edit began
+  function commitBeat(before, label) {
+    if (sameBeat(before, beat)) return false;
+    var op = { t: 'beat', from: before, to: cloneBeat(beat), label: label || '' };
+    record(op);
+    changed('beat', op);
+    return true;
+  }
   function setLength(i, d) {
     if (i < 0 || i >= notes.length || !isLen(d) || notes[i].d === d) return false;
     var op = { t: 'len', i: i, from: notes[i].d, to: d };
@@ -1346,7 +1605,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!past.length) return false;
     var op = past.pop();
     revertOp(op); future.push(op);
-    if (op.t === 'len') sel = op.i;
+    if (op.t === 'beat') { /* the song and its selection are untouched */ }
+    else if (op.t === 'len') sel = op.i;
     else if (op.t === 'del' && op.i < notes.length - 1) sel = op.i;   // a note came back in the middle: show it
     else sel = -1;
     changed('undo', op);
@@ -1356,7 +1616,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!future.length) return false;
     var op = future.pop();
     applyOp(op); past.push(op);
-    sel = op.t === 'len' ? op.i : -1;
+    if (op.t !== 'beat') sel = op.t === 'len' ? op.i : -1;
     changed('redo', op);
     return true;
   }
@@ -1427,7 +1687,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       var stopAt = t + 0.006 + tau * 7;
       o1.start(t); o2.start(t);
       o1.stop(stopAt); o2.stop(stopAt);
-      var voice = { id: null, g: g, o1: o1, o2: o2, t: t, nodes: [o1, o2, mix, lp, g] };
+      var voice = { id: null, g: g, srcs: [o1, o2], t: t, nodes: [o1, o2, mix, lp, g] };
       o1.onended = function () {
         try { voice.nodes.forEach(function (n) { n.disconnect(); }); } catch (e) { /* ignore */ }
         if (voice.id !== null && voices.get(voice.id) === voice) voices.delete(voice.id);
@@ -1439,11 +1699,105 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     function release(v, rel) {
       try {
         var now = ctx.currentTime;
-        if (v.t > now + 0.002) { v.g.disconnect(); v.o1.stop(now); v.o2.stop(now); return; }
+        if (v.t > now + 0.002) { v.g.disconnect(); v.srcs.forEach(function (o) { o.stop(now); }); return; }
         v.g.gain.cancelScheduledValues(Math.max(now, v.t + 0.007));
         v.g.gain.setTargetAtTime(0, now, rel);
-        v.o1.stop(now + rel * 8); v.o2.stop(now + rel * 8);
+        v.srcs.forEach(function (o) { o.stop(now + rel * 8); });
       } catch (e) { /* ignore */ }
+    }
+
+    /* ---- drum kit: every sound is built from oscillators and filtered noise, no samples ---- */
+    var noise = null, openHat = null;
+    function noiseBuffer() {
+      if (!noise) {
+        var len = Math.floor(ctx.sampleRate * 1.5);
+        noise = ctx.createBuffer(1, len, ctx.sampleRate);
+        var d = noise.getChannelData(0);
+        for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      }
+      return noise;
+    }
+    function makeDrum(id, t, vel) {
+      var g = ctx.createGain(), srcs = [], nodes = [g], end = t + 0.3;
+      g.connect(out);
+      function osc(type, f0, f1, glide) {
+        var o = ctx.createOscillator();
+        o.type = type;
+        o.frequency.setValueAtTime(f0, t);
+        if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + glide);
+        srcs.push(o); nodes.push(o);
+        return o;
+      }
+      function hiss() {
+        var b = ctx.createBufferSource();
+        b.buffer = noiseBuffer();
+        srcs.push(b); nodes.push(b);
+        return b;
+      }
+      function filter(src, type, f, q) {
+        var b = ctx.createBiquadFilter();
+        b.type = type; b.frequency.value = f;
+        if (q) b.Q.value = q;
+        src.connect(b); nodes.push(b);
+        return b;
+      }
+      // a percussive envelope: instant attack, exponential fall to silence after `decay` seconds
+      function hit(src, peak, decay, at) {
+        var e = ctx.createGain();
+        at = at || t;
+        e.gain.setValueAtTime(0.0001, t);
+        e.gain.setValueAtTime(0.0001, at);
+        e.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak * vel), at + 0.002);
+        e.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+        src.connect(e); e.connect(g); nodes.push(e);
+        end = Math.max(end, at + decay + 0.02);
+        return e;
+      }
+      if (id === 'kick') {
+        hit(osc('sine', 150, 44, 0.12), 0.95, 0.45);
+        hit(filter(hiss(), 'highpass', 2500), 0.22, 0.014);
+      } else if (id === 'snare') {
+        hit(filter(hiss(), 'highpass', 1400), 0.5, 0.2);
+        hit(osc('triangle', 190, 150, 0.1), 0.38, 0.12);
+      } else if (id === 'clap') {
+        var cf = filter(hiss(), 'bandpass', 1500, 0.9);
+        hit(cf, 0.55, 0.01, t); hit(cf, 0.55, 0.01, t + 0.011); hit(cf, 0.6, 0.012, t + 0.022);
+        hit(cf, 0.7, 0.2, t + 0.033);
+      } else if (id === 'hat') {
+        hit(filter(filter(hiss(), 'highpass', 7000), 'bandpass', 10000, 0.6), 0.5, 0.055);
+      } else if (id === 'ohat') {
+        hit(filter(filter(hiss(), 'highpass', 6500), 'bandpass', 9500, 0.5), 0.42, 0.42);
+      } else if (id === 'tom') {
+        hit(osc('sine', 170, 96, 0.24), 0.75, 0.42);
+        hit(filter(hiss(), 'bandpass', 900, 1), 0.08, 0.05);
+      } else if (id === 'rim') {
+        hit(osc('triangle', 1700), 0.32, 0.03);
+        hit(filter(osc('square', 820), 'bandpass', 1100, 2), 0.22, 0.025);
+      } else if (id === 'crash') {
+        hit(filter(hiss(), 'highpass', 4500), 0.3, 1.5);
+        hit(filter(hiss(), 'bandpass', 8500, 1.2), 0.14, 0.7);
+      } else return null;
+      srcs.forEach(function (o) { o.start(t); o.stop(end); });
+      var voice = { id: null, g: g, srcs: srcs, t: t, nodes: nodes };
+      srcs[0].onended = function () {
+        try { voice.nodes.forEach(function (n) { n.disconnect(); }); } catch (e) { /* ignore */ }
+        queued.delete(voice);
+        if (openHat === voice) openHat = null;
+      };
+      // a closed hi-hat chokes a ringing open one, like a real hi-hat pedal
+      if (id === 'hat' && openHat && openHat.t < t) { try { openHat.g.gain.setTargetAtTime(0, t, 0.012); } catch (e) { /* ignore */ } openHat = null; }
+      if (id === 'ohat') openHat = voice;
+      return voice;
+    }
+    // a drum hit `delay` seconds from now (vel 0..1)
+    function drum(id, delay, vel) {
+      if (muted) return;
+      try {
+        unlock();
+        if (!ctx) return;
+        var v = makeDrum(id, ctx.currentTime + 0.01 + Math.max(0, delay || 0), vel == null ? 1 : vel);
+        if (v) queued.add(v);
+      } catch (e) { /* the beat keeps going silently */ }
     }
 
     function on(id, name) {
@@ -1476,7 +1830,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         if (!v) return;
         var end = t + Math.max(0.06, dur);
         v.g.gain.setTargetAtTime(0, end, 0.06);
-        v.o1.stop(end + 0.5); v.o2.stop(end + 0.5);
+        v.srcs.forEach(function (o) { o.stop(end + 0.5); });
         queued.add(v);
       } catch (e) { /* the player keeps going silently */ }
     }
@@ -1488,7 +1842,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     function allOff() { Array.from(voices.keys()).forEach(function (id) { off(id, true); }); stopQueued(); }
     function setMuted(m) { muted = !!m; if (muted) allOff(); }
 
-    return { unlock: unlock, running: running, on: on, off: off, play: play, stopQueued: stopQueued, setMuted: setMuted, isMuted: function () { return muted; } };
+    return { unlock: unlock, running: running, on: on, off: off, play: play, drum: drum, stopQueued: stopQueued, setMuted: setMuted, isMuted: function () { return muted; } };
   })();
 
   /* ====================================================================
@@ -1826,7 +2180,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 
     // bring note i on screen (instant, so it is deterministic): whole systems where they fit
     function revealNote(i) {
-      if (!L) return;
+      if (!L || scroller.hidden) return;                     // the beat maker is showing
       if (!notes.length) { scroller.scrollTop = 0; return; }
       if (i < 0 || i >= notes.length || !info[i]) return;
       var k = info[i].k;
@@ -1888,7 +2242,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   var tempoIn = $('tempo'), tempoVal = $('tempoVal'), clockEl = $('clock');
   var lenBtns = Array.prototype.slice.call(document.querySelectorAll('.len')), dotBtn = $('dotBtn'), lenLbl = $('lenLbl');
   var noteText = $('noteText'), noteCount = $('noteCount'), statusEl = $('status');
-  var sheetScroll = $('sheetScroll'), helpDlg = $('helpDlg');
+  var sheetScroll = $('sheetScroll'), helpDlg = $('helpDlg'), midiBtn = $('midiBtn');
+  var appEl = document.querySelector('.app'), tabSheet = $('tabSheet'), tabBeat = $('tabBeat'), beatView = $('beatView');
+  var beatGrid = $('beatGrid'), beatPlayBtn = $('beatPlayBtn'), beatPlayLbl = $('beatPlayLbl'), presetSel = $('presetSel');
+  var swingIn = $('swing'), swingVal = $('swingVal'), withSongBtn = $('withSongBtn'), beatClearBtn = $('beatClearBtn');
   var statusTimer = 0;
 
   function say(msg, ms) {
@@ -1914,10 +2271,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     redoBtn.disabled = !future.length;
     deleteBtn.disabled = !n;
     clearBtn.disabled = !n;
+    midiBtn.disabled = !n && !beatHasHits();
+    beatClearBtn.disabled = !beatHasHits();
   }
 
   // called after every document change
   function changed(kind, op) {
+    if (op.t === 'beat') { beatChanged(kind, op); return; }
     var n = notes.length, t = op.t, anim = -1, focus = n - 1;
     if (kind === 'add' || (kind === 'redo' && t === 'add')) anim = n - 1;
     else if (kind === 'undo' && t === 'del') { anim = op.i; focus = op.i; }
@@ -1976,13 +2336,16 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   }
 
   /* ====================================================================
-     Player: plays the whole song in time, following it on the sheet and the keys
+     Player: one sixteenth-note clock drives the song and the drums together
      ==================================================================== */
   var Player = (function () {
     var state = 'stopped';                          // 'stopped' | 'playing' | 'paused'
+    var mode = 'song';                              // 'song': the melody (with the beat when it is on) | 'beat': the beat alone, looping
     var pos = 0;                                    // where the next Play starts
     var from = 0;                                   // where this run started: Stop and Loop come back here
-    var idx = 0, cur = -1, nextAt = 0, timer = 0, ending = false;
+    var cur = -1, timer = 0, ending = false;
+    var stepTime = 0, stepBeat = 0;                 // the next sixteenth step: when it sounds, and which beat of the song it is
+    var noteIdx = 0, noteBeat = 0;                  // the next note to start, and the beat it starts on
     var pending = new Set();                        // timeouts that sync the picture with the sound
     var lit = new Map();                            // key element -> number of song notes holding it down
     var LOOKAHEAD = 0.15, TICK = 25;
@@ -2012,35 +2375,67 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       Sound.stopQueued();
       lit.forEach(function (c, el) { el.classList.remove('is-auto'); });
       lit.clear();
+      Beat.showStep(-1);
       ending = false;
     }
 
-    function start(i) {
-      if (!notes.length) { say('Write a few notes first, then press Play'); return; }
+    function start(i, m) {
+      var hits = beatHasHits();
+      m = m === 'beat' ? 'beat' : 'song';
+      if (m === 'song' && !notes.length) {
+        if (!hits) { say('Write a few notes or make a beat first, then press Play'); return; }
+        m = 'beat';                                 // no song yet: Play loops the beat
+      }
+      if (m === 'beat' && !hits) { say('Tap a few pads to make a beat first'); return; }
       Sound.unlock();
       halt();
-      from = clampIdx(i); pos = from; idx = from; cur = -1;
-      nextAt = clock() + 0.06;
+      mode = m;
+      if (mode === 'song') {
+        from = clampIdx(i); pos = from;
+        noteIdx = from; stepBeat = noteBeat = beatsBefore(from);   // drums line up with the bar the start note is in
+      } else {
+        noteIdx = notes.length; stepBeat = noteBeat = 0;
+      }
+      cur = -1;
+      stepTime = clock() + 0.06;
       state = 'playing';
       timer = setInterval(tick, TICK);
       tick();
       ui();
     }
-    // schedule every note that starts within the look-ahead window; the tempo is read live
+    // schedule every step that starts within the look-ahead window; the tempo is read live
     function tick() {
       if (state !== 'playing' || ending) return;
       var horizon = clock() + LOOKAHEAD, guard = 0;
-      while (nextAt < horizon && guard++ < 256) {
-        if (idx >= notes.length) {
-          if (loopOn && notes.length) { idx = Math.min(from, notes.length - 1); continue; }
-          ending = true;
-          later(finish, (nextAt - clock()) * 1000);
-          return;
+      var endBeat = mode === 'song' ? beatsBefore(notes.length) : 0;
+      var drums = mode === 'beat' || drumsOn;
+      while (stepTime < horizon && guard++ < 512) {
+        var spb = secPerBeat();
+        if (mode === 'song') {
+          if (noteIdx >= notes.length && stepBeat >= endBeat - 1e-6) {
+            if (loopOn && notes.length) {
+              noteIdx = Math.min(from, notes.length - 1);
+              stepBeat = noteBeat = beatsBefore(noteIdx);
+              continue;
+            }
+            // the last note is over: the drums finish their bar, then the song ends
+            var barEnd = Math.ceil(endBeat / 4 - 1e-6) * 4;
+            if (!drums || !beatHasHits() || stepBeat >= barEnd - 1e-6) {
+              ending = true;
+              later(finish, (stepTime - clock()) * 1000);
+              return;
+            }
+          }
+          while (noteIdx < notes.length && noteBeat <= stepBeat + 1e-6) {
+            var e = notes[noteIdx];
+            if (noteBeat >= stepBeat - 1e-6) schedule(noteIdx, e, stepTime, e.d * spb);
+            noteBeat += e.d;
+            noteIdx++;
+          }
         }
-        var e = notes[idx], dur = e.d * secPerBeat();
-        schedule(idx, e, nextAt, dur);
-        nextAt += dur;
-        idx++;
+        if (drums) drumStep(stepBeat, stepTime, spb);
+        stepTime += spb / 4;
+        stepBeat += 0.25;
       }
     }
     function schedule(i, e, at, dur) {
@@ -2055,6 +2450,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         ui();
       }, delay * 1000);
     }
+    // one sixteenth of the beat; swing pushes every second sixteenth late (up to a triplet feel)
+    function drumStep(beatPos, time, spb) {
+      var step = Math.round(beatPos * 4) % STEPS;
+      var at = time + (step % 2 ? (swing / 100) * (spb / 4) / 3 : 0);
+      for (var r = 0; r < DRUMS.length; r++) if (beat[r][step]) Sound.drum(DRUMS[r].id, at - clock());
+      later(function () { if (state === 'playing') Beat.showStep(step); }, (time - clock()) * 1000);
+    }
     function finish() {
       if (state !== 'playing') return;
       halt();
@@ -2065,6 +2467,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
     function pause() {
       if (state !== 'playing') return false;
+      if (mode === 'beat') return stop();
       halt();
       state = 'paused';
       pos = cur >= 0 ? cur : from;
@@ -2075,24 +2478,32 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     function stop() {
       if (state === 'stopped') return false;
       halt();
-      state = 'stopped'; pos = from; cur = -1;
+      state = 'stopped';
+      if (mode === 'song') pos = from;
+      cur = -1;
       Sheet.mark('play', -1);
       ui();
       return true;
     }
+    // the main Play button plays the song
     function toggle() {
-      if (state === 'playing') pause();
-      else start(state === 'paused' ? pos : (sel >= 0 ? sel : pos));
+      if (state === 'playing' && mode === 'song') pause();
+      else start(state === 'paused' ? pos : (sel >= 0 ? sel : pos), 'song');
+    }
+    // the beat maker's button loops the beat on its own
+    function toggleBeat() {
+      if (state === 'playing' && mode === 'beat') stop();
+      else start(0, 'beat');
     }
     // a note was picked on the sheet
     function picked(i) {
-      if (state === 'playing') { if (i >= 0) start(i); return; }
+      if (state === 'playing' && mode === 'song') { if (i >= 0) start(i, 'song'); return; }
       if (state === 'paused') { if (i >= 0) { pos = i; cur = i; Sheet.mark('play', i); } }
       else pos = i >= 0 ? i : 0;
       ui();
     }
     function songChanged() {
-      if (!notes.length) { stop(); pos = 0; from = 0; }
+      if (!notes.length) { if (mode === 'song') stop(); pos = 0; from = 0; }
       else {
         pos = clampIdx(pos); from = clampIdx(from);
         if (cur >= notes.length) cur = -1;
@@ -2102,24 +2513,362 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
 
     function ui() {
-      var playing = state === 'playing', word = playing ? 'Pause' : state === 'paused' ? 'Resume' : 'Play';
-      playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+      var songOn = state === 'playing' && mode === 'song', beatOn = state === 'playing' && mode === 'beat';
+      var word = songOn ? 'Pause' : state === 'paused' ? 'Resume' : 'Play';
+      playBtn.setAttribute('aria-pressed', songOn ? 'true' : 'false');
       playBtn.setAttribute('aria-label', word);
-      playBtn.title = word + (playing ? '' : ' the song') + ' (Space)';
+      playBtn.title = word + (songOn ? '' : ' the song') + ' (Space)';
       playLbl.textContent = word;
       stopBtn.disabled = state === 'stopped';
+      beatPlayBtn.setAttribute('aria-pressed', beatOn ? 'true' : 'false');
+      beatPlayBtn.setAttribute('aria-label', beatOn ? 'Stop the beat' : 'Play the beat');
+      beatPlayLbl.textContent = beatOn ? 'Stop' : 'Beat';
+      if (beatOn) { clockEl.innerHTML = 'Beat loop · <b>' + bpm + '</b> BPM'; return; }
       var n = notes.length;
-      var at = !n ? 0 : playing ? (cur >= 0 ? cur : from) : state === 'paused' ? pos : (sel >= 0 ? sel : pos);
+      var at = !n ? 0 : songOn ? (cur >= 0 ? cur : from) : state === 'paused' ? pos : (sel >= 0 ? sel : pos);
       at = n ? clampIdx(at) : 0;
       var inf = n ? Sheet.info(at) : null, spb = secPerBeat();
       clockEl.innerHTML = 'Bar <b>' + (inf ? inf.bar : 1) + '</b> · ' + fmtTime(n ? beatsBefore(at) * spb : 0) + ' / ' + fmtTime(beatsBefore(n) * spb);
     }
 
     return {
-      start: start, pause: pause, stop: stop, toggle: toggle, picked: picked, songChanged: songChanged, ui: ui,
-      state: function () { return state; }
+      start: start, pause: pause, stop: stop, toggle: toggle, toggleBeat: toggleBeat, picked: picked, songChanged: songChanged, ui: ui,
+      state: function () { return state; },
+      mode: function () { return mode; }
     };
   })();
+
+  /* ====================================================================
+     Beat maker: 8 drums x 16 sixteenth-note steps, painted with a finger or the mouse
+     ==================================================================== */
+  var Beat = (function () {
+    var pads = [];                                  // pads[drum][step]
+    var nowStep = -1, paint = null;
+    var pgBtns = Array.prototype.slice.call(document.querySelectorAll('.pg'));
+    var narrow = window.matchMedia ? window.matchMedia('(max-width: 560px)') : null;
+
+    (function build() {
+      var frag = document.createDocumentFragment(), g, k;
+      var ruler = document.createElement('div');
+      ruler.className = 'bg-row bg-ruler';
+      ruler.setAttribute('aria-hidden', 'true');
+      var rh = '<span class="bg-name"></span>';
+      for (g = 0; g < 4; g++) {
+        rh += '<div class="bg-group h' + (g < 2 ? 1 : 2) + '">';
+        for (k = 0; k < 4; k++) rh += '<span>' + (k === 0 ? g + 1 : '·') + '</span>';
+        rh += '</div>';
+      }
+      ruler.innerHTML = rh;
+      frag.appendChild(ruler);
+      DRUMS.forEach(function (d, r) {
+        var row = document.createElement('div');
+        row.className = 'bg-row';
+        row.setAttribute('role', 'group');
+        row.setAttribute('aria-label', d.name);
+        var nb = document.createElement('button');
+        nb.type = 'button';
+        nb.className = 'bg-name';
+        nb.setAttribute('data-r', r);
+        nb.title = 'Hear the ' + d.name.toLowerCase();
+        nb.style.setProperty('--c', d.c);
+        nb.innerHTML = '<span class="sw" aria-hidden="true"></span>' + d.name;
+        row.appendChild(nb);
+        pads[r] = [];
+        for (g = 0; g < 4; g++) {
+          var grp = document.createElement('div');
+          grp.className = 'bg-group h' + (g < 2 ? 1 : 2) + (g % 2 ? ' alt' : '');
+          for (k = 0; k < 4; k++) {
+            var s = g * 4 + k, b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pad';
+            b.setAttribute('data-r', r);
+            b.setAttribute('data-s', s);
+            b.setAttribute('aria-label', d.name + ', step ' + (s + 1));
+            b.setAttribute('aria-pressed', 'false');
+            b.tabIndex = r === 0 && s === 0 ? 0 : -1;
+            grp.appendChild(b);
+            pads[r][s] = b;
+          }
+          row.appendChild(grp);
+        }
+        frag.appendChild(row);
+      });
+      beatGrid.appendChild(frag);
+      PRESETS.forEach(function (p) {
+        var o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.name + ' · ' + p.bpm + ' BPM';
+        presetSel.appendChild(o);
+      });
+    })();
+
+    function sync() {
+      for (var r = 0; r < DRUMS.length; r++) for (var s = 0; s < STEPS; s++) pads[r][s].setAttribute('aria-pressed', beat[r][s] ? 'true' : 'false');
+    }
+    function set(r, s, v, audition) {
+      if (beat[r][s] === v) return;
+      beat[r][s] = v;
+      pads[r][s].setAttribute('aria-pressed', v ? 'true' : 'false');
+      if (v && audition && Player.state() !== 'playing') Sound.drum(DRUMS[r].id, 0);   // hear what you place
+      updateUI();
+    }
+    function padOf(t) { return t && t.closest ? t.closest('.pad') : null; }
+
+    // press a pad and drag across others to paint (or erase, if the first pad was lit)
+    beatGrid.addEventListener('pointerdown', function (e) {
+      var pad = padOf(e.target);
+      if (!pad || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      e.preventDefault();
+      Sound.unlock();
+      var r = +pad.getAttribute('data-r'), s = +pad.getAttribute('data-s');
+      paint = { id: e.pointerId, v: beat[r][s] ? 0 : 1, before: cloneBeat(beat) };
+      set(r, s, paint.v, true);
+      rove(r, s, false);
+      try { if (pad.hasPointerCapture && pad.hasPointerCapture(e.pointerId)) pad.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    });
+    beatGrid.addEventListener('pointerover', function (e) {
+      if (!paint || e.pointerId !== paint.id) return;
+      var pad = padOf(e.target);
+      if (pad) set(+pad.getAttribute('data-r'), +pad.getAttribute('data-s'), paint.v, false);
+    });
+    function endPaint(e) {
+      if (!paint || e.pointerId !== paint.id) return;
+      var before = paint.before;
+      paint = null;
+      commitBeat(before);
+    }
+    document.addEventListener('pointerup', endPaint);
+    document.addEventListener('pointercancel', endPaint);
+
+    beatGrid.addEventListener('click', function (e) {
+      var pad = padOf(e.target);
+      if (pad) {
+        if (e.detail !== 0) return;                 // pointer clicks were handled on pointerdown
+        var r = +pad.getAttribute('data-r'), s = +pad.getAttribute('data-s'), before = cloneBeat(beat);
+        set(r, s, beat[r][s] ? 0 : 1, true);
+        commitBeat(before);
+        return;
+      }
+      var nb = e.target.closest ? e.target.closest('.bg-name') : null;
+      if (nb) { Sound.unlock(); Sound.drum(DRUMS[+nb.getAttribute('data-r')].id, 0); }
+    });
+
+    // arrow keys move between pads (one tab stop for the whole grid), Space / Enter toggle
+    function rove(r, s, focus) {
+      pads.forEach(function (row) { row.forEach(function (b) { b.tabIndex = -1; }); });
+      pads[r][s].tabIndex = 0;
+      if (narrow && narrow.matches) setPage(s < 8 ? 1 : 2, true);
+      if (focus) pads[r][s].focus();
+    }
+    beatGrid.addEventListener('keydown', function (e) {
+      var pad = padOf(e.target);
+      if (!pad || e.ctrlKey || e.metaKey || e.altKey) return;
+      var r = +pad.getAttribute('data-r'), s = +pad.getAttribute('data-s'), nr = r, ns = s;
+      if (e.key === 'ArrowRight') ns = Math.min(STEPS - 1, s + 1);
+      else if (e.key === 'ArrowLeft') ns = Math.max(0, s - 1);
+      else if (e.key === 'ArrowDown') nr = Math.min(DRUMS.length - 1, r + 1);
+      else if (e.key === 'ArrowUp') nr = Math.max(0, r - 1);
+      else if (e.key === 'Home') ns = 0;
+      else if (e.key === 'End') ns = STEPS - 1;
+      else return;
+      e.preventDefault();
+      rove(nr, ns, true);
+    });
+
+    // phones show eight steps at a time
+    function setPage(n, keepFocus) {
+      beatGrid.classList.toggle('on-1', n === 1);
+      beatGrid.classList.toggle('on-2', n === 2);
+      pgBtns.forEach(function (b) { b.setAttribute('aria-pressed', +b.getAttribute('data-page') === n ? 'true' : 'false'); });
+      if (keepFocus) return;
+      for (var r = 0; r < DRUMS.length; r++) for (var s = 0; s < STEPS; s++) {
+        if (pads[r][s].tabIndex === 0 && (s < 8) !== (n === 1)) { rove(r, n === 1 ? 0 : 8, false); return; }
+      }
+    }
+    pgBtns.forEach(function (b) { b.addEventListener('click', function () { setPage(+b.getAttribute('data-page')); }); });
+
+    // the column that is sounding right now
+    function showStep(step) {
+      if (step === nowStep) return;
+      var r;
+      if (nowStep >= 0) for (r = 0; r < DRUMS.length; r++) pads[r][nowStep].classList.remove('is-now');
+      nowStep = step;
+      if (step >= 0) for (r = 0; r < DRUMS.length; r++) pads[r][step].classList.add('is-now');
+      pgBtns.forEach(function (b) {
+        var half = +b.getAttribute('data-page');
+        b.classList.toggle('is-live', step >= 0 && (half === 1 ? step < 8 : step >= 8));
+      });
+    }
+
+    presetSel.addEventListener('change', function () {
+      var p = PRESETS.filter(function (x) { return x.id === presetSel.value; })[0];
+      presetSel.value = '';
+      if (!p) return;
+      var before = cloneBeat(beat);
+      beat = emptyBeat();
+      DRUMS.forEach(function (d, r) {
+        var row = p.p[d.id] || '';
+        for (var s = 0; s < STEPS; s++) beat[r][s] = row.charAt(s) === 'x' ? 1 : 0;
+      });
+      setSwing(p.swing || 0);
+      var note = '';
+      if (!notes.length && p.bpm !== bpm) { setTempo(p.bpm); note = ' at ' + p.bpm + ' BPM'; }   // never retime a written song
+      if (!commitBeat(before, 'Loaded the ' + p.name + ' beat' + note)) { sync(); say('The ' + p.name + ' beat is already loaded'); }
+    });
+    beatClearBtn.addEventListener('click', function () {
+      var before = cloneBeat(beat);
+      beat = emptyBeat();
+      commitBeat(before, 'Beat cleared');
+    });
+    beatPlayBtn.addEventListener('click', function () { Player.toggleBeat(); });
+
+    function setSwing(v) {
+      swing = Math.max(0, Math.min(100, Math.round((+v || 0) / 5) * 5));
+      swingIn.value = String(swing);
+      swingVal.textContent = swing + '%';
+      swingIn.setAttribute('aria-valuetext', swing + ' percent swing');
+      swingIn.style.setProperty('--fill', swing + '%');
+      savePrefs();
+    }
+    swingIn.addEventListener('input', function () { setSwing(swingIn.value); });
+    function setDrumsOn(on) {
+      drumsOn = !!on;
+      withSongBtn.setAttribute('aria-pressed', drumsOn ? 'true' : 'false');
+      savePrefs();
+    }
+    withSongBtn.addEventListener('click', function () {
+      setDrumsOn(!drumsOn);
+      say(drumsOn ? 'The beat plays with the song' : 'The song plays without the beat');
+    });
+
+    return { sync: sync, showStep: showStep, setSwing: setSwing, setDrumsOn: setDrumsOn };
+  })();
+
+  function beatChanged(kind, op) {
+    Beat.sync();
+    saveBeat();
+    updateUI();
+    Player.ui();
+    if (kind === 'undo' || kind === 'redo') say((kind === 'undo' ? 'Undone' : 'Redone') + (view === 'beat' ? '' : ' (beat maker)'));
+    else if (op.label) say(op.label);
+  }
+
+  /* ====================================================================
+     MIDI export: a Standard MIDI File (format 1) with a tempo track, the piano and the drums (channel 10)
+     ==================================================================== */
+  var PPQ = 480;                                    // ticks per quarter note
+  function pushAll(arr, items) { for (var i = 0; i < items.length; i++) arr.push(items[i]); }
+  function vlq(v) {                                 // MIDI variable-length quantity
+    var out = [v & 0x7f];
+    v = Math.floor(v / 128);
+    while (v > 0) { out.unshift((v & 0x7f) | 0x80); v = Math.floor(v / 128); }
+    return out;
+  }
+  function u32(v) { return [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]; }
+  function metaText(type, str) {
+    var b = [];
+    for (var i = 0; i < str.length; i++) b.push(str.charCodeAt(i) & 0x7f);
+    return [0xff, type].concat(vlq(b.length), b);
+  }
+  // events: { tick, ord, b }; at the same tick, meta (0) comes first, then note-offs (1), then note-ons (2)
+  function trackChunk(events, endTick) {
+    events.sort(function (a, b) { return a.tick - b.tick || a.ord - b.ord; });
+    var out = [], last = 0;
+    events.forEach(function (e) { pushAll(out, vlq(e.tick - last)); pushAll(out, e.b); last = e.tick; });
+    pushAll(out, vlq(Math.max(0, endTick - last)));
+    out.push(0xff, 0x2f, 0x00);                     // end of track
+    return [0x4d, 0x54, 0x72, 0x6b].concat(u32(out.length), out);
+  }
+  function buildMidi() {
+    var n = notes.length, hits = beatHasHits();
+    if (!n && !hits) return null;
+    var withDrums = hits && (drumsOn || !n);        // a beat on its own is exported as four bars
+    var songBeats = beatsBefore(n);
+    var drumBars = !withDrums ? 0 : n ? Math.max(1, Math.ceil(songBeats / 4 - 1e-6)) : 4;
+    var endBeat = Math.max(songBeats, drumBars * 4), endTick = Math.round(endBeat * PPQ);
+    var mpq = Math.round(60000000 / bpm);           // microseconds per quarter note
+    var tracks = [trackChunk([
+      { tick: 0, ord: 0, b: metaText(0x03, 'Note Cracker') },
+      { tick: 0, ord: 0, b: [0xff, 0x51, 0x03, (mpq >> 16) & 255, (mpq >> 8) & 255, mpq & 255] },
+      { tick: 0, ord: 0, b: [0xff, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08] }   // 4/4
+    ], endTick)];
+    if (n) {
+      var ev = [{ tick: 0, ord: 0, b: metaText(0x03, 'Piano') }, { tick: 0, ord: 0, b: [0xc0, 0x00] }], at = 0;
+      notes.forEach(function (e) {
+        var key = parseNote(e.n).midi;
+        ev.push({ tick: Math.round(at * PPQ), ord: 2, b: [0x90, key, 92] });
+        ev.push({ tick: Math.round((at + e.d) * PPQ), ord: 1, b: [0x80, key, 0] });
+        at += e.d;
+      });
+      tracks.push(trackChunk(ev, endTick));
+    }
+    if (withDrums) {
+      var dv = [{ tick: 0, ord: 0, b: metaText(0x03, 'Drums') }], late = (swing / 100) * (PPQ / 4) / 3;
+      for (var bar = 0; bar < drumBars; bar++) {
+        for (var s = 0; s < STEPS; s++) {
+          for (var r = 0; r < DRUMS.length; r++) {
+            if (!beat[r][s]) continue;
+            var t0 = Math.round((bar * 4 + s / 4) * PPQ + (s % 2 ? late : 0));
+            dv.push({ tick: t0, ord: 2, b: [0x99, DRUMS[r].midi, DRUMS[r].vel] });
+            dv.push({ tick: t0 + PPQ / 8, ord: 1, b: [0x89, DRUMS[r].midi, 0] });
+          }
+        }
+      }
+      tracks.push(trackChunk(dv, endTick));
+    }
+    var bytes = [0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, tracks.length, (PPQ >> 8) & 255, PPQ & 255];
+    tracks.forEach(function (t) { pushAll(bytes, t); });
+    return { bytes: new Uint8Array(bytes), seconds: endBeat * secPerBeat(), notes: n, drums: withDrums, bars: drumBars };
+  }
+  function downloadMidi() {
+    var m = buildMidi();
+    if (!m) { say('Nothing to export yet: write some notes or make a beat'); return; }
+    try {
+      var url = URL.createObjectURL(new Blob([m.bytes], { type: 'audio/midi' }));
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'note-cracker.mid';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      a.parentNode.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+      var what = m.notes && m.drums ? 'song + beat' : m.notes ? 'song' : 'beat, ' + m.bars + ' bars';
+      say('Downloaded note-cracker.mid (' + what + ', ' + fmtTime(m.seconds) + ')', 4500);
+    } catch (e) { say('This browser could not create the MIDI file'); }
+  }
+
+  /* ====================================================================
+     Views: the sheet, or the beat maker (which puts the piano away)
+     ==================================================================== */
+  function setView(v, fromUser) {
+    view = v === 'beat' ? 'beat' : 'sheet';
+    var beatOn = view === 'beat';
+    appEl.classList.toggle('beat-mode', beatOn);
+    tabSheet.setAttribute('aria-selected', beatOn ? 'false' : 'true');
+    tabBeat.setAttribute('aria-selected', beatOn ? 'true' : 'false');
+    tabSheet.tabIndex = beatOn ? -1 : 0;
+    tabBeat.tabIndex = beatOn ? 0 : -1;
+    sheetScroll.hidden = beatOn;
+    beatView.hidden = !beatOn;
+    releaseAll();
+    if (fromUser) savePrefs();
+    if (!beatOn) {
+      requestAnimationFrame(function () {
+        Sheet.render({ focus: sel >= 0 ? sel : notes.length - 1 });
+        if (!userScrolled) scrollKeyboardTo('C' + octave, false);
+      });
+    }
+  }
+  tabSheet.addEventListener('click', function () { setView('sheet', true); });
+  tabBeat.addEventListener('click', function () { setView('beat', true); });
+  tabSheet.parentNode.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    var next = e.key === 'Home' ? 'sheet' : e.key === 'End' ? 'beat' : view === 'beat' ? 'sheet' : 'beat';
+    setView(next, true);
+    (next === 'beat' ? tabBeat : tabSheet).focus();
+  });
 
   /* ====================================================================
      Selection + note lengths
@@ -2463,16 +3212,18 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (e.key === ' ' || e.code === 'Space') {
       if (isButtonTarget(e.target)) return;        // Space presses the focused button instead
       e.preventDefault();
-      if (!e.repeat) Player.toggle();
+      if (!e.repeat) { if (view === 'beat') Player.toggleBeat(); else Player.toggle(); }
       return;
     }
-    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); if (!e.repeat) deleteNote(sel); return; }
+    if (e.code === 'KeyB' || e.key === 'b' || e.key === 'B') { e.preventDefault(); if (!e.repeat) setView(view === 'beat' ? 'sheet' : 'beat', true); return; }
+    if (e.key === '[' || e.key === ']') { e.preventDefault(); setTempo(bpm + (e.key === ']' ? 5 : -5)); return; }
+    if (e.key === '?') { e.preventDefault(); openHelp(); return; }
+    if (view === 'beat') return;                   // the piano is put away while the beat maker is open
 
+    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); if (!e.repeat) deleteNote(sel); return; }
     var len = LEN_CODES[e.code] || LEN_CHARS[e.key];
     if (len) { e.preventDefault(); if (!e.repeat) chooseLen(len); return; }
     if (e.key === '.' || e.code === 'NumpadDecimal') { e.preventDefault(); if (!e.repeat) toggleDot(); return; }
-    if (e.key === '[' || e.key === ']') { e.preventDefault(); setTempo(bpm + (e.key === ']' ? 5 : -5)); return; }
-    if (e.key === '?') { e.preventDefault(); openHelp(); return; }
 
     var semi = semitoneFor(e);
     if (semi !== undefined) {
@@ -2529,6 +3280,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   deleteBtn.addEventListener('click', function () { deleteNote(sel); });
   clearBtn.addEventListener('click', function () { clearAll(); });
   copyBtn.addEventListener('click', copyNotes);
+  midiBtn.addEventListener('click', downloadMidi);
   // one click on the note tape selects it all, ready for a manual copy
   noteText.addEventListener('click', function () {
     if (noteText.selectionStart === noteText.selectionEnd) { try { noteText.select(); } catch (e) { /* ignore */ } }
@@ -2592,9 +3344,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
      ==================================================================== */
   loadPrefs();
   notes = loadNotes();
+  loadBeat();
   updateKeyLabels();
   setTempo(bpm);
   setLoop(loopOn);
+  Beat.setSwing(swing);
+  Beat.setDrumsOn(drumsOn);
+  Beat.sync();
+  setView(view, false);
   updateUI();
   Sheet.render({ focus: notes.length - 1 });
   select(-1, true);
