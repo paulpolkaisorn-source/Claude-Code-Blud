@@ -605,7 +605,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 #sheet .acc { fill: var(--ink); }
 #sheet .stem { stroke: var(--ink); stroke-linecap: round; }
 #sheet .ledger { fill: none; stroke: var(--ink); stroke-linecap: round; }
-#sheet .flag, #sheet .dot, #sheet .tie { fill: var(--ink); }
+#sheet .flag, #sheet .dot, #sheet .tie, #sheet .rglyph { fill: var(--ink); }   /* glyphs drawn with <use> are scaled: never give them a stroke */
 #sheet .barno { fill: var(--ink-soft); font-family: var(--font-display); font-style: italic; font-weight: 600; }
 #sheet .note { cursor: pointer; }
 #sheet .hit { fill: transparent; stroke: none; pointer-events: all; }
@@ -613,12 +613,15 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 #sheet.has-mark .cursor { display: none; }
 #sheet .selmark { fill: rgba(176, 141, 87, 0.2); stroke: #8B6A39; stroke-width: 1.3; stroke-dasharray: 4 3; }
 #sheet .playmark { fill: url(#playGrad); stroke: none; }
-#sheet .note.is-latest .head, #sheet .note.is-latest .flag, #sheet .note.is-latest .dot, #sheet .note.is-latest .tie { fill: #3a2a0f; stroke: #3a2a0f; }
+#sheet .note.is-latest .head { fill: #3a2a0f; stroke: #3a2a0f; }
+#sheet .note.is-latest .flag, #sheet .note.is-latest .dot, #sheet .note.is-latest .tie, #sheet .note.is-latest .rglyph { fill: #3a2a0f; }
 #sheet .note.is-latest .acc { fill: #3a2a0f; }
 #sheet .note.is-latest .stem, #sheet .note.is-latest .ledger { stroke: #3a2a0f; }
-#sheet .note.is-sel .head, #sheet .note.is-sel .flag, #sheet .note.is-sel .dot, #sheet .note.is-sel .tie, #sheet .note.is-sel .acc { fill: #6E4410; stroke: #6E4410; }
+#sheet .note.is-sel .head { fill: #6E4410; stroke: #6E4410; }
+#sheet .note.is-sel .flag, #sheet .note.is-sel .dot, #sheet .note.is-sel .tie, #sheet .note.is-sel .acc, #sheet .note.is-sel .rglyph { fill: #6E4410; }
 #sheet .note.is-sel .stem, #sheet .note.is-sel .ledger { stroke: #6E4410; }
-#sheet .note.is-play .head, #sheet .note.is-play .flag, #sheet .note.is-play .dot, #sheet .note.is-play .tie, #sheet .note.is-play .acc { fill: #8E2F12; stroke: #8E2F12; }
+#sheet .note.is-play .head { fill: #8E2F12; stroke: #8E2F12; }
+#sheet .note.is-play .flag, #sheet .note.is-play .dot, #sheet .note.is-play .tie, #sheet .note.is-play .acc, #sheet .note.is-play .rglyph { fill: #8E2F12; }
 #sheet .note.is-play .stem, #sheet .note.is-play .ledger { stroke: #8E2F12; }
 #sheet .note.ink-in { animation: inkIn 0.17s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 @keyframes inkIn {
@@ -1036,6 +1039,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 }
 @media (max-width: 420px) {
   .mini { width: 32px; height: 32px; }
+  .rail { padding-left: 8px; padding-right: 8px; }
+  .lengths .sep { display: none; }
   .bg-row { min-height: 28px; }
   .beat-grid { gap: 4px; }
   .beat-view { gap: 6px; }
@@ -1054,6 +1059,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .octave .val { padding-left: 6px; padding-right: 6px; }
 }
 @media (max-width: 340px) {
+  .octave { display: none; }
   .deck { gap: 4px; }
   .transport { gap: 6px; }
   .transport .tool, .transport .tool:not(#playBtn) { min-width: 38px; padding: 0 6px; }
@@ -1184,7 +1190,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       <div id="paper" class="paper">
         <svg id="sheet" role="img" aria-label="Empty grand staff" xmlns="http://www.w3.org/2000/svg" width="300" height="240"></svg>
         <p id="emptyHint" class="empty-hint">Pick a note length, then press a piano key to write your first note
-          <small>Your computer keyboard works too: A S D F G H J play C to B, 1&ndash;4 pick the length</small>
+          <small>Your computer keyboard works too: A S D F G H J play C to B, 1&ndash;4 pick the length, R adds a rest</small>
         </p>
       </div>
     </div>
@@ -1250,9 +1256,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         <button id="dotBtn" class="mini" type="button" aria-pressed="false" aria-label="Dotted note, one and a half times as long" aria-keyshortcuts="." title="Dotted: one and a half times as long (.)">
           <svg class="nico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3.4"/></svg>
         </button>
+        <span class="sep" aria-hidden="true"></span>
+        <button id="restBtn" class="mini" type="button" aria-label="Add a rest" aria-keyshortcuts="R" title="Add a rest (a silence) of the chosen length (R)">
+          <svg class="nico" viewBox="-1.3 -1.8 2.6 3.6" aria-hidden="true" focusable="false"><use href="#g-qrest"/></svg>
+        </button>
       </div>
       <div class="rail-end">
-        <p class="rail-hint"><kbd>A</kbd>&ndash;<kbd>K</kbd> play C to C &middot; <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys &middot; <kbd>Space</kbd> play song</p>
+        <p class="rail-hint"><kbd>A</kbd>&ndash;<kbd>K</kbd> play C to C &middot; <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys &middot; <kbd>R</kbd> rest &middot; <kbd>Space</kbd> play song</p>
         <button id="helpBtn" class="mini" type="button" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-keyshortcuts="?" title="Keyboard shortcuts (?)">?</button>
       </div>
     </div>
@@ -1274,6 +1284,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     <dt><kbd>Z</kbd> / <kbd>X</kbd></dt><dd>Octave down / up</dd>
     <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Whole, half, quarter, eighth note</dd>
     <dt><kbd>.</kbd></dt><dd>Dotted note (one and a half times as long)</dd>
+    <dt><kbd>R</kbd></dt><dd>Add a rest (a silence) of the chosen length; it copies as <code>R</code></dd>
     <dt><kbd>Space</kbd></dt><dd>Play / pause the whole song (in the beat maker: loop the beat)</dd>
     <dt><kbd>Esc</kbd></dt><dd>Stop, or unselect a note</dd>
     <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>Tempo down / up by 5 BPM</dd>
@@ -1318,6 +1329,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     var p = parseNote(name);
     return !!p && p.midi >= FIRST_MIDI && p.midi <= LAST_MIDI && !(p.sharp && (p.letter === 'E' || p.letter === 'B'));
   }
+  var REST = 'R';                                   // a rest is stored as a note named R
+  function isRest(name) { return name === REST; }
   function spoken(name) { var p = parseNote(name); return p.sharp ? p.letter + ' sharp ' + p.oct : name; }
 
   function $(id) { return document.getElementById(id); }
@@ -1412,8 +1425,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
     var sharp = 'M-0.33 -1.05h0.12v2.5h-0.12ZM0.21 -1.45h0.12v2.5h-0.12ZM-0.55 -0.45L0.55 -0.77V-0.45L-0.55 -0.13ZM-0.55 0.45L0.55 0.13V0.45L-0.55 0.77Z';
     var four = 'M0.86 0H1.2V1.28H1.5V1.52H1.2V1.86L1.5 1.88V2H0.56V1.88L0.86 1.86V1.52H0V1.34ZM0.86 0.4L0.3 1.28H0.86Z';
+    // rests, centred on the middle staff line (y down): the quarter-rest zigzag with its hook, and the eighth rest
+    var qrest = 'M-0.31 -1.5L-0.23 -1.47L0.46 -0.55Q0.16 -0.02 0.02 0.47Q0.25 0.62 0.52 0.91Q0.12 0.84 -0.04 1.02Q-0.14 1.22 0.06 1.5Q-0.7 1.26 -0.48 0.84Q-0.36 0.62 -0.14 0.55L-0.42 -0.08Q0.3 -0.72 -0.31 -1.5Z';
+    var erest = dot(-0.2, 0.47, 0.25) +
+      'M-0.24 -0.23Q0.1 -0.16 0.41 -0.62L0.48 -0.55Q0.2 -0.04 -0.26 -0.13Z' +
+      'M0.41 -0.62L0.49 -0.57L0.07 0.98L-0.04 0.95Z';
 
-    return { treble: treble, bass: bass, brace: brace, flag: flag, sharp: sharp, four: four };
+    return { treble: treble, bass: bass, brace: brace, flag: flag, sharp: sharp, four: four, qrest: qrest, erest: erest };
   })();
 
   (function installGlyphs() {
@@ -1424,7 +1442,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         '<path id="g-brace" d="' + Glyphs.brace() + '"/>' +
         '<path id="g-flag" d="' + Glyphs.flag() + '"/>' +
         '<path id="g-sharp" d="' + Glyphs.sharp + '"/>' +
-        '<path id="g-four" d="' + Glyphs.four + '"/>';
+        '<path id="g-four" d="' + Glyphs.four + '"/>' +
+        '<path id="g-qrest" d="' + Glyphs.qrest + '"/>' +
+        '<path id="g-erest" d="' + Glyphs.erest + '"/>';
     } catch (e) { /* the staff still renders without glyphs */ }
   })();
 
@@ -1472,7 +1492,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   var swing = 0, drumsOn = true, view = 'sheet';
 
   function isLen(d) { return LENGTHS.indexOf(d) >= 0; }
-  function isEntry(e) { return !!e && typeof e === 'object' && isValidNote(e.n) && isLen(e.d); }
+  function isEntry(e) { return !!e && typeof e === 'object' && (isValidNote(e.n) || isRest(e.n)) && isLen(e.d); }
+  // how a note reads in messages: "E4", or "a quarter rest"
+  function noteLabel(e) { return isRest(e.n) ? withArticle(lenName(e.d)) + ' rest' : e.n; }
   function lenParts(d) { return d === 6 || d === 3 || d === 1.5 ? { base: d / 1.5, dot: true } : { base: d, dot: false }; }
   function lenName(d) { return LEN_NAMES[d] || 'quarter'; }
   function withArticle(word) { return (/^[aeiou]/.test(word) ? 'an ' : 'a ') + word; }
@@ -1560,7 +1582,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   function nextLength() { return nextLen * (nextDot ? 1.5 : 1); }
 
   function addNote(name) {
-    if (!isValidNote(name)) return false;
+    if (!isValidNote(name) && !isRest(name)) return false;
     var op = { t: 'add', e: { n: name, d: nextLength() } };
     applyOp(op); record(op);
     sel = -1;                                       // playing the piano always writes at the end
@@ -1900,6 +1922,29 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       var treble = p.midi >= 60;
       return (treble ? a.tB : a.bB) - (p.dia - (treble ? 30 : 18)) * L.s / 2;
     }
+    // a rest sits on the staff the melody is using: the one of the note before it (or after it, at the very start)
+    var onTreble = [];
+    function placeRests() {
+      var last = null, first = null, j;
+      onTreble = new Array(notes.length);
+      for (j = 0; j < notes.length; j++) {
+        if (!isRest(notes[j].n)) { last = parseNote(notes[j].n).midi >= 60; if (first === null) first = last; }
+        onTreble[j] = last;
+      }
+      for (j = 0; j < notes.length && onTreble[j] === null; j++) onTreble[j] = first === null ? true : first;
+    }
+    // centre line and staff of note i on the system with anchors a
+    function geom(i, a) {
+      var n = notes[i].n, tr, top;
+      if (isRest(n)) {
+        tr = onTreble[i] !== false;
+        top = tr ? a.tT : a.bT;
+        return { cy: top + 2 * L.s, top: top, bot: top + 4 * L.s };
+      }
+      var p = parseNote(n);
+      tr = p.midi >= 60;
+      return { cy: noteCy(p, a), top: tr ? a.tT : a.bT, bot: tr ? a.tB : a.bB };
+    }
 
     /* ---- rhythm: notes -> 4-beat bars -> systems ---- */
     var PIECES = [4, 3, 2, 1.5, 1, 0.5];             // lengths one notehead can show
@@ -1922,7 +1967,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           var take = Math.min(left, 4 - cur.used), parts = split(take);
           for (k = 0; k < parts.length; k++) {
             var sg = { i: i, d: parts[k], cont: !first, tie: false, next: null, prev: null, x: 0, k: 0 };
-            if (!first) { prev.tie = true; prev.next = sg; sg.prev = prev; }
+            if (!first && !isRest(notes[i].n)) { prev.tie = true; prev.next = sg; sg.prev = prev; }   // rests are never tied
             cur.segs.push(sg); cur.used += parts[k];
             prev = sg; first = false;
           }
@@ -1942,6 +1987,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
     // bars flow into systems (lines); every full line is stretched to the right edge
     function arrange() {
+      placeRests();
       var bars = measure(), systems = [], cur = { bars: [], min: 0 }, b, k, j;
       for (b = 0; b < bars.length; b++) {
         bars[b].min = barMin(bars[b]);
@@ -1970,8 +2016,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
             c += ROOM[sg.d] * s;
             if (!info[sg.i]) info[sg.i] = { k: k, x: sg.x, bar: barNo };
           }
+          var whole = bar.segs.length === 1 && bar.full && bar.segs[0].d === 4 && isRest(notes[bar.segs[0].i].n);
           bx += bar.min * f;
           bar.end = bx;
+          if (whole) {                                // a rest that fills the whole bar sits in its middle
+            var ws = bar.segs[0];
+            ws.x = (bar.end - bar.min * f + bar.end) / 2;
+            if (info[ws.i] && info[ws.i].k === k && info[ws.i].bar === barNo) info[ws.i].x = ws.x;
+          }
         }
       }
       return systems;
@@ -1993,7 +2045,25 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         'Q' + r1(mx) + ' ' + r1(y + 2 * h - 2 * t) + ' ' + r1(x1) + ' ' + r1(y) + 'Z';
     }
 
+    function restMarkup(sg, a, flags) {
+      var s = L.s, e = notes[sg.i], mid = geom(sg.i, a).cy, x = sg.x, d = sg.d;
+      var style = flags.anim ? ' style="transform-origin:' + r1(x) + 'px ' + r1(mid) + 'px"' : '';
+      var name = lenName(e.d);
+      var out = '<g class="note is-rest' + (flags.latest ? ' is-latest' : '') + (flags.anim ? ' ink-in' : '') +
+        '" data-note="' + REST + '" data-i="' + sg.i + '"' + style + '><title>' + name.charAt(0).toUpperCase() + name.slice(1) + ' rest</title>';
+      out += '<rect class="hit" x="' + r1(x - 1.3 * s) + '" y="' + r1(mid - 2.2 * s) + '" width="' + r1(2.6 * s) + '" height="' + r1(4.4 * s) + '"/>';
+      if (d >= 2) {
+        // whole rest hangs from the fourth line, half rest sits on the middle line
+        out += '<rect class="head" x="' + r1(x - 0.62 * s) + '" y="' + r1(d === 4 ? mid - s : mid - 0.5 * s) + '" width="' + r1(1.24 * s) + '" height="' + r1(0.5 * s) + '"/>';
+      } else {
+        out += '<use class="rglyph" href="#g-' + (d >= 1 ? 'q' : 'e') + 'rest" transform="translate(' + r1(x) + ' ' + r1(mid) + ') scale(' + s + ')"/>';
+      }
+      if (d === 3 || d === 1.5) out += '<circle class="dot" cx="' + r1(x + (d === 3 ? 1.05 : 0.9) * s) + '" cy="' + r1(mid - 0.5 * s) + '" r="' + r1(Math.max(1.2, 0.19 * s)) + '"/>';
+      return out + '</g>';
+    }
+
     function pieceMarkup(sg, a, flags) {
+      if (isRest(notes[sg.i].n)) return restMarkup(sg, a, flags);
       var s = L.s, e = notes[sg.i], p = parseNote(e.n), treble = p.midi >= 60;
       var base = treble ? a.tB : a.bB;
       var step = p.dia - (treble ? 30 : 18);            // half-spaces above the staff's bottom line
@@ -2088,8 +2158,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           var sg = segs[j];
           notesOut += pieceMarkup(sg, a, { latest: sg.i === latest, anim: sg.i === animIdx });
           if (sg.i === latest && !sg.cont) {
-            var p = parseNote(notes[sg.i].n), cy = noteCy(p, a), tr = p.midi >= 60;
-            var stTop = tr ? tT : bT, stBot = tr ? tB : bB;
+            var gm = geom(sg.i, a), cy = gm.cy, stTop = gm.top, stBot = gm.bot;
             var cTop = Math.min(stTop - 0.9 * s, cy - 1.7 * s), cBot = Math.max(stBot + 0.9 * s, cy + 1.7 * s);
             out += '<rect class="cursor" x="' + r1(sg.x - 1.05 * s) + '" y="' + r1(cTop) + '" width="' + r1(2.1 * s) + '" height="' + r1(cBot - cTop) +
               '" rx="' + r1(0.5 * s) + '"/>';
@@ -2130,7 +2199,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       svg.setAttribute('width', W);
       svg.setAttribute('height', H);
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-      svg.setAttribute('aria-label', count ? 'Grand staff with ' + count + (count === 1 ? ' note' : ' notes') + ', last note ' + notes[count - 1].n : 'Empty grand staff');
+      svg.setAttribute('aria-label', count ? 'Grand staff with ' + count + (count === 1 ? ' note' : ' notes') + ', last ' + (isRest(notes[count - 1].n) ? 'a rest' : 'note ' + notes[count - 1].n) : 'Empty grand staff');
 
       // empty-state hint sits between the two staves
       hint.hidden = count > 0;
@@ -2148,8 +2217,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     /* ---- selection + playhead ---- */
     function placeRect(rect, i) {
       if (!L || i < 0 || i >= notes.length || !info[i]) { rect.setAttribute('display', 'none'); return; }
-      var s = L.s, inf = info[i], a = anchors(inf.k), p = parseNote(notes[i].n), cy = noteCy(p, a), tr = p.midi >= 60;
-      var stTop = tr ? a.tT : a.bT, stBot = tr ? a.tB : a.bB;
+      var s = L.s, inf = info[i], a = anchors(inf.k), gm = geom(i, a), cy = gm.cy;
+      var stTop = gm.top, stBot = gm.bot;
       var cTop = Math.min(stTop - 1.1 * s, cy - 1.9 * s), cBot = Math.max(stBot + 1.1 * s, cy + 1.9 * s), w = 2.5 * s;
       rect.setAttribute('x', r1(inf.x - w / 2));
       rect.setAttribute('y', r1(cTop));
@@ -2196,7 +2265,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           target = base + L.topPad + Math.max(0, k - fit + 1) * L.H - margin;
         }
       } else {
-        target = base + noteCy(parseNote(notes[i].n), anchors(k)) - vh / 2;   // tiny viewport: centre the note itself
+        target = base + geom(i, anchors(k)).cy - vh / 2;   // tiny viewport: centre the note itself
       }
       scroller.scrollTop = Math.max(0, Math.round(target));
     }
@@ -2288,9 +2357,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     saveNotes();
     Player.songChanged();
     select(sel, true);
-    if (kind === 'del') say('Removed ' + op.e.n);
+    if (kind === 'del') say('Removed ' + noteLabel(op.e));
     else if (kind === 'clr') say('Sheet cleared (' + op.list.length + (op.list.length === 1 ? ' note' : ' notes') + ')');
-    else if (kind === 'len') say(notes[op.i].n + ' is now ' + withArticle(lenName(op.to)) + ' note');
+    else if (kind === 'len') say((isRest(notes[op.i].n) ? 'The rest' : notes[op.i].n) + ' is now ' + withArticle(lenName(op.to)) + (isRest(notes[op.i].n) ? ' rest' : ' note'));
     else if (kind === 'undo') say('Undone');
     else if (kind === 'redo') say('Redone');
   }
@@ -2439,14 +2508,14 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       }
     }
     function schedule(i, e, at, dur) {
-      var delay = at - clock();
-      Sound.play(e.n, delay, dur * 0.94);           // a hair shorter than the beat, so repeated notes re-strike
+      var delay = at - clock(), rest = isRest(e.n);
+      if (!rest) Sound.play(e.n, delay, dur * 0.94);   // a hair shorter than the beat, so repeated notes re-strike; rests just keep time
       later(function () {
         if (state !== 'playing') return;
         cur = i;
         Sheet.mark('play', i);
         Sheet.revealNote(i);
-        light(e.n, Math.max(60, dur * 900));
+        if (!rest) light(e.n, Math.max(60, dur * 900));
         ui();
       }, delay * 1000);
     }
@@ -2795,9 +2864,11 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (n) {
       var ev = [{ tick: 0, ord: 0, b: metaText(0x03, 'Piano') }, { tick: 0, ord: 0, b: [0xc0, 0x00] }], at = 0;
       notes.forEach(function (e) {
-        var key = parseNote(e.n).midi;
-        ev.push({ tick: Math.round(at * PPQ), ord: 2, b: [0x90, key, 92] });
-        ev.push({ tick: Math.round((at + e.d) * PPQ), ord: 1, b: [0x80, key, 0] });
+        if (!isRest(e.n)) {                         // a rest is simply a gap in the track
+          var key = parseNote(e.n).midi;
+          ev.push({ tick: Math.round(at * PPQ), ord: 2, b: [0x90, key, 92] });
+          ev.push({ tick: Math.round((at + e.d) * PPQ), ord: 1, b: [0x80, key, 0] });
+        }
         at += e.d;
       });
       tracks.push(trackChunk(ev, endTick));
@@ -2883,7 +2954,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     syncLenUI();
     if (!quiet && i >= 0 && i !== was) {
       var inf = Sheet.info(i);
-      say('Selected ' + notes[i].n + ', ' + withArticle(lenName(notes[i].d)) + ' note' + (inf ? ' in bar ' + inf.bar : '') + '. Pick a length to change it.', 4200);
+      var what = isRest(notes[i].n) ? withArticle(lenName(notes[i].d)) + ' rest' : notes[i].n + ', ' + withArticle(lenName(notes[i].d)) + ' note';
+      say('Selected ' + what + (inf ? ' in bar ' + inf.bar : '') + '. Pick a length to change it.', 4200);
     }
   }
   function pick(i) {
@@ -2891,7 +2963,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (i >= 0 && i === sel && !playing) i = -1;      // clicking the selected note again unselects it
     select(i);
     Player.picked(i);
-    if (i >= 0 && !playing && !Sound.isMuted()) {    // let the picked note sound briefly
+    if (i >= 0 && !playing && !Sound.isMuted() && !isRest(notes[i].n)) {    // let the picked note sound briefly
       Sound.on('pick', notes[i].n);
       setTimeout(function () { Sound.off('pick'); }, 260);
     }
@@ -2903,7 +2975,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     lenBtns.forEach(function (b) { b.setAttribute('aria-pressed', +b.getAttribute('data-len') === cur.base ? 'true' : 'false'); });
     dotBtn.setAttribute('aria-pressed', cur.dot ? 'true' : 'false');
     dotBtn.disabled = cur.base === 0.5;               // no dotted eighths: their pieces would need sixteenth notes
-    lenLbl.textContent = sel >= 0 ? 'Note ' + notes[sel].n : 'Next note';
+    lenLbl.textContent = sel < 0 ? 'Next note' : isRest(notes[sel].n) ? 'Rest' : 'Note ' + notes[sel].n;
   }
   // with a note selected the length buttons change that note, otherwise they set the length of the next note
   function chooseLen(base) {
@@ -3224,6 +3296,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     var len = LEN_CODES[e.code] || LEN_CHARS[e.key];
     if (len) { e.preventDefault(); if (!e.repeat) chooseLen(len); return; }
     if (e.key === '.' || e.code === 'NumpadDecimal') { e.preventDefault(); if (!e.repeat) toggleDot(); return; }
+    if (e.code === 'KeyR' || e.key === 'r' || e.key === 'R') { e.preventDefault(); if (!e.repeat) addNote(REST); return; }
 
     var semi = semitoneFor(e);
     if (semi !== undefined) {
@@ -3297,6 +3370,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   loopBtn.addEventListener('click', function () { setLoop(!loopOn); say(loopOn ? 'Loop on' : 'Loop off'); });
   lenBtns.forEach(function (b) { b.addEventListener('click', function () { chooseLen(+b.getAttribute('data-len')); }); });
   dotBtn.addEventListener('click', toggleDot);
+  $('restBtn').addEventListener('click', function () { addNote(REST); });
 
   function setTempo(v, fromSlider) {
     v = Math.max(40, Math.min(240, Math.round(+v || 100)));
