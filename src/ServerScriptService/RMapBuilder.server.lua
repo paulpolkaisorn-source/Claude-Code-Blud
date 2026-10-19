@@ -108,7 +108,8 @@ local REMOVE_TEMPLATE_PARTS = true
 
 -- Play areas built inside the R. They are placed in world studs for the SHAPE above (cell size 20,
 -- map centred on the origin) with heights measured from the floor's top; if you reshape the R, move
--- them too. Nothing walkable is higher than 14 studs, so players can't jump over the 24-stud walls.
+-- them too. Nothing anyone can stand on is higher than 16 studs (a jump adds about 7), so players
+-- can't get over the 24-stud walls.
 local BUILD_SECTIONS = true
 local RAMP_THICKNESS = 1
 local LAMP_HEIGHT = 10
@@ -124,6 +125,24 @@ local RAMP_COLOR = BrickColor.new("Bright orange")
 local PODIUM_FIRST_COLOR = BrickColor.new("Bright yellow")
 local PODIUM_SECOND_COLOR = BrickColor.new("Medium stone grey")
 local PODIUM_THIRD_COLOR = BrickColor.new("Bright orange")
+local BLACK = BrickColor.new("Black")
+local WHITE = BrickColor.new("Institutional white")
+local WOOD_COLOR = BrickColor.new("Reddish brown")
+local GOLD_COLOR = BrickColor.new("Deep orange")
+local BLANKET_COLOR = BrickColor.new("Bright blue")
+local BEDROOM_RUG_COLOR = BrickColor.new("Bright violet")
+local LIVING_RUG_COLOR = BrickColor.new("Sand blue")
+local FRIDGE_COLOR = BrickColor.new("Medium stone grey")
+local STOOL_COLOR = BrickColor.new("Bright red")
+local TV_SCREEN_COLOR = BrickColor.new("Bright blue")
+local COUCH_COLOR = BrickColor.new("Bright red")
+local LEAF_COLOR = BrickColor.new("Dark green")
+local NOOB_SKIN_COLOR = BrickColor.new("Bright yellow")
+local NOOB_TORSO_COLOR = BrickColor.new("Bright blue")
+local NOOB_LEGS_COLOR = BrickColor.new("Br. yellowish green")
+local COLA_COLOR = BrickColor.new("Bright red")
+local LOGO_COLOR = BrickColor.new("Institutional white")
+local GIANT_BRICK_COLOR = BrickColor.new("Bright red")
 
 -- Rainbow Ramp stripes, from the top of the ramp to the bottom.
 local RAINBOW_COLORS: { BrickColor } = {
@@ -596,17 +615,28 @@ local function rampFromFloor(parent: Instance, name: string, top: Vector3, downh
 	return ramp(parent, name, rampFoot(top, downhill), top, width)
 end
 
+--- Makes a part glow (neon), optionally giving it a warm light that reaches `range` studs.
+--- @return BasePart -- The same part
+local function glow(part: BasePart, range: number?): BasePart
+	part.Material = Enum.Material.Neon
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	if range then
+		local light = Instance.new("PointLight")
+		light.Range = range
+		light.Color = Color3.fromRGB(255, 214, 140)
+		light.Parent = part
+	end
+	return part
+end
+
 --- Builds a lamp post with a glowing neon head and a warm light.
 local function lamp(parent: Instance, name: string, x: number, z: number): ()
 	blockBetween(parent, `{name}Post`, at(x - 0.5, 0, z - 0.5), at(x + 0.5, LAMP_HEIGHT, z + 0.5), LAMP_POST_COLOR)
-	local head = blockBetween(parent, `{name}Light`, at(x - 1, LAMP_HEIGHT, z - 1), at(x + 1, LAMP_HEIGHT + 2, z + 1), LAMP_LIGHT_COLOR)
-	head.Material = Enum.Material.Neon
-	head.TopSurface = Enum.SurfaceType.Smooth
-	head.BottomSurface = Enum.SurfaceType.Smooth
-	local light = Instance.new("PointLight")
-	light.Range = 18
-	light.Color = Color3.fromRGB(255, 214, 140)
-	light.Parent = head
+	glow(
+		blockBetween(parent, `{name}Light`, at(x - 1, LAMP_HEIGHT, z - 1), at(x + 1, LAMP_HEIGHT + 2, z + 1), LAMP_LIGHT_COLOR),
+		18
+	)
 end
 
 --- Builds a straight wall split into blocks around its openings (doors and windows).
@@ -673,23 +703,186 @@ local function buildTunnel(sections: Instance): ()
 	lamp(folder, "LampEast", -69, 36)
 end
 
---- House: two rooms joined by an inside door, with outside doors, windows and a ramp to the roof.
+--- House: a big one-floor house with a bedroom, kitchen and living room inside, two wide
+--- entrances and a ramp up to its flat roof.
 local function buildHouse(sections: Instance): ()
-	local folder =
-		newSection(sections, "House", "A two-room house with doors and windows, and a ramp up to its flat roof.")
+	local folder = newSection(
+		sections,
+		"House",
+		"A big one-floor house: bedroom, kitchen and living room inside, two wide entrances and a ramp up to the flat roof."
+	)
 	local function window(from: number, to: number): Opening
 		return { from = from, to = to, bottom = 4, top = 8 }
 	end
 	local function door(from: number, to: number): Opening
 		return { from = from, to = to, bottom = 0, top = 9 }
 	end
-	wallWithOpenings(folder, "NorthWall", "X", -36, -4, -14, -12, 12, { window(-31, -25), window(-17, -11) }, HOUSE_WALL_COLOR)
-	wallWithOpenings(folder, "SouthWall", "X", -36, -4, 16, 18, 12, { window(-31, -25), door(-15, -9) }, HOUSE_WALL_COLOR)
-	wallWithOpenings(folder, "WestWall", "Z", -12, 16, -36, -34, 12, { door(-1, 5) }, HOUSE_WALL_COLOR)
-	wallWithOpenings(folder, "EastWall", "Z", -12, 16, -6, -4, 12, { window(-1, 5) }, HOUSE_WALL_COLOR)
-	wallWithOpenings(folder, "MiddleWall", "Z", -12, 16, -21, -19, 12, { door(6, 12) }, HOUSE_WALL_COLOR)
-	blockBetween(folder, "Roof", at(-36, 12, -14), at(-4, 13, 18), HOUSE_ROOF_COLOR)
-	rampFromFloor(folder, "RoofRamp", at(-4, 13, 10), Vector3.new(1, 0, 0), 8)
+	local function entrance(from: number, to: number): Opening
+		return { from = from, to = to, bottom = 0, top = 10 }
+	end
+	local function box(name: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, color: BrickColor): Part
+		return blockBetween(folder, name, at(x0, y0, z0), at(x1, y1, z1), color)
+	end
+
+	-- Shell: outside walls around x -44..4, z -12..30, 12 studs tall, under a flat roof.
+	wallWithOpenings(folder, "NorthWall", "X", -44, 4, -12, -10, 12, { window(-39, -35), window(-14, -8) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(
+		folder,
+		"SouthWall",
+		"X",
+		-44,
+		4,
+		28,
+		30,
+		12,
+		{ window(-38, -32), entrance(-24, -14), window(-8, -2) },
+		HOUSE_WALL_COLOR
+	)
+	wallWithOpenings(folder, "WestWall", "Z", -10, 28, -44, -42, 12, { window(-4, 2), window(15, 21) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(folder, "EastWall", "Z", -10, 28, 2, 4, 12, { entrance(17, 25) }, HOUSE_WALL_COLOR)
+	-- Inside walls: the living room (south) opens into the bedroom (north-west) and the kitchen (north-east).
+	wallWithOpenings(folder, "HallWall", "X", -42, 2, 8, 10, 12, { door(-27, -21), door(-10, -4) }, HOUSE_WALL_COLOR)
+	wallWithOpenings(folder, "KitchenWall", "Z", -10, 8, -20, -18, 12, {}, HOUSE_WALL_COLOR)
+	box("Roof", -44, 12, -12, 4, 13, 30, HOUSE_ROOF_COLOR)
+	rampFromFloor(folder, "RoofRamp", at(4, 13, -2), Vector3.new(1, 0, 0), 8)
+
+	-- Bedroom
+	box("Headboard", -41, 0, -10, -34, 4, -9, WOOD_COLOR)
+	box("BedFrame", -41, 0, -9, -34, 1.5, 1, WOOD_COLOR)
+	box("Mattress", -41, 1.5, -9, -34, 2.5, 1, WHITE)
+	box("Pillow", -40, 2.5, -8.5, -35, 3.2, -6.5, WHITE)
+	box("Blanket", -41, 2.5, -5, -34, 2.8, 1, BLANKET_COLOR)
+	box("Nightstand", -33, 0, -9, -31, 2, -7, WOOD_COLOR)
+	glow(box("NightLamp", -32.5, 2, -8.5, -31.5, 3, -7.5, LAMP_LIGHT_COLOR))
+	box("Wardrobe", -28, 0, -10, -21, 8, -8, WOOD_COLOR)
+	box("BedroomRug", -40, 0, 2, -30, 0.2, 7, BEDROOM_RUG_COLOR)
+	glow(box("BedroomLight", -33, 11.6, -3, -29, 12, 1, WHITE), 20)
+
+	-- Kitchen
+	box("Counter", -17, 0, -10, -3, 3.5, -7, WHITE)
+	box("Stove", -12, 3.5, -10, -8, 3.7, -7, BLACK)
+	box("Fridge", -2, 0, -10, 2, 8, -7, FRIDGE_COLOR)
+	box("TableLeg", -9.5, 0, 0, -8.5, 2.5, 1, WOOD_COLOR)
+	box("TableTop", -12, 2.5, -2, -6, 3, 3, WOOD_COLOR)
+	box("StoolWest", -15, 0, -0.5, -13, 2, 1.5, STOOL_COLOR)
+	box("StoolEast", -5, 0, -0.5, -3, 2, 1.5, STOOL_COLOR)
+	glow(box("KitchenLight", -11, 11.6, -3, -7, 12, 1, WHITE), 20)
+
+	-- Living room
+	box("TVStand", -39, 0, 11, -31, 2, 13, BLACK)
+	glow(box("TVScreen", -38, 2, 11.5, -32, 6, 12.5, TV_SCREEN_COLOR))
+	box("LivingRug", -41, 0, 14, -29, 0.2, 21, LIVING_RUG_COLOR)
+	box("CoffeeTable", -38, 0.2, 16, -32, 1.7, 19, WOOD_COLOR)
+	box("CouchSeat", -40, 0, 22, -30, 2, 26, COUCH_COLOR)
+	box("CouchBack", -40, 0, 26, -30, 4, 28, COUCH_COLOR)
+	box("CouchArmWest", -41, 0, 22, -40, 3, 28, COUCH_COLOR)
+	box("CouchArmEast", -30, 0, 22, -29, 3, 28, COUCH_COLOR)
+	for index, spot in { { -13, 25 }, { -2, 11 } } do
+		box(`PlantPot{index}`, spot[1], 0, spot[2], spot[1] + 2, 2, spot[2] + 2, WOOD_COLOR)
+		box(`PlantLeaves{index}`, spot[1] - 0.5, 2, spot[2] - 0.5, spot[1] + 2.5, 5, spot[2] + 2.5, LEAF_COLOR)
+	end
+	glow(box("LivingLight", -22, 11.6, 16, -14, 12, 22, WHITE), 20)
+end
+
+--- Noob Statue: the classic Roblox noob, scaled up and standing on a black base, facing the spawn.
+local function buildNoobStatue(sections: Instance): ()
+	local folder =
+		newSection(sections, "NoobStatue", "A giant statue of the classic Roblox noob, in yellow, blue and green.")
+	local centerX, centerZ, scale = -62, -20, 2.8
+	blockBetween(folder, "Base", at(centerX - 8, 0, centerZ - 6), at(centerX + 8, 1, centerZ + 6), BLACK)
+	-- Body parts in classic character units (1 unit = `scale` studs), standing on the base.
+	local function piece(name: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, color: BrickColor): ()
+		blockBetween(
+			folder,
+			name,
+			at(centerX + x0 * scale, 1 + y0 * scale, centerZ + z0 * scale),
+			at(centerX + x1 * scale, 1 + y1 * scale, centerZ + z1 * scale),
+			color
+		)
+	end
+	piece("LeftLeg", -1, 0, -0.5, 0, 2, 0.5, NOOB_LEGS_COLOR)
+	piece("RightLeg", 0, 0, -0.5, 1, 2, 0.5, NOOB_LEGS_COLOR)
+	piece("Torso", -1, 2, -0.5, 1, 4, 0.5, NOOB_TORSO_COLOR)
+	piece("LeftArm", -2, 2, -0.5, -1, 4, 0.5, NOOB_SKIN_COLOR)
+	piece("RightArm", 1, 2, -0.5, 2, 4, 0.5, NOOB_SKIN_COLOR)
+	piece("Head", -0.6, 4, -0.6, 0.6, 5.2, 0.6, NOOB_SKIN_COLOR)
+	piece("EyeLeft", -0.35, 4.65, 0.6, -0.15, 4.95, 0.65, BLACK)
+	piece("EyeRight", 0.15, 4.65, 0.6, 0.35, 4.95, 0.65, BLACK)
+	piece("Smile", -0.3, 4.3, 0.6, 0.3, 4.4, 0.65, BLACK)
+end
+
+--- Bloxy Cola: two vending machines against the courtyard's east wall.
+local function buildBloxyCola(sections: Instance): ()
+	local folder =
+		newSection(sections, "BloxyCola", "Two Bloxy Cola vending machines with glowing panels in the courtyard's east corner.")
+	for index, z in { 3, 11 } do
+		local name = `Machine{index}`
+		blockBetween(folder, name, at(74, 0, z), at(79, 10, z + 6), COLA_COLOR)
+		glow(blockBetween(folder, `{name}Panel`, at(73.6, 4, z + 1), at(74, 9, z + 5), WHITE))
+		blockBetween(folder, `{name}Stripe`, at(73.6, 2.8, z + 0.5), at(74, 3.4, z + 5.5), WHITE)
+		blockBetween(folder, `{name}Slot`, at(73.6, 1, z + 2), at(74, 2.5, z + 4), BLACK)
+	end
+end
+
+--- Bloxy Trophy: a giant golden cup trophy on a black pedestal.
+local function buildBloxyTrophy(sections: Instance): ()
+	local folder = newSection(sections, "BloxyTrophy", "A giant golden Bloxy-style trophy on a black pedestal.")
+	local centerX, centerZ = 86, -28
+	local function box(name: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, color: BrickColor): ()
+		blockBetween(folder, name, at(centerX + x0, y0, centerZ + z0), at(centerX + x1, y1, centerZ + z1), color)
+	end
+	box("Pedestal", -6, 0, -6, 6, 2, 6, BLACK)
+	box("PedestalTop", -4, 2, -4, 4, 3, 4, BLACK)
+	box("Foot", -3, 3, -3, 3, 4, 3, GOLD_COLOR)
+	box("Stem", -1, 4, -1, 1, 8, 1, GOLD_COLOR)
+	box("CupBottom", -4, 8, -4, 4, 9, 4, GOLD_COLOR)
+	box("CupWest", -4, 9, -4, -3, 13, 4, GOLD_COLOR)
+	box("CupEast", 3, 9, -4, 4, 13, 4, GOLD_COLOR)
+	box("CupNorth", -3, 9, -4, 3, 13, -3, GOLD_COLOR)
+	box("CupSouth", -3, 9, 3, 3, 13, 4, GOLD_COLOR)
+	box("HandleWest", -5.5, 9.5, -0.5, -4, 12.5, 0.5, GOLD_COLOR)
+	box("HandleEast", 4, 9.5, -0.5, 5.5, 12.5, 0.5, GOLD_COLOR)
+end
+
+--- Roblox Logo: a giant tilted square with a square hole, standing on a stage between two lamps.
+local function buildRobloxLogo(sections: Instance): ()
+	local folder = newSection(
+		sections,
+		"RobloxLogo",
+		"A giant tilted-square Roblox logo standing on a black stage, lit by two neon lamps."
+	)
+	local centerX, centerZ = -20, -82
+	blockBetween(folder, "Stage", at(centerX - 14, 0, centerZ - 6), at(centerX + 14, 1, centerZ + 6), BLACK)
+
+	local size, barWidth, depth, tilt = 12, 3, 3, math.rad(15)
+	-- The lowest corner rests on the stage, sunk in slightly so it looks planted.
+	local center = at(centerX, 1 + size / 2 * (math.sin(tilt) + math.cos(tilt)) - 0.3, centerZ)
+	local right = Vector3.new(math.cos(tilt), math.sin(tilt), 0)
+	local up = Vector3.new(-math.sin(tilt), math.cos(tilt), 0)
+	local function logoBar(name: string, offsetX: number, offsetY: number, sizeX: number, sizeY: number): ()
+		local position = center + right * offsetX + up * offsetY
+		local part = makeBlock(name, Vector3.new(sizeX, sizeY, depth), position, LOGO_COLOR, folder)
+		part.CFrame = CFrame.new(position.X, position.Y, position.Z, right.X, up.X, 0, right.Y, up.Y, 0, right.Z, up.Z, 1)
+	end
+	local offset = (size - barWidth) / 2
+	logoBar("LogoTop", 0, offset, size, barWidth)
+	logoBar("LogoBottom", 0, -offset, size, barWidth)
+	logoBar("LogoLeft", -offset, 0, barWidth, size - 2 * barWidth)
+	logoBar("LogoRight", offset, 0, barWidth, size - 2 * barWidth)
+
+	lamp(folder, "LampWest", centerX - 18, centerZ)
+	lamp(folder, "LampEast", centerX + 18, centerZ)
+end
+
+--- Giant Brick: a classic 2x4 brick blown up to giant size, with big studs on top.
+local function buildGiantBrick(sections: Instance): ()
+	local folder = newSection(sections, "GiantBrick", "A giant classic 2x4 brick with oversized studs.")
+	blockBetween(folder, "Brick", at(82, 0, -74), at(98, 6, -66), GIANT_BRICK_COLOR)
+	for row, z in { -72, -68 } do
+		for column, x in { 84, 88, 92, 96 } do
+			blockBetween(folder, `Stud{row}_{column}`, at(x - 1.25, 6, z - 1.25), at(x + 1.25, 7.2, z + 1.25), GIANT_BRICK_COLOR)
+		end
+	end
 end
 
 --- Lookout Tower: a platform on pillars in the north-west corner, with a ramp up to it.
@@ -814,9 +1007,14 @@ local function buildSections(model: Model): (number, number)
 	local builders: { (Instance) -> () } = {
 		buildSpawnPlaza,
 		buildTunnel,
+		buildNoobStatue,
 		buildHouse,
+		buildBloxyCola,
+		buildBloxyTrophy,
 		buildLookoutTower,
 		buildSkyBridge,
+		buildRobloxLogo,
+		buildGiantBrick,
 		buildRainbowRamp,
 		buildSlopeHill,
 		buildFinishPodium,
