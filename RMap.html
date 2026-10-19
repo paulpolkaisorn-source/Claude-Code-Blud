@@ -367,7 +367,7 @@
 <main>
   <header>
     <h1>R Map</h1>
-    <p class="subtitle">A blocky Roblox map shaped like the letter R, with green floors, grey walls and a red strap, and a loop of play areas built inside it. Tap an area below to fly the camera there.</p>
+    <p class="subtitle">A blocky but realistic Roblox map shaped like the letter R: grass, concrete walls on a red-brick base, wood, glass, trees and Roblox landmarks, with a loop of play areas inside. Tap an area below to fly the camera there.</p>
     <ul class="stats" id="stats" aria-label="Map stats"></ul>
   </header>
 
@@ -388,7 +388,7 @@
       <div class="fallback" id="fallback"><p>Your browser can't show the 3D preview (WebGL 2 is unavailable). The downloads below still work.</p></div>
     </div>
     <ul class="legend" id="legend" aria-label="Legend"></ul>
-    <p class="note">The preview is drawn from the saved model file, part for part, so it matches what you insert into Studio. Lighting and the stud texture are an approximation of Roblox's look.</p>
+    <p class="note">The preview is drawn from the saved model file, part for part, so it matches what you insert into Studio. Materials and lighting are an approximation: in Studio the map's RealisticLighting script switches on sun, haze and glow when you press Play.</p>
   </section>
 
   <section aria-labelledby="areas-heading">
@@ -432,8 +432,8 @@
   </section>
 </main>
 
-<script type="application/json" id="map-data">{"parts":[{"a":true,"c":"SpawnLocation","cf":[-80,0.5,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnLocation","p":"","rgb":[75,151,75],"s":[12,1,12],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-2,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor11","p":"Floor","rgb":[75,151,75],"s":[20,4,40],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-2,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor10","p":"Floor","rgb":[75,151,75],"s":[20,4,60],"top":"Studs"},{"a":true,"c":"Part","cf":[30,-2,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor9","p":"Floor","rgb":[75,151,75],"s":[20,4,20],"top":"Studs"},{"a":true,"c":"Part","cf":[20,-2,50,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor8","p":"Floor","rgb":[75,151,75],"s":[40,4,20],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,-2,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor7","p":"Floor","rgb":[75,151,75],"s":[40,4,80],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-2,10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor6","p":"Floor","rgb":[75,151,75],"s":[80,4,60],"top":"Studs"},{"a":true,"c":"Part","cf":[50,-2,20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor5","p":"Floor","rgb":[75,151,75],"s":[20,4,160],"top":"Studs"},{"a":true,"c":"Part","cf":[-70,-2,-10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor4","p":"Floor","rgb":[75,151,75],"s":[60,4,100],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-2,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor3","p":"Floor","rgb":[75,151,75],"s":[20,4,80],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-2,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor2","p":"Floor","rgb":[75,151,75],"s":[20,4,120],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,-2,-90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Floor1","p":"Floor","rgb":[75,151,75],"s":[160,4,60],"top":"Studs"},{"a":true,"c":"Part","cf":[100,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall30","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[100,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall29","p":"Walls","rgb":[99,95,98],"s":[2,21,78],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall28","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall27","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,-90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall26","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,13.5,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall25","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall24","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[60,13.5,-110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall23","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,13.5,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall22","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall21","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[20,13.5,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall20","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[0,13.5,50,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall19","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-40,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall18","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Studs"},{"a":true,"c":"Part","cf":[-60,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall17","p":"Walls","rgb":[99,95,98],"s":[2,21,78],"top":"Studs"},{"a":true,"c":"Part","cf":[-100,13.5,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall16","p":"Walls","rgb":[99,95,98],"s":[2,21,238],"top":"Studs"},{"a":true,"c":"Part","cf":[80,13.5,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall15","p":"Walls","rgb":[99,95,98],"s":[42,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,13.5,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall14","p":"Walls","rgb":[99,95,98],"s":[42,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[50,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall13","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall12","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[30,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall11","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,13.5,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall10","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[10,13.5,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall9","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-30,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall8","p":"Walls","rgb":[99,95,98],"s":[62,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,13.5,20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall7","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,13.5,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall6","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,13.5,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall5","p":"Walls","rgb":[99,95,98],"s":[82,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall4","p":"Walls","rgb":[99,95,98],"s":[82,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,13.5,-80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall3","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,13.5,-100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall2","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,13.5,-120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wall1","p":"Walls","rgb":[99,95,98],"s":[162,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[100,-0.6,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap30","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[100,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap29","p":"Straps","rgb":[196,40,28],"s":[2,7.2,78],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap28","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,10,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap27","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,-90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap26","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,-0.6,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap25","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[60,-0.6,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap24","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[60,-0.6,-110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap23","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,-0.6,90,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap22","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[40,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap21","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[20,-0.6,70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap20","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-0.6,50,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap19","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-40,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap18","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Studs"},{"a":true,"c":"Part","cf":[-60,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap17","p":"Straps","rgb":[196,40,28],"s":[2,7.2,78],"top":"Studs"},{"a":true,"c":"Part","cf":[-100,-0.6,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap16","p":"Straps","rgb":[196,40,28],"s":[2,7.2,238],"top":"Studs"},{"a":true,"c":"Part","cf":[80,-0.6,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap15","p":"Straps","rgb":[196,40,28],"s":[42,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,-0.6,120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap14","p":"Straps","rgb":[196,40,28],"s":[42,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[50,-0.6,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap13","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap12","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[30,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap11","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-0.6,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap10","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[10,-0.6,60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap9","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-30,-0.6,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap8","p":"Straps","rgb":[196,40,28],"s":[62,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-0.6,20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap7","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-0.6,0,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap6","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-0.6,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap5","p":"Straps","rgb":[196,40,28],"s":[82,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[0,-0.6,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap4","p":"Straps","rgb":[196,40,28],"s":[82,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[90,-0.6,-80,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap3","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[70,-0.6,-100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap2","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,-0.6,-120,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Strap1","p":"Straps","rgb":[196,40,28],"s":[162,7.2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[78,20,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PodiumGateLintel","p":"Dividers","rgb":[99,95,98],"s":[24,8,2],"top":"Studs"},{"a":true,"c":"Part","cf":[94.5,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PodiumGateWall2","p":"Dividers","rgb":[99,95,98],"s":[9,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[94.5,1.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PodiumGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[9,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[63.5,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PodiumGateWall1","p":"Dividers","rgb":[99,95,98],"s":[5,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[63.5,1.5,100,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PodiumGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[5,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[22,20,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SlopeGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Studs"},{"a":true,"c":"Part","cf":[44.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SlopeGateWall2","p":"Dividers","rgb":[99,95,98],"s":[29,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[44.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SlopeGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[29,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[7.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SlopeGateWall1","p":"Dividers","rgb":[99,95,98],"s":[13,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[7.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SlopeGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[13,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[49,20,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"RainbowGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Studs"},{"a":true,"c":"Part","cf":[78,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"RainbowGateWall2","p":"Dividers","rgb":[99,95,98],"s":[42,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[78,1.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"RainbowGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[42,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-88,20,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-60.5,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutGateWall2","p":"Dividers","rgb":[99,95,98],"s":[39,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-60.5,1.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[39,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-97.5,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutGateWall1","p":"Dividers","rgb":[99,95,98],"s":[3,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-97.5,1.5,-60,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[3,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,20,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-66.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnGateWall2","p":"Dividers","rgb":[99,95,98],"s":[11,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-66.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[11,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-93.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnGateWall1","p":"Dividers","rgb":[99,95,98],"s":[11,21,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-93.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SpawnGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[11,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[86,0.5302,103.4235,-1,0,0,0,0.9397,-0.342,0,-0.342,-0.9397],"m":"Plastic","n":"ThirdRamp","p":"Sections/FinishPodium","rgb":[218,133,65],"s":[6,1,5.8476],"top":"Studs"},{"a":true,"c":"Part","cf":[86,1,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Third","p":"Sections/FinishPodium","rgb":[218,133,65],"s":[8,2,8],"top":"Studs"},{"a":true,"c":"Part","cf":[78,2.0302,99.3023,-1,0,0,0,0.9397,-0.342,0,-0.342,-0.9397],"m":"Plastic","n":"FirstRamp","p":"Sections/FinishPodium","rgb":[218,133,65],"s":[6,1,14.619],"top":"Studs"},{"a":true,"c":"Part","cf":[78,2.5,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"First","p":"Sections/FinishPodium","rgb":[245,205,48],"s":[8,5,8],"top":"Studs"},{"a":true,"c":"Part","cf":[70,1.0302,102.0498,-1,0,0,0,0.9397,-0.342,0,-0.342,-0.9397],"m":"Plastic","n":"SecondRamp","p":"Sections/FinishPodium","rgb":[218,133,65],"s":[6,1,8.7714],"top":"Studs"},{"a":true,"c":"Part","cf":[70,1.5,110,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Second","p":"Sections/FinishPodium","rgb":[163,162,165],"s":[8,3,8],"top":"Studs"},{"a":true,"c":"Part","cf":[61.5277,3.5169,81.5277,0.7071,0.1822,0.6832,0,0.9662,-0.2577,-0.7071,0.1822,0.6832],"m":"Plastic","n":"RampDown","p":"Sections/SlopeHill","rgb":[218,133,65],"s":[10,1,31.0484],"top":"Studs"},{"a":true,"c":"Part","cf":[46.0625,4,66.0625,-0.7071,0,-0.7071,0,1,0,0.7071,0,-0.7071],"m":"Plastic","n":"Hill","p":"Sections/SlopeHill","rgb":[13,105,172],"s":[14,8,14],"top":"Studs"},{"a":true,"c":"Part","cf":[30.5972,3.5169,50.5972,-0.7071,-0.1822,-0.6832,0,0.9662,-0.2577,0.7071,-0.1822,-0.6832],"m":"Plastic","n":"RampUp","p":"Sections/SlopeHill","rgb":[218,133,65],"s":[10,1,31.0484],"top":"Studs"},{"a":true,"c":"Part","cf":[49,0.6968,-64.9117,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Stripe6","p":"Sections/RainbowRamp","rgb":[107,50,124],"s":[10,1,6.8222],"top":"Studs"},{"a":true,"c":"Part","cf":[49,3.0302,-71.3225,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Stripe5","p":"Sections/RainbowRamp","rgb":[13,105,172],"s":[10,1,6.8222],"top":"Studs"},{"a":true,"c":"Part","cf":[49,5.3635,-77.7333,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Stripe4","p":"Sections/RainbowRamp","rgb":[0,255,0],"s":[10,1,6.8222],"top":"Studs"},{"a":true,"c":"Part","cf":[49,7.6968,-84.1441,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Stripe3","p":"Sections/RainbowRamp","rgb":[245,205,48],"s":[10,1,6.8222],"top":"Studs"},{"a":true,"c":"Part","cf":[49,10.0302,-90.5548,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Stripe2","p":"Sections/RainbowRamp","rgb":[218,133,65],"s":[10,1,6.8222],"top":"Studs"},{"a":true,"c":"Part","cf":[49,12.3635,-96.9656,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Stripe1","p":"Sections/RainbowRamp","rgb":[196,40,28],"s":[10,1,6.8222],"top":"Studs"},{"a":true,"c":"Part","cf":[96,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_4","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[92,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_3","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[88,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_2","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[84,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_1","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[96,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_4","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[92,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_3","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[88,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_2","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[84,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_1","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Studs"},{"a":true,"c":"Part","cf":[90,3,-70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Brick","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[16,6,8],"top":"Studs"},{"a":true,"c":"Part","cf":[-2,11,-82,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/RobloxLogo","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-2,5,-82,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampEastPost","p":"Sections/RobloxLogo","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-38,11,-82,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/RobloxLogo","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-38,5,-82,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampWestPost","p":"Sections/RobloxLogo","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-15.6533,9.2132,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"Plastic","n":"LogoRight","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[3,6,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-24.3467,6.8838,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"Plastic","n":"LogoLeft","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[3,6,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-18.8353,3.7018,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"Plastic","n":"LogoBottom","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[12,3,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-21.1647,12.3951,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"Plastic","n":"LogoTop","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[12,3,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,0.5,-82,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stage","p":"Sections/RobloxLogo","rgb":[27,42,53],"s":[28,1,12],"top":"Studs"},{"a":true,"c":"Part","cf":[57,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar4","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[41,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar3","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[57,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar2","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[41,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatformPillar1","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[49,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastPlatform","p":"Sections/SkyBridge","rgb":[13,105,172],"s":[18,1,18],"top":"Studs"},{"a":true,"c":"Part","cf":[10,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"DeckPillar3","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"DeckPillar2","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-50,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"DeckPillar1","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Deck","p":"Sections/SkyBridge","rgb":[13,105,172],"s":[120,1,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-92,6.5302,-80.9387,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Ramp","p":"Sections/LookoutTower","rgb":[218,133,65],"s":[8,1,40.9333],"top":"Studs"},{"a":true,"c":"Part","cf":[-81,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar4","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-97,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar3","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-81,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar2","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-97,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LookoutPillar1","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-89,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Lookout","p":"Sections/LookoutTower","rgb":[13,105,172],"s":[18,1,18],"top":"Studs"},{"a":true,"c":"Part","cf":[90.75,11,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HandleEast","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1.5,3,1],"top":"Studs"},{"a":true,"c":"Part","cf":[81.25,11,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HandleWest","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1.5,3,1],"top":"Studs"},{"a":true,"c":"Part","cf":[86,11,-24.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CupSouth","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[6,4,1],"top":"Studs"},{"a":true,"c":"Part","cf":[86,11,-31.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CupNorth","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[6,4,1],"top":"Studs"},{"a":true,"c":"Part","cf":[89.5,11,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CupEast","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1,4,8],"top":"Studs"},{"a":true,"c":"Part","cf":[82.5,11,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CupWest","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1,4,8],"top":"Studs"},{"a":true,"c":"Part","cf":[86,8.5,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CupBottom","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[86,6,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stem","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[2,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[86,3.5,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Foot","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[6,1,6],"top":"Studs"},{"a":true,"c":"Part","cf":[86,2.5,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PedestalTop","p":"Sections/BloxyTrophy","rgb":[27,42,53],"s":[8,1,8],"top":"Studs"},{"a":true,"c":"Part","cf":[86,1,-28,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Pedestal","p":"Sections/BloxyTrophy","rgb":[27,42,53],"s":[12,2,12],"top":"Studs"},{"a":true,"c":"Part","cf":[73.8,1.75,14,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Machine2Slot","p":"Sections/BloxyCola","rgb":[27,42,53],"s":[0.4,1.5,2],"top":"Studs"},{"a":true,"c":"Part","cf":[73.8,3.1,14,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Machine2Stripe","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,0.6,5],"top":"Studs"},{"a":true,"c":"Part","cf":[73.8,6.5,14,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"Machine2Panel","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,5,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[76.5,5,14,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Machine2","p":"Sections/BloxyCola","rgb":[196,40,28],"s":[5,10,6],"top":"Studs"},{"a":true,"c":"Part","cf":[73.8,1.75,6,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Machine1Slot","p":"Sections/BloxyCola","rgb":[27,42,53],"s":[0.4,1.5,2],"top":"Studs"},{"a":true,"c":"Part","cf":[73.8,3.1,6,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Machine1Stripe","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,0.6,5],"top":"Studs"},{"a":true,"c":"Part","cf":[73.8,6.5,6,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"Machine1Panel","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,5,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[76.5,5,6,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Machine1","p":"Sections/BloxyCola","rgb":[196,40,28],"s":[5,10,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-18,11.8,19,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LivingLight","p":"Sections/House","rgb":[248,248,248],"s":[8,0.4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-1,3.5,12,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PlantLeaves2","p":"Sections/House","rgb":[40,127,71],"s":[3,3,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-1,1,12,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PlantPot2","p":"Sections/House","rgb":[105,64,40],"s":[2,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-12,3.5,26,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PlantLeaves1","p":"Sections/House","rgb":[40,127,71],"s":[3,3,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-12,1,26,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"PlantPot1","p":"Sections/House","rgb":[105,64,40],"s":[2,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-29.5,1.5,25,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CouchArmEast","p":"Sections/House","rgb":[196,40,28],"s":[1,3,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-40.5,1.5,25,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CouchArmWest","p":"Sections/House","rgb":[196,40,28],"s":[1,3,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,2,27,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CouchBack","p":"Sections/House","rgb":[196,40,28],"s":[10,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,1,24,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CouchSeat","p":"Sections/House","rgb":[196,40,28],"s":[10,2,4],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,0.95,17.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"CoffeeTable","p":"Sections/House","rgb":[105,64,40],"s":[6,1.5,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,0.1,17.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LivingRug","p":"Sections/House","rgb":[116,134,157],"s":[12,0.2,7],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,4,12,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"TVScreen","p":"Sections/House","rgb":[13,105,172],"s":[6,4,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,1,12,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"TVStand","p":"Sections/House","rgb":[27,42,53],"s":[8,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-9,11.8,-1,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"KitchenLight","p":"Sections/House","rgb":[248,248,248],"s":[4,0.4,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-4,1,0.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"StoolEast","p":"Sections/House","rgb":[196,40,28],"s":[2,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-14,1,0.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"StoolWest","p":"Sections/House","rgb":[196,40,28],"s":[2,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-9,2.75,0.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"TableTop","p":"Sections/House","rgb":[105,64,40],"s":[6,0.5,5],"top":"Studs"},{"a":true,"c":"Part","cf":[-9,1.25,0.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"TableLeg","p":"Sections/House","rgb":[105,64,40],"s":[1,2.5,1],"top":"Studs"},{"a":true,"c":"Part","cf":[0,4,-8.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Fridge","p":"Sections/House","rgb":[163,162,165],"s":[4,8,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-10,3.6,-8.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stove","p":"Sections/House","rgb":[27,42,53],"s":[4,0.2,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-10,1.75,-8.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Counter","p":"Sections/House","rgb":[248,248,248],"s":[14,3.5,3],"top":"Studs"},{"a":true,"c":"Part","cf":[-31,11.8,-1,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"BedroomLight","p":"Sections/House","rgb":[248,248,248],"s":[4,0.4,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,0.1,4.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"BedroomRug","p":"Sections/House","rgb":[107,50,124],"s":[10,0.2,5],"top":"Studs"},{"a":true,"c":"Part","cf":[-24.5,4,-9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Wardrobe","p":"Sections/House","rgb":[105,64,40],"s":[7,8,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-32,2.5,-8,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"NightLamp","p":"Sections/House","rgb":[245,205,48],"s":[1,1,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-32,1,-8,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Nightstand","p":"Sections/House","rgb":[105,64,40],"s":[2,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-37.5,2.65,-2,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Blanket","p":"Sections/House","rgb":[13,105,172],"s":[7,0.3,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-37.5,2.85,-7.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Pillow","p":"Sections/House","rgb":[248,248,248],"s":[5,0.7,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-37.5,2,-4,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Mattress","p":"Sections/House","rgb":[248,248,248],"s":[7,1,10],"top":"Studs"},{"a":true,"c":"Part","cf":[-37.5,0.75,-4,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"BedFrame","p":"Sections/House","rgb":[105,64,40],"s":[7,1.5,10],"top":"Studs"},{"a":true,"c":"Part","cf":[-37.5,2,-9.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Headboard","p":"Sections/House","rgb":[105,64,40],"s":[7,4,1],"top":"Studs"},{"a":true,"c":"Part","cf":[21.6876,6.0302,-2,0,0.342,0.9397,0,0.9397,-0.342,-1,0,0],"m":"Plastic","n":"RoofRamp","p":"Sections/House","rgb":[218,133,65],"s":[8,1,38.0095],"top":"Studs"},{"a":true,"c":"Part","cf":[-20,12.5,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Roof","p":"Sections/House","rgb":[196,40,28],"s":[48,1,42],"top":"Studs"},{"a":true,"c":"Part","cf":[-19,6,-1,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"KitchenWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,18],"top":"Studs"},{"a":true,"c":"Part","cf":[-1,6,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HallWall5","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-7,10.5,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HallWall4","p":"Sections/House","rgb":[248,248,248],"s":[6,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-15.5,6,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HallWall3","p":"Sections/House","rgb":[248,248,248],"s":[11,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-24,10.5,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HallWall2","p":"Sections/House","rgb":[248,248,248],"s":[6,3,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-34.5,6,9,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HallWall1","p":"Sections/House","rgb":[248,248,248],"s":[15,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[3,6,26.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,12,3],"top":"Studs"},{"a":true,"c":"Part","cf":[3,11,21,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,2,8],"top":"Studs"},{"a":true,"c":"Part","cf":[3,6,3.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EastWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,27],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,6,24.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall7","p":"Sections/House","rgb":[248,248,248],"s":[2,12,7],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,10,18,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall6","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,2,18,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall5","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,6,8.5,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall4","p":"Sections/House","rgb":[248,248,248],"s":[2,12,13],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,10,-1,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,2,-1,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Studs"},{"a":true,"c":"Part","cf":[-43,6,-7,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"WestWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,6],"top":"Studs"},{"a":true,"c":"Part","cf":[1,6,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall9","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-5,10,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall8","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-5,2,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall7","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-11,6,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall6","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-19,11,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall5","p":"Sections/House","rgb":[248,248,248],"s":[10,2,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-28,6,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall4","p":"Sections/House","rgb":[248,248,248],"s":[8,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,10,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall3","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-35,2,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall2","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-41,6,29,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"SouthWall1","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-2,6,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall7","p":"Sections/House","rgb":[248,248,248],"s":[12,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-11,10,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall6","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-11,2,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall5","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-24.5,6,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall4","p":"Sections/House","rgb":[248,248,248],"s":[21,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-37,10,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall3","p":"Sections/House","rgb":[248,248,248],"s":[4,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-37,2,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall2","p":"Sections/House","rgb":[248,248,248],"s":[4,4,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-41.5,6,-11,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"NorthWall1","p":"Sections/House","rgb":[248,248,248],"s":[5,12,2],"top":"Studs"},{"a":true,"c":"Part","cf":[-62,13.18,-18.25,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Smile","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[1.68,0.28,0.14],"top":"Studs"},{"a":true,"c":"Part","cf":[-61.3,14.44,-18.25,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EyeRight","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[0.56,0.84,0.14],"top":"Studs"},{"a":true,"c":"Part","cf":[-62.7,14.44,-18.25,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"EyeLeft","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[0.56,0.84,0.14],"top":"Studs"},{"a":true,"c":"Part","cf":[-62,13.88,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Head","p":"Sections/NoobStatue","rgb":[245,205,48],"s":[3.36,3.36,3.36],"top":"Studs"},{"a":true,"c":"Part","cf":[-57.8,9.4,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"RightArm","p":"Sections/NoobStatue","rgb":[245,205,48],"s":[2.8,5.6,2.8],"top":"Studs"},{"a":true,"c":"Part","cf":[-66.2,9.4,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LeftArm","p":"Sections/NoobStatue","rgb":[245,205,48],"s":[2.8,5.6,2.8],"top":"Studs"},{"a":true,"c":"Part","cf":[-62,9.4,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Torso","p":"Sections/NoobStatue","rgb":[13,105,172],"s":[5.6,5.6,2.8],"top":"Studs"},{"a":true,"c":"Part","cf":[-60.6,3.8,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"RightLeg","p":"Sections/NoobStatue","rgb":[164,189,71],"s":[2.8,5.6,2.8],"top":"Studs"},{"a":true,"c":"Part","cf":[-63.4,3.8,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LeftLeg","p":"Sections/NoobStatue","rgb":[164,189,71],"s":[2.8,5.6,2.8],"top":"Studs"},{"a":true,"c":"Part","cf":[-62,0.5,-20,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Base","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[16,1,12],"top":"Studs"},{"a":true,"c":"Part","cf":[-69,11,36,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-69,5,36,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampEastPost","p":"Sections/Tunnel","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-91,11,36,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-91,5,36,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampWestPost","p":"Sections/Tunnel","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-94,5.5302,86.3139,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"Plastic","n":"Ramp","p":"Sections/Tunnel","rgb":[218,133,65],"s":[8,1,35.0856],"top":"Studs"},{"a":true,"c":"Part","cf":[-80,10.5,57,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"TunnelRoof","p":"Sections/Tunnel","rgb":[163,162,165],"s":[16,3,26],"top":"Studs"},{"a":true,"c":"Part","cf":[-66.5,6,57,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HillEast","p":"Sections/Tunnel","rgb":[163,162,165],"s":[11,12,26],"top":"Studs"},{"a":true,"c":"Part","cf":[-93.5,6,57,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"HillWest","p":"Sections/Tunnel","rgb":[163,162,165],"s":[11,12,26],"top":"Studs"},{"a":true,"c":"Part","cf":[-74,11,102,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/SpawnPlaza","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-74,5,102,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampEastPost","p":"Sections/SpawnPlaza","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"},{"a":true,"c":"Part","cf":[-86,11,102,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/SpawnPlaza","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-86,5,102,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"LampWestPost","p":"Sections/SpawnPlaza","rgb":[27,42,53],"s":[1,10,1],"top":"Studs"}],"sections":[{"description":"Where players spawn, lit by two neon lamps.","name":"SpawnPlaza"},{"description":"A stone hill with a tunnel through it. Walk up the ramp beside the spawn to stand on top.","name":"Tunnel"},{"description":"A giant statue of the classic Roblox noob, in yellow, blue and green.","name":"NoobStatue"},{"description":"A big one-floor house: bedroom, kitchen and living room inside, two wide entrances and a ramp up to the flat roof.","name":"House"},{"description":"Two Bloxy Cola vending machines with glowing panels in the courtyard's east corner.","name":"BloxyCola"},{"description":"A giant golden Bloxy-style trophy on a black pedestal.","name":"BloxyTrophy"},{"description":"A lookout platform 14 studs up in the north-west corner, reached by a long ramp. It leads onto the Sky Bridge.","name":"LookoutTower"},{"description":"A long bridge across the top of the R, from the Lookout Tower to the east platform.","name":"SkyBridge"},{"description":"A giant tilted-square Roblox logo standing on a black stage, lit by two neon lamps.","name":"RobloxLogo"},{"description":"A giant classic 2x4 brick with oversized studs.","name":"GiantBrick"},{"description":"A rainbow-striped ramp from the bridge's east platform down to the courtyard.","name":"RainbowRamp"},{"description":"Ramps up and over a hill running down the R's leg.","name":"SlopeHill"},{"description":"A winners' podium for 1st, 2nd and 3rd place at the end of the leg, each with its own ramp.","name":"FinishPodium"}]}</script>
-<script type="text/plain" id="rbxm-data">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</script>
+<script type="application/json" id="map-data">{"parts":[{"a":true,"c":"SpawnLocation","cf":[-80,0.5,90,1,0,0,0,1,0,0,0,1],"m":"Marble","n":"SpawnLocation","p":"","rgb":[229,228,223],"s":[12,1,12],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-2,100,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor11","p":"Floor","rgb":[75,151,75],"s":[20,4,40],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,-2,90,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor10","p":"Floor","rgb":[75,151,75],"s":[20,4,60],"top":"Smooth"},{"a":true,"c":"Part","cf":[30,-2,70,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor9","p":"Floor","rgb":[75,151,75],"s":[20,4,20],"top":"Smooth"},{"a":true,"c":"Part","cf":[20,-2,50,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor8","p":"Floor","rgb":[75,151,75],"s":[40,4,20],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,-2,80,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor7","p":"Floor","rgb":[75,151,75],"s":[40,4,80],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,-2,10,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor6","p":"Floor","rgb":[75,151,75],"s":[80,4,60],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,-2,20,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor5","p":"Floor","rgb":[75,151,75],"s":[20,4,160],"top":"Smooth"},{"a":true,"c":"Part","cf":[-70,-2,-10,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor4","p":"Floor","rgb":[75,151,75],"s":[60,4,100],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-2,-40,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor3","p":"Floor","rgb":[75,151,75],"s":[20,4,80],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,-2,-40,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor2","p":"Floor","rgb":[75,151,75],"s":[20,4,120],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,-2,-90,1,0,0,0,1,0,0,0,1],"m":"Grass","n":"Floor1","p":"Floor","rgb":[75,151,75],"s":[160,4,60],"top":"Smooth"},{"a":true,"c":"Part","cf":[100,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall30","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[100,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall29","p":"Walls","rgb":[99,95,98],"s":[2,21,78],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,13.5,70,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall28","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,13.5,10,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall27","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,13.5,-90,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall26","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,13.5,110,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall25","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall24","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,13.5,-110,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall23","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[40,13.5,90,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall22","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[40,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall21","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[20,13.5,70,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall20","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,13.5,50,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall19","p":"Walls","rgb":[99,95,98],"s":[2,21,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[-40,13.5,-40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall18","p":"Walls","rgb":[99,95,98],"s":[2,21,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[-60,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall17","p":"Walls","rgb":[99,95,98],"s":[2,21,78],"top":"Smooth"},{"a":true,"c":"Part","cf":[-100,13.5,0,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall16","p":"Walls","rgb":[99,95,98],"s":[2,21,238],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,13.5,120,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall15","p":"Walls","rgb":[99,95,98],"s":[42,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,13.5,120,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall14","p":"Walls","rgb":[99,95,98],"s":[42,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall13","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall12","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[30,13.5,80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall11","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,13.5,60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall10","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[10,13.5,60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall9","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-30,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall8","p":"Walls","rgb":[99,95,98],"s":[62,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,13.5,20,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall7","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,13.5,0,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall6","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,13.5,-20,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall5","p":"Walls","rgb":[99,95,98],"s":[82,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall4","p":"Walls","rgb":[99,95,98],"s":[82,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,13.5,-80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall3","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,13.5,-100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall2","p":"Walls","rgb":[99,95,98],"s":[22,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,13.5,-120,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Wall1","p":"Walls","rgb":[99,95,98],"s":[162,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[100,-0.6,100,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap30","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[100,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap29","p":"Straps","rgb":[196,40,28],"s":[2,7.2,78],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,-0.6,70,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap28","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,-0.6,10,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap27","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,-0.6,-90,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap26","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,-0.6,110,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap25","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,-0.6,40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap24","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,-0.6,-110,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap23","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[40,-0.6,90,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap22","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[40,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap21","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[20,-0.6,70,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap20","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,-0.6,50,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap19","p":"Straps","rgb":[196,40,28],"s":[2,7.2,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[-40,-0.6,-40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap18","p":"Straps","rgb":[196,40,28],"s":[2,7.2,38],"top":"Smooth"},{"a":true,"c":"Part","cf":[-60,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap17","p":"Straps","rgb":[196,40,28],"s":[2,7.2,78],"top":"Smooth"},{"a":true,"c":"Part","cf":[-100,-0.6,0,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap16","p":"Straps","rgb":[196,40,28],"s":[2,7.2,238],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,-0.6,120,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap15","p":"Straps","rgb":[196,40,28],"s":[42,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,-0.6,120,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap14","p":"Straps","rgb":[196,40,28],"s":[42,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,-0.6,100,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap13","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap12","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[30,-0.6,80,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap11","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,-0.6,60,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap10","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[10,-0.6,60,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap9","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-30,-0.6,40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap8","p":"Straps","rgb":[196,40,28],"s":[62,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,-0.6,20,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap7","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-0.6,0,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap6","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,-0.6,-20,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap5","p":"Straps","rgb":[196,40,28],"s":[82,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,-0.6,-60,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap4","p":"Straps","rgb":[196,40,28],"s":[82,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,-0.6,-80,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap3","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,-0.6,-100,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap2","p":"Straps","rgb":[196,40,28],"s":[22,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,-0.6,-120,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Strap1","p":"Straps","rgb":[196,40,28],"s":[162,7.2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[100,24.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap30","p":"Caps","rgb":[163,162,165],"s":[2.6,1,37.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[100,24.5,-40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap29","p":"Caps","rgb":[163,162,165],"s":[2.6,1,77.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,24.5,70,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap28","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,24.5,10,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap27","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,24.5,-90,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap26","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,24.5,110,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap25","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,24.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap24","p":"Caps","rgb":[163,162,165],"s":[2.6,1,37.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[60,24.5,-110,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap23","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40,24.5,90,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap22","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40,24.5,-40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap21","p":"Caps","rgb":[163,162,165],"s":[2.6,1,37.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[20,24.5,70,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap20","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,24.5,50,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap19","p":"Caps","rgb":[163,162,165],"s":[2.6,1,17.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-40,24.5,-40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap18","p":"Caps","rgb":[163,162,165],"s":[2.6,1,37.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-60,24.5,80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap17","p":"Caps","rgb":[163,162,165],"s":[2.6,1,77.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-100,24.5,0,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap16","p":"Caps","rgb":[163,162,165],"s":[2.6,1,237.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,24.5,120,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap15","p":"Caps","rgb":[163,162,165],"s":[42.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,24.5,120,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap14","p":"Caps","rgb":[163,162,165],"s":[42.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,24.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap13","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,24.5,80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap12","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[30,24.5,80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap11","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,24.5,60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap10","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[10,24.5,60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap9","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-30,24.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap8","p":"Caps","rgb":[163,162,165],"s":[62.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,24.5,20,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap7","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,24.5,0,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap6","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,24.5,-20,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap5","p":"Caps","rgb":[163,162,165],"s":[82.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,24.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap4","p":"Caps","rgb":[163,162,165],"s":[82.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,24.5,-80,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap3","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,24.5,-100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap2","p":"Caps","rgb":[163,162,165],"s":[22.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,24.5,-120,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"Cap1","p":"Caps","rgb":[163,162,165],"s":[162.6,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[80,24.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"PodiumGateCap","p":"Dividers","rgb":[163,162,165],"s":[37.4,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[78,20,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"PodiumGateLintel","p":"Dividers","rgb":[99,95,98],"s":[24,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[94.5,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"PodiumGateWall2","p":"Dividers","rgb":[99,95,98],"s":[9,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[94.5,1.5,100,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"PodiumGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[9,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[63.5,13.5,100,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"PodiumGateWall1","p":"Dividers","rgb":[99,95,98],"s":[5,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[63.5,1.5,100,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"PodiumGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[5,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[30,24.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SlopeGateCap","p":"Dividers","rgb":[163,162,165],"s":[57.4,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[22,20,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SlopeGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[44.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SlopeGateWall2","p":"Dividers","rgb":[99,95,98],"s":[29,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[44.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"SlopeGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[29,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[7.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SlopeGateWall1","p":"Dividers","rgb":[99,95,98],"s":[13,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[7.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"SlopeGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[13,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,24.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"RainbowGateCap","p":"Dividers","rgb":[163,162,165],"s":[57.4,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,20,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"RainbowGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[78,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"RainbowGateWall2","p":"Dividers","rgb":[99,95,98],"s":[42,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[78,1.5,-60,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"RainbowGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[42,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-70,24.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutGateCap","p":"Dividers","rgb":[163,162,165],"s":[57.4,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-88,20,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-60.5,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutGateWall2","p":"Dividers","rgb":[99,95,98],"s":[39,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-60.5,1.5,-60,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"LookoutGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[39,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.5,13.5,-60,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutGateWall1","p":"Dividers","rgb":[99,95,98],"s":[3,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.5,1.5,-60,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"LookoutGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[3,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,24.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SpawnGateCap","p":"Dividers","rgb":[163,162,165],"s":[37.4,1,2.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,20,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SpawnGateLintel","p":"Dividers","rgb":[99,95,98],"s":[16,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SpawnGateWall2","p":"Dividers","rgb":[99,95,98],"s":[11,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"SpawnGateStrap2","p":"Dividers","rgb":[196,40,28],"s":[11,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-93.5,13.5,40,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"SpawnGateWall1","p":"Dividers","rgb":[99,95,98],"s":[11,21,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-93.5,1.5,40,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"SpawnGateStrap1","p":"Dividers","rgb":[196,40,28],"s":[11,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-49,0.1,32.5,1,0,0,0,1,0,0,0,1],"m":"Cobblestone","n":"PathHouse","p":"Landscape","rgb":[163,162,165],"s":[70,0.2,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,0.1,39.5,1,0,0,0,1,0,0,0,1],"m":"Cobblestone","n":"PathGate","p":"Landscape","rgb":[163,162,165],"s":[8,0.2,9],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,0.1,57,1,0,0,0,1,0,0,0,1],"m":"Asphalt","n":"Road","p":"Landscape","rgb":[99,95,98],"s":[12,0.2,26],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,0.1,77,1,0,0,0,1,0,0,0,1],"m":"Cobblestone","n":"PathSpawn","p":"Landscape","rgb":[163,162,165],"s":[8,0.2,14],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,1.25,-10,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Bush4","p":"Landscape","rgb":[40,127,71],"s":[3,2.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-58,1.25,-10,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Bush3","p":"Landscape","rgb":[40,127,71],"s":[3,2.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,1.25,33,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Bush2","p":"Landscape","rgb":[40,127,71],"s":[3,2.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-8,1.25,33,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Bush1","p":"Landscape","rgb":[40,127,71],"s":[3,2.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[95,14.5,114,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree9Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[95,10.5,114,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree9Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[95,4,114,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree9Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[92,14.5,-10,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree8Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[92,10.5,-10,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree8Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[92,4,-10,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree8Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,14.5,28,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree7Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,10.5,28,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree7Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[50,4,28,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree7Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[26,14.5,-72,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree6Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[26,10.5,-72,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree6Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[26,4,-72,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree6Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,14.5,-72,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree5Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,10.5,-72,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree5Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,4,-72,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree5Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-50,14.5,-48,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree4Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-50,10.5,-48,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree4Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-50,4,-48,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree4Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-92,14.5,18,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree3Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-92,10.5,18,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree3Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-92,4,18,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree3Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,14.5,112,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree2Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,10.5,112,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree2Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66,4,112,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree2Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-94,14.5,112,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree1Leaves2","p":"Landscape","rgb":[52,142,64],"s":[5,3,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-94,10.5,112,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"Tree1Leaves1","p":"Landscape","rgb":[40,127,71],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-94,4,112,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Tree1Trunk","p":"Landscape","rgb":[124,92,70],"s":[2,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,0.5302,103.4235,-1,0,0,0,0.9397,-0.342,0,-0.342,-0.9397],"m":"Marble","n":"ThirdRamp","p":"Sections/FinishPodium","rgb":[204,142,105],"s":[6,1,5.8476],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,1,110,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"Third","p":"Sections/FinishPodium","rgb":[218,133,65],"s":[8,2,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[78,2.0302,99.3023,-1,0,0,0,0.9397,-0.342,0,-0.342,-0.9397],"m":"Marble","n":"FirstRamp","p":"Sections/FinishPodium","rgb":[204,142,105],"s":[6,1,14.619],"top":"Smooth"},{"a":true,"c":"Part","cf":[78,2.5,110,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"First","p":"Sections/FinishPodium","rgb":[245,205,48],"s":[8,5,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,1.0302,102.0498,-1,0,0,0,0.9397,-0.342,0,-0.342,-0.9397],"m":"Marble","n":"SecondRamp","p":"Sections/FinishPodium","rgb":[204,142,105],"s":[6,1,8.7714],"top":"Smooth"},{"a":true,"c":"Part","cf":[70,1.5,110,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"Second","p":"Sections/FinishPodium","rgb":[163,162,165],"s":[8,3,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[61.5277,3.5169,81.5277,0.7071,0.1822,0.6832,0,0.9662,-0.2577,-0.7071,0.1822,0.6832],"m":"Ground","n":"RampDown","p":"Sections/SlopeHill","rgb":[204,142,105],"s":[10,1,31.0484],"top":"Smooth"},{"a":true,"c":"Part","cf":[46.0625,4,66.0625,-0.7071,0,-0.7071,0,1,0,0.7071,0,-0.7071],"m":"Grass","n":"Hill","p":"Sections/SlopeHill","rgb":[52,142,64],"s":[14,8,14],"top":"Smooth"},{"a":true,"c":"Part","cf":[30.5972,3.5169,50.5972,-0.7071,-0.1822,-0.6832,0,0.9662,-0.2577,0.7071,-0.1822,-0.6832],"m":"Ground","n":"RampUp","p":"Sections/SlopeHill","rgb":[204,142,105],"s":[10,1,31.0484],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,0.6968,-64.9117,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"SmoothPlastic","n":"Stripe6","p":"Sections/RainbowRamp","rgb":[107,50,124],"s":[10,1,6.8222],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,3.0302,-71.3225,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"SmoothPlastic","n":"Stripe5","p":"Sections/RainbowRamp","rgb":[13,105,172],"s":[10,1,6.8222],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,5.3635,-77.7333,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"SmoothPlastic","n":"Stripe4","p":"Sections/RainbowRamp","rgb":[0,255,0],"s":[10,1,6.8222],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,7.6968,-84.1441,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"SmoothPlastic","n":"Stripe3","p":"Sections/RainbowRamp","rgb":[245,205,48],"s":[10,1,6.8222],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,10.0302,-90.5548,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"SmoothPlastic","n":"Stripe2","p":"Sections/RainbowRamp","rgb":[218,133,65],"s":[10,1,6.8222],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,12.3635,-96.9656,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"SmoothPlastic","n":"Stripe1","p":"Sections/RainbowRamp","rgb":[196,40,28],"s":[10,1,6.8222],"top":"Smooth"},{"a":true,"c":"Part","cf":[96,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_4","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[92,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_3","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[88,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_2","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[84,6.6,-68,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud2_1","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[96,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_4","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[92,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_3","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[88,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_2","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[84,6.6,-72,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Stud1_1","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[2.5,1.2,2.5],"top":"Smooth"},{"a":true,"c":"Part","cf":[90,3,-70,1,0,0,0,1,0,0,0,1],"m":"Plastic","n":"Brick","p":"Sections/GiantBrick","rgb":[196,40,28],"s":[16,6,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-2,11,-82,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/RobloxLogo","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-2,5,-82,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LampEastPost","p":"Sections/RobloxLogo","rgb":[27,42,53],"s":[1,10,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-38,11,-82,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/RobloxLogo","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-38,5,-82,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LampWestPost","p":"Sections/RobloxLogo","rgb":[27,42,53],"s":[1,10,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-15.6533,9.2132,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"SmoothPlastic","n":"LogoRight","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[3,6,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-24.3467,6.8838,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"SmoothPlastic","n":"LogoLeft","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[3,6,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-18.8353,3.7018,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"SmoothPlastic","n":"LogoBottom","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[12,3,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-21.1647,12.3951,-82,0.9659,-0.2588,0,0.2588,0.9659,0,0,0,1],"m":"SmoothPlastic","n":"LogoTop","p":"Sections/RobloxLogo","rgb":[248,248,248],"s":[12,3,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,0.5,-82,1,0,0,0,1,0,0,0,1],"m":"Granite","n":"Stage","p":"Sections/RobloxLogo","rgb":[27,42,53],"s":[28,1,12],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastWestBPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,15.05,-105.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastWestBPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,16.3,-103,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastWestBRail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,0.4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,15.05,-112.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastWestAPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,15.05,-117.4,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastWestAPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,16.3,-114.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastWestARail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,0.4,5.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.4,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastSouthBPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[54.2,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastSouthBPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[55.8,16.3,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastSouthBRail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[3.6,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[43.8,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastSouthAPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.6,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastSouthAPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[42.2,16.3,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastSouthARail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[3.6,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.8,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastEastPost4","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.8,15.05,-105.9333,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastEastPost3","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.8,15.05,-111.6667,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastEastPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.8,15.05,-117.4,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastEastPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.8,16.3,-108.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastEastRail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,0.4,17.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[57.8,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastNorthPost4","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[51.9333,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastNorthPost3","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[46.0667,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastNorthPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[40.2,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastNorthPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,16.3,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"EastNorthRail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[18,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[39.8,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost21","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[33.82,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost20","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[27.84,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost19","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[21.86,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost18","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[15.88,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost17","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[9.9,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost16","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[3.92,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost15","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-2.06,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost14","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-8.04,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost13","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-14.02,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost12","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost11","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-25.98,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost10","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-31.96,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost9","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.94,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost8","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43.92,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost7","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-49.9,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost6","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-55.88,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost5","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-61.86,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost4","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-67.84,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost3","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-73.82,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-79.8,15.05,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,16.3,-106.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckSouthRail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[120,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[39.8,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost21","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[33.82,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost20","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[27.84,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost19","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[21.86,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost18","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[15.88,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost17","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[9.9,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost16","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[3.92,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost15","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-2.06,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost14","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-8.04,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost13","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-14.02,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost12","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost11","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-25.98,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost10","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-31.96,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost9","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.94,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost8","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43.92,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost7","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-49.9,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost6","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-55.88,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost5","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-61.86,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost4","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-67.84,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost3","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-73.82,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost2","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-79.8,15.05,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthPost1","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,16.3,-111.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"DeckNorthRail","p":"Sections/SkyBridge","rgb":[27,42,53],"s":[120,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[57,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"EastPlatformPillar4","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[41,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"EastPlatformPillar3","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[57,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"EastPlatformPillar2","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[41,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"EastPlatformPillar1","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[49,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"WoodPlanks","n":"EastPlatform","p":"Sections/SkyBridge","rgb":[204,142,105],"s":[18,1,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[10,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"DeckPillar3","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"DeckPillar2","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-50,6.5,-109,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"DeckPillar1","p":"Sections/SkyBridge","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"WoodPlanks","n":"Deck","p":"Sections/SkyBridge","rgb":[204,142,105],"s":[120,1,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,15.05,-100.6,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutEastBPost2","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,15.05,-105.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutEastBPost1","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,16.3,-103.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutEastBRail","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,0.4,5.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,15.05,-112.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutEastAPost2","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,15.05,-117.4,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutEastAPost1","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,16.3,-114.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutEastARail","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,0.4,5.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutSouthPost3","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-84,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutSouthPost2","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-87.8,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutSouthPost1","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-84,16.3,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutSouthRail","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[8,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.8,15.05,-100.2,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutWestPost4","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.8,15.05,-105.9333,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutWestPost3","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.8,15.05,-111.6667,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutWestPost2","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.8,15.05,-117.4,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutWestPost1","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.8,16.3,-108.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutWestRail","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,0.4,17.6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80.2,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutNorthPost4","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-86.0667,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutNorthPost3","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-91.9333,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutNorthPost2","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97.8,15.05,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutNorthPost1","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[0.4,2.1,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-89,16.3,-117.8,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LookoutNorthRail","p":"Sections/LookoutTower","rgb":[27,42,53],"s":[18,0.4,0.4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-92,6.5302,-80.9387,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"WoodPlanks","n":"Ramp","p":"Sections/LookoutTower","rgb":[204,142,105],"s":[8,1,40.9333],"top":"Smooth"},{"a":true,"c":"Part","cf":[-81,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutPillar4","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97,6.5,-101,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutPillar3","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-81,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutPillar2","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-97,6.5,-117,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"LookoutPillar1","p":"Sections/LookoutTower","rgb":[163,162,165],"s":[2,13,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-89,13.5,-109,1,0,0,0,1,0,0,0,1],"m":"WoodPlanks","n":"Lookout","p":"Sections/LookoutTower","rgb":[204,142,105],"s":[18,1,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[90.75,11,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"HandleEast","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1.5,3,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[81.25,11,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"HandleWest","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1.5,3,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,11,-24.5,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"CupSouth","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[6,4,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,11,-31.5,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"CupNorth","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[6,4,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[89.5,11,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"CupEast","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1,4,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[82.5,11,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"CupWest","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[1,4,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,8.5,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"CupBottom","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[8,1,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,6,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"Stem","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[2,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,3.5,-28,1,0,0,0,1,0,0,0,1],"m":"Foil","n":"Foot","p":"Sections/BloxyTrophy","rgb":[255,176,0],"s":[6,1,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,2.5,-28,1,0,0,0,1,0,0,0,1],"m":"Marble","n":"PedestalTop","p":"Sections/BloxyTrophy","rgb":[27,42,53],"s":[8,1,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[86,1,-28,1,0,0,0,1,0,0,0,1],"m":"Marble","n":"Pedestal","p":"Sections/BloxyTrophy","rgb":[27,42,53],"s":[12,2,12],"top":"Smooth"},{"a":true,"c":"Part","cf":[73.8,1.75,14,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Machine2Slot","p":"Sections/BloxyCola","rgb":[27,42,53],"s":[0.4,1.5,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[73.8,3.1,14,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Machine2Stripe","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,0.6,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[73.8,6.5,14,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"Machine2Panel","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,5,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[76.5,5,14,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"Machine2","p":"Sections/BloxyCola","rgb":[196,40,28],"s":[5,10,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[73.8,1.75,6,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Machine1Slot","p":"Sections/BloxyCola","rgb":[27,42,53],"s":[0.4,1.5,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[73.8,3.1,6,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Machine1Stripe","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,0.6,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[73.8,6.5,6,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"Machine1Panel","p":"Sections/BloxyCola","rgb":[248,248,248],"s":[0.4,5,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[76.5,5,6,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"Machine1","p":"Sections/BloxyCola","rgb":[196,40,28],"s":[5,10,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-18,11.8,19,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LivingLight","p":"Sections/House","rgb":[248,248,248],"s":[8,0.4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-1,3.5,12,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"PlantLeaves2","p":"Sections/House","rgb":[40,127,71],"s":[3,3,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-1,1,12,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"PlantPot2","p":"Sections/House","rgb":[105,64,40],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-12,3.5,26,1,0,0,0,1,0,0,0,1],"m":"LeafyGrass","n":"PlantLeaves1","p":"Sections/House","rgb":[40,127,71],"s":[3,3,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-12,1,26,1,0,0,0,1,0,0,0,1],"m":"Concrete","n":"PlantPot1","p":"Sections/House","rgb":[105,64,40],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-29.5,1.5,25,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"CouchArmEast","p":"Sections/House","rgb":[196,40,28],"s":[1,3,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-40.5,1.5,25,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"CouchArmWest","p":"Sections/House","rgb":[196,40,28],"s":[1,3,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,2,27,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"CouchBack","p":"Sections/House","rgb":[196,40,28],"s":[10,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,1,24,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"CouchSeat","p":"Sections/House","rgb":[196,40,28],"s":[10,2,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,0.95,17.5,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"CoffeeTable","p":"Sections/House","rgb":[105,64,40],"s":[6,1.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,0.1,17.5,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"LivingRug","p":"Sections/House","rgb":[116,134,157],"s":[12,0.2,7],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,4,12,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"TVScreen","p":"Sections/House","rgb":[13,105,172],"s":[6,4,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,1,12,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"TVStand","p":"Sections/House","rgb":[27,42,53],"s":[8,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-9,11.8,-1,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"KitchenLight","p":"Sections/House","rgb":[248,248,248],"s":[4,0.4,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-4,1,0.5,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"StoolEast","p":"Sections/House","rgb":[196,40,28],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-14,1,0.5,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"StoolWest","p":"Sections/House","rgb":[196,40,28],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-9,2.75,0.5,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"TableTop","p":"Sections/House","rgb":[105,64,40],"s":[6,0.5,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-9,1.25,0.5,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"TableLeg","p":"Sections/House","rgb":[105,64,40],"s":[1,2.5,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[0,4,-8.5,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"Fridge","p":"Sections/House","rgb":[163,162,165],"s":[4,8,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-10,3.6,-8.5,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"Stove","p":"Sections/House","rgb":[27,42,53],"s":[4,0.2,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-10,1.75,-8.5,1,0,0,0,1,0,0,0,1],"m":"Marble","n":"Counter","p":"Sections/House","rgb":[248,248,248],"s":[14,3.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[-31,11.8,-1,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"BedroomLight","p":"Sections/House","rgb":[248,248,248],"s":[4,0.4,4],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,0.1,4.5,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"BedroomRug","p":"Sections/House","rgb":[107,50,124],"s":[10,0.2,5],"top":"Smooth"},{"a":true,"c":"Part","cf":[-24.5,4,-9,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Wardrobe","p":"Sections/House","rgb":[105,64,40],"s":[7,8,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-32,2.5,-8,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"NightLamp","p":"Sections/House","rgb":[245,205,48],"s":[1,1,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-32,1,-8,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Nightstand","p":"Sections/House","rgb":[105,64,40],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.5,2.65,-2,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"Blanket","p":"Sections/House","rgb":[13,105,172],"s":[7,0.3,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.5,2.85,-7.5,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"Pillow","p":"Sections/House","rgb":[248,248,248],"s":[5,0.7,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.5,2,-4,1,0,0,0,1,0,0,0,1],"m":"Fabric","n":"Mattress","p":"Sections/House","rgb":[248,248,248],"s":[7,1,10],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.5,0.75,-4,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"BedFrame","p":"Sections/House","rgb":[105,64,40],"s":[7,1.5,10],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37.5,2,-9.5,1,0,0,0,1,0,0,0,1],"m":"Wood","n":"Headboard","p":"Sections/House","rgb":[105,64,40],"s":[7,4,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,0.05,18,1,0,0,0,1,0,0,0,1],"m":"WoodPlanks","n":"LivingFloor","p":"Sections/House","rgb":[204,142,105],"s":[44,0.1,20],"top":"Smooth"},{"a":true,"c":"Part","cf":[-9,0.05,-1,1,0,0,0,1,0,0,0,1],"m":"CeramicTiles","n":"KitchenFloor","p":"Sections/House","rgb":[248,248,248],"s":[22,0.1,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[-31,0.05,-1,1,0,0,0,1,0,0,0,1],"m":"Carpet","n":"BedroomFloor","p":"Sections/House","rgb":[116,134,157],"s":[22,0.1,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[-36.5,14.75,-6.5,1,0,0,0,1,0,0,0,1],"m":"Brick","n":"Chimney","p":"Sections/House","rgb":[105,64,40],"s":[3,3.5,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[21.6876,6.0302,-2,0,0.342,0.9397,0,0.9397,-0.342,-1,0,0],"m":"WoodPlanks","n":"RoofRamp","p":"Sections/House","rgb":[204,142,105],"s":[8,1,38.0095],"top":"Smooth"},{"a":true,"c":"Part","cf":[-20,12.5,9,1,0,0,0,1,0,0,0,1],"m":"RoofShingles","n":"Roof","p":"Sections/House","rgb":[196,40,28],"s":[48,1,42],"top":"Smooth"},{"a":true,"c":"Part","cf":[-19,6,-1,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"KitchenWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,18],"top":"Smooth"},{"a":true,"c":"Part","cf":[-1,6,9,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"HallWall5","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-7,10.5,9,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"HallWall4","p":"Sections/House","rgb":[248,248,248],"s":[6,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-15.5,6,9,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"HallWall3","p":"Sections/House","rgb":[248,248,248],"s":[11,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-24,10.5,9,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"HallWall2","p":"Sections/House","rgb":[248,248,248],"s":[6,3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-34.5,6,9,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"HallWall1","p":"Sections/House","rgb":[248,248,248],"s":[15,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[3,6,26.5,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"EastWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,12,3],"top":"Smooth"},{"a":true,"c":"Part","cf":[3,11,21,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"EastWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,2,8],"top":"Smooth"},{"a":true,"c":"Part","cf":[3,6,3.5,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"EastWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,27],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,6,24.5,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall7","p":"Sections/House","rgb":[248,248,248],"s":[2,12,7],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,6,18,1,0,0,0,1,0,0,0,1],"m":"Glass","n":"WestWallGlass2","p":"Sections/House","rgb":[180,210,228],"s":[0.2,4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,10,18,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall6","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,2,18,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall5","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,6,8.5,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall4","p":"Sections/House","rgb":[248,248,248],"s":[2,12,13],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,6,-1,1,0,0,0,1,0,0,0,1],"m":"Glass","n":"WestWallGlass1","p":"Sections/House","rgb":[180,210,228],"s":[0.2,4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,10,-1,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall3","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,2,-1,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall2","p":"Sections/House","rgb":[248,248,248],"s":[2,4,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[-43,6,-7,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"WestWall1","p":"Sections/House","rgb":[248,248,248],"s":[2,12,6],"top":"Smooth"},{"a":true,"c":"Part","cf":[1,6,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall9","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-5,6,29,1,0,0,0,1,0,0,0,1],"m":"Glass","n":"SouthWallGlass2","p":"Sections/House","rgb":[180,210,228],"s":[6,4,0.2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-5,10,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall8","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-5,2,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall7","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-11,6,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall6","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-19,11,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall5","p":"Sections/House","rgb":[248,248,248],"s":[10,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-28,6,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall4","p":"Sections/House","rgb":[248,248,248],"s":[8,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,6,29,1,0,0,0,1,0,0,0,1],"m":"Glass","n":"SouthWallGlass1","p":"Sections/House","rgb":[180,210,228],"s":[6,4,0.2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,10,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall3","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-35,2,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall2","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-41,6,29,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"SouthWall1","p":"Sections/House","rgb":[248,248,248],"s":[6,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-2,6,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall7","p":"Sections/House","rgb":[248,248,248],"s":[12,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-11,6,-11,1,0,0,0,1,0,0,0,1],"m":"Glass","n":"NorthWallGlass2","p":"Sections/House","rgb":[180,210,228],"s":[6,4,0.2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-11,10,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall6","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-11,2,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall5","p":"Sections/House","rgb":[248,248,248],"s":[6,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-24.5,6,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall4","p":"Sections/House","rgb":[248,248,248],"s":[21,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37,6,-11,1,0,0,0,1,0,0,0,1],"m":"Glass","n":"NorthWallGlass1","p":"Sections/House","rgb":[180,210,228],"s":[4,4,0.2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37,10,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall3","p":"Sections/House","rgb":[248,248,248],"s":[4,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-37,2,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall2","p":"Sections/House","rgb":[248,248,248],"s":[4,4,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-41.5,6,-11,1,0,0,0,1,0,0,0,1],"m":"Plaster","n":"NorthWall1","p":"Sections/House","rgb":[248,248,248],"s":[5,12,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-62,13.18,-18.25,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Smile","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[1.68,0.28,0.14],"top":"Smooth"},{"a":true,"c":"Part","cf":[-61.3,14.44,-18.25,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"EyeRight","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[0.56,0.84,0.14],"top":"Smooth"},{"a":true,"c":"Part","cf":[-62.7,14.44,-18.25,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"EyeLeft","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[0.56,0.84,0.14],"top":"Smooth"},{"a":true,"c":"Part","cf":[-62,13.88,-20,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Head","p":"Sections/NoobStatue","rgb":[245,205,48],"s":[3.36,3.36,3.36],"top":"Smooth"},{"a":true,"c":"Part","cf":[-57.8,9.4,-20,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"RightArm","p":"Sections/NoobStatue","rgb":[245,205,48],"s":[2.8,5.6,2.8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66.2,9.4,-20,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"LeftArm","p":"Sections/NoobStatue","rgb":[245,205,48],"s":[2.8,5.6,2.8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-62,9.4,-20,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"Torso","p":"Sections/NoobStatue","rgb":[13,105,172],"s":[5.6,5.6,2.8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-60.6,3.8,-20,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"RightLeg","p":"Sections/NoobStatue","rgb":[164,189,71],"s":[2.8,5.6,2.8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-63.4,3.8,-20,1,0,0,0,1,0,0,0,1],"m":"SmoothPlastic","n":"LeftLeg","p":"Sections/NoobStatue","rgb":[164,189,71],"s":[2.8,5.6,2.8],"top":"Smooth"},{"a":true,"c":"Part","cf":[-62,0.5,-20,1,0,0,0,1,0,0,0,1],"m":"Granite","n":"Base","p":"Sections/NoobStatue","rgb":[27,42,53],"s":[16,1,12],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,8.85,64,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"CeilingLight3","p":"Sections/Tunnel","rgb":[248,248,248],"s":[2,0.3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,8.85,57,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"CeilingLight2","p":"Sections/Tunnel","rgb":[248,248,248],"s":[2,0.3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,8.85,50,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"CeilingLight1","p":"Sections/Tunnel","rgb":[248,248,248],"s":[2,0.3,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-69,11,36,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-69,5,36,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LampEastPost","p":"Sections/Tunnel","rgb":[27,42,53],"s":[1,10,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-91,11,36,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/Tunnel","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-91,5,36,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LampWestPost","p":"Sections/Tunnel","rgb":[27,42,53],"s":[1,10,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-94,5.5302,86.3139,1,0,0,0,0.9397,-0.342,0,0.342,0.9397],"m":"WoodPlanks","n":"Ramp","p":"Sections/Tunnel","rgb":[204,142,105],"s":[8,1,35.0856],"top":"Smooth"},{"a":true,"c":"Part","cf":[-80,10.5,57,1,0,0,0,1,0,0,0,1],"m":"Rock","n":"TunnelRoof","p":"Sections/Tunnel","rgb":[163,162,165],"s":[16,3,26],"top":"Smooth"},{"a":true,"c":"Part","cf":[-66.5,6,57,1,0,0,0,1,0,0,0,1],"m":"Rock","n":"HillEast","p":"Sections/Tunnel","rgb":[163,162,165],"s":[11,12,26],"top":"Smooth"},{"a":true,"c":"Part","cf":[-93.5,6,57,1,0,0,0,1,0,0,0,1],"m":"Rock","n":"HillWest","p":"Sections/Tunnel","rgb":[163,162,165],"s":[11,12,26],"top":"Smooth"},{"a":true,"c":"Part","cf":[-74,11,102,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampEastLight","p":"Sections/SpawnPlaza","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-74,5,102,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LampEastPost","p":"Sections/SpawnPlaza","rgb":[27,42,53],"s":[1,10,1],"top":"Smooth"},{"a":true,"c":"Part","cf":[-86,11,102,1,0,0,0,1,0,0,0,1],"m":"Neon","n":"LampWestLight","p":"Sections/SpawnPlaza","rgb":[245,205,48],"s":[2,2,2],"top":"Smooth"},{"a":true,"c":"Part","cf":[-86,5,102,1,0,0,0,1,0,0,0,1],"m":"Metal","n":"LampWestPost","p":"Sections/SpawnPlaza","rgb":[27,42,53],"s":[1,10,1],"top":"Smooth"}],"sections":[{"description":"Where players spawn, lit by two neon lamps.","name":"SpawnPlaza"},{"description":"A stone hill with a tunnel through it. Walk up the ramp beside the spawn to stand on top.","name":"Tunnel"},{"description":"A giant statue of the classic Roblox noob, in yellow, blue and green.","name":"NoobStatue"},{"description":"A big one-floor house: bedroom, kitchen and living room inside, two wide entrances and a ramp up to the flat roof.","name":"House"},{"description":"Two Bloxy Cola vending machines with glowing panels in the courtyard's east corner.","name":"BloxyCola"},{"description":"A giant golden Bloxy-style trophy on a black pedestal.","name":"BloxyTrophy"},{"description":"A lookout platform 14 studs up in the north-west corner, reached by a long ramp. It leads onto the Sky Bridge.","name":"LookoutTower"},{"description":"A long bridge across the top of the R, from the Lookout Tower to the east platform.","name":"SkyBridge"},{"description":"A giant tilted-square Roblox logo standing on a black stage, lit by two neon lamps.","name":"RobloxLogo"},{"description":"A giant classic 2x4 brick with oversized studs.","name":"GiantBrick"},{"description":"A rainbow-striped ramp from the bridge's east platform down to the courtyard.","name":"RainbowRamp"},{"description":"Ramps up and over a hill running down the R's leg.","name":"SlopeHill"},{"description":"A winners' podium for 1st, 2nd and 3rd place at the end of the leg, each with its own ramp.","name":"FinishPodium"}]}</script>
+<script type="text/plain" id="rbxm-data">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</script>
 <script type="text/plain" id="lua-source">
 --!strict
 --[[
@@ -452,6 +452,7 @@
 ]]
 
 -- // SERVICES
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -486,6 +487,13 @@ type Opening = {
 	to: number,
 	bottom: number,
 	top: number,
+	glass: boolean?, -- fill the gap with a window pane
+}
+
+-- Gives every part whose path inside the map (e.g. "Sections/House/Roof") matches `pattern` a material.
+type MaterialRule = {
+	pattern: string,
+	material: Enum.Material,
 }
 
 -- A wall between two play areas with one big door. It runs along `axis` on world line `line`
@@ -530,7 +538,12 @@ local FLOOR_COLOR = BrickColor.new("Bright green")
 local WALL_COLOR = BrickColor.new("Dark stone grey")
 local STRAP_COLOR = BrickColor.new("Bright red") -- band along the bottom of every wall
 local STRAP_HEIGHT = 3 -- studs of strap showing above the floor; 0 for no strap
-local CLASSIC_STUDS = true -- studs on top faces for the classic blocky look
+local CAP_COLOR = BrickColor.new("Medium stone grey")
+local CAP_HEIGHT = 1 -- a slightly wider coping along the top of every wall; 0 for none
+local CAP_OVERHANG = 0.3
+local SPAWN_COLOR = BrickColor.new("Light stone grey")
+-- true: classic plastic with studs everywhere. false: realistic Roblox materials (see MATERIAL_RULES).
+local CLASSIC_STUDS = false
 
 -- Grid position of the spawn (1-based; fractions allowed, col 1.5 = between cols 1 and 2).
 local SPAWN_CELL = { row = 11, col = 1.5 }
@@ -545,8 +558,8 @@ local REMOVE_TEMPLATE_PARTS = true
 
 -- Play areas built inside the R. They are placed in world studs for the SHAPE above (cell size 20,
 -- map centred on the origin) with heights measured from the floor's top; if you reshape the R, move
--- them too. Nothing anyone can stand on is higher than 16 studs (a jump adds about 7), so players
--- can't get over the 24-stud walls.
+-- them too. Nothing anyone can stand on is higher than 17 studs (a jump adds about 7), so players
+-- can't get over the walls, which reach 25 studs with their caps.
 local BUILD_SECTIONS = true
 local RAMP_THICKNESS = 1
 local LAMP_HEIGHT = 10
@@ -556,9 +569,10 @@ local LAMP_LIGHT_COLOR = BrickColor.new("Bright yellow")
 local STONE_COLOR = BrickColor.new("Medium stone grey")
 local HOUSE_WALL_COLOR = BrickColor.new("Institutional white")
 local HOUSE_ROOF_COLOR = BrickColor.new("Bright red")
-local DECK_COLOR = BrickColor.new("Bright blue")
+local DECK_COLOR = BrickColor.new("Nougat")
+local HILL_COLOR = BrickColor.new("Sea green")
 local PILLAR_COLOR = BrickColor.new("Medium stone grey")
-local RAMP_COLOR = BrickColor.new("Bright orange")
+local RAMP_COLOR = BrickColor.new("Nougat")
 local PODIUM_FIRST_COLOR = BrickColor.new("Bright yellow")
 local PODIUM_SECOND_COLOR = BrickColor.new("Medium stone grey")
 local PODIUM_THIRD_COLOR = BrickColor.new("Bright orange")
@@ -580,6 +594,124 @@ local NOOB_LEGS_COLOR = BrickColor.new("Br. yellowish green")
 local COLA_COLOR = BrickColor.new("Bright red")
 local LOGO_COLOR = BrickColor.new("Institutional white")
 local GIANT_BRICK_COLOR = BrickColor.new("Bright red")
+local GLASS_COLOR = BrickColor.new("Light blue")
+local GLASS_TRANSPARENCY = 0.5
+local RAIL_COLOR = BrickColor.new("Black")
+local RAIL_HEIGHT = 2.5
+local TRUNK_COLOR = BrickColor.new("Brown")
+local LEAF_LIGHT_COLOR = BrickColor.new("Sea green")
+local PATH_COLOR = BrickColor.new("Medium stone grey")
+local ROAD_COLOR = BrickColor.new("Dark stone grey")
+local CHIMNEY_COLOR = BrickColor.new("Reddish brown")
+local BEDROOM_FLOOR_COLOR = BrickColor.new("Sand blue")
+local KITCHEN_FLOOR_COLOR = BrickColor.new("Institutional white")
+local LIVING_FLOOR_COLOR = BrickColor.new("Nougat")
+
+-- Landscape, in world x, z: blocky trees, bushes and stone paths.
+local TREES: { { number } } = {
+	{ -94, 112 },
+	{ -66, 112 },
+	{ -92, 18 },
+	{ -50, -48 },
+	{ -66, -72 },
+	{ 26, -72 },
+	{ 50, 28 },
+	{ 92, -10 },
+	{ 95, 114 },
+}
+local BUSHES: { { number } } = { { -8, 33 }, { 0, 33 }, { -58, -10 }, { -66, -10 } }
+-- Paths as { minX, minZ, maxX, maxZ }; "Road" is the asphalt through the tunnel.
+local PATHS: { { name: string, area: { number } } } = {
+	{ name = "PathSpawn", area = { -84, 70, -76, 84 } },
+	{ name = "Road", area = { -86, 44, -74, 70 } },
+	{ name = "PathGate", area = { -84, 35, -76, 44 } },
+	{ name = "PathHouse", area = { -84, 30, -14, 35 } },
+}
+
+-- Realistic materials, matched in order against each part's path inside the map (first match wins).
+-- Neon and glass parts keep their own material. Ignored when CLASSIC_STUDS is true.
+local MATERIAL_RULES: { MaterialRule } = {
+	{ pattern = "^Floor/", material = Enum.Material.Grass },
+	{ pattern = "^Walls/", material = Enum.Material.Concrete },
+	{ pattern = "^Caps/", material = Enum.Material.Concrete },
+	{ pattern = "^Straps/", material = Enum.Material.Brick },
+	{ pattern = "^Dividers/.*Strap", material = Enum.Material.Brick },
+	{ pattern = "^Dividers/", material = Enum.Material.Concrete },
+	{ pattern = "^SpawnLocation$", material = Enum.Material.Marble },
+	{ pattern = "Trunk$", material = Enum.Material.Wood },
+	{ pattern = "Leaves%d*$", material = Enum.Material.LeafyGrass },
+	{ pattern = "^Landscape/Bush", material = Enum.Material.LeafyGrass },
+	{ pattern = "^Landscape/Road", material = Enum.Material.Asphalt },
+	{ pattern = "^Landscape/Path", material = Enum.Material.Cobblestone },
+	{ pattern = "Post%d*$", material = Enum.Material.Metal },
+	{ pattern = "Rail$", material = Enum.Material.Metal },
+	{ pattern = "Pillar%d*$", material = Enum.Material.Concrete },
+	{ pattern = "^Sections/SlopeHill/Hill$", material = Enum.Material.Grass },
+	{ pattern = "^Sections/SlopeHill/", material = Enum.Material.Ground },
+	{ pattern = "^Sections/FinishPodium/.*Ramp$", material = Enum.Material.Marble },
+	{ pattern = "^Sections/FinishPodium/", material = Enum.Material.Foil },
+	{ pattern = "^Sections/RainbowRamp/", material = Enum.Material.SmoothPlastic },
+	{ pattern = "Ramp[^/]*$", material = Enum.Material.WoodPlanks },
+	{ pattern = "^Sections/Tunnel/", material = Enum.Material.Rock },
+	{ pattern = "^Sections/House/BedroomFloor$", material = Enum.Material.Carpet },
+	{ pattern = "^Sections/House/KitchenFloor$", material = Enum.Material.CeramicTiles },
+	{ pattern = "^Sections/House/LivingFloor$", material = Enum.Material.WoodPlanks },
+	{ pattern = "^Sections/House/Roof$", material = Enum.Material.RoofShingles },
+	{ pattern = "^Sections/House/Chimney$", material = Enum.Material.Brick },
+	{ pattern = "^Sections/House/.*Wall%d*$", material = Enum.Material.Plaster },
+	{ pattern = "^Sections/House/.*Rug$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Mattress$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Pillow$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Blanket$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Couch", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Counter$", material = Enum.Material.Marble },
+	{ pattern = "^Sections/House/Stove$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/House/Fridge$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/House/PlantPot", material = Enum.Material.Concrete },
+	{ pattern = "^Sections/House/Stool", material = Enum.Material.SmoothPlastic },
+	{ pattern = "^Sections/House/", material = Enum.Material.Wood },
+	{ pattern = "^Sections/NoobStatue/Base$", material = Enum.Material.Granite },
+	{ pattern = "^Sections/BloxyCola/Machine%d$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/BloxyTrophy/Pedestal", material = Enum.Material.Marble },
+	{ pattern = "^Sections/BloxyTrophy/", material = Enum.Material.Foil },
+	{ pattern = "^Sections/RobloxLogo/Stage$", material = Enum.Material.Granite },
+	{ pattern = "^Sections/GiantBrick/", material = Enum.Material.Plastic },
+	{ pattern = "^Sections/.*/Lookout$", material = Enum.Material.WoodPlanks },
+	{ pattern = "^Sections/SkyBridge/", material = Enum.Material.WoodPlanks },
+}
+
+-- Realistic lighting (sun, haze, colour grading, glow). The settings ride along inside the map on a
+-- Script called RealisticLighting, which applies them every time the game starts.
+local APPLY_LIGHTING = true
+local LIGHTING_PROPERTIES: { [string]: any } = {
+	Technology = "Future",
+	ClockTime = 14.5,
+	GeographicLatitude = 35,
+	Brightness = 2.5,
+	Ambient = Color3.fromRGB(70, 70, 78),
+	OutdoorAmbient = Color3.fromRGB(135, 138, 150),
+	EnvironmentDiffuseScale = 1,
+	EnvironmentSpecularScale = 1,
+	ShadowSoftness = 0.2,
+	GlobalShadows = true,
+}
+local LIGHTING_SCRIPT_SOURCE = [[
+-- Applies RMap's realistic lighting when the game starts. The settings are this script's
+-- attributes (Lighting properties) and children (sky effects); change them in Properties.
+local Lighting = game:GetService("Lighting")
+for name, value in script:GetAttributes() do
+	pcall(function()
+		Lighting[name] = if name == "Technology" then Enum.Technology[value] else value
+	end)
+end
+for _, effect in script:GetChildren() do
+	local old = Lighting:FindFirstChild(effect.Name)
+	if old then
+		old:Destroy()
+	end
+	effect:Clone().Parent = Lighting
+end
+]]
 
 -- Rainbow Ramp stripes, from the top of the ramp to the bottom.
 local RAINBOW_COLORS: { BrickColor } = {
@@ -865,35 +997,50 @@ end
 --- Works out the ground footprint of one wall run.
 --- @param grid Grid -- Parsed grid
 --- @param run WallRun -- The wall run
+--- @param halfWidth number -- Half the block's thickness (caps are a little wider than walls)
 --- @return (number, number, number, number) -- minX, maxX, minZ, maxZ in studs
-local function wallFootprint(grid: Grid, run: WallRun): (number, number, number, number)
-	local halfThickness = WALL_THICKNESS / 2
+local function wallFootprint(grid: Grid, run: WallRun, halfWidth: number): (number, number, number, number)
 	if run.axis == "X" then
-		-- X walls overshoot each end by half a thickness so they fill the corner squares.
+		-- X walls overshoot each end by half their width so they fill the corner squares.
 		local z = gridLineZ(grid, run.line)
-		return gridLineX(grid, run.from) - halfThickness, gridLineX(grid, run.to) + halfThickness, z - halfThickness, z + halfThickness
+		return gridLineX(grid, run.from) - halfWidth, gridLineX(grid, run.to) + halfWidth, z - halfWidth, z + halfWidth
 	end
-	-- Z walls stop half a thickness short of each corner so they never overlap an X wall.
+	-- Z walls stop half a width short of each corner so they never overlap an X wall.
 	local x = gridLineX(grid, run.line)
-	return x - halfThickness, x + halfThickness, gridLineZ(grid, run.from) + halfThickness, gridLineZ(grid, run.to) - halfThickness
+	return x - halfWidth, x + halfWidth, gridLineZ(grid, run.from) + halfWidth, gridLineZ(grid, run.to) - halfWidth
 end
 
---- Builds the wall blocks, centred on every floor/empty edge, each with a strap block under it.
+--- Builds the wall blocks, centred on every floor/empty edge, each with a strap block under it and
+--- a slightly wider cap on top.
 --- @param grid Grid -- Parsed grid (must have no pinch points)
 --- @param wallParent Instance -- Folder for the wall blocks
 --- @param strapParent Instance? -- Folder for the strap blocks; nil when STRAP_HEIGHT is 0
---- @return (number, number) -- Number of wall blocks and strap blocks created
-local function buildWalls(grid: Grid, wallParent: Instance, strapParent: Instance?): (number, number)
+--- @param capParent Instance? -- Folder for the cap blocks; nil when CAP_HEIGHT is 0
+--- @return (number, number, number) -- Number of wall, strap and cap blocks created
+local function buildWalls(
+	grid: Grid,
+	wallParent: Instance,
+	strapParent: Instance?,
+	capParent: Instance?
+): (number, number, number)
 	local runs = collectWallRuns(grid)
 	local bottomY = FLOOR_TOP_Y - FLOOR_THICKNESS - WALL_SINK
 	local strapTopY = FLOOR_TOP_Y + STRAP_HEIGHT
 	local topY = FLOOR_TOP_Y + WALL_HEIGHT
+	local half = WALL_THICKNESS / 2
 	-- The strap is the bottom slice of the wall, so both share one footprint and never overlap.
 	local wallBottomY = if strapParent then strapTopY else bottomY
 
 	for index, run in runs do
-		local minX, maxX, minZ, maxZ = wallFootprint(grid, run)
-		local function makeSlice(name: string, fromY: number, toY: number, color: BrickColor, parent: Instance): ()
+		local function makeSlice(
+			name: string,
+			halfWidth: number,
+			fromY: number,
+			toY: number,
+			color: BrickColor,
+			parent: Instance
+		): ()
+			local minX, maxX, minZ, maxZ = wallFootprint(grid, run, halfWidth)
 			makeBlock(
 				name,
 				Vector3.new(maxX - minX, toY - fromY, maxZ - minZ),
@@ -902,13 +1049,16 @@ local function buildWalls(grid: Grid, wallParent: Instance, strapParent: Instanc
 				parent
 			)
 		end
-		makeSlice(`Wall{index}`, wallBottomY, topY, WALL_COLOR, wallParent)
+		makeSlice(`Wall{index}`, half, wallBottomY, topY, WALL_COLOR, wallParent)
 		if strapParent then
-			makeSlice(`Strap{index}`, bottomY, strapTopY, STRAP_COLOR, strapParent)
+			makeSlice(`Strap{index}`, half, bottomY, strapTopY, STRAP_COLOR, strapParent)
+		end
+		if capParent then
+			makeSlice(`Cap{index}`, half + CAP_OVERHANG, topY, topY + CAP_HEIGHT, CAP_COLOR, capParent)
 		end
 	end
 
-	return #runs, if strapParent then #runs else 0
+	return #runs, if strapParent then #runs else 0, if capParent then #runs else 0
 end
 
 --- Builds the spawn pad on top of the floor at SPAWN_CELL.
@@ -926,7 +1076,7 @@ local function buildSpawn(grid: Grid, parent: Instance): SpawnLocation
 		FLOOR_TOP_Y + SPAWN_SIZE.Y / 2,
 		gridLineZ(grid, SPAWN_CELL.row - 0.5)
 	)
-	spawnLocation.BrickColor = FLOOR_COLOR
+	spawnLocation.BrickColor = SPAWN_COLOR
 	spawnLocation.Material = if CLASSIC_STUDS then Enum.Material.Plastic else Enum.Material.SmoothPlastic
 	spawnLocation.TopSurface = Enum.SurfaceType.Smooth
 	spawnLocation.BottomSurface = Enum.SurfaceType.Smooth
@@ -1108,14 +1258,61 @@ local function wallWithOpenings(
 		end
 	end
 
+	local panes = 0
 	local cursor = from
 	for _, opening in openings do
 		piece(cursor, opening.from, 0, height)
 		piece(opening.from, opening.to, 0, opening.bottom)
 		piece(opening.from, opening.to, opening.top, height)
+		if opening.glass then
+			-- A thin pane down the middle of the wall's thickness.
+			panes += 1
+			local middle = (side0 + side1) / 2
+			local pane = if axis == "X"
+				then blockBetween(
+					parent,
+					`{name}Glass{panes}`,
+					at(opening.from, opening.bottom, middle - 0.1),
+					at(opening.to, opening.top, middle + 0.1),
+					GLASS_COLOR
+				)
+				else blockBetween(
+					parent,
+					`{name}Glass{panes}`,
+					at(middle - 0.1, opening.bottom, opening.from),
+					at(middle + 0.1, opening.top, opening.to),
+					GLASS_COLOR
+				)
+			pane.Material = Enum.Material.Glass
+			pane.Transparency = GLASS_TRANSPARENCY
+			pane.CastShadow = false
+		end
 		cursor = opening.to
 	end
 	piece(cursor, to, 0, height)
+end
+
+--- Builds a railing (a top rail on posts) along one straight edge of a platform whose top is at
+--- `deckTop`. The rectangle min..max is the railing's footprint, 0.4 studs thick.
+local function railing(
+	parent: Instance,
+	name: string,
+	minX: number,
+	minZ: number,
+	maxX: number,
+	maxZ: number,
+	deckTop: number
+): ()
+	blockBetween(parent, `{name}Rail`, at(minX, deckTop + RAIL_HEIGHT - 0.4, minZ), at(maxX, deckTop + RAIL_HEIGHT, maxZ), RAIL_COLOR)
+	local alongX = maxX - minX >= maxZ - minZ
+	local length = if alongX then maxX - minX else maxZ - minZ
+	local spans = math.max(1, math.ceil(length / 6))
+	for index = 0, spans do
+		local offset = (length - 0.4) * index / spans
+		local x = if alongX then minX + offset else minX
+		local z = if alongX then minZ else minZ + offset
+		blockBetween(parent, `{name}Post{index + 1}`, at(x, deckTop, z), at(x + 0.4, deckTop + RAIL_HEIGHT - 0.4, z + 0.4), RAIL_COLOR)
+	end
 end
 
 --- Spawn Plaza: lamps either side of the spawn pad.
@@ -1138,6 +1335,9 @@ local function buildTunnel(sections: Instance): ()
 	rampFromFloor(folder, "Ramp", at(-94, 12, 70), Vector3.new(0, 0, 1), 8)
 	lamp(folder, "LampWest", -91, 36)
 	lamp(folder, "LampEast", -69, 36)
+	for index, z in { 50, 57, 64 } do
+		glow(blockBetween(folder, `CeilingLight{index}`, at(-81, 8.7, z - 1), at(-79, 9, z + 1), WHITE), 14)
+	end
 end
 
 --- House: a big one-floor house with a bedroom, kitchen and living room inside, two wide
@@ -1149,7 +1349,7 @@ local function buildHouse(sections: Instance): ()
 		"A big one-floor house: bedroom, kitchen and living room inside, two wide entrances and a ramp up to the flat roof."
 	)
 	local function window(from: number, to: number): Opening
-		return { from = from, to = to, bottom = 4, top = 8 }
+		return { from = from, to = to, bottom = 4, top = 8, glass = true }
 	end
 	local function door(from: number, to: number): Opening
 		return { from = from, to = to, bottom = 0, top = 9 }
@@ -1182,6 +1382,11 @@ local function buildHouse(sections: Instance): ()
 	wallWithOpenings(folder, "KitchenWall", "Z", -10, 8, -20, -18, 12, {}, HOUSE_WALL_COLOR)
 	box("Roof", -44, 12, -12, 4, 13, 30, HOUSE_ROOF_COLOR)
 	rampFromFloor(folder, "RoofRamp", at(4, 13, -2), Vector3.new(1, 0, 0), 8)
+	box("Chimney", -38, 13, -8, -35, 16.5, -5, CHIMNEY_COLOR)
+	-- Thin floor coverings: carpet, tiles and wooden boards.
+	box("BedroomFloor", -42, 0, -10, -20, 0.1, 8, BEDROOM_FLOOR_COLOR)
+	box("KitchenFloor", -20, 0, -10, 2, 0.1, 8, KITCHEN_FLOOR_COLOR)
+	box("LivingFloor", -42, 0, 8, 2, 0.1, 28, LIVING_FLOOR_COLOR)
 
 	-- Bedroom
 	box("Headboard", -41, 0, -10, -34, 4, -9, WOOD_COLOR)
@@ -1331,6 +1536,12 @@ local function buildLookoutTower(sections: Instance): ()
 	)
 	platform(folder, "Lookout", -98, -118, -80, -100, 14, DECK_COLOR, true)
 	rampFromFloor(folder, "Ramp", at(-92, 14, -100), Vector3.new(0, 0, 1), 8)
+	-- Railings on every edge except where the ramp arrives (south) and the bridge leaves (east).
+	railing(folder, "LookoutNorth", -98, -118, -80, -117.6, 14)
+	railing(folder, "LookoutWest", -98, -117.6, -97.6, -100, 14)
+	railing(folder, "LookoutSouth", -88, -100.4, -80, -100, 14)
+	railing(folder, "LookoutEastA", -80.4, -117.6, -80, -112, 14)
+	railing(folder, "LookoutEastB", -80.4, -106, -80, -100.4, 14)
 end
 
 --- Sky Bridge: a long deck across the top of the R to an east platform.
@@ -1345,6 +1556,15 @@ local function buildSkyBridge(sections: Instance): ()
 		blockBetween(folder, `DeckPillar{index}`, at(x - 1, 0, -110), at(x + 1, 13, -108), PILLAR_COLOR)
 	end
 	platform(folder, "EastPlatform", 40, -118, 58, -100, 14, DECK_COLOR, true)
+	railing(folder, "DeckNorth", -80, -112, 40, -111.6, 14)
+	railing(folder, "DeckSouth", -80, -106.4, 40, -106, 14)
+	-- East platform: open where the bridge arrives (west) and the Rainbow Ramp leaves (south).
+	railing(folder, "EastNorth", 40, -118, 58, -117.6, 14)
+	railing(folder, "EastEast", 57.6, -117.6, 58, -100, 14)
+	railing(folder, "EastSouthA", 40.4, -100.4, 44, -100, 14)
+	railing(folder, "EastSouthB", 54, -100.4, 57.6, -100, 14)
+	railing(folder, "EastWestA", 40, -117.6, 40.4, -112, 14)
+	railing(folder, "EastWestB", 40, -106, 40.4, -100, 14)
 end
 
 --- Rainbow Ramp: a striped ramp from the bridge's east platform down to the courtyard.
@@ -1376,7 +1596,7 @@ local function buildSlopeHill(sections: Instance): ()
 	end
 	ramp(folder, "RampUp", along(14, 0), along(44, hillHeight), 10)
 	local hillCenter = along(51, hillHeight / 2)
-	local hill = makeBlock("Hill", Vector3.new(14, hillHeight, 14), hillCenter, DECK_COLOR, folder)
+	local hill = makeBlock("Hill", Vector3.new(14, hillHeight, 14), hillCenter, HILL_COLOR, folder)
 	hill.CFrame = facing(hillCenter, forward)
 	ramp(folder, "RampDown", along(88, 0), along(58, hillHeight), 10)
 end
@@ -1399,25 +1619,46 @@ local function buildFinishPodium(sections: Instance): ()
 	end
 end
 
---- Builds one divider wall: a red strap and grey wall either side of the door, and a lintel above it.
+--- Builds one divider wall: a red strap and grey wall either side of the door, a lintel above it
+--- and a cap along the top that meets the outer walls' caps.
 local function buildDivider(parent: Instance, divider: Divider): ()
-	local half = WALL_THICKNESS / 2
-	local function slab(name: string, from: number, to: number, bottom: number, top: number, color: BrickColor): ()
+	local function slab(
+		name: string,
+		from: number,
+		to: number,
+		bottom: number,
+		top: number,
+		halfWidth: number,
+		color: BrickColor
+	): ()
 		if to <= from or top <= bottom then
 			return
 		end
 		if divider.axis == "X" then
-			blockBetween(parent, name, at(from, bottom, divider.line - half), at(to, top, divider.line + half), color)
+			blockBetween(parent, name, at(from, bottom, divider.line - halfWidth), at(to, top, divider.line + halfWidth), color)
 		else
-			blockBetween(parent, name, at(divider.line - half, bottom, from), at(divider.line + half, top, to), color)
+			blockBetween(parent, name, at(divider.line - halfWidth, bottom, from), at(divider.line + halfWidth, top, to), color)
 		end
 	end
 
+	local half = WALL_THICKNESS / 2
 	for side, span in { { divider.from, divider.doorFrom }, { divider.doorTo, divider.to } } do
-		slab(`{divider.name}Strap{side}`, span[1], span[2], 0, STRAP_HEIGHT, STRAP_COLOR)
-		slab(`{divider.name}Wall{side}`, span[1], span[2], STRAP_HEIGHT, WALL_HEIGHT, WALL_COLOR)
+		slab(`{divider.name}Strap{side}`, span[1], span[2], 0, STRAP_HEIGHT, half, STRAP_COLOR)
+		slab(`{divider.name}Wall{side}`, span[1], span[2], STRAP_HEIGHT, WALL_HEIGHT, half, WALL_COLOR)
 	end
-	slab(`{divider.name}Lintel`, divider.doorFrom, divider.doorTo, DOOR_HEIGHT, WALL_HEIGHT, WALL_COLOR)
+	slab(`{divider.name}Lintel`, divider.doorFrom, divider.doorTo, DOOR_HEIGHT, WALL_HEIGHT, half, WALL_COLOR)
+	if CAP_HEIGHT > 0 then
+		-- The outer walls' caps overhang by CAP_OVERHANG, so this one stops that much short of each end.
+		slab(
+			`{divider.name}Cap`,
+			divider.from + CAP_OVERHANG,
+			divider.to - CAP_OVERHANG,
+			WALL_HEIGHT,
+			WALL_HEIGHT + CAP_HEIGHT,
+			half + CAP_OVERHANG,
+			CAP_COLOR
+		)
+	end
 end
 
 --- Builds the walls that split the map into rooms.
@@ -1469,6 +1710,127 @@ local function buildSections(model: Model): (number, number)
 	return #builders, partCount
 end
 
+--- Landscape: blocky trees, bushes and stone paths around the map.
+--- @param model Model -- The map model
+local function buildLandscape(model: Model): ()
+	local folder = Instance.new("Folder")
+	folder.Name = "Landscape"
+	folder.Parent = model
+	for index, spot in TREES do
+		local x, z = spot[1], spot[2]
+		blockBetween(folder, `Tree{index}Trunk`, at(x - 1, 0, z - 1), at(x + 1, 8, z + 1), TRUNK_COLOR)
+		blockBetween(folder, `Tree{index}Leaves1`, at(x - 4, 8, z - 4), at(x + 4, 13, z + 4), LEAF_COLOR)
+		blockBetween(folder, `Tree{index}Leaves2`, at(x - 2.5, 13, z - 2.5), at(x + 2.5, 16, z + 2.5), LEAF_LIGHT_COLOR)
+	end
+	for index, spot in BUSHES do
+		blockBetween(folder, `Bush{index}`, at(spot[1] - 1.5, 0, spot[2] - 1.5), at(spot[1] + 1.5, 2.5, spot[2] + 1.5), LEAF_COLOR)
+	end
+	for _, path in PATHS do
+		local area = path.area
+		blockBetween(
+			folder,
+			path.name,
+			at(area[1], 0, area[2]),
+			at(area[3], 0.2, area[4]),
+			if path.name == "Road" then ROAD_COLOR else PATH_COLOR
+		)
+	end
+end
+
+--- Returns a part's path inside the map, like "Sections/House/Roof".
+--- @return string -- Slash-separated names below `model`
+local function relativePath(model: Instance, part: Instance): string
+	local names = { part.Name }
+	local node = part.Parent
+	while node and node ~= model do
+		table.insert(names, 1, node.Name)
+		node = node.Parent
+	end
+	return table.concat(names, "/")
+end
+
+--- Gives every part its realistic material from MATERIAL_RULES (neon and glass parts are kept).
+--- @param model Model -- The map model
+local function applyMaterials(model: Model): ()
+	for _, descendant in model:GetDescendants() do
+		if
+			descendant:IsA("BasePart")
+			and descendant.Material ~= Enum.Material.Neon
+			and descendant.Material ~= Enum.Material.Glass
+		then
+			local path = relativePath(model, descendant)
+			for _, rule in MATERIAL_RULES do
+				if string.find(path, rule.pattern) then
+					descendant.Material = rule.material
+					break
+				end
+			end
+		end
+	end
+end
+
+--- Copies lighting settings from a RealisticLighting script (attributes and child effects) into Lighting.
+--- @param controller Instance -- The RealisticLighting script
+local function applyLightingFrom(controller: Instance): ()
+	for name, value in controller:GetAttributes() do
+		pcall(function()
+			(Lighting :: any)[name] = if name == "Technology" then (Enum.Technology :: any)[value] else value
+		end)
+	end
+	for _, effect in controller:GetChildren() do
+		local old = Lighting:FindFirstChild(effect.Name)
+		if old then
+			old:Destroy()
+		end
+		effect:Clone().Parent = Lighting
+	end
+end
+
+--- Adds realistic lighting. The settings live on a Script inside the map that re-applies them
+--- every time the game starts, so they travel with RMap.rbxm; they're also applied right away.
+--- @param model Model -- The map model
+local function buildLighting(model: Model): ()
+	local controller = Instance.new("Script")
+	controller.Name = "RealisticLighting"
+	for name, value in LIGHTING_PROPERTIES do
+		controller:SetAttribute(name, value)
+	end
+
+	local atmosphere = Instance.new("Atmosphere")
+	atmosphere.Density = 0.28
+	atmosphere.Offset = 0.2
+	atmosphere.Color = Color3.fromRGB(199, 210, 222)
+	atmosphere.Decay = Color3.fromRGB(92, 110, 128)
+	atmosphere.Glare = 0.15
+	atmosphere.Haze = 1.2
+	atmosphere.Parent = controller
+
+	local grading = Instance.new("ColorCorrectionEffect")
+	grading.Brightness = 0.02
+	grading.Contrast = 0.08
+	grading.Saturation = 0.12
+	grading.TintColor = Color3.fromRGB(255, 248, 240)
+	grading.Parent = controller
+
+	local bloom = Instance.new("BloomEffect")
+	bloom.Intensity = 0.6
+	bloom.Size = 28
+	bloom.Threshold = 1.6
+	bloom.Parent = controller
+
+	local sunRays = Instance.new("SunRaysEffect")
+	sunRays.Intensity = 0.04
+	sunRays.Spread = 0.7
+	sunRays.Parent = controller
+
+	-- Scripts can only be given source in Studio (Command Bar) or by tools, not in a running game.
+	pcall(function()
+		controller.Source = LIGHTING_SCRIPT_SOURCE
+	end)
+	controller.Parent = model
+	applyLightingFrom(controller)
+end
+
 --- Removes the Baseplate template's own baseplate and spawn from Workspace.
 local function removeTemplateParts(): ()
 	local baseplate = Workspace:FindFirstChild("Baseplate")
@@ -1493,6 +1855,10 @@ local function validate(grid: Grid): ()
 	assert(
 		STRAP_HEIGHT >= 0 and STRAP_HEIGHT < WALL_HEIGHT,
 		"[RMapBuilder] STRAP_HEIGHT must be 0 or more and smaller than WALL_HEIGHT"
+	)
+	assert(
+		CAP_HEIGHT >= 0 and CAP_OVERHANG >= 0 and WALL_THICKNESS + 2 * CAP_OVERHANG < CELL_SIZE,
+		"[RMapBuilder] CAP_HEIGHT and CAP_OVERHANG must be 0 or more, and caps must be thinner than a cell"
 	)
 	assert(
 		WALL_THICKNESS > 0 and WALL_THICKNESS < CELL_SIZE,
@@ -1580,14 +1946,29 @@ local function buildMap(): Model
 		strapFolder = folder
 	end
 
+	local capFolder: Folder? = nil
+	if CAP_HEIGHT > 0 then
+		local folder = Instance.new("Folder")
+		folder.Name = "Caps"
+		folder.Parent = model
+		capFolder = folder
+	end
+
 	local floorCount = buildFloor(grid, floorFolder)
-	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder)
+	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder, capFolder)
 	buildSpawn(grid, model)
 
 	local sectionCount, sectionPartCount, dividerCount = 0, 0, 0
 	if BUILD_SECTIONS then
 		sectionCount, sectionPartCount = buildSections(model)
 		dividerCount = buildDividers(model)
+		buildLandscape(model)
+	end
+	if not CLASSIC_STUDS then
+		applyMaterials(model)
+	end
+	if APPLY_LIGHTING then
+		buildLighting(model)
 	end
 
 	model.WorldPivot = CFrame.new(0, FLOOR_TOP_Y, 0)
@@ -1620,15 +2001,21 @@ const MAP = JSON.parse(document.getElementById("map-data").textContent);
 const RBXM_BASE64 = document.getElementById("rbxm-data").textContent.trim();
 const LUA_SOURCE = document.getElementById("lua-source").textContent.replace(/^\r?\n/, "");
 const SURFACE = { plain: 0, studs: 1, truss: 2, neon: 3 };
+// Shader pattern for each Roblox material (anything not listed is drawn as smooth plastic).
+const MATERIAL_IDS = {
+  Neon: 3, Grass: 4, LeafyGrass: 5, Concrete: 6, Brick: 7, Wood: 8, WoodPlanks: 9, RoofShingles: 10,
+  Rock: 11, Slate: 11, Cobblestone: 12, Granite: 13, Marble: 14, Fabric: 15, Carpet: 16, CeramicTiles: 17,
+  Metal: 18, Foil: 19, Glass: 20, Asphalt: 21, Ground: 22, Plaster: 23,
+};
+const GLASS_ID = MATERIAL_IDS.Glass;
 const IDENTITY_AXES = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 
 // A part becomes a box: centre, its three axes (right, up, back) and size.
 function partToBlock(part) {
   const c = part.cf;
-  let surface = SURFACE.plain;
+  let surface = MATERIAL_IDS[part.m] ?? SURFACE.plain;
   if (part.c === "TrussPart") surface = SURFACE.truss;
-  else if (part.m === "Neon") surface = SURFACE.neon;
-  else if (part.top === "Studs") surface = SURFACE.studs;
+  else if (surface === SURFACE.plain && part.top === "Studs") surface = SURFACE.studs;
   return {
     center: [c[0], c[1], c[2]],
     axes: [[c[3], c[6], c[9]], [c[4], c[7], c[10]], [c[5], c[8], c[11]]],
@@ -1749,6 +2136,7 @@ layout(location = 4) in vec2 aFaceSize;
 layout(location = 5) in float aSurface;
 uniform mat4 uViewProjection;
 uniform mat4 uLightViewProjection;
+out vec3 vPosition;
 out vec3 vNormal;
 out vec3 vColor;
 out vec2 vFaceUv;
@@ -1756,6 +2144,7 @@ out vec2 vFaceSize;
 out float vSurface;
 out vec4 vLightPosition;
 void main() {
+  vPosition = aPosition;
   vNormal = aNormal;
   vColor = aColor;
   vFaceUv = aFaceUv;
@@ -1770,6 +2159,9 @@ precision highp float;
 precision highp sampler2DShadow;
 uniform sampler2DShadow uShadowMap;
 uniform vec3 uLightDirection;
+uniform vec3 uCameraPosition;
+uniform vec3 uFogColor;
+in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vColor;
 in vec2 vFaceUv;
@@ -1791,17 +2183,143 @@ float sampleShadow() {
   return lit / 9.0;
 }
 
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  return noise(p) * 0.5 + noise(p * 2.03 + 1.7) * 0.25 + noise(p * 4.01 + 3.1) * 0.125 + noise(p * 8.07 + 5.3) * 0.0625;
+}
+
+bool isMaterial(float id) {
+  return abs(vSurface - id) < 0.5;
+}
+
+// 0 at a line, 1 away from it (lines every 1 unit of x, width w).
+float lineMask(float x, float w) {
+  float f = fract(x);
+  return smoothstep(0.0, w, min(f, 1.0 - f));
+}
+
+// Procedural look of a Roblox material: returns brightness, sets shine and opacity.
+// uv is in studs; on side faces uv.y points up.
+float materialShade(vec2 uv, out float shine, out float alpha) {
+  shine = 0.0;
+  alpha = 1.0;
+  if (isMaterial(4.0)) { // Grass
+    return 0.8 + 0.32 * fbm(uv * 0.9) + 0.1 * (hash(floor(uv * 5.0)) - 0.5);
+  }
+  if (isMaterial(5.0)) { // LeafyGrass: leaf clumps
+    return 0.66 + 0.26 * fbm(uv * 1.4) + 0.2 * smoothstep(0.3, 0.75, noise(uv * 1.8));
+  }
+  if (isMaterial(6.0)) { // Concrete with a joint every 8 studs
+    return 0.9 + 0.14 * fbm(uv * 1.7) - 0.12 * (1.0 - lineMask(uv.x / 8.0, 0.01));
+  }
+  if (isMaterial(7.0)) { // Brick: staggered courses and lighter mortar
+    vec2 b = vec2(uv.x / 1.6, uv.y / 0.8);
+    b.x += mod(floor(b.y), 2.0) * 0.5;
+    float mortar = 1.0 - min(lineMask(b.x, 0.05), lineMask(b.y, 0.09));
+    float tone = 0.8 + 0.24 * hash(floor(b) + 7.0) + 0.08 * noise(uv * 3.0);
+    return mix(tone, 1.35, mortar);
+  }
+  if (isMaterial(8.0) || isMaterial(9.0)) { // Wood grain; WoodPlanks adds boards
+    bool alongU = vFaceSize.x >= vFaceSize.y;
+    float along = alongU ? uv.x : uv.y;
+    float across = alongU ? uv.y : uv.x;
+    float grain = noise(vec2(along * 0.35, across * 7.0)) * 0.6 + noise(vec2(along * 1.5, across * 20.0)) * 0.4;
+    float shade = 0.8 + 0.22 * grain;
+    if (isMaterial(9.0)) {
+      float board = floor(across);
+      float joint = 1.0 - lineMask(along / 7.0 + hash(vec2(board, 2.0)), 0.006);
+      shade *= (0.86 + 0.16 * hash(vec2(board, 5.0))) * (0.62 + 0.38 * lineMask(across, 0.05)) * (1.0 - 0.3 * joint);
+    }
+    return shade;
+  }
+  if (isMaterial(10.0)) { // RoofShingles: staggered rows
+    float row = floor(uv.y / 1.1);
+    float x = uv.x / 1.4 + mod(row, 2.0) * 0.5;
+    float f = fract(uv.y / 1.1);
+    return (0.78 + 0.24 * hash(vec2(floor(x), row))) * (0.62 + 0.38 * smoothstep(0.0, 0.12, f)) * (0.8 + 0.2 * lineMask(x, 0.04)) * (0.92 + 0.12 * f);
+  }
+  if (isMaterial(11.0)) { // Rock / Slate: blotches and cracks
+    float crack = 1.0 - smoothstep(0.0, 0.035, abs(noise(uv * 0.9) - 0.5));
+    return 0.7 + 0.46 * fbm(uv * 0.6) - 0.25 * crack;
+  }
+  if (isMaterial(12.0)) { // Cobblestone
+    vec2 c = uv / 1.3;
+    c.x += mod(floor(c.y), 2.0) * 0.5;
+    vec2 f = fract(c);
+    float edge = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y));
+    return (0.76 + 0.32 * hash(floor(c))) * (0.5 + 0.5 * smoothstep(0.0, 0.14, edge)) + 0.05 * noise(uv * 4.0);
+  }
+  if (isMaterial(13.0)) { // Granite: speckles
+    shine = 0.2;
+    vec2 cell = floor(uv * 7.0);
+    return 0.82 + 0.3 * hash(cell) * step(0.55, hash(cell + 3.0)) + 0.1 * fbm(uv * 1.2);
+  }
+  if (isMaterial(14.0)) { // Marble: soft veins
+    shine = 0.45;
+    float vein = 1.0 - smoothstep(0.0, 0.09, abs(sin(uv.x * 0.7 + uv.y * 0.5 + fbm(uv * 0.6) * 7.0)));
+    return 0.97 + 0.05 * fbm(uv * 2.0) - 0.16 * vein;
+  }
+  if (isMaterial(15.0)) { // Fabric weave
+    return 0.9 + 0.05 * sin(uv.x * 22.0) * sin(uv.y * 22.0) + 0.06 * noise(uv * 3.0);
+  }
+  if (isMaterial(16.0)) { // Carpet
+    return 0.86 + 0.14 * noise(uv * 7.0) + 0.04 * hash(floor(uv * 24.0));
+  }
+  if (isMaterial(17.0)) { // CeramicTiles: 2-stud tiles with grout
+    shine = 0.3;
+    vec2 t = uv / 2.0;
+    return mix(0.72, 0.97 + 0.04 * hash(floor(t)), min(lineMask(t.x, 0.03), lineMask(t.y, 0.03)));
+  }
+  if (isMaterial(18.0)) { // Metal: brushed
+    shine = 0.7;
+    return 0.88 + 0.1 * noise(vec2(uv.x * 0.4, uv.y * 25.0));
+  }
+  if (isMaterial(19.0)) { // Foil: very shiny
+    shine = 1.3;
+    return 0.95 + 0.12 * noise(uv * 2.5);
+  }
+  if (isMaterial(20.0)) { // Glass
+    shine = 0.9;
+    alpha = 0.35;
+    return 1.0;
+  }
+  if (isMaterial(21.0)) { // Asphalt
+    return 0.78 + 0.18 * hash(floor(uv * 9.0)) + 0.08 * noise(uv * 1.5);
+  }
+  if (isMaterial(22.0)) { // Ground (dirt)
+    return 0.72 + 0.4 * fbm(uv * 0.8);
+  }
+  if (isMaterial(23.0)) { // Plaster
+    return 0.95 + 0.07 * fbm(uv * 1.3);
+  }
+  return 1.0;
+}
+
 void main() {
   // Neon glows and ignores lighting.
-  if (vSurface > 2.5) {
+  if (isMaterial(3.0)) {
     outColor = vec4(min(vColor * 1.2 + 0.08, vec3(1.0)), 1.0);
     return;
   }
 
   vec3 normal = normalize(vNormal);
   float shade = 1.0;
+  float shine = 0.0;
+  float alpha = 1.0;
 
-  if (vSurface > 1.5) {
+  if (isMaterial(2.0)) {
     // Truss ladder: rails, a rung every 2 studs and a diagonal brace; the rest is open.
     bool alongU = vFaceSize.x > vFaceSize.y;
     float along = alongU ? vFaceUv.x : vFaceUv.y;
@@ -1813,8 +2331,8 @@ void main() {
       || abs(across - segment * width * 0.5) < bar * 0.75;
     if (!solid) discard;
   } else {
-    if (vSurface > 0.5) {
-      // Studs: one raised circle per stud, lit on the side facing the sun; fades out when tiny.
+    if (isMaterial(1.0)) {
+      // Classic studs: one raised circle per stud, lit on the sun side; fades out when tiny.
       vec2 g = fract(vFaceUv) - 0.5;
       float d = length(g);
       float footprint = max(fwidth(vFaceUv.x), fwidth(vFaceUv.y));
@@ -1823,22 +2341,33 @@ void main() {
       float ring = smoothstep(0.22 - aa, 0.22, d) * (1.0 - smoothstep(0.31, 0.31 + aa, d));
       float facing = dot(normalize(g + 1e-4), normalize(uLightDirection.xz + 1e-4));
       shade += visible * ring * facing * 0.38;
+    } else {
+      shade = materialShade(vFaceUv, shine, alpha);
     }
-    // Thin darker line along every block edge so separate blocks read clearly.
-    vec2 toEdge = min(vFaceUv, vFaceSize - vFaceUv);
-    float edgeDistance = min(toEdge.x, toEdge.y);
-    float lineWidth = max(fwidth(edgeDistance) * 1.25, 0.05);
-    shade *= 1.0 - 0.22 * (1.0 - smoothstep(lineWidth * 0.5, lineWidth * 1.5, edgeDistance));
+    // Soft line along block edges; skipped on grass, where the floor's block seams aren't real.
+    if (!isMaterial(4.0) && alpha > 0.99) {
+      vec2 toEdge = min(vFaceUv, vFaceSize - vFaceUv);
+      float edgeDistance = min(toEdge.x, toEdge.y);
+      float lineWidth = max(fwidth(edgeDistance) * 1.25, 0.05);
+      float strength = isMaterial(0.0) || isMaterial(1.0) ? 0.2 : 0.1;
+      shade *= 1.0 - strength * (1.0 - smoothstep(lineWidth * 0.5, lineWidth * 1.5, edgeDistance));
+    }
   }
 
   vec3 albedo = pow(vColor, vec3(2.2)) * shade;
   float diffuse = max(dot(normal, uLightDirection), 0.0);
   float shadow = diffuse > 0.0 ? sampleShadow() : 0.0;
+  vec3 toCamera = uCameraPosition - vPosition;
+  vec3 halfway = normalize(uLightDirection + normalize(toCamera));
+  float highlight = pow(max(dot(normal, halfway), 0.0), 48.0) * shine * shadow;
   vec3 skyLight = vec3(0.56, 0.63, 0.76);
   vec3 groundLight = vec3(0.32, 0.30, 0.28);
   vec3 ambient = mix(groundLight, skyLight, normal.y * 0.5 + 0.5) * 0.62;
-  vec3 color = albedo * (ambient + vec3(1.0, 0.96, 0.88) * diffuse * shadow * 0.9);
-  outColor = vec4(pow(color, vec3(1.0 / 2.2)), 1.0);
+  vec3 color = albedo * (ambient + vec3(1.0, 0.96, 0.88) * diffuse * shadow * 0.9) + vec3(1.0, 0.97, 0.9) * highlight * 0.6;
+  // Light haze with distance, like Roblox's atmosphere.
+  float haze = 1.0 - exp(-length(toCamera) * 0.0009);
+  color = mix(color, pow(uFogColor, vec3(2.2)), haze * 0.3);
+  outColor = vec4(pow(color, vec3(1.0 / 2.2)) * alpha, alpha);
 }`;
 
 const DEPTH_VERTEX_SHADER = `#version 300 es
@@ -1893,8 +2422,9 @@ function buildMesh(blocks) {
     const color = block.color.map((channel) => channel / 255);
     const half = block.size.map((value) => value / 2);
     for (let axis = 0; axis < 3; axis++) {
-      const tangentA = axis === 0 ? 1 : 0;
-      const tangentB = axis === 2 ? 1 : 2;
+      // Side faces keep "up" as the second UV axis, so brick courses and boards run level.
+      const tangentA = axis === 0 ? 2 : 0;
+      const tangentB = axis === 1 ? 2 : 1;
       for (const sign of [-1, 1]) {
         const normal = block.axes[axis].map((value) => value * sign);
         let surface = block.surface;
@@ -1929,7 +2459,7 @@ function buildMesh(blocks) {
   return { vertices, indices };
 }
 
-function startViewer(blocks, mapBounds, hiddenTail) {
+function startViewer(blocks, mapBounds, ranges) {
   const viewer = document.getElementById("viewer");
   const canvas = document.getElementById("view");
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: true, premultipliedAlpha: true });
@@ -1992,9 +2522,14 @@ function startViewer(blocks, mapBounds, hiddenTail) {
   gl.readBuffer(gl.NONE);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-  // The last `hiddenTail` blocks (the house roof) can be hidden to look inside.
+  // Draw order: solid parts, then the house roof ("See inside" leaves it out), then see-through glass.
   let showInside = false;
-  const visibleIndexCount = () => mesh.indices.length - (showInside ? hiddenTail * 36 : 0);
+  const hiddenTail = ranges.glassStart - ranges.roofStart;
+  const solidIndexCount = ranges.roofStart * 36;
+  const roofIndexCount = hiddenTail * 36;
+  const glassFirstIndex = ranges.glassStart * 36;
+  const glassIndexCount = mesh.indices.length - glassFirstIndex;
+  const drawSolids = () => gl.drawElements(gl.TRIANGLES, solidIndexCount + (showInside ? 0 : roofIndexCount), gl.UNSIGNED_INT, 0);
   const depthMatrixLocation = gl.getUniformLocation(depthProgram, "uLightViewProjection");
   // Redrawn only when what's visible changes; the scene itself never moves.
   function renderShadowMap() {
@@ -2008,7 +2543,7 @@ function startViewer(blocks, mapBounds, hiddenTail) {
     gl.polygonOffset(2, 4);
     gl.useProgram(depthProgram);
     gl.uniformMatrix4fv(depthMatrixLocation, false, lightViewProjection);
-    gl.drawElements(gl.TRIANGLES, visibleIndexCount(), gl.UNSIGNED_INT, 0);
+    drawSolids();
     gl.disable(gl.POLYGON_OFFSET_FILL);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.useProgram(mainProgram);
@@ -2018,6 +2553,8 @@ function startViewer(blocks, mapBounds, hiddenTail) {
 
   gl.useProgram(mainProgram);
   const viewProjectionLocation = gl.getUniformLocation(mainProgram, "uViewProjection");
+  const cameraLocation = gl.getUniformLocation(mainProgram, "uCameraPosition");
+  gl.uniform3fv(gl.getUniformLocation(mainProgram, "uFogColor"), [0.78, 0.86, 0.94]);
   gl.uniformMatrix4fv(gl.getUniformLocation(mainProgram, "uLightViewProjection"), false, lightViewProjection);
   gl.uniform3fv(gl.getUniformLocation(mainProgram, "uLightDirection"), lightDirection);
   gl.uniform1i(gl.getUniformLocation(mainProgram, "uShadowMap"), 0);
@@ -2084,7 +2621,16 @@ function startViewer(blocks, mapBounds, hiddenTail) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniformMatrix4fv(viewProjectionLocation, false, multiply(projection, view));
-    gl.drawElements(gl.TRIANGLES, visibleIndexCount(), gl.UNSIGNED_INT, 0);
+    gl.uniform3fv(cameraLocation, eye);
+    drawSolids();
+    if (glassIndexCount > 0) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false);
+      gl.drawElements(gl.TRIANGLES, glassIndexCount, gl.UNSIGNED_INT, glassFirstIndex * 4);
+      gl.depthMask(true);
+      gl.disable(gl.BLEND);
+    }
   }
 
   function setPreset(name) {
@@ -2460,12 +3006,14 @@ function setUpButtons() {
 
   let viewerApi = null;
   try {
-    // The house roof goes last so the viewer can leave it out to show the rooms inside.
+    // Draw order: solid parts, the house roof (so "See inside" can leave it out), then glass.
     const isRoof = (block) => block.part.p === "Sections/House" && block.part.n === "Roof";
+    const isGlass = (block) => block.surface === GLASS_ID;
     const roofs = blocks.filter(isRoof);
+    const glass = blocks.filter(isGlass);
     const spawn = blocks.find((block) => block.part.c === "SpawnLocation");
-    const scene = blocks.filter((block) => !isRoof(block)).concat(spawn ? buildScaleFigure(spawn) : [], roofs);
-    viewerApi = startViewer(scene, mapBounds, roofs.length);
+    const solids = blocks.filter((block) => !isRoof(block) && !isGlass(block)).concat(spawn ? buildScaleFigure(spawn) : []);
+    viewerApi = startViewer(solids.concat(roofs, glass), mapBounds, { roofStart: solids.length, glassStart: solids.length + roofs.length });
   } catch (error) {
     document.getElementById("fallback").firstElementChild.textContent = "Preview unavailable: " + error.message;
     document.getElementById("viewer").classList.add("no-webgl");

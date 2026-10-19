@@ -15,6 +15,7 @@
 ]]
 
 -- // SERVICES
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -49,6 +50,13 @@ type Opening = {
 	to: number,
 	bottom: number,
 	top: number,
+	glass: boolean?, -- fill the gap with a window pane
+}
+
+-- Gives every part whose path inside the map (e.g. "Sections/House/Roof") matches `pattern` a material.
+type MaterialRule = {
+	pattern: string,
+	material: Enum.Material,
 }
 
 -- A wall between two play areas with one big door. It runs along `axis` on world line `line`
@@ -93,7 +101,12 @@ local FLOOR_COLOR = BrickColor.new("Bright green")
 local WALL_COLOR = BrickColor.new("Dark stone grey")
 local STRAP_COLOR = BrickColor.new("Bright red") -- band along the bottom of every wall
 local STRAP_HEIGHT = 3 -- studs of strap showing above the floor; 0 for no strap
-local CLASSIC_STUDS = true -- studs on top faces for the classic blocky look
+local CAP_COLOR = BrickColor.new("Medium stone grey")
+local CAP_HEIGHT = 1 -- a slightly wider coping along the top of every wall; 0 for none
+local CAP_OVERHANG = 0.3
+local SPAWN_COLOR = BrickColor.new("Light stone grey")
+-- true: classic plastic with studs everywhere. false: realistic Roblox materials (see MATERIAL_RULES).
+local CLASSIC_STUDS = false
 
 -- Grid position of the spawn (1-based; fractions allowed, col 1.5 = between cols 1 and 2).
 local SPAWN_CELL = { row = 11, col = 1.5 }
@@ -108,8 +121,8 @@ local REMOVE_TEMPLATE_PARTS = true
 
 -- Play areas built inside the R. They are placed in world studs for the SHAPE above (cell size 20,
 -- map centred on the origin) with heights measured from the floor's top; if you reshape the R, move
--- them too. Nothing anyone can stand on is higher than 16 studs (a jump adds about 7), so players
--- can't get over the 24-stud walls.
+-- them too. Nothing anyone can stand on is higher than 17 studs (a jump adds about 7), so players
+-- can't get over the walls, which reach 25 studs with their caps.
 local BUILD_SECTIONS = true
 local RAMP_THICKNESS = 1
 local LAMP_HEIGHT = 10
@@ -119,9 +132,10 @@ local LAMP_LIGHT_COLOR = BrickColor.new("Bright yellow")
 local STONE_COLOR = BrickColor.new("Medium stone grey")
 local HOUSE_WALL_COLOR = BrickColor.new("Institutional white")
 local HOUSE_ROOF_COLOR = BrickColor.new("Bright red")
-local DECK_COLOR = BrickColor.new("Bright blue")
+local DECK_COLOR = BrickColor.new("Nougat")
+local HILL_COLOR = BrickColor.new("Sea green")
 local PILLAR_COLOR = BrickColor.new("Medium stone grey")
-local RAMP_COLOR = BrickColor.new("Bright orange")
+local RAMP_COLOR = BrickColor.new("Nougat")
 local PODIUM_FIRST_COLOR = BrickColor.new("Bright yellow")
 local PODIUM_SECOND_COLOR = BrickColor.new("Medium stone grey")
 local PODIUM_THIRD_COLOR = BrickColor.new("Bright orange")
@@ -143,6 +157,124 @@ local NOOB_LEGS_COLOR = BrickColor.new("Br. yellowish green")
 local COLA_COLOR = BrickColor.new("Bright red")
 local LOGO_COLOR = BrickColor.new("Institutional white")
 local GIANT_BRICK_COLOR = BrickColor.new("Bright red")
+local GLASS_COLOR = BrickColor.new("Light blue")
+local GLASS_TRANSPARENCY = 0.5
+local RAIL_COLOR = BrickColor.new("Black")
+local RAIL_HEIGHT = 2.5
+local TRUNK_COLOR = BrickColor.new("Brown")
+local LEAF_LIGHT_COLOR = BrickColor.new("Sea green")
+local PATH_COLOR = BrickColor.new("Medium stone grey")
+local ROAD_COLOR = BrickColor.new("Dark stone grey")
+local CHIMNEY_COLOR = BrickColor.new("Reddish brown")
+local BEDROOM_FLOOR_COLOR = BrickColor.new("Sand blue")
+local KITCHEN_FLOOR_COLOR = BrickColor.new("Institutional white")
+local LIVING_FLOOR_COLOR = BrickColor.new("Nougat")
+
+-- Landscape, in world x, z: blocky trees, bushes and stone paths.
+local TREES: { { number } } = {
+	{ -94, 112 },
+	{ -66, 112 },
+	{ -92, 18 },
+	{ -50, -48 },
+	{ -66, -72 },
+	{ 26, -72 },
+	{ 50, 28 },
+	{ 92, -10 },
+	{ 95, 114 },
+}
+local BUSHES: { { number } } = { { -8, 33 }, { 0, 33 }, { -58, -10 }, { -66, -10 } }
+-- Paths as { minX, minZ, maxX, maxZ }; "Road" is the asphalt through the tunnel.
+local PATHS: { { name: string, area: { number } } } = {
+	{ name = "PathSpawn", area = { -84, 70, -76, 84 } },
+	{ name = "Road", area = { -86, 44, -74, 70 } },
+	{ name = "PathGate", area = { -84, 35, -76, 44 } },
+	{ name = "PathHouse", area = { -84, 30, -14, 35 } },
+}
+
+-- Realistic materials, matched in order against each part's path inside the map (first match wins).
+-- Neon and glass parts keep their own material. Ignored when CLASSIC_STUDS is true.
+local MATERIAL_RULES: { MaterialRule } = {
+	{ pattern = "^Floor/", material = Enum.Material.Grass },
+	{ pattern = "^Walls/", material = Enum.Material.Concrete },
+	{ pattern = "^Caps/", material = Enum.Material.Concrete },
+	{ pattern = "^Straps/", material = Enum.Material.Brick },
+	{ pattern = "^Dividers/.*Strap", material = Enum.Material.Brick },
+	{ pattern = "^Dividers/", material = Enum.Material.Concrete },
+	{ pattern = "^SpawnLocation$", material = Enum.Material.Marble },
+	{ pattern = "Trunk$", material = Enum.Material.Wood },
+	{ pattern = "Leaves%d*$", material = Enum.Material.LeafyGrass },
+	{ pattern = "^Landscape/Bush", material = Enum.Material.LeafyGrass },
+	{ pattern = "^Landscape/Road", material = Enum.Material.Asphalt },
+	{ pattern = "^Landscape/Path", material = Enum.Material.Cobblestone },
+	{ pattern = "Post%d*$", material = Enum.Material.Metal },
+	{ pattern = "Rail$", material = Enum.Material.Metal },
+	{ pattern = "Pillar%d*$", material = Enum.Material.Concrete },
+	{ pattern = "^Sections/SlopeHill/Hill$", material = Enum.Material.Grass },
+	{ pattern = "^Sections/SlopeHill/", material = Enum.Material.Ground },
+	{ pattern = "^Sections/FinishPodium/.*Ramp$", material = Enum.Material.Marble },
+	{ pattern = "^Sections/FinishPodium/", material = Enum.Material.Foil },
+	{ pattern = "^Sections/RainbowRamp/", material = Enum.Material.SmoothPlastic },
+	{ pattern = "Ramp[^/]*$", material = Enum.Material.WoodPlanks },
+	{ pattern = "^Sections/Tunnel/", material = Enum.Material.Rock },
+	{ pattern = "^Sections/House/BedroomFloor$", material = Enum.Material.Carpet },
+	{ pattern = "^Sections/House/KitchenFloor$", material = Enum.Material.CeramicTiles },
+	{ pattern = "^Sections/House/LivingFloor$", material = Enum.Material.WoodPlanks },
+	{ pattern = "^Sections/House/Roof$", material = Enum.Material.RoofShingles },
+	{ pattern = "^Sections/House/Chimney$", material = Enum.Material.Brick },
+	{ pattern = "^Sections/House/.*Wall%d*$", material = Enum.Material.Plaster },
+	{ pattern = "^Sections/House/.*Rug$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Mattress$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Pillow$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Blanket$", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Couch", material = Enum.Material.Fabric },
+	{ pattern = "^Sections/House/Counter$", material = Enum.Material.Marble },
+	{ pattern = "^Sections/House/Stove$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/House/Fridge$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/House/PlantPot", material = Enum.Material.Concrete },
+	{ pattern = "^Sections/House/Stool", material = Enum.Material.SmoothPlastic },
+	{ pattern = "^Sections/House/", material = Enum.Material.Wood },
+	{ pattern = "^Sections/NoobStatue/Base$", material = Enum.Material.Granite },
+	{ pattern = "^Sections/BloxyCola/Machine%d$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/BloxyTrophy/Pedestal", material = Enum.Material.Marble },
+	{ pattern = "^Sections/BloxyTrophy/", material = Enum.Material.Foil },
+	{ pattern = "^Sections/RobloxLogo/Stage$", material = Enum.Material.Granite },
+	{ pattern = "^Sections/GiantBrick/", material = Enum.Material.Plastic },
+	{ pattern = "^Sections/.*/Lookout$", material = Enum.Material.WoodPlanks },
+	{ pattern = "^Sections/SkyBridge/", material = Enum.Material.WoodPlanks },
+}
+
+-- Realistic lighting (sun, haze, colour grading, glow). The settings ride along inside the map on a
+-- Script called RealisticLighting, which applies them every time the game starts.
+local APPLY_LIGHTING = true
+local LIGHTING_PROPERTIES: { [string]: any } = {
+	Technology = "Future",
+	ClockTime = 14.5,
+	GeographicLatitude = 35,
+	Brightness = 2.5,
+	Ambient = Color3.fromRGB(70, 70, 78),
+	OutdoorAmbient = Color3.fromRGB(135, 138, 150),
+	EnvironmentDiffuseScale = 1,
+	EnvironmentSpecularScale = 1,
+	ShadowSoftness = 0.2,
+	GlobalShadows = true,
+}
+local LIGHTING_SCRIPT_SOURCE = [[
+-- Applies RMap's realistic lighting when the game starts. The settings are this script's
+-- attributes (Lighting properties) and children (sky effects); change them in Properties.
+local Lighting = game:GetService("Lighting")
+for name, value in script:GetAttributes() do
+	pcall(function()
+		Lighting[name] = if name == "Technology" then Enum.Technology[value] else value
+	end)
+end
+for _, effect in script:GetChildren() do
+	local old = Lighting:FindFirstChild(effect.Name)
+	if old then
+		old:Destroy()
+	end
+	effect:Clone().Parent = Lighting
+end
+]]
 
 -- Rainbow Ramp stripes, from the top of the ramp to the bottom.
 local RAINBOW_COLORS: { BrickColor } = {
@@ -428,35 +560,50 @@ end
 --- Works out the ground footprint of one wall run.
 --- @param grid Grid -- Parsed grid
 --- @param run WallRun -- The wall run
+--- @param halfWidth number -- Half the block's thickness (caps are a little wider than walls)
 --- @return (number, number, number, number) -- minX, maxX, minZ, maxZ in studs
-local function wallFootprint(grid: Grid, run: WallRun): (number, number, number, number)
-	local halfThickness = WALL_THICKNESS / 2
+local function wallFootprint(grid: Grid, run: WallRun, halfWidth: number): (number, number, number, number)
 	if run.axis == "X" then
-		-- X walls overshoot each end by half a thickness so they fill the corner squares.
+		-- X walls overshoot each end by half their width so they fill the corner squares.
 		local z = gridLineZ(grid, run.line)
-		return gridLineX(grid, run.from) - halfThickness, gridLineX(grid, run.to) + halfThickness, z - halfThickness, z + halfThickness
+		return gridLineX(grid, run.from) - halfWidth, gridLineX(grid, run.to) + halfWidth, z - halfWidth, z + halfWidth
 	end
-	-- Z walls stop half a thickness short of each corner so they never overlap an X wall.
+	-- Z walls stop half a width short of each corner so they never overlap an X wall.
 	local x = gridLineX(grid, run.line)
-	return x - halfThickness, x + halfThickness, gridLineZ(grid, run.from) + halfThickness, gridLineZ(grid, run.to) - halfThickness
+	return x - halfWidth, x + halfWidth, gridLineZ(grid, run.from) + halfWidth, gridLineZ(grid, run.to) - halfWidth
 end
 
---- Builds the wall blocks, centred on every floor/empty edge, each with a strap block under it.
+--- Builds the wall blocks, centred on every floor/empty edge, each with a strap block under it and
+--- a slightly wider cap on top.
 --- @param grid Grid -- Parsed grid (must have no pinch points)
 --- @param wallParent Instance -- Folder for the wall blocks
 --- @param strapParent Instance? -- Folder for the strap blocks; nil when STRAP_HEIGHT is 0
---- @return (number, number) -- Number of wall blocks and strap blocks created
-local function buildWalls(grid: Grid, wallParent: Instance, strapParent: Instance?): (number, number)
+--- @param capParent Instance? -- Folder for the cap blocks; nil when CAP_HEIGHT is 0
+--- @return (number, number, number) -- Number of wall, strap and cap blocks created
+local function buildWalls(
+	grid: Grid,
+	wallParent: Instance,
+	strapParent: Instance?,
+	capParent: Instance?
+): (number, number, number)
 	local runs = collectWallRuns(grid)
 	local bottomY = FLOOR_TOP_Y - FLOOR_THICKNESS - WALL_SINK
 	local strapTopY = FLOOR_TOP_Y + STRAP_HEIGHT
 	local topY = FLOOR_TOP_Y + WALL_HEIGHT
+	local half = WALL_THICKNESS / 2
 	-- The strap is the bottom slice of the wall, so both share one footprint and never overlap.
 	local wallBottomY = if strapParent then strapTopY else bottomY
 
 	for index, run in runs do
-		local minX, maxX, minZ, maxZ = wallFootprint(grid, run)
-		local function makeSlice(name: string, fromY: number, toY: number, color: BrickColor, parent: Instance): ()
+		local function makeSlice(
+			name: string,
+			halfWidth: number,
+			fromY: number,
+			toY: number,
+			color: BrickColor,
+			parent: Instance
+		): ()
+			local minX, maxX, minZ, maxZ = wallFootprint(grid, run, halfWidth)
 			makeBlock(
 				name,
 				Vector3.new(maxX - minX, toY - fromY, maxZ - minZ),
@@ -465,13 +612,16 @@ local function buildWalls(grid: Grid, wallParent: Instance, strapParent: Instanc
 				parent
 			)
 		end
-		makeSlice(`Wall{index}`, wallBottomY, topY, WALL_COLOR, wallParent)
+		makeSlice(`Wall{index}`, half, wallBottomY, topY, WALL_COLOR, wallParent)
 		if strapParent then
-			makeSlice(`Strap{index}`, bottomY, strapTopY, STRAP_COLOR, strapParent)
+			makeSlice(`Strap{index}`, half, bottomY, strapTopY, STRAP_COLOR, strapParent)
+		end
+		if capParent then
+			makeSlice(`Cap{index}`, half + CAP_OVERHANG, topY, topY + CAP_HEIGHT, CAP_COLOR, capParent)
 		end
 	end
 
-	return #runs, if strapParent then #runs else 0
+	return #runs, if strapParent then #runs else 0, if capParent then #runs else 0
 end
 
 --- Builds the spawn pad on top of the floor at SPAWN_CELL.
@@ -489,7 +639,7 @@ local function buildSpawn(grid: Grid, parent: Instance): SpawnLocation
 		FLOOR_TOP_Y + SPAWN_SIZE.Y / 2,
 		gridLineZ(grid, SPAWN_CELL.row - 0.5)
 	)
-	spawnLocation.BrickColor = FLOOR_COLOR
+	spawnLocation.BrickColor = SPAWN_COLOR
 	spawnLocation.Material = if CLASSIC_STUDS then Enum.Material.Plastic else Enum.Material.SmoothPlastic
 	spawnLocation.TopSurface = Enum.SurfaceType.Smooth
 	spawnLocation.BottomSurface = Enum.SurfaceType.Smooth
@@ -671,14 +821,61 @@ local function wallWithOpenings(
 		end
 	end
 
+	local panes = 0
 	local cursor = from
 	for _, opening in openings do
 		piece(cursor, opening.from, 0, height)
 		piece(opening.from, opening.to, 0, opening.bottom)
 		piece(opening.from, opening.to, opening.top, height)
+		if opening.glass then
+			-- A thin pane down the middle of the wall's thickness.
+			panes += 1
+			local middle = (side0 + side1) / 2
+			local pane = if axis == "X"
+				then blockBetween(
+					parent,
+					`{name}Glass{panes}`,
+					at(opening.from, opening.bottom, middle - 0.1),
+					at(opening.to, opening.top, middle + 0.1),
+					GLASS_COLOR
+				)
+				else blockBetween(
+					parent,
+					`{name}Glass{panes}`,
+					at(middle - 0.1, opening.bottom, opening.from),
+					at(middle + 0.1, opening.top, opening.to),
+					GLASS_COLOR
+				)
+			pane.Material = Enum.Material.Glass
+			pane.Transparency = GLASS_TRANSPARENCY
+			pane.CastShadow = false
+		end
 		cursor = opening.to
 	end
 	piece(cursor, to, 0, height)
+end
+
+--- Builds a railing (a top rail on posts) along one straight edge of a platform whose top is at
+--- `deckTop`. The rectangle min..max is the railing's footprint, 0.4 studs thick.
+local function railing(
+	parent: Instance,
+	name: string,
+	minX: number,
+	minZ: number,
+	maxX: number,
+	maxZ: number,
+	deckTop: number
+): ()
+	blockBetween(parent, `{name}Rail`, at(minX, deckTop + RAIL_HEIGHT - 0.4, minZ), at(maxX, deckTop + RAIL_HEIGHT, maxZ), RAIL_COLOR)
+	local alongX = maxX - minX >= maxZ - minZ
+	local length = if alongX then maxX - minX else maxZ - minZ
+	local spans = math.max(1, math.ceil(length / 6))
+	for index = 0, spans do
+		local offset = (length - 0.4) * index / spans
+		local x = if alongX then minX + offset else minX
+		local z = if alongX then minZ else minZ + offset
+		blockBetween(parent, `{name}Post{index + 1}`, at(x, deckTop, z), at(x + 0.4, deckTop + RAIL_HEIGHT - 0.4, z + 0.4), RAIL_COLOR)
+	end
 end
 
 --- Spawn Plaza: lamps either side of the spawn pad.
@@ -701,6 +898,9 @@ local function buildTunnel(sections: Instance): ()
 	rampFromFloor(folder, "Ramp", at(-94, 12, 70), Vector3.new(0, 0, 1), 8)
 	lamp(folder, "LampWest", -91, 36)
 	lamp(folder, "LampEast", -69, 36)
+	for index, z in { 50, 57, 64 } do
+		glow(blockBetween(folder, `CeilingLight{index}`, at(-81, 8.7, z - 1), at(-79, 9, z + 1), WHITE), 14)
+	end
 end
 
 --- House: a big one-floor house with a bedroom, kitchen and living room inside, two wide
@@ -712,7 +912,7 @@ local function buildHouse(sections: Instance): ()
 		"A big one-floor house: bedroom, kitchen and living room inside, two wide entrances and a ramp up to the flat roof."
 	)
 	local function window(from: number, to: number): Opening
-		return { from = from, to = to, bottom = 4, top = 8 }
+		return { from = from, to = to, bottom = 4, top = 8, glass = true }
 	end
 	local function door(from: number, to: number): Opening
 		return { from = from, to = to, bottom = 0, top = 9 }
@@ -745,6 +945,11 @@ local function buildHouse(sections: Instance): ()
 	wallWithOpenings(folder, "KitchenWall", "Z", -10, 8, -20, -18, 12, {}, HOUSE_WALL_COLOR)
 	box("Roof", -44, 12, -12, 4, 13, 30, HOUSE_ROOF_COLOR)
 	rampFromFloor(folder, "RoofRamp", at(4, 13, -2), Vector3.new(1, 0, 0), 8)
+	box("Chimney", -38, 13, -8, -35, 16.5, -5, CHIMNEY_COLOR)
+	-- Thin floor coverings: carpet, tiles and wooden boards.
+	box("BedroomFloor", -42, 0, -10, -20, 0.1, 8, BEDROOM_FLOOR_COLOR)
+	box("KitchenFloor", -20, 0, -10, 2, 0.1, 8, KITCHEN_FLOOR_COLOR)
+	box("LivingFloor", -42, 0, 8, 2, 0.1, 28, LIVING_FLOOR_COLOR)
 
 	-- Bedroom
 	box("Headboard", -41, 0, -10, -34, 4, -9, WOOD_COLOR)
@@ -894,6 +1099,12 @@ local function buildLookoutTower(sections: Instance): ()
 	)
 	platform(folder, "Lookout", -98, -118, -80, -100, 14, DECK_COLOR, true)
 	rampFromFloor(folder, "Ramp", at(-92, 14, -100), Vector3.new(0, 0, 1), 8)
+	-- Railings on every edge except where the ramp arrives (south) and the bridge leaves (east).
+	railing(folder, "LookoutNorth", -98, -118, -80, -117.6, 14)
+	railing(folder, "LookoutWest", -98, -117.6, -97.6, -100, 14)
+	railing(folder, "LookoutSouth", -88, -100.4, -80, -100, 14)
+	railing(folder, "LookoutEastA", -80.4, -117.6, -80, -112, 14)
+	railing(folder, "LookoutEastB", -80.4, -106, -80, -100.4, 14)
 end
 
 --- Sky Bridge: a long deck across the top of the R to an east platform.
@@ -908,6 +1119,15 @@ local function buildSkyBridge(sections: Instance): ()
 		blockBetween(folder, `DeckPillar{index}`, at(x - 1, 0, -110), at(x + 1, 13, -108), PILLAR_COLOR)
 	end
 	platform(folder, "EastPlatform", 40, -118, 58, -100, 14, DECK_COLOR, true)
+	railing(folder, "DeckNorth", -80, -112, 40, -111.6, 14)
+	railing(folder, "DeckSouth", -80, -106.4, 40, -106, 14)
+	-- East platform: open where the bridge arrives (west) and the Rainbow Ramp leaves (south).
+	railing(folder, "EastNorth", 40, -118, 58, -117.6, 14)
+	railing(folder, "EastEast", 57.6, -117.6, 58, -100, 14)
+	railing(folder, "EastSouthA", 40.4, -100.4, 44, -100, 14)
+	railing(folder, "EastSouthB", 54, -100.4, 57.6, -100, 14)
+	railing(folder, "EastWestA", 40, -117.6, 40.4, -112, 14)
+	railing(folder, "EastWestB", 40, -106, 40.4, -100, 14)
 end
 
 --- Rainbow Ramp: a striped ramp from the bridge's east platform down to the courtyard.
@@ -939,7 +1159,7 @@ local function buildSlopeHill(sections: Instance): ()
 	end
 	ramp(folder, "RampUp", along(14, 0), along(44, hillHeight), 10)
 	local hillCenter = along(51, hillHeight / 2)
-	local hill = makeBlock("Hill", Vector3.new(14, hillHeight, 14), hillCenter, DECK_COLOR, folder)
+	local hill = makeBlock("Hill", Vector3.new(14, hillHeight, 14), hillCenter, HILL_COLOR, folder)
 	hill.CFrame = facing(hillCenter, forward)
 	ramp(folder, "RampDown", along(88, 0), along(58, hillHeight), 10)
 end
@@ -962,25 +1182,46 @@ local function buildFinishPodium(sections: Instance): ()
 	end
 end
 
---- Builds one divider wall: a red strap and grey wall either side of the door, and a lintel above it.
+--- Builds one divider wall: a red strap and grey wall either side of the door, a lintel above it
+--- and a cap along the top that meets the outer walls' caps.
 local function buildDivider(parent: Instance, divider: Divider): ()
-	local half = WALL_THICKNESS / 2
-	local function slab(name: string, from: number, to: number, bottom: number, top: number, color: BrickColor): ()
+	local function slab(
+		name: string,
+		from: number,
+		to: number,
+		bottom: number,
+		top: number,
+		halfWidth: number,
+		color: BrickColor
+	): ()
 		if to <= from or top <= bottom then
 			return
 		end
 		if divider.axis == "X" then
-			blockBetween(parent, name, at(from, bottom, divider.line - half), at(to, top, divider.line + half), color)
+			blockBetween(parent, name, at(from, bottom, divider.line - halfWidth), at(to, top, divider.line + halfWidth), color)
 		else
-			blockBetween(parent, name, at(divider.line - half, bottom, from), at(divider.line + half, top, to), color)
+			blockBetween(parent, name, at(divider.line - halfWidth, bottom, from), at(divider.line + halfWidth, top, to), color)
 		end
 	end
 
+	local half = WALL_THICKNESS / 2
 	for side, span in { { divider.from, divider.doorFrom }, { divider.doorTo, divider.to } } do
-		slab(`{divider.name}Strap{side}`, span[1], span[2], 0, STRAP_HEIGHT, STRAP_COLOR)
-		slab(`{divider.name}Wall{side}`, span[1], span[2], STRAP_HEIGHT, WALL_HEIGHT, WALL_COLOR)
+		slab(`{divider.name}Strap{side}`, span[1], span[2], 0, STRAP_HEIGHT, half, STRAP_COLOR)
+		slab(`{divider.name}Wall{side}`, span[1], span[2], STRAP_HEIGHT, WALL_HEIGHT, half, WALL_COLOR)
 	end
-	slab(`{divider.name}Lintel`, divider.doorFrom, divider.doorTo, DOOR_HEIGHT, WALL_HEIGHT, WALL_COLOR)
+	slab(`{divider.name}Lintel`, divider.doorFrom, divider.doorTo, DOOR_HEIGHT, WALL_HEIGHT, half, WALL_COLOR)
+	if CAP_HEIGHT > 0 then
+		-- The outer walls' caps overhang by CAP_OVERHANG, so this one stops that much short of each end.
+		slab(
+			`{divider.name}Cap`,
+			divider.from + CAP_OVERHANG,
+			divider.to - CAP_OVERHANG,
+			WALL_HEIGHT,
+			WALL_HEIGHT + CAP_HEIGHT,
+			half + CAP_OVERHANG,
+			CAP_COLOR
+		)
+	end
 end
 
 --- Builds the walls that split the map into rooms.
@@ -1032,6 +1273,127 @@ local function buildSections(model: Model): (number, number)
 	return #builders, partCount
 end
 
+--- Landscape: blocky trees, bushes and stone paths around the map.
+--- @param model Model -- The map model
+local function buildLandscape(model: Model): ()
+	local folder = Instance.new("Folder")
+	folder.Name = "Landscape"
+	folder.Parent = model
+	for index, spot in TREES do
+		local x, z = spot[1], spot[2]
+		blockBetween(folder, `Tree{index}Trunk`, at(x - 1, 0, z - 1), at(x + 1, 8, z + 1), TRUNK_COLOR)
+		blockBetween(folder, `Tree{index}Leaves1`, at(x - 4, 8, z - 4), at(x + 4, 13, z + 4), LEAF_COLOR)
+		blockBetween(folder, `Tree{index}Leaves2`, at(x - 2.5, 13, z - 2.5), at(x + 2.5, 16, z + 2.5), LEAF_LIGHT_COLOR)
+	end
+	for index, spot in BUSHES do
+		blockBetween(folder, `Bush{index}`, at(spot[1] - 1.5, 0, spot[2] - 1.5), at(spot[1] + 1.5, 2.5, spot[2] + 1.5), LEAF_COLOR)
+	end
+	for _, path in PATHS do
+		local area = path.area
+		blockBetween(
+			folder,
+			path.name,
+			at(area[1], 0, area[2]),
+			at(area[3], 0.2, area[4]),
+			if path.name == "Road" then ROAD_COLOR else PATH_COLOR
+		)
+	end
+end
+
+--- Returns a part's path inside the map, like "Sections/House/Roof".
+--- @return string -- Slash-separated names below `model`
+local function relativePath(model: Instance, part: Instance): string
+	local names = { part.Name }
+	local node = part.Parent
+	while node and node ~= model do
+		table.insert(names, 1, node.Name)
+		node = node.Parent
+	end
+	return table.concat(names, "/")
+end
+
+--- Gives every part its realistic material from MATERIAL_RULES (neon and glass parts are kept).
+--- @param model Model -- The map model
+local function applyMaterials(model: Model): ()
+	for _, descendant in model:GetDescendants() do
+		if
+			descendant:IsA("BasePart")
+			and descendant.Material ~= Enum.Material.Neon
+			and descendant.Material ~= Enum.Material.Glass
+		then
+			local path = relativePath(model, descendant)
+			for _, rule in MATERIAL_RULES do
+				if string.find(path, rule.pattern) then
+					descendant.Material = rule.material
+					break
+				end
+			end
+		end
+	end
+end
+
+--- Copies lighting settings from a RealisticLighting script (attributes and child effects) into Lighting.
+--- @param controller Instance -- The RealisticLighting script
+local function applyLightingFrom(controller: Instance): ()
+	for name, value in controller:GetAttributes() do
+		pcall(function()
+			(Lighting :: any)[name] = if name == "Technology" then (Enum.Technology :: any)[value] else value
+		end)
+	end
+	for _, effect in controller:GetChildren() do
+		local old = Lighting:FindFirstChild(effect.Name)
+		if old then
+			old:Destroy()
+		end
+		effect:Clone().Parent = Lighting
+	end
+end
+
+--- Adds realistic lighting. The settings live on a Script inside the map that re-applies them
+--- every time the game starts, so they travel with RMap.rbxm; they're also applied right away.
+--- @param model Model -- The map model
+local function buildLighting(model: Model): ()
+	local controller = Instance.new("Script")
+	controller.Name = "RealisticLighting"
+	for name, value in LIGHTING_PROPERTIES do
+		controller:SetAttribute(name, value)
+	end
+
+	local atmosphere = Instance.new("Atmosphere")
+	atmosphere.Density = 0.28
+	atmosphere.Offset = 0.2
+	atmosphere.Color = Color3.fromRGB(199, 210, 222)
+	atmosphere.Decay = Color3.fromRGB(92, 110, 128)
+	atmosphere.Glare = 0.15
+	atmosphere.Haze = 1.2
+	atmosphere.Parent = controller
+
+	local grading = Instance.new("ColorCorrectionEffect")
+	grading.Brightness = 0.02
+	grading.Contrast = 0.08
+	grading.Saturation = 0.12
+	grading.TintColor = Color3.fromRGB(255, 248, 240)
+	grading.Parent = controller
+
+	local bloom = Instance.new("BloomEffect")
+	bloom.Intensity = 0.6
+	bloom.Size = 28
+	bloom.Threshold = 1.6
+	bloom.Parent = controller
+
+	local sunRays = Instance.new("SunRaysEffect")
+	sunRays.Intensity = 0.04
+	sunRays.Spread = 0.7
+	sunRays.Parent = controller
+
+	-- Scripts can only be given source in Studio (Command Bar) or by tools, not in a running game.
+	pcall(function()
+		controller.Source = LIGHTING_SCRIPT_SOURCE
+	end)
+	controller.Parent = model
+	applyLightingFrom(controller)
+end
+
 --- Removes the Baseplate template's own baseplate and spawn from Workspace.
 local function removeTemplateParts(): ()
 	local baseplate = Workspace:FindFirstChild("Baseplate")
@@ -1056,6 +1418,10 @@ local function validate(grid: Grid): ()
 	assert(
 		STRAP_HEIGHT >= 0 and STRAP_HEIGHT < WALL_HEIGHT,
 		"[RMapBuilder] STRAP_HEIGHT must be 0 or more and smaller than WALL_HEIGHT"
+	)
+	assert(
+		CAP_HEIGHT >= 0 and CAP_OVERHANG >= 0 and WALL_THICKNESS + 2 * CAP_OVERHANG < CELL_SIZE,
+		"[RMapBuilder] CAP_HEIGHT and CAP_OVERHANG must be 0 or more, and caps must be thinner than a cell"
 	)
 	assert(
 		WALL_THICKNESS > 0 and WALL_THICKNESS < CELL_SIZE,
@@ -1143,14 +1509,29 @@ local function buildMap(): Model
 		strapFolder = folder
 	end
 
+	local capFolder: Folder? = nil
+	if CAP_HEIGHT > 0 then
+		local folder = Instance.new("Folder")
+		folder.Name = "Caps"
+		folder.Parent = model
+		capFolder = folder
+	end
+
 	local floorCount = buildFloor(grid, floorFolder)
-	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder)
+	local wallCount, strapCount = buildWalls(grid, wallFolder, strapFolder, capFolder)
 	buildSpawn(grid, model)
 
 	local sectionCount, sectionPartCount, dividerCount = 0, 0, 0
 	if BUILD_SECTIONS then
 		sectionCount, sectionPartCount = buildSections(model)
 		dividerCount = buildDividers(model)
+		buildLandscape(model)
+	end
+	if not CLASSIC_STUDS then
+		applyMaterials(model)
+	end
+	if APPLY_LIGHTING then
+		buildLighting(model)
 	end
 
 	model.WorldPivot = CFrame.new(0, FLOOR_TOP_Y, 0)
