@@ -151,9 +151,7 @@ local STOOL_COLOR = BrickColor.new("Bright red")
 local TV_SCREEN_COLOR = BrickColor.new("Bright blue")
 local COUCH_COLOR = BrickColor.new("Bright red")
 local LEAF_COLOR = BrickColor.new("Dark green")
-local NOOB_SKIN_COLOR = BrickColor.new("Bright yellow")
-local NOOB_TORSO_COLOR = BrickColor.new("Bright blue")
-local NOOB_LEGS_COLOR = BrickColor.new("Br. yellowish green")
+local STATUE_DETAIL_COLOR = BrickColor.new("Dark stone grey") -- carved eyes and smile
 local COLA_COLOR = BrickColor.new("Bright red")
 local LOGO_COLOR = BrickColor.new("Institutional white")
 local GIANT_BRICK_COLOR = BrickColor.new("Bright red")
@@ -234,6 +232,7 @@ local MATERIAL_RULES: { MaterialRule } = {
 	{ pattern = "^Sections/House/Stool", material = Enum.Material.SmoothPlastic },
 	{ pattern = "^Sections/House/", material = Enum.Material.Wood },
 	{ pattern = "^Sections/NoobStatue/Base$", material = Enum.Material.Granite },
+	{ pattern = "^Sections/NoobStatue/", material = Enum.Material.Slate },
 	{ pattern = "^Sections/BloxyCola/Machine%d$", material = Enum.Material.Metal },
 	{ pattern = "^Sections/BloxyTrophy/Pedestal", material = Enum.Material.Marble },
 	{ pattern = "^Sections/BloxyTrophy/", material = Enum.Material.Foil },
@@ -989,12 +988,12 @@ local function buildHouse(sections: Instance): ()
 	glow(box("LivingLight", -22, 11.6, 16, -14, 12, 22, WHITE), 20)
 end
 
---- Noob Statue: the classic Roblox noob, scaled up and standing on a black base, facing the spawn.
+--- Noob Statue: the classic Roblox noob carved in stone, on a granite base, facing the spawn.
 local function buildNoobStatue(sections: Instance): ()
 	local folder =
-		newSection(sections, "NoobStatue", "A giant statue of the classic Roblox noob, in yellow, blue and green.")
-	local centerX, centerZ, scale = -62, -20, 2.8
-	blockBetween(folder, "Base", at(centerX - 8, 0, centerZ - 6), at(centerX + 8, 1, centerZ + 6), BLACK)
+		newSection(sections, "NoobStatue", "A stone statue of the classic Roblox noob on a dark granite base.")
+	local centerX, centerZ, scale = -62, -20, 1.8
+	blockBetween(folder, "Base", at(centerX - 5, 0, centerZ - 4), at(centerX + 5, 1, centerZ + 4), BLACK)
 	-- Body parts in classic character units (1 unit = `scale` studs), standing on the base.
 	local function piece(name: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, color: BrickColor): ()
 		blockBetween(
@@ -1005,15 +1004,15 @@ local function buildNoobStatue(sections: Instance): ()
 			color
 		)
 	end
-	piece("LeftLeg", -1, 0, -0.5, 0, 2, 0.5, NOOB_LEGS_COLOR)
-	piece("RightLeg", 0, 0, -0.5, 1, 2, 0.5, NOOB_LEGS_COLOR)
-	piece("Torso", -1, 2, -0.5, 1, 4, 0.5, NOOB_TORSO_COLOR)
-	piece("LeftArm", -2, 2, -0.5, -1, 4, 0.5, NOOB_SKIN_COLOR)
-	piece("RightArm", 1, 2, -0.5, 2, 4, 0.5, NOOB_SKIN_COLOR)
-	piece("Head", -0.6, 4, -0.6, 0.6, 5.2, 0.6, NOOB_SKIN_COLOR)
-	piece("EyeLeft", -0.35, 4.65, 0.6, -0.15, 4.95, 0.65, BLACK)
-	piece("EyeRight", 0.15, 4.65, 0.6, 0.35, 4.95, 0.65, BLACK)
-	piece("Smile", -0.3, 4.3, 0.6, 0.3, 4.4, 0.65, BLACK)
+	piece("LeftLeg", -1, 0, -0.5, 0, 2, 0.5, STONE_COLOR)
+	piece("RightLeg", 0, 0, -0.5, 1, 2, 0.5, STONE_COLOR)
+	piece("Torso", -1, 2, -0.5, 1, 4, 0.5, STONE_COLOR)
+	piece("LeftArm", -2, 2, -0.5, -1, 4, 0.5, STONE_COLOR)
+	piece("RightArm", 1, 2, -0.5, 2, 4, 0.5, STONE_COLOR)
+	piece("Head", -0.6, 4, -0.6, 0.6, 5.2, 0.6, STONE_COLOR)
+	piece("EyeLeft", -0.35, 4.65, 0.6, -0.15, 4.95, 0.65, STATUE_DETAIL_COLOR)
+	piece("EyeRight", 0.15, 4.65, 0.6, 0.35, 4.95, 0.65, STATUE_DETAIL_COLOR)
+	piece("Smile", -0.3, 4.3, 0.6, 0.3, 4.4, 0.65, STATUE_DETAIL_COLOR)
 end
 
 --- Bloxy Cola: two vending machines against the courtyard's east wall.
