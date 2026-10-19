@@ -437,6 +437,39 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 214, 160, 0.16);
 }
 .dtab svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tablist { display: flex; gap: 6px; }
+.editmode { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.app.beat-mode .editmode { display: none; }
+.em-lbl { font: 700 10px / 1 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream); margin-right: 4px; white-space: nowrap; }
+.emode {
+  display: inline-flex; align-items: center; gap: 5px; height: 100%;
+  padding: 0 10px; border: 0; border-radius: 6px; cursor: pointer;
+  font: 700 10px / 1 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--cream);
+  background: rgba(20, 10, 4, 0.38);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 214, 160, 0.16);
+}
+.emode svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.emode[aria-pressed="true"] {
+  color: var(--ink);
+  background-color: var(--brass);
+  background-image: var(--brass-face);
+  box-shadow: inset 1px 1px 0 rgba(255, 247, 222, 0.85), inset -1px -1px 0 rgba(91, 67, 31, 0.55), 0 2px 0 var(--brass-deep), 1px 3px 4px rgba(0, 0, 0, 0.45);
+  text-shadow: 1px 1px 0 rgba(255, 240, 205, 0.55);
+}
+.emode:focus-visible { outline: 3px solid var(--cream); outline-offset: 2px; }
+@media (hover: hover) { .emode:not([aria-pressed="true"]):hover { background: rgba(20, 10, 4, 0.55); } }
+@media (max-width: 860px) { .em-lbl { display: none; } }
+@media (max-width: 560px) {
+  #tabBeat .dtab-txt { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  #tabBeat { padding: 0 11px; }
+  .emode { padding: 0 8px; }
+}
+@media (max-width: 400px) {
+  .emode span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .emode { padding: 0 9px; }
+  .emode svg { width: 16px; height: 16px; }
+}
 .dtab[aria-selected="true"] {
   color: var(--ink);
   background-color: var(--brass);
@@ -1229,15 +1262,32 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   </section>
 
   <main class="desk">
-    <div class="desk-tabs" role="tablist" aria-label="View">
+    <div class="desk-tabs">
+      <div class="tablist" role="tablist" aria-label="View">
       <button id="tabSheet" class="dtab" type="button" role="tab" aria-selected="true" aria-controls="sheetScroll" aria-keyshortcuts="B" title="The music sheet (B switches views)">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         Sheet
       </button>
       <button id="tabBeat" class="dtab" type="button" role="tab" aria-selected="false" aria-controls="beatView" tabindex="-1" aria-keyshortcuts="B" title="Make a drum beat (B switches views)">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="9" rx="8" ry="3.5"/><path d="M4 9v6c0 1.9 3.6 3.5 8 3.5s8-1.6 8-3.5V9"/><path d="m15 3 4-2"/><path d="m9 3-4-2"/></svg>
-        Beat maker
+        <span class="dtab-txt">Beat maker</span>
       </button>
+      </div>
+      <div class="editmode" role="group" aria-label="With a note selected, the keys">
+        <span class="em-lbl" aria-hidden="true">Selected note:</span>
+        <button class="emode" type="button" data-mode="replace" aria-pressed="true" aria-keyshortcuts="M" title="Keys replace the selected note (M switches)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/></svg>
+          <span>Replace</span>
+        </button>
+        <button class="emode" type="button" data-mode="before" aria-pressed="false" aria-keyshortcuts="M" title="Keys put new notes in front of the selected note (M switches)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 5v14"/><path d="M8 8v8"/><path d="M4 12h8"/></svg>
+          <span>Before</span>
+        </button>
+        <button class="emode" type="button" data-mode="after" aria-pressed="false" aria-keyshortcuts="M" title="Keys put new notes behind the selected note (M switches)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 5v14"/><path d="M16 8v8"/><path d="M12 12h8"/></svg>
+          <span>After</span>
+        </button>
+      </div>
     </div>
     <div id="sheetScroll" class="sheet-scroll" role="tabpanel" aria-labelledby="tabSheet" tabindex="0">
       <div id="paper" class="paper">
@@ -1361,7 +1411,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     <dt><kbd>Space</kbd></dt><dd>Play / pause the whole song (in the beat maker: loop the beat)</dd>
     <dt><kbd>Esc</kbd></dt><dd>Stop, or unselect a note</dd>
     <dt><kbd>[</kbd> / <kbd>]</kbd></dt><dd>Tempo down / up by 5 BPM</dd>
-    <dt>Click a note</dt><dd>Select it, then press a piano key to replace it in place, change its length, delete it, or play from there</dd>
+    <dt>Click a note</dt><dd>Select it, then press a piano key (or <kbd>R</kbd> for a rest) to replace it, or put the new one before / after it; change its length, delete it, or play from there</dd>
+    <dt><kbd>M</kbd></dt><dd>Switch what keys do to the selected note: Replace, Before, After (also at the top right of the sheet)</dd>
     <dt>Note tape</dt><dd>Type or paste notes like <code>C4 D4 F#4 R G4</code> (flats such as <code>Bb4</code> work, <code>C4:2</code> sets a length in beats), then Enter</dd>
     <dt><kbd>&larr;</kbd> / <kbd>&rarr;</kbd></dt><dd>Move the selection (with the sheet focused)</dd>
     <dt><kbd>Backspace</kbd></dt><dd>Delete the selected note, or the last one</dd>
@@ -1571,6 +1622,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   // settings that survive a reload
   var nextLen = 1, nextDot = false, bpm = 100, loopOn = false;
   var swing = 0, drumsOn = true, view = 'sheet', restLen = 1;
+  var editMode = 'replace';                         // with a note selected, keys: 'replace' it | put 'before' it | put 'after' it
 
   function isLen(d) { return LENGTHS.indexOf(d) >= 0; }
   function isRestLen(d) { return typeof d === 'number' && isFinite(d) && d >= REST_MIN - 1e-9 && d <= REST_MAX + 1e-9; }
@@ -1642,11 +1694,12 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       drumsOn = p.drums !== false;
       view = p.view === 'beat' ? 'beat' : 'sheet';
       if (isRestLen(p.rest)) restLen = cleanRest(p.rest);
+      if (p.edit === 'before' || p.edit === 'after') editMode = p.edit;
     } catch (e) { /* defaults */ }
   }
   function savePrefs() {
     try {
-      window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn, swing: swing, drums: drumsOn, view: view, rest: restLen }));
+      window.localStorage.setItem(PREF_KEY, JSON.stringify({ len: nextLen, dot: nextDot, bpm: bpm, loop: loopOn, swing: swing, drums: drumsOn, view: view, rest: restLen, edit: editMode }));
     } catch (e) { /* ignore */ }
   }
 
@@ -1657,6 +1710,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     else if (op.t === 'len') notes[op.i] = { n: notes[op.i].n, d: op.to };
     else if (op.t === 'beat') beat = cloneBeat(op.to);
     else if (op.t === 'rep') notes[op.i] = op.to;
+    else if (op.t === 'ins') notes.splice(op.i, 0, op.e);
     else if (op.t === 'set') notes.splice.apply(notes, [0, notes.length].concat(op.to));
   }
   function revertOp(op) {
@@ -1666,6 +1720,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     else if (op.t === 'len') notes[op.i] = { n: notes[op.i].n, d: op.from };
     else if (op.t === 'beat') beat = cloneBeat(op.from);
     else if (op.t === 'rep') notes[op.i] = op.from;
+    else if (op.t === 'ins') notes.splice(op.i, 1);
     else if (op.t === 'set') notes.splice.apply(notes, [0, notes.length].concat(op.from));
   }
   function record(op) { past.push(op); future.length = 0; }
@@ -1708,15 +1763,38 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     return true;
   }
   // swap note i for another pitch (or a rest) in the same place, keeping its length when the new kind allows it
-  function replaceNote(i, name) {
+  function replaceNote(i, name, len) {
     if (i < 0 || i >= notes.length || !(isValidNote(name) || isRest(name))) return false;
-    var old = notes[i], d = old.d;
+    var old = notes[i], d = len !== undefined ? len : old.d;
     if (isRest(name) ? !isRestLen(d) : !isLen(d)) d = isRest(name) ? restLen : nextLength();
     if (old.n === name && old.d === d) return false;
     var op = { t: 'rep', i: i, from: old, to: { n: name, d: d } };
     applyOp(op); record(op);
     changed('rep', op);
     return true;
+  }
+  // put a new note or rest in at index `at`; `mode` says where the selection goes afterwards
+  function insertNote(at, name, mode) {
+    if (at < 0 || at > notes.length || !(isValidNote(name) || isRest(name))) return false;
+    var e = { n: name, d: isRest(name) ? restLen : nextLength() };
+    var anchor = mode === 'before' ? notes[at] : notes[at - 1];
+    var op = { t: 'ins', i: at, e: e, selBefore: sel, selAfter: mode === 'before' ? at + 1 : at,
+      label: 'Put ' + noteLabel(e) + (anchor ? (mode === 'before' ? ' before ' : ' after ') + noteLabel(anchor) : '') };
+    applyOp(op); record(op);
+    sel = op.selAfter;                              // before: stay on the same note, so the next one lands in front of it too; after: follow the new note
+    changed('ins', op);
+    return true;
+  }
+  // a note or rest from the keys / rest button: with something selected it replaces it or goes in front of / behind it
+  // (the edit mode), otherwise it goes at the end
+  function putSymbol(name, len) {
+    if (sel < 0 || sel >= notes.length) {
+      if (isRest(name) && len !== undefined) restLen = len;
+      return addNote(name);
+    }
+    if (editMode === 'replace') return replaceNote(sel, name, len);
+    if (isRest(name) && len !== undefined) restLen = len;
+    return insertNote(editMode === 'before' ? sel : sel + 1, name, editMode);
   }
   // replace the whole song (typed or pasted into the note tape)
   function setSong(list, info) {
@@ -1741,6 +1819,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     revertOp(op); future.push(op);
     if (op.t === 'beat') { /* the song and its selection are untouched */ }
     else if (op.t === 'len' || op.t === 'rep') sel = op.i;
+    else if (op.t === 'ins') sel = op.selBefore < notes.length ? op.selBefore : -1;
     else if (op.t === 'del' && op.i < notes.length - 1) sel = op.i;   // a note came back in the middle: show it
     else sel = -1;
     changed('undo', op);
@@ -1750,7 +1829,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!future.length) return false;
     var op = future.pop();
     applyOp(op); past.push(op);
-    if (op.t !== 'beat') sel = op.t === 'len' || op.t === 'rep' ? op.i : -1;
+    if (op.t === 'ins') sel = op.selAfter;
+    else if (op.t !== 'beat') sel = op.t === 'len' || op.t === 'rep' ? op.i : -1;
     changed('redo', op);
     return true;
   }
@@ -2492,6 +2572,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     else if (kind === 'undo' && t === 'del') { anim = op.i; focus = op.i; }
     else if (t === 'len' || t === 'rep') { focus = op.i; if (kind === 'rep') anim = op.i; }
     else if (t === 'set') focus = 0;
+    else if (t === 'ins') { focus = op.i; if (kind !== 'undo') anim = op.i; }
     else if (t === 'del') focus = Math.min(op.i, n - 1);
     try { Sheet.render({ anim: anim, focus: focus }); } catch (e) { /* keep the rest of the UI in sync */ }
     updateUI();
@@ -2502,6 +2583,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     else if (kind === 'clr') say('Sheet cleared (' + op.list.length + (op.list.length === 1 ? ' note' : ' notes') + ')');
     else if (kind === 'len') say(isRest(notes[op.i].n) ? 'The rest is now ' + withArticle(restName(op.to)) + ' rest' : notes[op.i].n + ' is now ' + withArticle(lenName(op.to)) + ' note');
     else if (kind === 'rep') say('Changed ' + noteLabel(op.from) + ' to ' + noteLabel(op.to));
+    else if (kind === 'ins') say(op.label);
     else if (kind === 'set') say(op.info, op.info.indexOf('Skipped') >= 0 ? 7000 : 4200);
     else if (kind === 'undo') say('Undone');
     else if (kind === 'redo') say('Redone');
@@ -3123,9 +3205,26 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!quiet && i >= 0 && i !== was) {
       var inf = Sheet.info(i);
       var what = isRest(notes[i].n) ? withArticle(restName(notes[i].d)) + ' rest' : notes[i].n + ', ' + withArticle(lenName(notes[i].d)) + ' note';
-      say('Selected ' + what + (inf ? ' in bar ' + inf.bar : '') + '. Press a piano key to replace it, or pick a length.', 5000);
+      say('Selected ' + what + (inf ? ' in bar ' + inf.bar : '') + '. ' + modeHint(), 5000);
     }
   }
+  // what the keys do to a selected note
+  var EDIT_MODES = ['replace', 'before', 'after'];
+  var modeBtns = Array.prototype.slice.call(document.querySelectorAll('.emode'));
+  function modeHint() {
+    if (editMode === 'replace') return 'Press a piano key to replace it, or pick a length.';
+    return 'Piano keys now put new notes ' + (editMode === 'before' ? 'in front of' : 'behind') + ' it.';
+  }
+  function setEditMode(m, fromUser) {
+    editMode = EDIT_MODES.indexOf(m) >= 0 ? m : 'replace';
+    modeBtns.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === editMode ? 'true' : 'false'); });
+    if (!fromUser) return;
+    savePrefs();
+    var what = editMode === 'replace' ? 'replace the selected note' : 'put new notes ' + (editMode === 'before' ? 'in front of' : 'behind') + ' the selected note';
+    say('Keys now ' + what + (sel < 0 ? ' (click a note on the sheet first)' : ''), 4200);
+  }
+  modeBtns.forEach(function (b) { b.addEventListener('click', function () { setEditMode(b.getAttribute('data-mode'), true); }); });
+
   function pick(i) {
     var playing = Player.state() === 'playing';
     if (i >= 0 && i === sel && !playing) i = -1;      // clicking the selected note again unselects it
@@ -3223,8 +3322,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     el.classList.add('is-down');
     el.setAttribute('data-down', 'true');
     Sound.on(voice, name);                         // sound first: the sheet update below is the heavier part
-    if (sel >= 0) replaceNote(sel, name);          // a note is selected: the key replaces it in place
-    else addNote(name);
+    putSymbol(name);                               // replace / before / after the selected note, or at the end
     return true;
   }
   function releaseNote(name, holder) {
@@ -3458,6 +3556,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       if (!e.repeat) { if (view === 'beat') Player.toggleBeat(); else Player.toggle(); }
       return;
     }
+    if ((e.code === 'KeyM' || e.key === 'm' || e.key === 'M') && view !== 'beat') { e.preventDefault(); if (!e.repeat) setEditMode(EDIT_MODES[(EDIT_MODES.indexOf(editMode) + 1) % 3], true); return; }
     if (e.code === 'KeyB' || e.key === 'b' || e.key === 'B') { e.preventDefault(); if (!e.repeat) setView(view === 'beat' ? 'sheet' : 'beat', true); return; }
     if (e.key === '[' || e.key === ']') { e.preventDefault(); setTempo(bpm + (e.key === ']' ? 5 : -5)); return; }
     if (e.key === '?') { e.preventDefault(); openHelp(); return; }
@@ -3598,7 +3697,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   lenBtns.forEach(function (b) { b.addEventListener('click', function () { chooseLen(+b.getAttribute('data-len')); }); });
   dotBtn.addEventListener('click', toggleDot);
   // the rest button / R: turns the selected note into a rest, or adds a rest at the end
-  function restKey() { if (sel >= 0) replaceNote(sel, REST); else addNote(REST); }
+  function restKey() { putSymbol(REST); }
   $('restBtn').addEventListener('click', restKey);
 
   /* ---- rest length: the tag next to the rest button (1 beat, 0.5 beat, or anything from 0.1 to 10) ---- */
@@ -3663,9 +3762,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   $('restAddBtn').addEventListener('click', function () {
     var v = readRestInput();
     if (v === null) return;
-    restLen = v; savePrefs();
     closeRestPop(true);
-    addNote(REST);                                  // a new rest at the end, with this length
+    putSymbol(REST, v);                             // a rest of this length: at the end, or replacing / before / after the selection
+    savePrefs();
+    syncRestUI();
   });
   restIn.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); $('restSetBtn').click(); }
@@ -3729,6 +3829,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   Beat.setSwing(swing);
   Beat.setDrumsOn(drumsOn);
   Beat.sync();
+  setEditMode(editMode, false);
   setView(view, false);
   updateUI();
   Sheet.render({ focus: notes.length - 1 });
