@@ -520,6 +520,16 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
 .dc-tname .sw { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--brass)); box-shadow: inset 0 0 0 1px rgba(40, 25, 5, 0.45); }
 .dc-track .ms { height: 30px; width: auto; padding: 0 10px; letter-spacing: 0.08em; }
 .dc-knob { display: flex; align-items: center; gap: 8px; flex: 1 1 190px; min-width: 160px; max-width: 300px; }
+.dc-pick { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.dc-pick .bselect, #dcAddRow { min-width: 0; max-width: 210px; }
+#dcKit { min-width: 148px; }
+.dc-track .bselect { height: 32px; font-size: 12.5px; }
+.ms.del:disabled { opacity: 0.4; cursor: default; }
+.bg-name .nm { min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.dc-grid .bg-name.is-loading .sw { animation: dcLoading 0.8s ease-in-out infinite alternate; }
+.dc-grid .bg-name.is-failed .sw { background: transparent; box-shadow: inset 0 0 0 1.5px var(--c); }
+@keyframes dcLoading { from { opacity: 1; } to { opacity: 0.15; } }
+@media (prefers-reduced-motion: reduce) { .dc-grid .bg-name.is-loading .sw { animation: none; opacity: 0.4; } }
 .dc-what { font: 600 13px / 1.2 var(--font-ui); color: var(--cream); }
 .dc-status { flex: 1 1 100%; margin: 0; text-align: left; min-height: 1.3em; }
 .dc-busy { cursor: progress; }
@@ -542,6 +552,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   .dc-strip:not(.dc-export) .tool span:not(#dcPlayLbl):not(#dcAddLbl) { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .dc-export .tool .ico { display: none; }
   .slot { width: 32px; height: 34px; }
+  .dc-grid .bg-name { padding: 0 5px; gap: 4px; font-size: 9px; letter-spacing: 0.02em; }
+  .dc-grid .bg-name .sw { width: 6px; height: 6px; }
 }
 @media (max-width: 340px) {
   .masthead .nameplate h1 { font-size: 22px; }
@@ -1598,6 +1610,11 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         <input id="dcSwing" class="fader" type="range" min="0" max="100" step="5" value="0">
         <output id="dcSwingVal" class="readwin" for="dcSwing" aria-hidden="true">0%</output>
       </div>
+      <div class="dc-fader">
+        <label class="lbl-dark" for="dcRoom">Room</label>
+        <input id="dcRoom" class="fader" type="range" min="0" max="100" step="5" value="20">
+        <output id="dcRoomVal" class="readwin" for="dcRoom" aria-hidden="true">20%</output>
+      </div>
       <span id="dcClock" class="readwin dc-clock" role="timer" aria-label="Drum machine position">Pattern A</span>
     </div>
 
@@ -1649,16 +1666,22 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           <button class="segb" type="button" data-pen="2" aria-pressed="true" title="Normal hits">Normal</button>
           <button class="segb" type="button" data-pen="3" aria-pressed="false" title="Accented (loud) hits">Accent</button>
         </div>
+        <label class="dc-pick" title="Real recorded drum kits: picks the sound of every drum at once"><span class="lbl-dark">Kit</span><select id="dcKit" class="bselect"></select></label>
+        <select id="dcAddRow" class="bselect" aria-label="Add a drum" title="Add any drum or percussion sound as a new row (up to 16)"><option value="">+ Add drum&hellip;</option></select>
         <div id="dcPager" class="pager" role="group" aria-label="Steps shown"></div>
       </div>
       <div id="dcGrid" class="dc-grid" role="group" aria-label="Drum pattern"></div>
       <div class="dc-track">
         <span class="dc-tname"><span class="sw" id="dcTrackSw"></span><b id="dcTrackName">Kick</b></span>
+        <label class="dc-pick"><span class="lbl-dark">Drum</span><select id="dcTSound" class="bselect" title="Which drum this row is"></select></label>
+        <label class="dc-pick"><span class="lbl-dark">From</span><select id="dcTKit" class="bselect" title="Which kit this drum's recording comes from: mix and match kits"></select></label>
         <button id="dcTMute" class="ms mute" type="button" aria-pressed="false" title="Mute this drum">Mute</button>
         <button id="dcTSolo" class="ms solo" type="button" aria-pressed="false" title="Hear only this drum (and other solo drums)">Solo</button>
+        <button id="dcTDel" class="ms del" type="button" title="Remove this drum (undo brings it back)">Remove</button>
         <label class="dc-knob"><span class="lbl-dark">Volume</span><input id="dcVol" class="fader" type="range" min="0" max="150" step="5" value="100"><output id="dcVolVal" class="readwin">100%</output></label>
+        <label class="dc-knob"><span class="lbl-dark">Pan</span><input id="dcPan" class="fader" type="range" min="-100" max="100" step="5" value="0"><output id="dcPanVal" class="readwin">C</output></label>
         <label class="dc-knob"><span class="lbl-dark">Tune</span><input id="dcTune" class="fader" type="range" min="-12" max="12" step="1" value="0"><output id="dcTuneVal" class="readwin">0</output></label>
-        <label class="dc-knob"><span class="lbl-dark">Decay</span><input id="dcDecay" class="fader" type="range" min="30" max="200" step="5" value="100"><output id="dcDecayVal" class="readwin">100%</output></label>
+        <label class="dc-knob"><span class="lbl-dark">Decay</span><input id="dcDecay" class="fader" type="range" min="10" max="100" step="5" value="100"><output id="dcDecayVal" class="readwin">100%</output></label>
       </div>
     </div>
 
@@ -1701,7 +1724,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     <dt><kbd>Backspace</kbd></dt><dd>Delete the selected note, or the last one</dd>
     <dt><kbd>B</kbd></dt><dd>Switch between the sheet and the beat maker</dd>
     <dt>Beat maker</dt><dd>Tap or drag across pads to place drum hits, tap a drum name to hear it, <kbd>Space</kbd> loops the beat</dd>
-    <dt>Drum Cracker</dt><dd>The drum switch at the top opens a full drum machine: tap or drag pads (Soft / Normal / Accent), patterns A&ndash;H (keys <kbd>1</kbd>&ndash;<kbd>8</kbd>), a song made of patterns, tap a drum's name to tune it, <kbd>Space</kbd> plays, and MIDI / MP3 / WAV export</dd>
+    <dt>Drum Cracker</dt><dd>The drum switch at the top opens a drum machine with real recorded kits. <b>Kit</b> sets every drum's sound at once (Studio, Room, Rock, Jazz, Brush, Orchestra, Electronic, 808, 909, Dance, or the Synth that always works offline). Tap a drum's name to change which drum it is, which kit it comes <b>From</b> (mix kits freely), its volume, pan, tune and decay, or remove it; <b>+ Add drum</b> adds any of 47 drums and percussion (up to 16). Tap or drag pads (Soft / Normal / Accent), patterns A&ndash;H (keys <kbd>1</kbd>&ndash;<kbd>8</kbd>), a song made of patterns, <b>Room</b> for space, <kbd>Space</kbd> plays, and MIDI / MP3 / WAV export. A kit downloads the first time it is used, then works offline. Recordings: the FluidR3 GM, Chaos and JCLive SoundFonts, served by the WebAudioFont project</dd>
     <dt>MIDI</dt><dd>Downloads the song (piano) and the beat (drums) as a <code>.mid</code> file</dd>
     <dt><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>Y</kbd></dt><dd>Undo / redo</dd>
   </dl>
@@ -2121,8 +2144,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   }
 
   /* ====================================================================
-     Drum synthesis: every drum is built from oscillators and filtered noise (no samples), on any AudioContext,
-     so the same sounds play live and render offline for MP3 / WAV export
+     Drum synthesis: drums built from oscillators and filtered noise, on any AudioContext (live or offline). The
+     Note Cracker beat maker plays these; Drum Cracker uses them for its Synth kit and when a recording cannot load
      ==================================================================== */
   // the output chain everything goes through: a little headroom, then a gentle compressor
   function masterBus(ac) {
@@ -2357,6 +2380,24 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         if (v) queued.add(v);
       } catch (e) { /* the beat keeps going silently */ }
     }
+    // a Drum Cracker hit `delay` seconds from now: the drum's recording (smp), or its synth recipe without one
+    var dBus = null;
+    function drumHit(row, delay, lv, smp) {
+      if (muted) return;
+      try {
+        unlock();
+        if (!ctx) return;
+        if (!dBus) dBus = dcBus(ctx, out, dc.room);
+        var v = dcVoice(ctx, dBus, row, audioAt(delay), lv, smp);
+        if (!v) return;
+        queued.add(v);
+        v.srcs[0].onended = function () {
+          try { v.nodes.forEach(function (n) { n.disconnect(); }); } catch (e) { /* ignore */ }
+          queued.delete(v);
+        };
+      } catch (e) { /* the beat keeps going silently */ }
+    }
+    function setRoom(r) { try { if (dBus) dBus.send.gain.setTargetAtTime(dcRoomGain(r), ctx.currentTime, 0.05); } catch (e) { /* ignore */ } }
 
     function on(id, name) {
       if (muted) return;
@@ -2400,7 +2441,10 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     function allOff() { Array.from(voices.keys()).forEach(function (id) { off(id, true); }); stopQueued(); }
     function setMuted(m) { muted = !!m; if (muted) allOff(); }
 
-    return { unlock: unlock, running: running, resync: resync, on: on, off: off, play: play, drum: drum, stopQueued: stopQueued, setMuted: setMuted, isMuted: function () { return muted; } };
+    return {
+      unlock: unlock, running: running, resync: resync, on: on, off: off, play: play, drum: drum, drumHit: drumHit, setRoom: setRoom,
+      stopQueued: stopQueued, setMuted: setMuted, isMuted: function () { return muted; }
+    };
   })();
 
   /* ====================================================================
@@ -4153,27 +4197,139 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   unlockEvents.forEach(function (ev) { document.addEventListener(ev, unlockAudio, { capture: true, passive: true }); });
 
   /* ====================================================================
-     Drum Cracker: a full drum machine. 12 drums, 8 patterns (A-H) of 16 or 32 steps with soft / normal / accent hits,
-     a song chain, per-drum volume / tune / decay with mute and solo; MIDI, MP3 and WAV export
+     Drum Cracker: a drum machine with real recorded drum kits. Up to 16 drums, each any of the 47 General MIDI drum
+     and percussion sounds from any of 22 kits (or the built-in synth), 8 patterns (A-H) of 16 or 32 steps with
+     soft / normal / accent hits, a song chain, per-drum volume / pan / tune / decay with mute and solo, a room
+     reverb; MIDI, MP3 and WAV export
      ==================================================================== */
   var DC_KEY = 'drumCracker.project.v1';
-  var DC_TRACKS = [
-    { id: 'kick',  name: 'Kick',       midi: 36, c: '#C9572E' },
-    { id: 'snare', name: 'Snare',      midi: 38, c: '#D98A2B' },
-    { id: 'clap',  name: 'Clap',       midi: 39, c: '#E3B23C' },
-    { id: 'rim',   name: 'Rim',        midi: 37, c: '#8A72B8' },
-    { id: 'hat',   name: 'Closed hat', midi: 42, c: '#9BB04A' },
-    { id: 'ohat',  name: 'Open hat',   midi: 46, c: '#5FA27F' },
-    { id: 'ltom',  name: 'Low tom',    midi: 45, c: '#3F7FA6' },
-    { id: 'mtom',  name: 'Mid tom',    midi: 47, c: '#4F8DB0' },
-    { id: 'htom',  name: 'High tom',   midi: 50, c: '#6AA3C4' },
-    { id: 'crash', name: 'Crash',      midi: 49, c: '#B86B9A' },
-    { id: 'ride',  name: 'Ride',       midi: 51, c: '#A0729E' },
-    { id: 'cow',   name: 'Cowbell',    midi: 56, c: '#C0A04A' }
+  var DC_MAX_ROWS = 16;
+  var DC_FAM = { kick: '#C9572E', snare: '#D98A2B', hat: '#9BB04A', tom: '#3F7FA6', cym: '#B86B9A', perc: '#C0A04A', latin: '#5FA27F' };
+  // the General MIDI drum sounds: name, family (colour), mix level against the other drums, pan (drummer's view),
+  // and the synth recipe that stands in when a recording cannot be loaded: [recipe, semitones, decay]
+  var DC_SOUNDS = {
+    35: { name: 'Deep kick', fam: 'kick', mix: 1, pan: 0, syn: ['kick', -2, 1] },
+    36: { name: 'Kick', fam: 'kick', mix: 1, pan: 0, syn: ['kick', 0, 1] },
+    37: { name: 'Side stick', fam: 'snare', mix: 0.6, pan: 0, syn: ['rim', 0, 1] },
+    38: { name: 'Snare', fam: 'snare', mix: 0.85, pan: 0, syn: ['snare', 0, 1] },
+    39: { name: 'Clap', fam: 'snare', mix: 0.75, pan: 0, syn: ['clap', 0, 1] },
+    40: { name: 'E-snare', fam: 'snare', mix: 0.85, pan: 0, syn: ['snare', 2, 0.8] },
+    41: { name: 'Low floor', fam: 'tom', mix: 0.8, pan: 0.35, syn: ['ltom', -3, 1] },
+    42: { name: 'Closed hat', fam: 'hat', mix: 0.45, pan: -0.3, syn: ['hat', 0, 1] },
+    43: { name: 'Floor tom', fam: 'tom', mix: 0.8, pan: 0.3, syn: ['ltom', 0, 1] },
+    44: { name: 'Pedal hat', fam: 'hat', mix: 0.4, pan: -0.3, syn: ['hat', -2, 0.7] },
+    45: { name: 'Low tom', fam: 'tom', mix: 0.8, pan: 0.15, syn: ['mtom', -2, 1] },
+    46: { name: 'Open hat', fam: 'hat', mix: 0.5, pan: -0.3, syn: ['ohat', 0, 1] },
+    47: { name: 'Mid tom', fam: 'tom', mix: 0.8, pan: 0.05, syn: ['mtom', 0, 1] },
+    48: { name: 'Hi-mid tom', fam: 'tom', mix: 0.8, pan: -0.05, syn: ['htom', -2, 1] },
+    49: { name: 'Crash', fam: 'cym', mix: 0.55, pan: -0.35, syn: ['crash', 0, 1] },
+    50: { name: 'High tom', fam: 'tom', mix: 0.8, pan: -0.15, syn: ['htom', 0, 1] },
+    51: { name: 'Ride', fam: 'cym', mix: 0.5, pan: 0.35, syn: ['ride', 0, 1] },
+    52: { name: 'China', fam: 'cym', mix: 0.5, pan: 0.45, syn: ['crash', -3, 0.8] },
+    53: { name: 'Ride bell', fam: 'cym', mix: 0.5, pan: 0.35, syn: ['ride', 5, 0.8] },
+    54: { name: 'Tambourine', fam: 'perc', mix: 0.45, pan: -0.2, syn: ['hat', 4, 1.6] },
+    55: { name: 'Splash', fam: 'cym', mix: 0.5, pan: -0.45, syn: ['crash', 5, 0.5] },
+    56: { name: 'Cowbell', fam: 'perc', mix: 0.5, pan: 0.15, syn: ['cow', 0, 1] },
+    57: { name: 'Crash 2', fam: 'cym', mix: 0.55, pan: 0.4, syn: ['crash', -2, 1] },
+    58: { name: 'Vibraslap', fam: 'perc', mix: 0.45, pan: 0.2, syn: ['ohat', -5, 1] },
+    59: { name: 'Ride 2', fam: 'cym', mix: 0.5, pan: 0.4, syn: ['ride', -2, 1] },
+    60: { name: 'Hi bongo', fam: 'latin', mix: 0.6, pan: -0.2, syn: ['htom', 10, 0.5] },
+    61: { name: 'Lo bongo', fam: 'latin', mix: 0.6, pan: -0.1, syn: ['htom', 5, 0.5] },
+    62: { name: 'Mute conga', fam: 'latin', mix: 0.6, pan: 0.1, syn: ['mtom', 7, 0.35] },
+    63: { name: 'Hi conga', fam: 'latin', mix: 0.6, pan: 0.15, syn: ['mtom', 7, 0.6] },
+    64: { name: 'Lo conga', fam: 'latin', mix: 0.6, pan: 0.25, syn: ['mtom', 2, 0.7] },
+    65: { name: 'Hi timbale', fam: 'latin', mix: 0.55, pan: -0.25, syn: ['htom', 7, 0.6] },
+    66: { name: 'Lo timbale', fam: 'latin', mix: 0.55, pan: 0.25, syn: ['htom', 2, 0.6] },
+    67: { name: 'Hi agogo', fam: 'latin', mix: 0.45, pan: -0.2, syn: ['cow', 7, 1] },
+    68: { name: 'Lo agogo', fam: 'latin', mix: 0.45, pan: 0.2, syn: ['cow', 2, 1] },
+    69: { name: 'Cabasa', fam: 'perc', mix: 0.45, pan: 0.3, syn: ['hat', 3, 0.8] },
+    70: { name: 'Maracas', fam: 'perc', mix: 0.45, pan: -0.3, syn: ['hat', 6, 0.6] },
+    71: { name: 'Whistle', fam: 'perc', mix: 0.35, pan: 0, syn: ['cow', 12, 0.4] },
+    72: { name: 'Long whistle', fam: 'perc', mix: 0.35, pan: 0, syn: ['cow', 12, 1] },
+    73: { name: 'Guiro', fam: 'perc', mix: 0.45, pan: 0.2, syn: ['hat', -4, 1.5] },
+    74: { name: 'Long guiro', fam: 'perc', mix: 0.45, pan: 0.2, syn: ['hat', -4, 3] },
+    75: { name: 'Claves', fam: 'perc', mix: 0.5, pan: -0.15, syn: ['rim', 7, 1] },
+    76: { name: 'Hi block', fam: 'perc', mix: 0.5, pan: -0.15, syn: ['rim', 3, 1] },
+    77: { name: 'Lo block', fam: 'perc', mix: 0.5, pan: 0.15, syn: ['rim', -2, 1] },
+    78: { name: 'Mute cuica', fam: 'latin', mix: 0.45, pan: 0.1, syn: ['htom', 12, 0.3] },
+    79: { name: 'Open cuica', fam: 'latin', mix: 0.45, pan: 0.1, syn: ['htom', 12, 0.7] },
+    80: { name: 'Mute triangle', fam: 'perc', mix: 0.4, pan: 0.4, syn: ['cow', 12, 0.3] },
+    81: { name: 'Triangle', fam: 'perc', mix: 0.4, pan: 0.4, syn: ['cow', 12, 1.5] }
+  };
+  var DC_GROUPS = [
+    ['Kicks', [36, 35]], ['Snares and claps', [38, 40, 37, 39]], ['Hi-hats', [42, 44, 46]],
+    ['Toms', [50, 48, 47, 45, 43, 41]], ['Cymbals', [49, 57, 55, 52, 51, 59, 53]],
+    ['Percussion', [54, 56, 75, 76, 77, 69, 70, 73, 74, 80, 81, 71, 72, 58]],
+    ['Latin', [60, 61, 62, 63, 64, 65, 66, 67, 68, 78, 79]]
   ];
+  // a closed or pedal hi-hat cuts off a ringing open one (and the same for triangle and cuica)
+  var DC_CHOKE = { 42: 'hh', 44: 'hh', 46: 'hh', 80: 'tri', 81: 'tri', 78: 'cui', 79: 'cui' };
+  var DC_RINGS = { 46: true, 81: true, 79: true };
+
+  // The recordings: General MIDI drum kits from free SoundFonts (FluidR3 GM, Chaos, JCLive) as converted by the
+  // WebAudioFont project, fetched when a kit is first used (GitHub Pages, raw GitHub as the fallback) and kept in
+  // IndexedDB. The files are only ever read as text, never run.
+  var DC_CDN = ['https://surikov.github.io/webaudiofontdata/sound/', 'https://raw.githubusercontent.com/surikov/webaudiofontdata/master/sound/'];
+  var DC_BANKS = { F: 'FluidR3_GM_sf2_file', C: 'Chaos_sf2_file', J: 'JCLive_sf2_file' };
+  var DC_KITS = [
+    { id: 'studio1', name: 'Studio 1', g: 'Acoustic', src: 'F0' },
+    { id: 'studio2', name: 'Studio 2', g: 'Acoustic', src: 'C0' },
+    { id: 'studio3', name: 'Studio 3', g: 'Acoustic', src: 'J20' },
+    { id: 'room1', name: 'Room 1', g: 'Acoustic', src: 'F8' },
+    { id: 'room2', name: 'Room 2', g: 'Acoustic', src: 'C1' },
+    { id: 'rock1', name: 'Rock 1', g: 'Acoustic', src: 'F16' },
+    { id: 'rock2', name: 'Rock 2', g: 'Acoustic', src: 'C3' },
+    { id: 'rock3', name: 'Rock 3', g: 'Acoustic', src: 'J22' },
+    { id: 'jazz1', name: 'Jazz 1', g: 'Acoustic', src: 'F22' },
+    { id: 'jazz2', name: 'Jazz 2', g: 'Acoustic', src: 'C7' },
+    { id: 'brush1', name: 'Brush 1', g: 'Acoustic', src: 'F27' },
+    { id: 'brush2', name: 'Brush 2', g: 'Acoustic', src: 'C8' },
+    { id: 'brush3', name: 'Brush 3', g: 'Acoustic', src: 'J27' },
+    { id: 'orch1', name: 'Orchestra 1', g: 'Acoustic', src: 'F30' },
+    { id: 'orch2', name: 'Orchestra 2', g: 'Acoustic', src: 'C9' },
+    { id: 'elec1', name: 'Electronic 1', g: 'Electronic', src: 'F20' },
+    { id: 'elec2', name: 'Electronic 2', g: 'Electronic', src: 'C4' },
+    { id: 'elec3', name: 'Electronic 3', g: 'Electronic', src: 'J23' },
+    { id: 'tr808a', name: 'TR-808 1', g: 'Electronic', src: 'F21' },
+    { id: 'tr808b', name: 'TR-808 2', g: 'Electronic', src: 'C5' },
+    { id: 'tr909', name: 'TR-909', g: 'Electronic', src: 'C6' },
+    { id: 'dance', name: 'Dance', g: 'Electronic', src: 'J25' },
+    { id: 'synth', name: 'Synth (offline)', g: 'Built in', src: '' }
+  ];
+  // per sound: for each recorded kit above (in order), the kit whose recording it actually uses (base 36). Kits share
+  // many pieces, and the few recordings that are missing or cut short are swapped for the nearest good kit's.
+  var DC_SAME = {
+    35: '012345478989cd1fgcijgc', 36: '012345678989cddfghijkh', 37: '0120101701017010170117', 38: '0120456789abcdefghijkl',
+    39: '0120101701abc0e017i117', 40: '0120456789abcdefghijkl', 41: '01204517010b7defghijb7', 42: '0120101701017de017ij17',
+    43: '01204517010b7defghijb7', 44: '0120101701017de017ij17', 45: '01204517010b7defghijb7', 46: '0120101701017de017ij17',
+    47: '01204517010b7defghijb7', 48: '01204517010b7defghijb7', 49: '0120101701017de0170117', 50: '01204517010b7defghijb7',
+    51: '0120101701017de0170117', 52: '0120101701017de0gh011h', 53: '0120101701017de0170117', 54: '0120101701017010170117',
+    55: '0120101701017010170117', 56: '012010170101701017i117', 57: '0120101701017de0170117', 58: '0120101701017010170117',
+    59: '0120101701017de0170117', 60: '0120101201012010120112', 61: '0120101201012010120112', 62: '012010120101201012i112',
+    63: '012010120101201012i112', 64: '012010120101201012i112', 65: '0120101201012010120112', 66: '0120101201012010120112',
+    67: '0120101201012010120112', 68: '0120101201012010120112', 69: '0120101201012010120112', 70: '0120101201012010120112',
+    71: '0120101201012010120112', 72: '0120101201012010120112', 73: '0120101201012010120112', 74: '0120101201012010120112',
+    75: '012010120101201012i112', 76: '0120101201012010120112', 77: '0120101201012010120112', 78: '0120101201012010120112',
+    79: '0120101201012010120112', 80: '0100101001010010100110', 81: '0100101001010010100110'
+  };
+  var DC_KIT_IX = {};
+  DC_KITS.forEach(function (k, i) { DC_KIT_IX[k.id] = i; });
+  var DC_DEFAULT_KIT = 'studio1';
+  function dcKit(id) { return DC_KITS[DC_KIT_IX[id]] || DC_KITS[0]; }
+  // the kit whose recording a kit uses for a sound, or 'synth'
+  function dcSrcKit(kitId, sound) {
+    var i = DC_KIT_IX[kitId];
+    if (i == null || !DC_KITS[i].src || !DC_SAME[sound]) return 'synth';
+    return DC_KITS[parseInt(DC_SAME[sound].charAt(i), 36)].id;
+  }
+
   var DC_LEVELS = [null, { gain: 0.5, midi: 64, name: 'soft' }, { gain: 0.82, midi: 100, name: 'normal' }, { gain: 1, midi: 127, name: 'accent' }];
   var DC_SLOTS = 'ABCDEFGH', DC_MAX = 32, DC_SONG_MAX = 64;
-  // '.' rest, '1' soft, 'x' normal, '3' accent
+  // preset parts name a drum role (any of its sounds will do) or a sound number; '.' rest, '1' soft, 'x' normal, '3' accent
+  var DC_ROLE = {
+    kick: [36, 35], snare: [38, 40], clap: [39], rim: [37], hat: [42, 44], ohat: [46], ltom: [45, 43, 41], mtom: [47, 48, 45],
+    htom: [50, 48], ftom: [43, 41, 45], crash: [49, 57, 55], ride: [51, 59], cow: [56]
+  };
   var DC_PRESETS = [
     { id: 'rock', name: 'Rock', bpm: 112, p: { kick: 'x.......x.x.....', snare: '....x.......x...', hat: '3x1x3x1x3x1x3x1x', crash: '3...............' } },
     { id: 'hiphop', name: 'Hip-hop', bpm: 90, swing: 25, p: { kick: 'x......x..x.....', snare: '....3.......3...', hat: 'x.x.x.x.x.x.x...', ohat: '..............x.' } },
@@ -4184,92 +4340,166 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     { id: 'disco', name: 'Disco', bpm: 118, p: { kick: 'x...x...x...x...', snare: '....x.......x...', ohat: '..x...x...x...x.', hat: 'x...x...x...x...' } },
     { id: 'bossa', name: 'Bossa nova', bpm: 128, p: { kick: 'x..x..x.x..x..x.', rim: '..x..x...x..x...', ride: 'x1x1x1x1x1x1x1x1' } },
     { id: 'dnb', name: 'Drum & bass', bpm: 172, p: { kick: '3.........x.....', snare: '....3.......3...', hat: 'x.x.x.x.x.x.x.x.', ride: '..1...1...1...1.' } },
+    { id: 'afro', name: 'Afrobeat', bpm: 108, p: { kick: 'x.....x...x.....', snare: '....x..1....x..1', hat: 'x.xxx.xxx.xxx.xx', ohat: '..............x.', 70: '1111111111111111' } },
+    { id: 'samba', name: 'Samba', bpm: 100, p: { kick: 'x..xx..xx..xx..x', rim: 'x..x..x...x..x..', 54: '3111311131113111', 67: 'x.x...x...x.x...', 68: '....x...x.....x.' } },
+    { id: 'salsa', name: 'Salsa (son clave)', bpm: 95, p: { 75: 'x.....x.....x.......x...x.......', cow: '3...x...3...x...3...x...3...x...', 62: '1...x.1.1...x.1.1...x.1.1...x.1.', 63: '............x.x.............x.x.', 64: '...............x...............x' } },
     { id: 'cowbell', name: 'Latin cowbell', bpm: 110, p: { kick: 'x..x..x.x..x..x.', cow: '3.x.x.3.x.x.3.x.', clap: '....x.......x...', hat: '1.1.1.1.1.1.1.1.' } },
     { id: 'fill', name: 'Tom fill', bpm: 112, p: { kick: '3.......x.......', snare: 'x.x.x.x.........', htom: '........xx......', mtom: '..........xx....', ltom: '............x3x3', crash: '3...............' } }
   ];
+  // the twelve drums of a new project (and of saves from before drums could be changed)
+  var DC_START = [[36, 'kick'], [38, 'snare'], [39, 'clap'], [37, 'rim'], [42, 'hat'], [46, 'ohat'], [45, 'ltom'], [47, 'mtom'], [50, 'htom'], [49, 'crash'], [51, 'ride'], [56, 'cow']];
 
-  function dcEmptyPattern() {
+  function dcR2(v) { return Math.round(v * 100) / 100; }
+  function dcFreeId(rows) { var n = 1; while (rows.some(function (r) { return r.id === 'r' + n; })) n++; return 'r' + n; }
+  function dcNewRow(sound, kit, rows, id) {
+    return { id: id || dcFreeId(rows), sound: sound, kit: kit, vol: 1, tune: 0, decay: 1, pan: DC_SOUNDS[sound].pan, mute: false, solo: false };
+  }
+  function dcEmptyPattern(rows) {
     var cells = {};
-    DC_TRACKS.forEach(function (t) { var r = []; for (var s = 0; s < DC_MAX; s++) r.push(0); cells[t.id] = r; });
+    rows.forEach(function (t) { var r = []; for (var s = 0; s < DC_MAX; s++) r.push(0); cells[t.id] = r; });
     return { len: 16, cells: cells };
   }
   function dcLevel(ch) { return ch === '1' ? 1 : ch === 'x' || ch === '2' ? 2 : ch === '3' ? 3 : 0; }
-  function dcFillPreset(pat, pre) {
-    DC_TRACKS.forEach(function (t) {
-      var row = pre.p[t.id] || '';
-      for (var s = 0; s < DC_MAX; s++) pat.cells[t.id][s] = s < 16 ? dcLevel(row.charAt(s)) : 0;
+  // which drum plays each part of a preset; a part with no matching drum gets a new one (while there is room)
+  function dcPresetPlan(pre, rows, kit) {
+    var used = {}, plan = [], added = [];
+    Object.keys(pre.p).forEach(function (part) {
+      var want = DC_ROLE[part] || [+part], row = null;
+      for (var i = 0; i < want.length && !row; i++) {
+        row = rows.filter(function (r) { return r.sound === want[i] && !used[r.id]; })[0] || null;
+      }
+      if (!row && rows.length < DC_MAX_ROWS && DC_SOUNDS[want[0]]) { row = dcNewRow(want[0], kit, rows); rows.push(row); added.push(row); }
+      if (!row) return;
+      used[row.id] = true;
+      plan.push({ id: row.id, s: pre.p[part] });
     });
-    pat.len = 16;
+    return { plan: plan, added: added };
+  }
+  function dcFillPreset(pat, plan) {
+    var len = plan.some(function (x) { return x.s.length > 16; }) ? 32 : 16;
+    Object.keys(pat.cells).forEach(function (id) { for (var s = 0; s < DC_MAX; s++) pat.cells[id][s] = 0; });
+    plan.forEach(function (x) { for (var s = 0; s < len; s++) pat.cells[x.id][s] = dcLevel(x.s.charAt(s)); });
+    pat.len = len;
   }
   function dcDefault() {
-    var o = { bpm: 112, swing: 0, cur: 0, scope: 'pattern', loopSong: true, pen: 2, loops: 4, track: 'kick', pick: -1, page: 0, patterns: [], song: [0], kit: {} };
-    for (var i = 0; i < DC_SLOTS.length; i++) o.patterns.push(dcEmptyPattern());
-    DC_TRACKS.forEach(function (t) { o.kit[t.id] = { vol: 1, tune: 0, decay: 1, mute: false, solo: false }; });
-    dcFillPreset(o.patterns[0], DC_PRESETS[0]);    // something to press Play on straight away
+    var o = { bpm: 112, swing: 0, room: 20, cur: 0, scope: 'pattern', loopSong: true, pen: 2, loops: 4, track: 'kick', pick: -1, page: 0, patterns: [], song: [0], rows: [] };
+    DC_START.forEach(function (x) { o.rows.push(dcNewRow(x[0], DC_DEFAULT_KIT, o.rows, x[1])); });
+    for (var i = 0; i < DC_SLOTS.length; i++) o.patterns.push(dcEmptyPattern(o.rows));
+    dcFillPreset(o.patterns[0], dcPresetPlan(DC_PRESETS[0], o.rows, DC_DEFAULT_KIT).plan);   // something to press Play on straight away
     return o;
   }
   function clampNum(v, lo, hi, def) { v = Number(v); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : def; }
+  function dcCleanRow(r, id, sound) {
+    return {
+      id: id, sound: sound, kit: DC_KIT_IX[r.kit] != null ? r.kit : DC_DEFAULT_KIT,
+      vol: dcR2(clampNum(r.vol, 0, 1.5, 1)), tune: Math.round(clampNum(r.tune, -12, 12, 0)),
+      decay: dcR2(clampNum(r.decay, 0.1, 1, 1)), pan: dcR2(clampNum(r.pan, -1, 1, DC_SOUNDS[sound].pan)),
+      mute: r.mute === true, solo: r.solo === true
+    };
+  }
   // a saved project, checked field by field so a damaged save can never break the page
   function dcSanitize(o) {
     var d = dcDefault();
     if (!o || typeof o !== 'object') return d;
     d.bpm = Math.round(clampNum(o.bpm, 40, 240, d.bpm));
     d.swing = Math.round(clampNum(o.swing, 0, 100, 0) / 5) * 5;
+    d.room = Math.round(clampNum(o.room, 0, 100, 20) / 5) * 5;
     d.cur = Math.round(clampNum(o.cur, 0, 7, 0));
     d.scope = o.scope === 'song' ? 'song' : 'pattern';
     d.loopSong = o.loopSong !== false;
     d.pen = [1, 2, 3].indexOf(o.pen) >= 0 ? o.pen : 2;
     d.loops = [1, 2, 4, 8].indexOf(o.loops) >= 0 ? o.loops : 4;
-    d.track = DC_TRACKS.some(function (t) { return t.id === o.track; }) ? o.track : 'kick';
+    var rows = [];
+    if (Array.isArray(o.rows)) {
+      o.rows.forEach(function (r) {
+        if (!r || typeof r !== 'object' || rows.length >= DC_MAX_ROWS) return;
+        var id = typeof r.id === 'string' && /^[a-z0-9]{1,12}$/.test(r.id) ? r.id : null, sound = Math.round(Number(r.sound));
+        if (!id || !DC_SOUNDS[sound] || rows.some(function (x) { return x.id === id; })) return;
+        rows.push(dcCleanRow(r, id, sound));
+      });
+    } else if (o.kit && typeof o.kit === 'object') {
+      // the first version: twelve fixed synth drums; they keep their settings and now play the default kit
+      rows = DC_START.map(function (x) {
+        var k = o.kit[x[1]] && typeof o.kit[x[1]] === 'object' ? o.kit[x[1]] : {};
+        return dcCleanRow({ vol: k.vol, tune: k.tune, decay: Math.min(1, clampNum(k.decay, 0.1, 2, 1)), mute: k.mute, solo: k.solo }, x[1], x[0]);
+      });
+    }
+    if (rows.length) d.rows = rows;
+    var hasRow = function (id) { return d.rows.some(function (r) { return r.id === id; }); };
+    d.track = hasRow(o.track) ? o.track : d.rows[0].id;
     if (Array.isArray(o.patterns)) {
       d.patterns = d.patterns.map(function (def, i) {
-        var src = o.patterns[i], pat = dcEmptyPattern();
-        if (!src || typeof src !== 'object' || !src.cells) return i === 0 && !o.patterns.length ? def : pat;
+        var src = o.patterns[i], pat = dcEmptyPattern(d.rows);
+        if (!src || typeof src !== 'object' || !src.cells) return i === 0 && !o.patterns.length && !rows.length ? def : pat;
         pat.len = src.len === 32 ? 32 : 16;
-        DC_TRACKS.forEach(function (t) {
+        d.rows.forEach(function (t) {
           var row = src.cells[t.id];
           if (!Array.isArray(row)) return;
           for (var s = 0; s < DC_MAX; s++) { var v = row[s]; pat.cells[t.id][s] = v === 1 || v === 2 || v === 3 ? v : 0; }
         });
         return pat;
       });
-    }
+    } else if (rows.length) d.patterns = d.patterns.map(function () { return dcEmptyPattern(d.rows); });
     if (Array.isArray(o.song)) d.song = o.song.filter(function (v) { return v === (v | 0) && v >= 0 && v < 8; }).slice(0, DC_SONG_MAX);
-    if (o.kit && typeof o.kit === 'object') {
-      DC_TRACKS.forEach(function (t) {
-        var k = o.kit[t.id];
-        if (!k || typeof k !== 'object') return;
-        d.kit[t.id] = {
-          vol: Math.round(clampNum(k.vol, 0, 1.5, 1) * 100) / 100,
-          tune: Math.round(clampNum(k.tune, -12, 12, 0)),
-          decay: Math.round(clampNum(k.decay, 0.3, 2, 1) * 100) / 100,
-          mute: k.mute === true, solo: k.solo === true
-        };
-      });
-    }
     return d;
   }
   var dc = dcDefault();
-  function dcLoad() { try { var raw = window.localStorage.getItem(DC_KEY); if (raw) dc = dcSanitize(JSON.parse(raw)); } catch (e) { dc = dcDefault(); } }
+  function dcLoad() {
+    try {
+      var raw = window.localStorage.getItem(DC_KEY), o = raw ? JSON.parse(raw) : null;
+      if (!o) return;
+      dc = dcSanitize(o);
+      if (!Array.isArray(o.rows)) dcSave();         // a first-version save, now in the current shape
+    } catch (e) { dc = dcDefault(); }
+  }
   function dcSave() { try { window.localStorage.setItem(DC_KEY, JSON.stringify(dc)); } catch (e) { /* ignore */ } }
+  function dcRow(id) { for (var i = 0; i < dc.rows.length; i++) if (dc.rows[i].id === id) return dc.rows[i]; return null; }
+  function dcSel() { return dcRow(dc.track) || dc.rows[0]; }
+  // a drum's name; a second drum of the same sound is "Snare #2"
+  function dcRowName(row) {
+    var n = 0, i;
+    for (i = 0; i < dc.rows.length && dc.rows[i] !== row; i++) if (dc.rows[i].sound === row.sound) n++;
+    return DC_SOUNDS[row.sound].name + (n ? ' #' + (n + 1) : '');
+  }
+  function dcRowColor(row) { return DC_FAM[DC_SOUNDS[row.sound].fam]; }
   function dcPatHasHits(i) {
     var pat = dc.patterns[i];
-    return DC_TRACKS.some(function (t) { for (var s = 0; s < pat.len; s++) if (pat.cells[t.id][s]) return true; return false; });
+    return dc.rows.some(function (t) { for (var s = 0; s < pat.len; s++) if (pat.cells[t.id][s]) return true; return false; });
   }
-  function dcAnySolo() { return DC_TRACKS.some(function (t) { return dc.kit[t.id].solo; }); }
-  function dcAudible(id) { var k = dc.kit[id]; return dcAnySolo() ? k.solo : !k.mute; }
+  function dcAnySolo() { return dc.rows.some(function (r) { return r.solo; }); }
+  function dcAudible(row) { return dcAnySolo() ? row.solo : !row.mute; }
   function dcSlot(i) { return DC_SLOTS.charAt(i); }
+  // the kit every drum plays (sharing recordings counts), or null for a mix of kits
+  function dcKitFits(kitId) { return dc.rows.every(function (r) { return dcSrcKit(r.kit, r.sound) === dcSrcKit(kitId, r.sound); }); }
+  function dcMainKit() {
+    var count = {}, best = null, i;
+    dc.rows.forEach(function (r) { count[r.kit] = (count[r.kit] || 0) + 1; if (!best || count[r.kit] > count[best]) best = r.kit; });
+    if (best && dcKitFits(best)) return best;
+    for (i = 0; i < DC_KITS.length; i++) if (dcKitFits(DC_KITS[i].id)) return DC_KITS[i].id;
+    return null;
+  }
+  function dcCommonKit() {
+    var count = {}, best = DC_DEFAULT_KIT;
+    dc.rows.forEach(function (r) { count[r.kit] = (count[r.kit] || 0) + 1; if (count[r.kit] > (count[best] || 0)) best = r.kit; });
+    return dcMainKit() || best;
+  }
 
-  // undo: snapshots of what the user builds (patterns, song, drum sound settings); mute / solo / tempo are settings
+  // undo: snapshots of what the user builds (patterns, song, the drums and their sounds); mute / solo / tempo are settings
   var dcPast = [], dcFuture = [];
   function dcSnap() {
-    return JSON.stringify({ p: dc.patterns, s: dc.song, k: DC_TRACKS.map(function (t) { var k = dc.kit[t.id]; return [k.vol, k.tune, k.decay]; }) });
+    return JSON.stringify({ p: dc.patterns, s: dc.song, r: dc.rows.map(function (r) { return [r.id, r.sound, r.kit, r.vol, r.tune, r.decay, r.pan]; }) });
   }
   function dcRestore(json) {
-    var o = JSON.parse(json);
+    var o = JSON.parse(json), was = {};
+    dc.rows.forEach(function (r) { was[r.id] = r; });
     dc.patterns = o.p; dc.song = o.s;
-    DC_TRACKS.forEach(function (t, i) { var k = dc.kit[t.id]; k.vol = o.k[i][0]; k.tune = o.k[i][1]; k.decay = o.k[i][2]; });
+    dc.rows = o.r.map(function (a) {
+      var w = was[a[0]];
+      return { id: a[0], sound: a[1], kit: a[2], vol: a[3], tune: a[4], decay: a[5], pan: a[6], mute: w ? w.mute : false, solo: w ? w.solo : false };
+    });
+    if (!dcRow(dc.track)) dc.track = dc.rows[0].id;
     if (dc.pick >= dc.song.length) dc.pick = -1;
+    dcPrefetch(false);
   }
   function dcCommit(before, label) {
     var after = dcSnap();
@@ -4296,12 +4526,236 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     return true;
   }
 
+  /* ---- the recordings: fetched, decoded and measured once per sound, shared by live play and export ---- */
+  var Samples = (function () {
+    var got = {};                                   // 'F0:38' -> { st: 'loading' | 'ready' | 'failed', p, buf, off, gain, rate }
+    var dctx = null, dbP = null, listeners = [];
+    function key(kitId, sound) { var k = dcSrcKit(kitId, sound); return k === 'synth' ? null : dcKit(k).src + ':' + sound; }
+    function fileUrl(base, src, sound) { return base + '128' + sound + '_' + src.slice(1) + '_' + DC_BANKS[src.charAt(0)] + '.js'; }
+    function decoder() {
+      if (!dctx) {
+        var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        try { dctx = OAC ? new OAC(1, 1, 44100) : null; } catch (e) { dctx = null; }
+      }
+      return dctx;
+    }
+    // a small IndexedDB cache, so a kit used once also plays offline
+    function idb() {
+      if (!dbP) dbP = new Promise(function (res) {
+        try {
+          var rq = window.indexedDB.open('drumCracker.samples', 1);
+          rq.onupgradeneeded = function () { rq.result.createObjectStore('z'); };
+          rq.onsuccess = function () { res(rq.result); };
+          rq.onerror = rq.onblocked = function () { res(null); };
+        } catch (e) { res(null); }
+      });
+      return dbP;
+    }
+    function cache(mode, k, v) {
+      return idb().then(function (db) {
+        if (!db) return null;
+        return new Promise(function (res) {
+          try {
+            var st = db.transaction('z', mode === 'get' ? 'readonly' : 'readwrite').objectStore('z');
+            var rq = mode === 'get' ? st.get(k) : mode === 'put' ? st.put(v, k) : st.delete(k);
+            rq.onsuccess = function () { res(mode === 'get' ? rq.result || null : null); };
+            rq.onerror = function () { res(null); };
+          } catch (e) { res(null); }
+        });
+      });
+    }
+    function fetchText(src, sound) {
+      var i = 0;
+      function next() {
+        if (i >= DC_CDN.length) return Promise.reject(new Error('unreachable'));
+        var url = fileUrl(DC_CDN[i++], src, sound), ctl = window.AbortController ? new AbortController() : null;
+        var timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : 0;
+        return fetch(url, ctl ? { signal: ctl.signal, credentials: 'omit' } : { credentials: 'omit' }).then(function (r) {
+          clearTimeout(timer);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        }).catch(function () { clearTimeout(timer); return next(); });
+      }
+      return next();
+    }
+    // the sample (base64) and its tuning, read out of the file's text
+    function parse(txt, sound) {
+      var best = null;
+      txt.split(/\{\s*midi\s*:/).slice(1).forEach(function (z) {
+        function num(name) { var m = new RegExp(name + '\\s*:\\s*(-?\\d+(?:\\.\\d+)?)').exec(z); return m ? +m[1] : 0; }
+        var m = /(file|sample)\s*:\s*'([A-Za-z0-9+\/=]+)'/.exec(z);
+        if (!m) return;
+        var o = { kind: m[1], data: m[2], sr: num('sampleRate') || 44100, pitch: num('originalPitch') - 100 * num('coarseTune') - num('fineTune'), lo: num('keyRangeLow'), hi: num('keyRangeHigh') };
+        var fits = o.lo <= sound && sound <= o.hi;
+        if (!best || (fits && !best.fits)) { o.fits = fits; best = o; }
+      });
+      return best;
+    }
+    function decode(z) {
+      return new Promise(function (res, rej) {
+        var ac = decoder();
+        if (!ac) { rej(new Error('no audio')); return; }
+        var bin = atob(z.data), n = bin.length, u8 = new Uint8Array(n), i;
+        for (i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+        if (z.kind === 'sample') {                  // raw 16-bit little-endian PCM
+          var len = n >> 1, buf = ac.createBuffer(1, Math.max(1, len), z.sr), ch = buf.getChannelData(0);
+          for (i = 0; i < len; i++) { var v = u8[2 * i] | (u8[2 * i + 1] << 8); ch[i] = (v >= 32768 ? v - 65536 : v) / 32768; }
+          res(buf); return;
+        }
+        var p = ac.decodeAudioData(u8.buffer, res, rej);
+        if (p && typeof p.then === 'function') p.then(res, rej);
+      });
+    }
+    // loudness, where the sound starts, and the speed that puts it at the right pitch
+    function measure(e, buf, z, sound) {
+      var d = buf.getChannelData(0), n = d.length, pk = 0, i, a;
+      for (i = 0; i < n; i++) { a = d[i] < 0 ? -d[i] : d[i]; if (a > pk) pk = a; }
+      var lim = Math.min(n, Math.round(buf.sampleRate * 0.04));
+      for (i = 0; i < lim; i++) { a = d[i] < 0 ? -d[i] : d[i]; if (a > pk * 0.03) break; }
+      e.buf = buf;
+      e.off = i < lim ? Math.max(0, i - 8) / buf.sampleRate : 0;
+      e.gain = pk > 0.0005 ? Math.min(8, 0.9 / pk) : 1;
+      e.rate = Math.max(0.05, Math.min(8, Math.pow(2, (100 * sound - z.pitch) / 1200)));
+      e.st = 'ready';
+    }
+    function changed() { listeners.forEach(function (fn) { try { fn(); } catch (err) { /* ignore */ } }); }
+    function load(kitId, sound) {
+      var k = key(kitId, sound);
+      if (!k) return Promise.resolve(null);
+      var e = got[k];
+      if (e && e.st !== 'failed') return e.p;
+      e = got[k] = { st: 'loading' };
+      var src = k.split(':')[0], fromCache = false;
+      e.p = cache('get', k).then(function (z) {
+        if (z && z.data) { fromCache = true; return z; }
+        return fetchText(src, sound).then(function (txt) {
+          var zz = parse(txt, sound);
+          if (!zz) throw new Error('no sample in the file');
+          cache('put', k, zz);
+          return zz;
+        });
+      }).then(function (z) {
+        return decode(z).then(function (buf) { measure(e, buf, z, sound); changed(); return e; });
+      }).catch(function () {
+        if (fromCache) cache('del', k);
+        e.st = 'failed'; changed();
+        return null;
+      });
+      return e.p;
+    }
+    function ready(kitId, sound) { var k = key(kitId, sound), e = k && got[k]; return e && e.st === 'ready' ? e : null; }
+    function state(kitId, sound) { var k = key(kitId, sound); if (!k) return 'synth'; return got[k] ? got[k].st : 'idle'; }
+    // load every drum's recording; resolves with the drums that could not be loaded
+    function ensure(rows, progress) {
+      var total = rows.length, done = 0;
+      return Promise.all(rows.map(function (r) {
+        return load(r.kit, r.sound).then(function (e) {
+          done++;
+          if (progress) progress(done, total);
+          return e || !key(r.kit, r.sound) ? null : r;
+        });
+      })).then(function (list) { return list.filter(Boolean); });
+    }
+    function busy(rows) { return rows.some(function (r) { var s = state(r.kit, r.sound); return s === 'loading' || s === 'idle'; }); }
+    return { load: load, ready: ready, state: state, ensure: ensure, busy: busy, onChange: function (fn) { listeners.push(fn); } };
+  })();
+
+  /* ---- playing a drum on any audio context (live, or offline for export) ---- */
+  function dcRoomGain(room) { return Math.pow(room / 100, 1.3) * 0.55; }
+  // the room: a short, darkening noise tail for the convolver
+  function dcImpulse(ac) {
+    var sr = ac.sampleRate, len = Math.floor(sr * 1.4), b = ac.createBuffer(2, len, sr);
+    for (var c = 0; c < 2; c++) {
+      var d = b.getChannelData(c), lp = 0;
+      for (var i = 0; i < len; i++) {
+        var t = i / sr;
+        lp += (Math.random() * 2 - 1 - lp) * (0.45 - 0.3 * Math.min(1, t / 1.2));
+        d[i] = t < 0.006 ? 0 : lp * Math.exp(-t / 0.28);
+      }
+    }
+    return b;
+  }
+  // the drums' own input on a context: straight to the master bus, plus a send to the room
+  function dcBus(ac, master, room) {
+    var inp = ac.createGain(), send = ac.createGain();
+    var io = { inp: inp, send: send, rings: {}, scratch: { noise: null, openHat: null } };
+    inp.connect(master);
+    send.gain.value = dcRoomGain(room);
+    try { var cv = ac.createConvolver(); cv.buffer = dcImpulse(ac); inp.connect(send); send.connect(cv); cv.connect(master); } catch (e) { /* dry only */ }
+    return io;
+  }
+  // one hit of a drum at audio time t (lv 1..3): its recording when `smp` is given, else the synth recipe
+  function dcVoice(ac, io, row, t, lv, smp) {
+    var snd = DC_SOUNDS[row.sound], vel = DC_LEVELS[lv].gain, out = io.inp, pan = null, voice;
+    if (row.pan && ac.createStereoPanner) { pan = ac.createStereoPanner(); pan.pan.value = row.pan; pan.connect(io.inp); out = pan; }
+    if (smp) {
+      var src = ac.createBufferSource(), rate = Math.max(0.05, Math.min(8, smp.rate * Math.pow(2, row.tune / 12)));
+      src.buffer = smp.buf; src.playbackRate.value = rate;
+      var len = (smp.buf.duration - smp.off) / rate, amp = vel * smp.gain * snd.mix * row.vol, end;
+      var g = ac.createGain(), nodes = [src, g], head = src;
+      if (lv === 1) {                               // soft hits are darker too, like a lighter stroke
+        var lp = ac.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 3800; lp.Q.value = 0.5;
+        src.connect(lp); head = lp; nodes.push(lp);
+      }
+      head.connect(g); g.connect(out);
+      g.gain.setValueAtTime(amp, t);
+      if (row.decay < 0.99) {                       // shortened: hold, then die away
+        end = t + len * row.decay;
+        g.gain.setValueAtTime(amp, t + len * row.decay * 0.55);
+        g.gain.exponentialRampToValueAtTime(Math.max(1e-5, amp * 0.001), end);
+      } else {
+        end = t + len;
+        if (len > 0.04) { g.gain.setValueAtTime(amp, end - 0.012); g.gain.linearRampToValueAtTime(0, end); }   // never a click at the end
+      }
+      src.start(t, smp.off);
+      src.stop(end + 0.01);
+      voice = { g: g, srcs: [src], t: t, nodes: nodes, end: end };
+    } else {
+      voice = synthDrum(ac, out, io.scratch, snd.syn[0], t, vel * row.vol, { tune: row.tune + snd.syn[1], decay: row.decay * snd.syn[2] });
+      if (!voice) return null;
+    }
+    if (pan) voice.nodes.push(pan);
+    var grp = DC_CHOKE[row.sound];
+    if (grp) {
+      io.rings[grp] = (io.rings[grp] || []).filter(function (v) {
+        if (v.end <= t) return false;
+        if (v.t < t - 0.001) {
+          try { v.g.gain.cancelScheduledValues(t); v.g.gain.setTargetAtTime(0, t, 0.012); } catch (e) { /* ignore */ }
+          return false;
+        }
+        return true;
+      });
+      if (DC_RINGS[row.sound]) io.rings[grp].push(voice);
+    }
+    return voice;
+  }
+  // how long a hit rings, for the export's length
+  function dcHitLength(row, smp) {
+    if (!smp) return 1.5;
+    var rate = Math.max(0.05, Math.min(8, smp.rate * Math.pow(2, row.tune / 12)));
+    return (smp.buf.duration - smp.off) / rate * row.decay;
+  }
+  // load the drums' recordings; `label` (a kit name) shows progress for loads the user asked for
+  function dcPrefetch(label) {
+    var rows = dc.rows.slice(), t0 = Date.now(), shown = false;
+    return Samples.ensure(rows, function (done, total) {
+      if (label && done < total && Date.now() - t0 > 250) { say('Loading ' + label + '… ' + done + '/' + total, 20000); shown = true; }
+    }).then(function (failed) {
+      if (failed.length) {
+        var names = failed.map(function (r) { return dcRowName(r); });
+        say('Could not load ' + (names.length > 3 ? names.length + ' drums' : names.join(', ')) + ' (offline?): the built-in synth plays ' + (names.length === 1 ? 'it' : 'them') + ' for now', 8000);
+      } else if (shown) say(label + ' is ready', 3000);
+      return failed;
+    });
+  }
+
   /* ---- the drum machine's own player: a sixteenth-note clock over a pattern or the song chain ---- */
   var DCPlayer = (function () {
-    var state = 'stopped', scope = 'pattern', timer = 0, ending = false;
+    var state = 'stopped', scope = 'pattern', timer = 0, ending = false, waiting = 0;
     var anchorTime = 0, anchorStep = 0, curSpb = 0.5, nextStep = 0;
     var chainPos = -1, patIdx = 0, stepInPat = 0, queued = -1, nowPat = -1, nowStep = -1, nowChain = -1;
-    var pending = new Set();
+    var pending = new Set(), lastSmp = {};
     var LOOKAHEAD = 0.12, TICK = 25;
 
     function clock() { return performance.now() / 1000; }
@@ -4319,17 +4773,33 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       DC.showPlay();
     }
     function start() {
-      scope = dc.scope;
-      if (scope === 'song' && !dc.song.length) { say('The song is empty: add patterns to it with the + button'); return; }
-      if (scope === 'pattern' && !dcPatHasHits(dc.cur)) { say('Pattern ' + dcSlot(dc.cur) + ' is empty: tap some pads or load a preset'); return; }
+      if (dc.scope === 'song' && !dc.song.length) { say('The song is empty: add patterns to it with the + button'); return; }
+      if (dc.scope === 'pattern' && !dcPatHasHits(dc.cur)) { say('Pattern ' + dcSlot(dc.cur) + ' is empty: tap some pads or load a preset'); return; }
       Player.stop();
       Sound.unlock();
+      if (Samples.busy(dc.rows)) {                  // wait for the kit (Play again cancels)
+        var token = ++waiting;
+        say('Loading the drum sounds…', 20000);
+        ui();
+        Promise.race([dcPrefetch(null), new Promise(function (res) { setTimeout(res, 12000); })]).then(function () {
+          if (waiting !== token) return;
+          waiting = 0;
+          go();
+        });
+        return;
+      }
+      go();
+    }
+    function go() {
       Sound.resync();
       halt();
+      scope = dc.scope;
+      if ((scope === 'song' && !dc.song.length) || (scope === 'pattern' && !dcPatHasHits(dc.cur))) { state = 'stopped'; ui(); return; }
       curSpb = 60 / dc.bpm;
       anchorTime = clock() + 0.06; anchorStep = 0; nextStep = 0; stepInPat = 0; queued = -1;
       if (scope === 'song') { chainPos = 0; patIdx = dc.song[0]; } else { chainPos = -1; patIdx = dc.cur; }
       state = 'playing';
+      if (/^Loading/.test($('dcStatus').textContent)) say('Playing', 1500);
       timer = setInterval(tick, TICK);
       tick();
       ui();
@@ -4363,11 +4833,13 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     }
     function playStep(pi, s, t) {
       var pat = dc.patterns[pi], late = s % 2 ? (dc.swing / 100) * (curSpb / 4) / 3 : 0, cp = chainPos;
-      DC_TRACKS.forEach(function (tr) {
-        var v = pat.cells[tr.id][s];
-        if (!v || !dcAudible(tr.id)) return;
-        var k = dc.kit[tr.id];
-        Sound.drum(tr.id, t + late - clock(), DC_LEVELS[v].gain * k.vol, { tune: k.tune, decay: k.decay });
+      dc.rows.forEach(function (row) {
+        var v = pat.cells[row.id] && pat.cells[row.id][s];
+        if (!v || !dcAudible(row)) return;
+        var smp = Samples.ready(row.kit, row.sound), st = smp ? 'ready' : Samples.state(row.kit, row.sound);
+        if (smp) lastSmp[row.id] = smp;
+        else if (st === 'loading' || st === 'idle') { smp = lastSmp[row.id]; if (!smp) return; }   // a kit change still loading: keep the old sound
+        Sound.drumHit(row, t + late - clock(), v, smp);
       });
       later(function () {
         if (state !== 'playing') return;
@@ -4383,16 +4855,17 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       ui();
     }
     function stop() {
+      if (waiting) { waiting = 0; ui(); return true; }
       if (state === 'stopped') return false;
       halt();
       state = 'stopped';
       ui();
       return true;
     }
-    function toggle() { if (state === 'playing') stop(); else start(); }
+    function toggle() { if (state === 'playing' || waiting) stop(); else start(); }
     function patternPicked(i) { if (state === 'playing' && scope === 'pattern') queued = i; }
     function ui() {
-      var on = state === 'playing';
+      var on = state === 'playing' || !!waiting;
       $('dcPlay').setAttribute('aria-pressed', on ? 'true' : 'false');
       $('dcPlayLbl').textContent = on ? 'Stop' : 'Play';
       $('dcPlay').title = (on ? 'Stop' : 'Play') + ' (Space)';
@@ -4405,7 +4878,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     };
   })();
 
-  /* ---- export: MIDI, and audio rendered offline with the same synth, saved as WAV or MP3 ---- */
+  /* ---- export: MIDI, and audio rendered offline with the same recordings, saved as WAV or MP3 ---- */
   function saveBlob(blob, name) {
     var url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = name; a.style.display = 'none';
@@ -4420,24 +4893,22 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   }
   function dcFileBase() { return dc.scope === 'song' ? 'drum-cracker-song' : 'drum-cracker-pattern-' + dcSlot(dc.cur); }
   function dcWhat() { return dc.scope === 'song' ? 'Song (' + dc.song.length + (dc.song.length === 1 ? ' pattern)' : ' patterns)') : 'Pattern ' + dcSlot(dc.cur) + ' ×' + dc.loops; }
-  // every hit of the export, in time order, with what the audio and MIDI files need
+  // every hit of the export, in time order, with a copy of its drum as it is now
   function dcEvents(seq) {
-    var spb = 60 / dc.bpm, six = spb / 4, t = 0, ev = [];
+    var spb = 60 / dc.bpm, six = spb / 4, t = 0, ev = [], rows = JSON.parse(JSON.stringify(dc.rows));
     seq.forEach(function (pi) {
       var pat = dc.patterns[pi];
       for (var s = 0; s < pat.len; s++) {
         var at = t + s * six + (s % 2 ? (dc.swing / 100) * six / 3 : 0);
-        DC_TRACKS.forEach(function (tr) {
-          var v = pat.cells[tr.id][s];
-          if (!v || !dcAudible(tr.id)) return;
-          var k = dc.kit[tr.id];
-          ev.push({ t: at, id: tr.id, midi: tr.midi, vel: Math.max(1, Math.min(127, Math.round(DC_LEVELS[v].midi * Math.min(1, k.vol)))),
-            gain: DC_LEVELS[v].gain * k.vol, opts: { tune: k.tune, decay: k.decay } });
+        rows.forEach(function (row) {
+          var v = pat.cells[row.id] && pat.cells[row.id][s];
+          if (!v || !dcAudible(row)) return;
+          ev.push({ t: at, row: row, lv: v, vel: Math.max(1, Math.min(127, Math.round(DC_LEVELS[v].midi * Math.min(1, row.vol)))) });
         });
       }
       t += pat.len * six;
     });
-    return { ev: ev, seconds: t, spb: spb };
+    return { ev: ev, seconds: t, spb: spb, rows: rows };
   }
   function dcCheckExport() {
     var seq = dcSequence();
@@ -4446,36 +4917,43 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!r.ev.length) { say(dc.scope === 'song' ? 'Nothing to export: the song has no hits (or every drum is muted)' : 'Nothing to export: pattern ' + dcSlot(dc.cur) + ' is empty'); return null; }
     return r;
   }
+  function dcRowLabel(row) { return dcRowName(dcRow(row.id) || row) + ' (' + dcKit(dcSrcKit(row.kit, row.sound)).name + ')'; }
   function dcMidi() {
     var r = dcCheckExport();
     if (!r) return;
     var endTick = Math.round(r.seconds / r.spb * PPQ), mpq = Math.round(60000000 / dc.bpm);
-    var dv = [{ tick: 0, ord: 0, b: metaText(0x03, 'Drums') }];
-    r.ev.forEach(function (e) {
-      var t0 = Math.round(e.t / r.spb * PPQ);
-      dv.push({ tick: t0, ord: 2, b: [0x99, e.midi, e.vel] });
-      dv.push({ tick: t0 + PPQ / 8, ord: 1, b: [0x89, e.midi, 0] });
+    var tracks = [trackChunk([
+      { tick: 0, ord: 0, b: metaText(0x03, 'Drum Cracker') },
+      { tick: 0, ord: 0, b: [0xff, 0x51, 0x03, (mpq >> 16) & 255, (mpq >> 8) & 255, mpq & 255] },
+      { tick: 0, ord: 0, b: [0xff, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08] }
+    ], endTick)];
+    r.rows.forEach(function (row) {                 // one named track per drum, all on the drum channel (10)
+      var dv = [{ tick: 0, ord: 0, b: metaText(0x03, dcRowLabel(row)) }], last = 0;
+      r.ev.forEach(function (e) {
+        if (e.row !== row) return;
+        var t0 = Math.round(e.t / r.spb * PPQ);
+        dv.push({ tick: t0, ord: 2, b: [0x99, row.sound, e.vel] });
+        dv.push({ tick: t0 + PPQ / 8, ord: 1, b: [0x89, row.sound, 0] });
+        last = t0 + PPQ / 8;
+      });
+      if (dv.length > 1) tracks.push(trackChunk(dv, Math.max(endTick, last)));
     });
-    var tracks = [
-      trackChunk([
-        { tick: 0, ord: 0, b: metaText(0x03, 'Drum Cracker') },
-        { tick: 0, ord: 0, b: [0xff, 0x51, 0x03, (mpq >> 16) & 255, (mpq >> 8) & 255, mpq & 255] },
-        { tick: 0, ord: 0, b: [0xff, 0x58, 0x04, 0x04, 0x02, 0x18, 0x08] }
-      ], endTick),
-      trackChunk(dv, Math.max(endTick, dv[dv.length - 1].tick))
-    ];
     var bytes = [0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, tracks.length, (PPQ >> 8) & 255, PPQ & 255];
     tracks.forEach(function (t) { pushAll(bytes, t); });
     saveBlob(new Blob([new Uint8Array(bytes)], { type: 'audio/midi' }), dcFileBase() + '.mid');
     say('Downloaded ' + dcFileBase() + '.mid (' + dcWhat() + ', ' + fmtTime(r.seconds) + ')', 5000);
   }
-  var DC_TAIL = 1.5;                                // seconds left for cymbals to ring out at the end
   function dcRender(r) {
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OAC) return Promise.reject(new Error('This browser cannot render audio files'));
-    var sr = 44100, oc = new OAC(2, Math.ceil((r.seconds + DC_TAIL) * sr), sr);
-    var bus = masterBus(oc), kit = { noise: null, openHat: null };
-    r.ev.forEach(function (e) { synthDrum(oc, bus, kit, e.id, e.t + 0.005, e.gain, e.opts); });
+    var ring = 0.3;                                 // let the last cymbal ring out (up to 6 s)
+    r.ev.forEach(function (e) { ring = Math.max(ring, e.t + dcHitLength(e.row, e.smp) - r.seconds); });
+    var total = r.seconds + Math.min(6, ring + (dc.room ? 0.8 : 0.1));
+    var sr = 44100, oc = new OAC(2, Math.ceil(total * sr), sr);
+    var bus = masterBus(oc), io = dcBus(oc, bus, dc.room);
+    bus.gain.setValueAtTime(bus.gain.value, Math.max(0, total - 0.35));
+    bus.gain.linearRampToValueAtTime(0, total);     // a soft landing if anything is still sounding
+    r.ev.forEach(function (e) { dcVoice(oc, io, e.row, e.t + 0.005, e.lv, e.smp); });
     var p = oc.startRendering();
     if (p && typeof p.then === 'function') return p;
     return new Promise(function (res) { oc.oncomplete = function (ev) { res(ev.renderedBuffer); }; });
@@ -4540,20 +5018,25 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     if (!r) return;
     dcBusy = true;
     DC.busy(true);
-    say('Rendering ' + dcWhat() + '…', 60000);
-    var base = dcFileBase();
+    var base = dcFileBase(), used = r.rows.filter(function (row) { return r.ev.some(function (e) { return e.row === row; }); }), stood = [];
+    if (Samples.busy(used)) say('Loading the drum sounds…', 60000);
     var enc = kind === 'mp3' ? loadLame().then(function (l) { return l; }, function () { return null; }) : Promise.resolve(null);
-    Promise.all([dcRender(r), enc]).then(function (got) {
-      var buf = got[0], lame = got[1];
+    Samples.ensure(used).then(function (failed) {
+      stood = failed.map(function (row) { return dcRowName(dcRow(row.id) || row); });
+      r.ev.forEach(function (e) { e.smp = Samples.ready(e.row.kit, e.row.sound); });
+      say('Rendering ' + dcWhat() + '…', 60000);
+      return Promise.all([dcRender(r), enc]);
+    }).then(function (got) {
+      var buf = got[0], lame = got[1], note = stood.length ? ' (offline? the synth stood in for ' + stood.join(', ') + ')' : '';
       if (kind === 'mp3' && lame) {
         return encodeMp3(lame, buf, function (f) { say('Encoding MP3… ' + Math.round(f * 100) + '%', 60000); }).then(function (blob) {
           saveBlob(blob, base + '.mp3');
-          say('Downloaded ' + base + '.mp3 (' + dcWhat() + ', ' + fmtTime(buf.duration) + ')', 6000);
+          say('Downloaded ' + base + '.mp3 (' + dcWhat() + ', ' + fmtTime(buf.duration) + ')' + note, 6000);
         });
       }
       saveBlob(encodeWav(buf), base + '.wav');
       say(kind === 'mp3' ? 'Could not load the MP3 encoder (are you offline?), so a WAV was saved instead: ' + base + '.wav'
-        : 'Downloaded ' + base + '.wav (' + dcWhat() + ', ' + fmtTime(buf.duration) + ')', 8000);
+        : 'Downloaded ' + base + '.wav (' + dcWhat() + ', ' + fmtTime(buf.duration) + ')' + note, 8000);
     }).catch(function (e) {
       say('Could not render the audio: ' + (e && e.message ? e.message : 'unknown error'), 8000);
     }).then(function () { dcBusy = false; DC.busy(false); });
@@ -4562,10 +5045,28 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
   /* ---- the drum machine on screen ---- */
   var DC = (function () {
     var grid = $('dcGrid'), slotsEl = $('dcSlots'), chainEl = $('dcChain'), pagerEl = $('dcPager');
-    var pads = {}, rows = {}, names = {}, mutes = {}, solos = {}, slotBtns = [], chainSig = '', pagerSig = '', lit = -1, paint = null, knobBefore = null;
+    var kitSel = $('dcKit'), addSel = $('dcAddRow'), soundSel = $('dcTSound'), rowKitSel = $('dcTKit');
+    var pads = {}, rowEls = {}, names = {}, mutes = {}, solos = {}, slotBtns = [], chainSig = '', pagerSig = '', rowsSig = '', rowKitSig = '', lit = -1, paint = null, knobBefore = null;
+
+    function opt(value, text) { var o = document.createElement('option'); o.value = value; o.textContent = text; return o; }
+    function soundOptions(sel) {
+      DC_GROUPS.forEach(function (g) {
+        var og = document.createElement('optgroup');
+        og.label = g[0];
+        g[1].forEach(function (n) { og.appendChild(opt(String(n), DC_SOUNDS[n].name)); });
+        sel.appendChild(og);
+      });
+    }
+    function kitOptions(sel, list) {
+      var groups = {};
+      list.forEach(function (k) {
+        if (!groups[k.g]) { groups[k.g] = document.createElement('optgroup'); groups[k.g].label = k.g; sel.appendChild(groups[k.g]); }
+        groups[k.g].appendChild(opt(k.id, k.name));
+      });
+    }
 
     (function build() {
-      var frag = document.createDocumentFragment(), g, k;
+      var g, k;
       var ruler = document.createElement('div');
       ruler.className = 'bg-row bg-ruler';
       ruler.setAttribute('aria-hidden', 'true');
@@ -4576,24 +5077,47 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
         rh += '</div>';
       }
       ruler.innerHTML = rh;
-      frag.appendChild(ruler);
-      DC_TRACKS.forEach(function (tr, r) {
+      grid.appendChild(ruler);
+      for (var i = 0; i < DC_SLOTS.length; i++) {
+        var sb = document.createElement('button');
+        sb.type = 'button'; sb.className = 'slot'; sb.setAttribute('data-p', i);
+        sb.setAttribute('aria-pressed', 'false'); sb.setAttribute('aria-keyshortcuts', String(i + 1));
+        sb.textContent = dcSlot(i); sb.title = 'Pattern ' + dcSlot(i) + ' (' + (i + 1) + ')';
+        slotsEl.appendChild(sb); slotBtns.push(sb);
+      }
+      DC_PRESETS.forEach(function (p) { $('dcPreset').appendChild(opt(p.id, p.name + ' · ' + p.bpm + ' BPM')); });
+      kitSel.appendChild(opt('mix', 'Custom mix'));
+      kitOptions(kitSel, DC_KITS);
+      soundOptions(addSel);
+      soundOptions(soundSel);
+    })();
+
+    // one row of pads per drum, rebuilt when drums are added, removed or change sound
+    function buildRows() {
+      var sig = dc.rows.map(function (r) { return r.id + ':' + r.sound; }).join(',');
+      if (sig === rowsSig) return;
+      rowsSig = sig; lit = -1;
+      Object.keys(rowEls).forEach(function (id) { rowEls[id].parentNode.removeChild(rowEls[id]); });
+      pads = {}; rowEls = {}; names = {}; mutes = {}; solos = {};
+      var frag = document.createDocumentFragment();
+      dc.rows.forEach(function (tr, r) {
+        var name = dcRowName(tr), g, k;
         var row = document.createElement('div');
         row.className = 'bg-row';
         row.setAttribute('role', 'group');
-        row.setAttribute('aria-label', tr.name);
+        row.setAttribute('aria-label', name);
         var nb = document.createElement('button');
         nb.type = 'button'; nb.className = 'bg-name'; nb.setAttribute('data-t', tr.id);
-        nb.title = tr.name + ': tap to hear it and edit its sound';
-        nb.style.setProperty('--c', tr.c);
-        nb.innerHTML = '<span class="sw" aria-hidden="true"></span>' + tr.name;
+        nb.style.setProperty('--c', dcRowColor(tr));
+        nb.innerHTML = '<span class="sw" aria-hidden="true"></span><span class="nm"></span>';
+        nb.lastChild.textContent = name.replace('Tambourine', 'Tambou\u00ADrine');   // a soft hyphen for narrow chips
         row.appendChild(nb);
         var m = document.createElement('button');
         m.type = 'button'; m.className = 'ms mute'; m.setAttribute('data-t', tr.id); m.setAttribute('aria-pressed', 'false');
-        m.setAttribute('aria-label', 'Mute ' + tr.name); m.title = 'Mute'; m.textContent = 'M';
+        m.setAttribute('aria-label', 'Mute ' + name); m.title = 'Mute'; m.textContent = 'M';
         var so = document.createElement('button');
         so.type = 'button'; so.className = 'ms solo'; so.setAttribute('data-t', tr.id); so.setAttribute('aria-pressed', 'false');
-        so.setAttribute('aria-label', 'Solo ' + tr.name); so.title = 'Solo'; so.textContent = 'S';
+        so.setAttribute('aria-label', 'Solo ' + name); so.title = 'Solo'; so.textContent = 'S';
         row.appendChild(m); row.appendChild(so);
         pads[tr.id] = [];
         for (g = 0; g < 8; g++) {
@@ -4603,7 +5127,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
             var s = g * 4 + k, b = document.createElement('button');
             b.type = 'button'; b.className = 'pad';
             b.setAttribute('data-t', tr.id); b.setAttribute('data-s', s);
-            b.setAttribute('aria-label', tr.name + ', step ' + (s + 1));
+            b.setAttribute('aria-label', name + ', step ' + (s + 1));
             b.setAttribute('aria-pressed', 'false');
             b.tabIndex = r === 0 && s === 0 ? 0 : -1;
             grp.appendChild(b);
@@ -4611,42 +5135,44 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           }
           row.appendChild(grp);
         }
-        rows[tr.id] = row; names[tr.id] = nb; mutes[tr.id] = m; solos[tr.id] = so;
+        rowEls[tr.id] = row; names[tr.id] = nb; mutes[tr.id] = m; solos[tr.id] = so;
         frag.appendChild(row);
       });
       grid.appendChild(frag);
-      for (var i = 0; i < DC_SLOTS.length; i++) {
-        var sb = document.createElement('button');
-        sb.type = 'button'; sb.className = 'slot'; sb.setAttribute('data-p', i);
-        sb.setAttribute('aria-pressed', 'false'); sb.setAttribute('aria-keyshortcuts', String(i + 1));
-        sb.textContent = dcSlot(i); sb.title = 'Pattern ' + dcSlot(i) + ' (' + (i + 1) + ')';
-        slotsEl.appendChild(sb); slotBtns.push(sb);
-      }
-      DC_PRESETS.forEach(function (p) {
-        var o = document.createElement('option');
-        o.value = p.id; o.textContent = p.name + ' · ' + p.bpm + ' BPM';
-        $('dcPreset').appendChild(o);
-      });
-    })();
+    }
 
     function pressed(el, on) { el.setAttribute('aria-pressed', on ? 'true' : 'false'); }
     function setPad(id, s, v) {
       var b = pads[id][s];
       b.setAttribute('aria-pressed', v ? 'true' : 'false');
       b.classList.toggle('v1', v === 1); b.classList.toggle('v2', v === 2); b.classList.toggle('v3', v === 3);
-      b.setAttribute('aria-label', DC_TRACKS.filter(function (t) { return t.id === id; })[0].name + ', step ' + (s + 1) + (v ? ', ' + DC_LEVELS[v].name : ''));
+      var row = dcRow(id);
+      b.setAttribute('aria-label', (row ? dcRowName(row) : id) + ', step ' + (s + 1) + (v ? ', ' + DC_LEVELS[v].name : ''));
     }
+    // each drum's name chip: which kit it plays, and whether its recording is loading or missing
+    function paintLoad() {
+      dc.rows.forEach(function (row) {
+        var nb = names[row.id];
+        if (!nb) return;
+        var st = Samples.state(row.kit, row.sound), kit = dcKit(dcSrcKit(row.kit, row.sound)).name;
+        nb.classList.toggle('is-loading', st === 'loading' || st === 'idle');
+        nb.classList.toggle('is-failed', st === 'failed');
+        nb.title = dcRowName(row) + ' · ' + kit + (st === 'failed' ? ' (could not load: the synth stands in)' : st === 'loading' ? ' (loading)' : '') + ': tap to hear it and edit its sound';
+      });
+    }
+    function fmtPan(p) { var v = Math.round(p * 100); return v === 0 ? 'C' : (v < 0 ? 'L' : 'R') + Math.abs(v); }
     function render() {
-      var pat = dc.patterns[dc.cur], solo = dcAnySolo();
+      buildRows();
+      var pat = dc.patterns[dc.cur], solo = dcAnySolo(), sel = dcSel();
       slotBtns.forEach(function (b, i) { pressed(b, i === dc.cur); b.classList.toggle('has', dcPatHasHits(i)); });
       grid.classList.toggle('len16', pat.len === 16);
-      DC_TRACKS.forEach(function (tr) {
+      dc.rows.forEach(function (tr) {
         for (var s = 0; s < DC_MAX; s++) setPad(tr.id, s, pat.cells[tr.id][s]);
-        var k = dc.kit[tr.id];
-        pressed(mutes[tr.id], k.mute); pressed(solos[tr.id], k.solo);
-        rows[tr.id].classList.toggle('is-silent', solo ? !k.solo : k.mute);
-        names[tr.id].classList.toggle('is-sel', dc.track === tr.id);
+        pressed(mutes[tr.id], tr.mute); pressed(solos[tr.id], tr.solo);
+        rowEls[tr.id].classList.toggle('is-silent', solo ? !tr.solo : tr.mute);
+        names[tr.id].classList.toggle('is-sel', sel === tr);
       });
+      paintLoad();
       document.querySelectorAll('.segb[data-scope]').forEach(function (b) { pressed(b, b.getAttribute('data-scope') === dc.scope); });
       document.querySelectorAll('.segb[data-len]').forEach(function (b) { pressed(b, +b.getAttribute('data-len') === pat.len); });
       document.querySelectorAll('.segb[data-pen]').forEach(function (b) { pressed(b, +b.getAttribute('data-pen') === dc.pen); });
@@ -4656,11 +5182,20 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       $('dcSwing').value = String(dc.swing); $('dcSwingVal').textContent = dc.swing + '%';
       $('dcSwing').style.setProperty('--fill', dc.swing + '%');
       $('dcSwing').setAttribute('aria-valuetext', dc.swing + ' percent swing');
+      $('dcRoom').value = String(dc.room); $('dcRoomVal').textContent = dc.room + '%';
+      $('dcRoom').style.setProperty('--fill', dc.room + '%');
+      $('dcRoom').setAttribute('aria-valuetext', dc.room + ' percent room sound');
       pressed($('dcLoopSong'), dc.loopSong);
       $('dcAddLbl').textContent = dcSlot(dc.cur);
       $('dcAddSong').disabled = dc.song.length >= DC_SONG_MAX;
       $('dcDelSong').disabled = !dc.song.length;
       $('dcUndo').disabled = !dcPast.length; $('dcRedo').disabled = !dcFuture.length;
+      // kit and drums
+      var main = dcMainKit();
+      kitSel.value = main || 'mix';
+      kitSel.options[0].hidden = !!main; kitSel.options[0].disabled = true;
+      addSel.disabled = dc.rows.length >= DC_MAX_ROWS;
+      addSel.options[0].textContent = dc.rows.length >= DC_MAX_ROWS ? 'All ' + DC_MAX_ROWS + ' drums in use' : '+ Add drum…';
       // song chain
       var sig = dc.song.join(',') + '|' + dc.pick;
       if (sig !== chainSig) {
@@ -4669,17 +5204,27 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
           return '<button class="cchip" type="button" role="listitem" data-pos="' + i + '" aria-pressed="' + (i === dc.pick) + '" aria-label="Song step ' + (i + 1) + ': pattern ' + dcSlot(p) + '">' + dcSlot(p) + '</button>';
         }).join('');
       }
-      // track panel
-      var tr = DC_TRACKS.filter(function (t) { return t.id === dc.track; })[0], k = dc.kit[tr.id];
-      $('dcTrackName').textContent = tr.name;
-      $('dcTrackSw').style.setProperty('--c', tr.c);
-      $('dcVol').value = String(Math.round(k.vol * 100)); $('dcVolVal').textContent = Math.round(k.vol * 100) + '%';
-      $('dcVol').style.setProperty('--fill', (k.vol / 1.5 * 100) + '%');
-      $('dcTune').value = String(k.tune); $('dcTuneVal').textContent = (k.tune > 0 ? '+' : '') + k.tune;
-      $('dcTune').style.setProperty('--fill', ((k.tune + 12) / 24 * 100) + '%');
-      $('dcDecay').value = String(Math.round(k.decay * 100)); $('dcDecayVal').textContent = Math.round(k.decay * 100) + '%';
-      $('dcDecay').style.setProperty('--fill', ((k.decay - 0.3) / 1.7 * 100) + '%');
-      pressed($('dcTMute'), k.mute); pressed($('dcTSolo'), k.solo);
+      // the selected drum
+      $('dcTrackName').textContent = dcRowName(sel);
+      $('dcTrackSw').style.setProperty('--c', dcRowColor(sel));
+      soundSel.value = String(sel.sound);
+      var ks = sel.sound + '';
+      if (ks !== rowKitSig) {                       // only the kits with their own recording of this sound
+        rowKitSig = ks;
+        rowKitSel.innerHTML = '';
+        kitOptions(rowKitSel, DC_KITS.filter(function (k) { return !k.src || dcSrcKit(k.id, sel.sound) === k.id; }));
+      }
+      rowKitSel.value = dcSrcKit(sel.kit, sel.sound);
+      $('dcVol').value = String(Math.round(sel.vol * 100)); $('dcVolVal').textContent = Math.round(sel.vol * 100) + '%';
+      $('dcVol').style.setProperty('--fill', (sel.vol / 1.5 * 100) + '%');
+      $('dcPan').value = String(Math.round(sel.pan * 100)); $('dcPanVal').textContent = fmtPan(sel.pan);
+      $('dcPan').style.setProperty('--fill', ((sel.pan + 1) / 2 * 100) + '%');
+      $('dcTune').value = String(sel.tune); $('dcTuneVal').textContent = (sel.tune > 0 ? '+' : '') + sel.tune;
+      $('dcTune').style.setProperty('--fill', ((sel.tune + 12) / 24 * 100) + '%');
+      $('dcDecay').value = String(Math.round(sel.decay * 100)); $('dcDecayVal').textContent = Math.round(sel.decay * 100) + '%';
+      $('dcDecay').style.setProperty('--fill', ((sel.decay - 0.1) / 0.9 * 100) + '%');
+      pressed($('dcTMute'), sel.mute); pressed($('dcTSolo'), sel.solo);
+      $('dcTDel').disabled = dc.rows.length <= 1;
       // export line
       $('dcExportWhat').textContent = dc.scope === 'song' ? 'Song · ' + dc.song.length + (dc.song.length === 1 ? ' pattern' : ' patterns') : 'Pattern ' + dcSlot(dc.cur);
       $('dcLoops').hidden = dc.scope === 'song';
@@ -4701,9 +5246,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     function showPlay() {
       var n = DCPlayer.now(), playing = DCPlayer.state() === 'playing', step = playing && n.pat === dc.cur ? n.step : -1;
       if (step !== lit) {
-        DC_TRACKS.forEach(function (tr) {
-          if (lit >= 0) pads[tr.id][lit].classList.remove('is-now');
-          if (step >= 0) pads[tr.id][step].classList.add('is-now');
+        Object.keys(pads).forEach(function (id) {
+          if (lit >= 0) pads[id][lit].classList.remove('is-now');
+          if (step >= 0) pads[id][step].classList.add('is-now');
         });
         lit = step;
       }
@@ -4724,6 +5269,26 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       ['dcMidi', 'dcMp3', 'dcWav'].forEach(function (id) { $(id).disabled = on; });
       document.getElementById('drumApp').classList.toggle('dc-busy', on);
     }
+    var paintQueued = false;
+    Samples.onChange(function () {
+      if (paintQueued) return;
+      paintQueued = true;
+      requestAnimationFrame(function () { paintQueued = false; paintLoad(); });
+    });
+
+    // hear a drum: right away when its recording is in, else as soon as it arrives
+    function hear(row, lv) {
+      Sound.unlock();
+      var st = Samples.state(row.kit, row.sound), t0 = Date.now(), id = row.id;
+      if (st === 'loading' || st === 'idle') {
+        Samples.load(row.kit, row.sound).then(function () {
+          var r = dcRow(id);
+          if (r && Date.now() - t0 < 2500 && DCPlayer.state() !== 'playing') Sound.drumHit(r, 0, lv, Samples.ready(r.kit, r.sound));
+        });
+        return;
+      }
+      Sound.drumHit(row, 0, lv, Samples.ready(row.kit, row.sound));
+    }
 
     // pads: tap or drag to paint with the chosen hit strength; tapping a pad that already has that strength clears it
     function padOf(t) { return t && t.closest ? t.closest('.pad') : null; }
@@ -4732,7 +5297,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       if (row[s] === v) return;
       row[s] = v;
       setPad(id, s, v);
-      if (v && audition && DCPlayer.state() !== 'playing') { var k = dc.kit[id]; Sound.drum(id, 0, DC_LEVELS[v].gain * k.vol, { tune: k.tune, decay: k.decay }); }
+      if (v && audition && DCPlayer.state() !== 'playing') hear(dcRow(id), v);
     }
     grid.addEventListener('pointerdown', function (e) {
       var pad = padOf(e.target);
@@ -4769,23 +5334,21 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       }
       var b = e.target.closest ? e.target.closest('.bg-name, .ms') : null;
       if (!b) return;
-      var tid = b.getAttribute('data-t');
+      var tid = b.getAttribute('data-t'), row = dcRow(tid);
+      if (!row) return;
       if (b.classList.contains('bg-name')) {
         dc.track = tid; dcSave(); render();
-        Sound.unlock();
-        var k = dc.kit[tid];
-        Sound.drum(tid, 0, DC_LEVELS[dc.pen].gain * k.vol, { tune: k.tune, decay: k.decay });
-      } else toggleMS(tid, b.classList.contains('mute') ? 'mute' : 'solo');
+        hear(row, dc.pen);
+      } else toggleMS(row, b.classList.contains('mute') ? 'mute' : 'solo');
     });
-    function toggleMS(id, which) {
-      dc.kit[id][which] = !dc.kit[id][which];
+    function toggleMS(row, which) {
+      row[which] = !row[which];
       dcSave(); render();
-      var name = DC_TRACKS.filter(function (t) { return t.id === id; })[0].name;
-      say(name + (which === 'mute' ? (dc.kit[id].mute ? ' muted' : ' unmuted') : (dc.kit[id].solo ? ' solo on' : ' solo off')));
+      say(dcRowName(row) + (which === 'mute' ? (row.mute ? ' muted' : ' unmuted') : (row.solo ? ' solo on' : ' solo off')));
     }
     // arrow keys move between pads (one tab stop for the grid)
     function rove(id, s, focus) {
-      DC_TRACKS.forEach(function (t) { pads[t.id].forEach(function (b) { b.tabIndex = -1; }); });
+      Object.keys(pads).forEach(function (t) { pads[t].forEach(function (b) { b.tabIndex = -1; }); });
       pads[id][s].tabIndex = 0;
       if (s >> 3 !== dc.page && window.matchMedia && window.matchMedia('(max-width: 560px)').matches) { dc.page = s >> 3; render(); }
       if (focus) pads[id][s].focus();
@@ -4793,17 +5356,18 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     grid.addEventListener('keydown', function (e) {
       var pad = padOf(e.target);
       if (!pad || e.ctrlKey || e.metaKey || e.altKey) return;
-      var r = DC_TRACKS.map(function (t) { return t.id; }).indexOf(pad.getAttribute('data-t')), s = +pad.getAttribute('data-s');
+      var ids = dc.rows.map(function (t) { return t.id; });
+      var r = ids.indexOf(pad.getAttribute('data-t')), s = +pad.getAttribute('data-s');
       var len = dc.patterns[dc.cur].len, nr = r, ns = s;
       if (e.key === 'ArrowRight') ns = Math.min(len - 1, s + 1);
       else if (e.key === 'ArrowLeft') ns = Math.max(0, s - 1);
-      else if (e.key === 'ArrowDown') nr = Math.min(DC_TRACKS.length - 1, r + 1);
+      else if (e.key === 'ArrowDown') nr = Math.min(ids.length - 1, r + 1);
       else if (e.key === 'ArrowUp') nr = Math.max(0, r - 1);
       else if (e.key === 'Home') ns = 0;
       else if (e.key === 'End') ns = len - 1;
       else return;
       e.preventDefault();
-      rove(DC_TRACKS[nr].id, ns, true);
+      rove(ids[nr], ns, true);
     });
 
     // patterns
@@ -4835,14 +5399,21 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     document.querySelectorAll('.segb[data-pen]').forEach(function (b) {
       b.addEventListener('click', function () { dc.pen = +b.getAttribute('data-pen'); dcSave(); render(); say('New hits: ' + DC_LEVELS[dc.pen].name); });
     });
+    function addCells(row) { dc.patterns.forEach(function (pat) { var r = []; for (var s = 0; s < DC_MAX; s++) r.push(0); pat.cells[row.id] = r; }); }
     $('dcPreset').addEventListener('change', function () {
       var pre = DC_PRESETS.filter(function (x) { return x.id === $('dcPreset').value; })[0];
       $('dcPreset').value = '';
       if (!pre) return;
       var before = dcSnap(), fresh = DC_SLOTS.split('').every(function (c, i) { return i === dc.cur || !dcPatHasHits(i); });
-      dcFillPreset(dc.patterns[dc.cur], pre);
+      var res = dcPresetPlan(pre, dc.rows, dcCommonKit());
+      res.added.forEach(addCells);
+      dcFillPreset(dc.patterns[dc.cur], res.plan);
       var note = '';
       if (fresh) { dc.bpm = pre.bpm; dc.swing = pre.swing || 0; note = ' at ' + pre.bpm + ' BPM'; }   // never retime other patterns
+      if (res.added.length) {
+        note += '; added ' + res.added.map(function (r) { return DC_SOUNDS[r.sound].name; }).join(', ');
+        dcPrefetch(null);
+      }
       if (!dcCommit(before, 'Loaded ' + pre.name + ' into pattern ' + dcSlot(dc.cur) + note)) say(pre.name + ' is already in pattern ' + dcSlot(dc.cur));
       dcSave();
     });
@@ -4857,7 +5428,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     });
     $('dcClearPat').addEventListener('click', function () {
       var before = dcSnap(), len = dc.patterns[dc.cur].len;
-      dc.patterns[dc.cur] = dcEmptyPattern();
+      dc.patterns[dc.cur] = dcEmptyPattern(dc.rows);
       dc.patterns[dc.cur].len = len;
       if (!dcCommit(before, 'Pattern ' + dcSlot(dc.cur) + ' cleared')) say('Pattern ' + dcSlot(dc.cur) + ' is already empty');
     });
@@ -4889,10 +5460,62 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     });
     $('dcLoopSong').addEventListener('click', function () { dc.loopSong = !dc.loopSong; dcSave(); render(); say(dc.loopSong ? 'The song loops' : 'The song plays once'); });
 
-    // tempo, swing
+    // tempo, swing, room
     function setTempoDC(v) { dc.bpm = Math.max(40, Math.min(240, Math.round(+v || 100))); dcSave(); render(); }
     $('dcTempo').addEventListener('input', function () { setTempoDC($('dcTempo').value); });
     $('dcSwing').addEventListener('input', function () { dc.swing = Math.round(+$('dcSwing').value / 5) * 5; dcSave(); render(); });
+    $('dcRoom').addEventListener('input', function () { dc.room = Math.round(+$('dcRoom').value / 5) * 5; Sound.setRoom(dc.room); dcSave(); render(); });
+
+    // the kit: every drum at once
+    kitSel.addEventListener('change', function () {
+      var id = kitSel.value;
+      if (DC_KIT_IX[id] == null) return;
+      var before = dcSnap();
+      dc.rows.forEach(function (r) { r.kit = id; });
+      dcCommit(before, 'Kit: ' + dcKit(id).name);
+      dcPrefetch(dcKit(id).name).then(function () { if (DCPlayer.state() !== 'playing') hear(dcSel(), dc.pen); });
+    });
+    // add a drum (from the main kit) and select it
+    addSel.addEventListener('change', function () {
+      var sound = +addSel.value;
+      addSel.value = '';
+      if (!DC_SOUNDS[sound] || dc.rows.length >= DC_MAX_ROWS) return;
+      var before = dcSnap(), row = dcNewRow(sound, dcCommonKit(), dc.rows);
+      dc.rows.push(row);
+      addCells(row);
+      dc.track = row.id;
+      dcCommit(before, 'Added ' + dcRowName(row) + ' (' + dc.rows.length + ' drums)');
+      dcPrefetch(null);
+      hear(row, dc.pen);
+    });
+    // the selected drum: which sound, from which kit
+    soundSel.addEventListener('change', function () {
+      var row = dcSel(), sound = +soundSel.value;
+      if (!DC_SOUNDS[sound] || sound === row.sound) return;
+      var before = dcSnap();
+      if (row.pan === DC_SOUNDS[row.sound].pan) row.pan = DC_SOUNDS[sound].pan;   // follow the new drum's place unless it was moved
+      row.sound = sound;
+      dcCommit(before, 'That drum is now ' + dcRowName(row));
+      dcPrefetch(null);
+      hear(row, dc.pen);
+    });
+    rowKitSel.addEventListener('change', function () {
+      var row = dcSel(), id = rowKitSel.value;
+      if (DC_KIT_IX[id] == null) return;
+      var before = dcSnap();
+      row.kit = id;
+      dcCommit(before, dcRowName(row) + ' now from ' + dcKit(id).name);
+      dcPrefetch(null);
+      hear(row, dc.pen);
+    });
+    $('dcTDel').addEventListener('click', function () {
+      if (dc.rows.length <= 1) return;
+      var row = dcSel(), i = dc.rows.indexOf(row), before = dcSnap(), name = dcRowName(row);
+      dc.rows.splice(i, 1);
+      dc.patterns.forEach(function (pat) { delete pat.cells[row.id]; });
+      dc.track = dc.rows[Math.min(i, dc.rows.length - 1)].id;
+      dcCommit(before, 'Removed ' + name + ' (undo brings it back)');
+    });
 
     // the selected drum's sound: live while dragging, one undo step per drag
     function knob(id, apply) {
@@ -4900,20 +5523,20 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
       function grab() { if (knobBefore === null) knobBefore = dcSnap(); }
       el.addEventListener('pointerdown', grab);
       el.addEventListener('keydown', grab);
-      el.addEventListener('input', function () { grab(); apply(+el.value); dcSave(); render(); });
+      el.addEventListener('input', function () { grab(); apply(dcSel(), +el.value); dcSave(); render(); });
       el.addEventListener('change', function () {
         var before = knobBefore;
         knobBefore = null;
         if (before !== null) dcCommit(before);
-        var k = dc.kit[dc.track];
-        Sound.drum(dc.track, 0, DC_LEVELS[dc.pen].gain * k.vol, { tune: k.tune, decay: k.decay });   // hear the result
+        if (DCPlayer.state() !== 'playing') hear(dcSel(), dc.pen);   // hear the result
       });
     }
-    knob('dcVol', function (v) { dc.kit[dc.track].vol = Math.round(v) / 100; });
-    knob('dcTune', function (v) { dc.kit[dc.track].tune = Math.round(v); });
-    knob('dcDecay', function (v) { dc.kit[dc.track].decay = Math.round(v) / 100; });
-    $('dcTMute').addEventListener('click', function () { toggleMS(dc.track, 'mute'); });
-    $('dcTSolo').addEventListener('click', function () { toggleMS(dc.track, 'solo'); });
+    knob('dcVol', function (row, v) { row.vol = Math.round(v) / 100; });
+    knob('dcPan', function (row, v) { row.pan = Math.round(v) / 100; });
+    knob('dcTune', function (row, v) { row.tune = Math.round(v); });
+    knob('dcDecay', function (row, v) { row.decay = Math.round(v) / 100; });
+    $('dcTMute').addEventListener('click', function () { toggleMS(dcSel(), 'mute'); });
+    $('dcTSolo').addEventListener('click', function () { toggleMS(dcSel(), 'solo'); });
 
     pagerEl.addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('.pg') : null;
@@ -4943,7 +5566,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; -webkit-appe
     $('appTag').innerHTML = drums ? 'Build it &middot; Play it &middot; Export it' : 'Play it &middot; Ink it &middot; Hear it &middot; Copy it';
     document.title = drums ? 'Drum Cracker' : 'Note Cracker';
     releaseAll();
-    if (drums) { Player.stop(); DC.render(); }
+    if (drums) { Player.stop(); DC.render(); dcPrefetch(null); }
     else {
       DCPlayer.stop();
       requestAnimationFrame(function () { Sheet.render({ focus: sel >= 0 ? sel : notes.length - 1 }); if (!userScrolled) scrollKeyboardTo('C' + octave, false); });
