@@ -152,6 +152,20 @@ local TV_SCREEN_COLOR = BrickColor.new("Bright blue")
 local COUCH_COLOR = BrickColor.new("Bright red")
 local LEAF_COLOR = BrickColor.new("Dark green")
 local STATUE_DETAIL_COLOR = BrickColor.new("Dark stone grey") -- carved eyes and smile
+local CABINET_COLOR = BrickColor.new("Reddish brown")
+local CABINET_DOOR_COLOR = BrickColor.new("Brown")
+
+-- Closed wooden cabinets in free corners: { minX, minZ, maxX, maxZ } and the way the doors face
+-- (N = -Z, S = +Z, W = -X, E = +X). The back and one side of each touch the walls.
+local CABINETS: { { area: { number }, facing: "N" | "S" | "E" | "W" } } = {
+	{ area = { -67, 116, -61, 119 }, facing = "N" }, -- spawn plaza, south-east corner
+	{ area = { -99, 33, -96, 39 }, facing = "E" }, -- courtyard, beside the Spawn Gate
+	{ area = { -99, -59, -96, -53 }, facing = "E" }, -- courtyard, beside the Lookout Gate
+	{ area = { 93, -64, 99, -61 }, facing = "N" }, -- top room, east corner
+	{ area = { 96, -7, 99, -1 }, facing = "W" }, -- courtyard, east corner
+	{ area = { 1, 41, 7, 44 }, facing = "S" }, -- Slope Hill room, beside the Slope Gate
+	{ area = { 61, 116, 67, 119 }, facing = "N" }, -- podium room, south-west corner
+}
 local COLA_COLOR = BrickColor.new("Bright red")
 local LOGO_COLOR = BrickColor.new("Institutional white")
 local GIANT_BRICK_COLOR = BrickColor.new("Bright red")
@@ -238,6 +252,8 @@ local MATERIAL_RULES: { MaterialRule } = {
 	{ pattern = "^Sections/BloxyTrophy/", material = Enum.Material.Foil },
 	{ pattern = "^Sections/RobloxLogo/Stage$", material = Enum.Material.Granite },
 	{ pattern = "^Sections/GiantBrick/", material = Enum.Material.Plastic },
+	{ pattern = "^Sections/Cabinets/.*Handle%d$", material = Enum.Material.Metal },
+	{ pattern = "^Sections/Cabinets/", material = Enum.Material.Wood },
 	{ pattern = "^Sections/.*/Lookout$", material = Enum.Material.WoodPlanks },
 	{ pattern = "^Sections/SkyBridge/", material = Enum.Material.WoodPlanks },
 }
@@ -1236,6 +1252,37 @@ local function buildDividers(model: Model): number
 	return #DIVIDERS
 end
 
+--- Cabinets: closed wooden cabinets (no openings) with two doors and brass handles, in corners.
+local function buildCabinets(sections: Instance): ()
+	local folder = newSection(sections, "Cabinets", "Seven closed wooden cabinets standing in corners around the map.")
+	for index, cabinet in CABINETS do
+		local minX, minZ, maxX, maxZ = cabinet.area[1], cabinet.area[2], cabinet.area[3], cabinet.area[4]
+		local facing = cabinet.facing
+		local name = `Cabinet{index}`
+		blockBetween(folder, `{name}Body`, at(minX, 0, minZ), at(maxX, 7.6, maxZ), CABINET_COLOR)
+		blockBetween(folder, `{name}Top`, at(minX, 7.6, minZ), at(maxX, 8, maxZ), CABINET_DOOR_COLOR)
+
+		-- Thin pieces on the front face: `from`..`to` along the front, `out0`..`out1` studs in front of it.
+		local function front(partName: string, from: number, to: number, y0: number, y1: number, out0: number, out1: number, color: BrickColor): ()
+			if facing == "N" then
+				blockBetween(folder, partName, at(from, y0, minZ - out1), at(to, y1, minZ - out0), color)
+			elseif facing == "S" then
+				blockBetween(folder, partName, at(from, y0, maxZ + out0), at(to, y1, maxZ + out1), color)
+			elseif facing == "W" then
+				blockBetween(folder, partName, at(minX - out1, y0, from), at(minX - out0, y1, to), color)
+			else
+				blockBetween(folder, partName, at(maxX + out0, y0, from), at(maxX + out1, y1, to), color)
+			end
+		end
+		local along0, along1 = if facing == "N" or facing == "S" then minX else minZ, if facing == "N" or facing == "S" then maxX else maxZ
+		local middle = (along0 + along1) / 2
+		front(`{name}Door1`, along0 + 0.3, middle - 0.1, 0.6, 7.2, 0, 0.15, CABINET_DOOR_COLOR)
+		front(`{name}Door2`, middle + 0.1, along1 - 0.3, 0.6, 7.2, 0, 0.15, CABINET_DOOR_COLOR)
+		front(`{name}Handle1`, middle - 0.7, middle - 0.4, 3.4, 4.6, 0.15, 0.35, GOLD_COLOR)
+		front(`{name}Handle2`, middle + 0.4, middle + 0.7, 3.4, 4.6, 0.15, 0.35, GOLD_COLOR)
+	end
+end
+
 --- Builds every play area into a Sections folder, in the order players loop through them.
 --- @param model Model -- The map model
 --- @return (number, number) -- Number of areas and number of parts in them
@@ -1258,6 +1305,7 @@ local function buildSections(model: Model): (number, number)
 		buildRainbowRamp,
 		buildSlopeHill,
 		buildFinishPodium,
+		buildCabinets,
 	}
 	for _, build in builders do
 		build(sections)
