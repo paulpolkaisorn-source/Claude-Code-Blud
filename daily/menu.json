@@ -1,28 +1,39 @@
 {
-  "updated": "2026-10-25T22:00:00+07:00",
-  "note": "Yo twin! First message from me 🦷 Sunday is cheese-board day and Monday starts the week strong. Sweet stuff only at meal times, water after everything.",
+  "updated": "2026-10-26T06:39:00+07:00",
+  "note": "Good morning twin ☀️ Monday is here and so is your water bottle, fill it up before school. Halloween is Friday, so this week we're training those teeth for the candy boss fight 🎃🦷",
   "days": [
-    {
-      "date": "2026-10-25",
-      "meals": [
-        ["Breakfast", "Fluffy cheese omelette with spinach, whole grain toast, a glass of milk"],
-        ["Snack", "Cheese board: cheddar, gouda, cucumber slices, a few almonds"],
-        ["Lunch", "Grilled salmon rice bowl with edamame, avocado and cucumber. Orange slices for dessert"],
-        ["Snack", "Carrot and celery sticks with hummus, big glass of water"],
-        ["Dinner", "Roast chicken, roasted broccoli, mashed potato. Small scoop of vanilla ice cream right after, then water"]
-      ],
-      "tip": "Ice cream counts as one acid attack only if you eat it right after dinner. Don't save it for a 9pm snack."
-    },
     {
       "date": "2026-10-26",
       "meals": [
-        ["Breakfast", "Plain Greek yogurt with blueberries, sliced banana and crushed almonds"],
+        ["Breakfast", "Plain Greek yogurt with blueberries, sliced banana and crushed almonds, a glass of milk"],
         ["Snack", "Hard-boiled egg and cherry tomatoes"],
-        ["Lunch", "Teriyaki-free chicken sushi rolls, miso soup, a few strawberries"],
-        ["Snack", "Salted edamame and a cheese stick"],
-        ["Dinner", "Beef and broccoli stir-fry with jasmine rice. Finish with a cube of cheese"]
+        ["Lunch", "Thai khao man gai (Hainanese chicken rice) with cucumber slices and clear soup. A few pieces of fresh pineapple right after"],
+        ["Snack", "Salted edamame and a cheese stick, water"],
+        ["Dinner", "Grilled ribeye steak, buttery corn on the cob and steamed green beans. Finish with a cube of cheddar"]
       ],
-      "tip": "Monday school bottle challenge: finish one full bottle before lunch and refill it."
+      "tip": "Pineapple is a bit acidic, so drink water after lunch and wait 30 minutes before your after-lunch brush."
+    },
+    {
+      "date": "2026-10-27",
+      "meals": [
+        ["Breakfast", "Japanese tamagoyaki (sweet-less rolled omelette), small bowl of rice, miso soup"],
+        ["Snack", "Carrot and cucumber sticks with tzatziki"],
+        ["Lunch", "Creamy mac and cheese with broccoli bits and grilled chicken strips"],
+        ["Snack", "Plain yogurt cup with a few raspberries stirred in"],
+        ["Dinner", "Pan-seared salmon with garlic butter, jasmine rice and sautéed bok choy. Two squares of dark chocolate right after"]
+      ],
+      "tip": "Chew your veggie sticks slowly. All that crunching makes extra spit, and spit is your teeth's free repair service."
+    },
+    {
+      "date": "2026-10-28",
+      "meals": [
+        ["Breakfast", "Avocado toast on whole grain bread with a poached egg and a glass of milk"],
+        ["Snack", "Cheese cubes and cashews"],
+        ["Lunch", "Thai pad kra pao with minced pork (ask for less sugar), fried egg on top, cucumber on the side"],
+        ["Snack", "Celery with no-sugar peanut butter, water"],
+        ["Dinner", "Homemade shrimp and veggie tempura with udon soup. Small scoop of matcha ice cream right after"]
+      ],
+      "tip": "Halloween prep: when you get candy Friday, pick chocolate over gummies and sour stuff, and eat it right after dinner."
     }
   ]
 }
