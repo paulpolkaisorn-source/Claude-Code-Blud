@@ -1,0 +1,902 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Cavity Shield</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one-column phone-first app, sticky top bar + tab strip, cards only where they hold a tool */
+:root {
+  --bg: #eef7f6;          /* minty enamel */
+  --surface: #ffffff;
+  --surface-2: #e2f0ee;
+  --fg: #12312f;
+  --muted: #557571;
+  --line: #c9e0dc;
+  --accent: #0f8f86;      /* fluoride teal */
+  --accent-ink: #ffffff;
+  --water: #2b7fd6;
+  --water-soft: #d6e8fb;
+  --hero: #1f9d55;
+  --hero-soft: #dcf3e5;
+  --ok: #b7791f;
+  --ok-soft: #fbf0d9;
+  --villain: #c53a4d;
+  --villain-soft: #fbe1e5;
+  --shadow: 0 1px 2px rgba(18,49,47,.06), 0 6px 18px rgba(18,49,47,.06);
+  --f-display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1c1b; --surface: #142826; --surface-2: #1b3431; --fg: #e3f3f0; --muted: #93b5b0; --line: #26433f;
+    --accent: #3cc4b8; --accent-ink: #062320; --water: #6fb2f5; --water-soft: #16304a;
+    --hero: #4fd18a; --hero-soft: #133826; --ok: #e8b25a; --ok-soft: #3a2d14; --villain: #f07687; --villain-soft: #3f1a21;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1c1b; --surface: #142826; --surface-2: #1b3431; --fg: #e3f3f0; --muted: #93b5b0; --line: #26433f;
+  --accent: #3cc4b8; --accent-ink: #062320; --water: #6fb2f5; --water-soft: #16304a;
+  --hero: #4fd18a; --hero-soft: #133826; --ok: #e8b25a; --ok-soft: #3a2d14; --villain: #f07687; --villain-soft: #3f1a21;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 720px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.15rem; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
+.label { font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* header */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 14px 0; }
+.brand { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand h1 { font-size: 1.75rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.brand h1 svg { width: 30px; height: 30px; flex: none; }
+.sync { font-size: .75rem; color: var(--muted); text-align: right; }
+nav.tabs { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; padding-bottom: 10px; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+nav.tabs button { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-weight: 800; font-size: .9rem; color: var(--muted); }
+nav.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+section.view { display: grid; gap: 18px; padding-top: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); display: grid; gap: 14px; min-width: 0; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+
+/* reminder banner */
+.nudge { display: flex; gap: 12px; align-items: center; background: var(--water-soft); border: 2px solid var(--water); border-radius: 16px; padding: 12px 14px; font-weight: 700; }
+.nudge p { flex: 1; min-width: 0; }
+.btn { border: 0; border-radius: 12px; padding: 10px 16px; font-weight: 800; background: var(--accent); color: var(--accent-ink); }
+.btn.water { background: var(--water); color: var(--accent-ink); }
+.btn.ghost { background: var(--surface-2); color: var(--fg); }
+.btn.danger { background: var(--villain-soft); color: var(--villain); }
+.btn:active { transform: translateY(1px); }
+
+/* score */
+.score { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.ring { width: 96px; height: 96px; }
+.ring text { font-family: var(--f-display); font-weight: 800; fill: var(--fg); }
+.score .msg { font-weight: 700; }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day { display: grid; justify-items: center; gap: 4px; font-size: .72rem; color: var(--muted); font-weight: 700; }
+.dot { width: 100%; max-width: 38px; aspect-ratio: 1; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; font-size: .72rem; color: var(--fg); }
+.dot.lvl1 { background: var(--ok-soft); border-color: var(--ok); }
+.dot.lvl2 { background: var(--hero-soft); border-color: var(--hero); }
+.dot.lvl3 { background: var(--hero); border-color: var(--hero); color: var(--accent-ink); }
+.dot.today { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* checklist */
+.checks { display: grid; gap: 8px; }
+.check { display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px; }
+.check .box { width: 28px; height: 28px; border-radius: 9px; border: 2px solid var(--line); display: grid; place-items: center; transition: background .15s; }
+.check .box svg { width: 18px; height: 18px; opacity: 0; }
+.check[aria-pressed="true"] { background: var(--hero-soft); border-color: var(--hero); }
+.check[aria-pressed="true"] .box { background: var(--hero); border-color: var(--hero); }
+.check[aria-pressed="true"] .box svg { opacity: 1; }
+.check strong { display: block; }
+.check span.sub { font-size: .85rem; color: var(--muted); }
+.check .when { font-family: var(--f-mono); font-size: .72rem; color: var(--accent); font-weight: 700; }
+
+/* water */
+.glasses { display: flex; flex-wrap: wrap; gap: 8px; }
+.glass { width: 34px; height: 44px; }
+.glass .fill { fill: var(--water); }
+.glass .empty { fill: var(--water-soft); }
+.glass .rim { fill: none; stroke: var(--water); stroke-width: 2; }
+.big { font-family: var(--f-display); font-size: 2.4rem; font-weight: 800; line-height: 1; }
+.big small { font-size: 1rem; color: var(--muted); font-weight: 700; }
+select { font: inherit; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.field { display: grid; gap: 4px; }
+.field label { font-size: .8rem; font-weight: 800; color: var(--muted); }
+
+/* acid counter */
+.acid { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+.meter { height: 12px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--villain); width: 0; transition: width .3s; }
+
+/* food */
+.rules { display: grid; gap: 10px; counter-reset: r; }
+.rule { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: start; }
+.rule b.n { width: 32px; height: 32px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-family: var(--f-display); }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-weight: 800; font-size: .85rem; }
+.filters button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+input[type="search"] { font: inherit; width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.foods { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+.food { border-radius: 14px; padding: 12px; border: 1px solid var(--line); background: var(--surface); display: grid; gap: 6px; align-content: start; min-width: 0; }
+.food .head { display: flex; align-items: center; gap: 8px; }
+.food .em { font-size: 1.5rem; line-height: 1; }
+.food h4 { margin: 0; font-family: var(--f-display); font-size: 1.05rem; flex: 1; min-width: 0; }
+.pill { font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; flex: none; }
+.food.hero { border-left: 5px solid var(--hero); } .food.hero .pill { background: var(--hero-soft); color: var(--hero); }
+.food.ok { border-left: 5px solid var(--ok); } .food.ok .pill { background: var(--ok-soft); color: var(--ok); }
+.food.villain { border-left: 5px solid var(--villain); } .food.villain .pill { background: var(--villain-soft); color: var(--villain); }
+.food p { font-size: .88rem; }
+.food .tip { color: var(--muted); font-size: .82rem; }
+
+/* plans */
+.plan { display: grid; gap: 8px; }
+.meal { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding-block: 8px; border-top: 1px dashed var(--line); }
+.meal:first-child { border-top: 0; }
+.meal .t { font-family: var(--f-mono); font-size: .78rem; font-weight: 700; color: var(--accent); }
+.daypick { display: flex; gap: 6px; flex-wrap: wrap; }
+.daypick button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 6px 10px; font-weight: 800; font-size: .85rem; }
+.daypick button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.inbox { border-color: var(--accent); }
+.avatar { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; flex: none; }
+.bubble { background: var(--surface-2); border-radius: 4px 16px 16px 16px; padding: 12px 14px; font-weight: 600; }
+
+/* timer */
+.timer { display: grid; justify-items: center; gap: 14px; text-align: center; }
+.mouth { width: min(260px, 80vw); height: auto; }
+.mouth .q { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; transition: fill .3s; }
+.mouth .q.on { fill: var(--accent); }
+.mouth .q.done { fill: var(--hero-soft); stroke: var(--hero); }
+.mouth text { font-family: var(--f-body); font-weight: 800; font-size: 13px; fill: var(--fg); }
+.clock { font-family: var(--f-mono); font-size: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.zone { font-weight: 800; color: var(--accent); min-height: 1.5em; }
+
+/* truth cards */
+.truth { display: grid; gap: 10px; }
+.vs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+.vs > div { border-radius: 14px; padding: 12px; background: var(--surface-2); display: grid; gap: 4px; }
+.vs .win { background: var(--hero-soft); }
+ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.note { font-size: .82rem; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 800; z-index: 20; max-width: calc(100% - 32px); text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media (max-width: 420px) { .score { grid-template-columns: 1fr; justify-items: center; text-align: center; } .meal { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4c-3-2-9-2-11 2-2 5 1 9 2 13 1 5 1 9 4 9 2 0 2-6 5-6s3 6 5 6c3 0 3-4 4-9 1-4 4-8 2-13-2-4-8-4-11-2z" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 11l3 3 6-6" fill="none" stroke="var(--hero)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Cavity Shield
+      </h1>
+      <div class="sync" id="sync">Saved on this device</div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="tab-today" aria-selected="true" data-view="today">Today</button>
+      <button role="tab" id="tab-water" aria-selected="false" data-view="water">Water</button>
+      <button role="tab" id="tab-food" aria-selected="false" data-view="food">Food</button>
+      <button role="tab" id="tab-meals" aria-selected="false" data-view="meals">Meal ideas</button>
+      <button role="tab" id="tab-timer" aria-selected="false" data-view="timer">Brush timer</button>
+      <button role="tab" id="tab-facts" aria-selected="false" data-view="facts">pH water & gear</button>
+    </nav>
+  </header>
+
+  <div id="nudge" class="nudge" hidden style="margin-top:14px">
+    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2s-7 8-7 13a7 7 0 0014 0c0-5-7-13-7-13z" fill="var(--water)"/></svg>
+    <p id="nudgeText">Water time! Your teeth are thirsty.</p>
+    <button class="btn water" id="nudgeDrink">I drank</button>
+  </div>
+
+  <!-- TODAY -->
+  <section class="view" id="view-today" role="tabpanel" aria-labelledby="tab-today">
+    <div class="card inbox">
+      <div class="row spread">
+        <div class="row" style="gap:10px">
+          <span class="avatar" aria-hidden="true">C</span>
+          <div style="display:grid"><h3>Message from Claude</h3><span class="note" id="inboxWhen">Your food plan for today and tomorrow</span></div>
+        </div>
+        <div class="daypick" id="inboxPick">
+          <button data-i="0" aria-pressed="true">Today</button>
+          <button data-i="1" aria-pressed="false">Tomorrow</button>
+        </div>
+      </div>
+      <p class="bubble" id="inboxNote"></p>
+      <div class="plan" id="inboxPlan"></div>
+      <p class="note" id="inboxTip"></p>
+    </div>
+
+    <div class="card">
+      <div class="score">
+        <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface-2)" stroke-width="12"/>
+          <circle id="ringArc" cx="50" cy="50" r="42" fill="none" stroke="var(--hero)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 264" transform="rotate(-90 50 50)"/>
+          <text id="ringText" x="50" y="58" text-anchor="middle" font-size="24">0%</text>
+        </svg>
+        <div style="display:grid;gap:6px;min-width:0">
+          <span class="label" id="todayLabel">Today</span>
+          <h2 id="shieldTitle">Shield charging…</h2>
+          <p class="msg" id="shieldMsg">Tick things off as you do them.</p>
+        </div>
+      </div>
+      <div>
+        <span class="label">Last 7 days</span>
+        <div class="week" id="week" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row spread"><h3>Daily tooth missions</h3><span class="label" id="checkCount">0 / 0</span></div>
+      <div class="checks" id="checks"></div>
+    </div>
+
+    <div class="card">
+      <div class="row spread"><h3>Water</h3><button class="btn ghost" data-goto="water">Open water tracker</button></div>
+      <div class="row spread">
+        <div class="big"><span id="waterNum2">0</span><small> / <span id="waterGoal2">7</span> glasses</small></div>
+        <button class="btn water" id="drinkQuick">+1 glass</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Acid attack counter</h3>
+      <p class="note">Every time you eat or sip something sugary or sour between meals, mouth germs make acid for about 20–30 minutes. That acid is what digs the black holes. Fewer attacks = stronger teeth.</p>
+      <div class="acid">
+        <div style="display:grid;gap:6px;min-width:0">
+          <div class="row spread"><strong>Sneaky snacks today: <span class="mono" id="acidNum">0</span></strong><span class="note">Aim for 0–1</span></div>
+          <div class="meter" aria-hidden="true"><i id="acidBar"></i></div>
+          <p class="note" id="acidMsg">Clean mouth. Nice.</p>
+        </div>
+        <div style="display:grid;gap:6px">
+          <button class="btn danger" id="acidAdd">+ I had one</button>
+          <button class="btn ghost" id="acidSub">Undo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WATER -->
+  <section class="view" id="view-water" role="tabpanel" aria-labelledby="tab-water" hidden>
+    <div class="card">
+      <div class="row spread">
+        <div class="big"><span id="waterNum">0</span><small> / <span id="waterGoal">7</span> glasses</small></div>
+        <span class="label mono" id="waterMl">0 ml</span>
+      </div>
+      <div class="glasses" id="glasses" aria-label="Glasses of water today"></div>
+      <div class="row">
+        <button class="btn water" id="drink">+1 glass (250 ml)</button>
+        <button class="btn ghost" id="undrink">−1</button>
+      </div>
+      <p class="note" id="lastDrink">No water logged yet today.</p>
+    </div>
+
+    <div class="card">
+      <h3>Reminder settings</h3>
+      <div class="row">
+        <div class="field">
+          <label for="age">My age</label>
+          <select id="age"></select>
+        </div>
+        <div class="field">
+          <label for="remind">Remind me every</label>
+          <select id="remind">
+            <option value="0">Off</option>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sound">Sound</label>
+          <select id="sound"><option value="1">Ding on</option><option value="0">Silent</option></select>
+        </div>
+      </div>
+      <button class="btn ghost" id="testSound">Test the ding</button>
+      <p class="note" id="remindNote">Reminders pop up while this page is open (the tab can be in the background). For reminders when the page is closed, set repeating phone alarms at 8, 10, 12, 2, 4 and 6 o'clock too.</p>
+    </div>
+
+    <div class="card">
+      <h3>Why water saves your teeth</h3>
+      <ul class="clean">
+        <li>Water washes sugar and food bits off your teeth.</li>
+        <li>It keeps your mouth full of spit (saliva), which is your body's own tooth repair liquid.</li>
+        <li>Tap water usually has fluoride, which makes enamel harder for acid to dig into.</li>
+        <li>Drink a few sips after every snack or juice. It's like a mini rinse.</li>
+        <li>After your night brush, the only drink allowed is plain water.</li>
+      </ul>
+      <p class="note">Easy tricks: keep a bottle on your desk, drink one glass with every meal, one when you get home, and one before each screen session.</p>
+    </div>
+  </section>
+
+  <!-- FOOD -->
+  <section class="view" id="view-food" role="tabpanel" aria-labelledby="tab-food" hidden>
+    <div class="card">
+      <h3>The 6 golden food rules</h3>
+      <div class="rules">
+        <div class="rule"><b class="n">1</b><p><strong>Sweets with meals, not between.</strong> A dessert right after lunch is one acid attack. The same candy spread over the afternoon is five.</p></div>
+        <div class="rule"><b class="n">2</b><p><strong>Don't sip sweet drinks slowly.</strong> Juice, soda and milk tea bathe your teeth in sugar the whole time you sip. If you have one, finish it with a meal and use a straw.</p></div>
+        <div class="rule"><b class="n">3</b><p><strong>Finish with a tooth hero.</strong> A cube of cheese, plain yogurt or crunchy veggies at the end of a meal pushes your mouth back to safe.</p></div>
+        <div class="rule"><b class="n">4</b><p><strong>Water after every treat.</strong> Swish and swallow. It washes sugar away right now.</p></div>
+        <div class="rule"><b class="n">5</b><p><strong>Wait 30 minutes to brush after sour stuff.</strong> Acid (oranges, lemon, soda, sour candy) softens enamel for a bit. Brushing right away scrubs the soft layer. Rinse with water first, brush later.</p></div>
+        <div class="rule"><b class="n">6</b><p><strong>Nothing but water after the night brush.</strong> Spit makes less at night, so sugar left on teeth does the most damage while you sleep.</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Food finder</h3>
+      <input type="search" id="foodSearch" placeholder="Search a food, like cheese or soda" aria-label="Search foods">
+      <div class="filters" id="foodFilters">
+        <button aria-pressed="true" data-f="all">All</button>
+        <button aria-pressed="false" data-f="hero">Tooth heroes</button>
+        <button aria-pressed="false" data-f="ok">Sometimes, with meals</button>
+        <button aria-pressed="false" data-f="villain">Hole makers</button>
+      </div>
+      <div class="foods" id="foods"></div>
+      <p class="note" id="foodEmpty" hidden>No match. Try another word.</p>
+    </div>
+  </section>
+
+  <!-- MEALS -->
+  <section class="view" id="view-meals" role="tabpanel" aria-labelledby="tab-meals" hidden>
+    <div class="card">
+      <div class="row spread"><h3>Yummy tooth-safe days</h3><span class="label">No budget limit</span></div>
+      <p class="note">Pick a day. Every plan has sweet stuff only at meal times, a tooth hero at the end, and water all day.</p>
+      <div class="daypick" id="dayPick"></div>
+      <div class="plan" id="plan"></div>
+    </div>
+    <div class="card">
+      <h3>Snack box ideas (between meals)</h3>
+      <ul class="clean">
+        <li>Cheese cubes + cucumber sticks</li>
+        <li>Plain Greek yogurt with a few blueberries stirred in</li>
+        <li>Hard-boiled egg + cherry tomatoes</li>
+        <li>Carrot and celery sticks with hummus</li>
+        <li>Edamame with a pinch of salt</li>
+        <li>Turkey or ham roll-ups with cheese</li>
+        <li>Plain popcorn (brush or floss after, the shells stick)</li>
+        <li>A handful of almonds or cashews (if you're not allergic)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- TIMER -->
+  <section class="view" id="view-timer" role="tabpanel" aria-labelledby="tab-timer" hidden>
+    <div class="card timer">
+      <h3>2-minute brush timer</h3>
+      <svg class="mouth" viewBox="0 0 260 200" aria-hidden="true">
+        <path class="q" id="q0" d="M130 20 C70 20 30 50 22 95 L125 95 L125 20 Z"/>
+        <path class="q" id="q1" d="M130 20 C190 20 230 50 238 95 L135 95 L135 20 Z"/>
+        <path class="q" id="q3" d="M22 105 C30 150 70 180 125 180 L125 105 Z"/>
+        <path class="q" id="q2" d="M238 105 C230 150 190 180 135 180 L135 105 Z"/>
+        <text x="72" y="70" text-anchor="middle">Top left</text>
+        <text x="188" y="70" text-anchor="middle">Top right</text>
+        <text x="188" y="140" text-anchor="middle">Bottom right</text>
+        <text x="72" y="140" text-anchor="middle">Bottom left</text>
+      </svg>
+      <div class="clock" id="clock">2:00</div>
+      <div class="zone" id="zone">Pea-size fluoride toothpaste, soft brush, little circles.</div>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="startBrush">Start</button>
+        <button class="btn ghost" id="resetBrush">Reset</button>
+      </div>
+      <p class="note">When it ends: spit, don't rinse. The leftover toothpaste keeps protecting. The timer ticks off the matching brush mission for you.</p>
+    </div>
+    <div class="card">
+      <h3>Brushing like a pro</h3>
+      <ul class="clean">
+        <li>Tilt the brush toward the gums, small gentle circles. Hard scrubbing hurts gums.</li>
+        <li>Do outside, inside and the chewing tops of every tooth. The back molars get holes the most.</li>
+        <li>Brush your tongue at the end.</li>
+        <li>Floss once a day, best before the night brush. Holes love hiding between teeth where the brush can't reach.</li>
+        <li>New brush every 3 months, or when the bristles splay out.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FACTS -->
+  <section class="view" id="view-facts" role="tabpanel" aria-labelledby="tab-facts" hidden>
+    <div class="card truth">
+      <h3>Real talk about pH water</h3>
+      <p>Alkaline (high pH) water is safe to drink, but it doesn't protect teeth better than normal water. It's back to normal in your mouth within seconds. What actually helps teeth is <strong>fluoride</strong>, and most bottled and alkaline waters have little or none.</p>
+      <div class="vs">
+        <div class="win"><span class="label">Best for teeth</span><strong>Plain tap water</strong><span class="note">Usually has fluoride. Free. Filter it if you like the taste better (most jug filters keep fluoride; reverse osmosis removes it).</span></div>
+        <div><span class="label">Fine</span><strong>pH / alkaline water</strong><span class="note">OK to drink. No extra tooth power. Check the label for fluoride.</span></div>
+        <div><span class="label">Careful</span><strong>Flavored sparkling water</strong><span class="note">No sugar, but a bit acidic. Have it with meals, not all day.</span></div>
+      </div>
+      <p class="note">Ask your parents or dentist whether your home tap water has fluoride. If it doesn't, the dentist may suggest fluoride toothpaste, rinse or varnish.</p>
+    </div>
+    <div class="card">
+      <h3>Infinite budget shopping list</h3>
+      <ul class="clean">
+        <li><strong>Electric toothbrush</strong> with a 2-minute timer and pressure sensor.</li>
+        <li><strong>Water flosser</strong> or floss picks, so flossing is actually fun.</li>
+        <li><strong>Plaque disclosing tablets.</strong> Chew one and plaque turns purple, so you see exactly where you missed.</li>
+        <li><strong>A smart water bottle</strong> that glows when it's time to drink, or one with hour lines printed on the side.</li>
+        <li><strong>Kids' fluoride mouthwash</strong> (age 6 and up, don't swallow).</li>
+        <li><strong>Xylitol gum or mints</strong> (sugar-free) for after meals at school, if you're old enough to chew gum safely.</li>
+        <li><strong>Fancy cheese and fresh veggie snack boxes</strong> every week.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Dentist checklist</h3>
+      <ul class="clean">
+        <li>Checkup and cleaning every 6 months.</li>
+        <li>Ask about <strong>sealants</strong>: a clear coating painted on back teeth that blocks holes. Super worth it.</li>
+        <li>Ask about <strong>fluoride varnish</strong> at each visit.</li>
+        <li>Tell an adult right away if a tooth hurts with sweet, hot or cold food, or you see a brown or black spot.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const LS_KEY = "cavity-shield-v1";
+  const MISSIONS = [
+    { id: "brushAM", t: "Morning brush, 2 minutes", s: "After breakfast. Fluoride toothpaste.", w: "Morning" },
+    { id: "brushNoon", t: "After-lunch brush", s: "Or swish water hard for 30 seconds if you can't brush.", w: "Midday" },
+    { id: "brushPM", t: "Night brush, 2 minutes", s: "The most important one. Spit, don't rinse.", w: "Bedtime" },
+    { id: "floss", t: "Floss between every tooth", s: "Once a day, before the night brush.", w: "Bedtime" },
+    { id: "hero", t: "Ate a tooth hero", s: "Cheese, yogurt, milk, eggs or crunchy veggies.", w: "Any meal" },
+    { id: "waterAfter", t: "Water after sweet or sour stuff", s: "Swish and swallow after treats or juice.", w: "After treats" },
+    { id: "nightWater", t: "Only water after the night brush", s: "No snacks, no milk, no juice in bed.", w: "Bedtime" },
+    { id: "water", t: "Hit my water goal", s: "Ticks itself when you reach your glasses.", w: "All day", auto: true }
+  ];
+  const FOODS = [
+    ["🧀","Cheese","hero","Raises your mouth's pH and coats teeth with calcium.","Eat a cube at the end of a meal."],
+    ["🥛","Plain milk","hero","Calcium and phosphate rebuild enamel.","Plain, not chocolate or strawberry. Not in bed after brushing."],
+    ["🥣","Plain yogurt","hero","Calcium plus good bacteria, low sugar if unsweetened.","Add fresh berries yourself instead of buying sweet yogurt."],
+    ["🥚","Eggs","hero","Vitamin D and phosphorus help teeth stay strong.","Great breakfast before the morning brush."],
+    ["🥕","Carrots & celery","hero","Crunching scrubs teeth and makes lots of spit.","Perfect between-meal snack."],
+    ["🥒","Cucumber","hero","Mostly water, crunchy, zero sugar.","Snack all you want."],
+    ["🥬","Leafy greens","hero","Calcium and folic acid for teeth and gums.","Spinach, kale, broccoli count."],
+    ["🐟","Salmon & fish","hero","Vitamin D helps your body use calcium.","Sushi without sweet sauce is a win."],
+    ["🍗","Chicken & meat","hero","Phosphorus protects enamel, no sugar.","Pair with veggies."],
+    ["🥜","Almonds & nuts","hero","Calcium and protein, very little sugar.","Only if you're not allergic."],
+    ["🫘","Edamame & tofu","hero","Calcium and protein, crunchy or soft.","Salted edamame is an elite snack."],
+    ["💧","Tap water","hero","Washes teeth and usually has fluoride.","The best drink, period."],
+    ["🍬","Xylitol gum","hero","Sugar-free gum makes spit and germs can't eat xylitol.","After meals, if you're old enough for gum."],
+    ["🍎","Apples & pears","ok","Crunchy and juicy, but they have natural sugar.","Eat whole with a meal, then water."],
+    ["🍓","Berries","ok","Vitamins, some sugar.","Best mixed into plain yogurt."],
+    ["🍌","Bananas","ok","Soft and a bit sticky.","With breakfast, then water."],
+    ["🍊","Oranges & citrus","ok","Healthy, but acidic.","With meals. Wait 30 min to brush after."],
+    ["🍞","Whole grain bread","ok","Better than white, but starch can stick.","With a meal, then water."],
+    ["🍿","Plain popcorn","ok","Low sugar, but shells wedge between teeth.","Floss after."],
+    ["🍫","Dark chocolate","ok","Melts off teeth faster than chewy candy.","A small piece right after a meal."],
+    ["🫧","Sparkling water","ok","No sugar, but bubbles make it slightly acidic.","With meals, not sipped all day."],
+    ["🍭","Lollipops & hard candy","villain","Sit in your mouth for ages, one long acid attack.","Skip, or eat a cookie with lunch instead."],
+    ["🧸","Gummies & chewy candy","villain","Glue sugar into the grooves of your back teeth.","The worst kind of candy for holes."],
+    ["🍋","Sour candy","villain","Sugar plus acid, double damage.","If you must, with a meal and then water."],
+    ["🥤","Soda (even diet)","villain","Acid melts enamel, regular soda adds tons of sugar.","Diet still has the acid."],
+    ["⚡","Sports & energy drinks","villain","Very acidic and sugary.","Water is the real sports drink for kids."],
+    ["🧃","Juice","villain","Natural sugar is still sugar, and you sip it slowly.","Eat the whole fruit instead."],
+    ["🧋","Milk tea & boba","villain","Lots of sugar sipped for a long time, chewy pearls.","Ask for 0–25% sugar, drink it with a meal."],
+    ["🍇","Dried fruit & raisins","villain","Sticky sugar that clings to teeth.","Fresh fruit is much better."],
+    ["🥨","Chips & crackers","villain","Starch turns into sugar and packs into back teeth.","Floss and drink water after."],
+    ["🥣","Sugary cereal","villain","Sugar plus starch every morning.","Switch to eggs, oats or plain yogurt."]
+  ];
+  const PLANS = [
+    { n: "Mon", m: [
+      ["Breakfast","Scrambled eggs, whole grain toast, a glass of milk"],
+      ["Snack","Cheese cubes and cucumber sticks, water"],
+      ["Lunch","Teriyaki-free salmon rice bowl with edamame and avocado, orange slices for dessert"],
+      ["Snack","Carrot sticks with hummus, water"],
+      ["Dinner","Roast chicken, broccoli, mashed potato. Dessert: a square of dark chocolate, then water"] ] },
+    { n: "Tue", m: [
+      ["Breakfast","Plain Greek yogurt with blueberries and almonds"],
+      ["Snack","Hard-boiled egg and cherry tomatoes"],
+      ["Lunch","Grilled cheese on whole grain with tomato soup, apple slices"],
+      ["Snack","Edamame, water"],
+      ["Dinner","Beef stir-fry with bok choy and rice, ice cream scoop for dessert, then cheese cube"] ] },
+    { n: "Wed", m: [
+      ["Breakfast","Omelette with spinach and cheese, milk"],
+      ["Snack","Celery with peanut butter (no-sugar kind)"],
+      ["Lunch","Sushi platter (no sweet sauce), miso soup, a few strawberries"],
+      ["Snack","Turkey and cheese roll-ups"],
+      ["Dinner","Wagyu burger in lettuce wrap or bun, sweet potato fries, salad"] ] },
+    { n: "Thu", m: [
+      ["Breakfast","Oatmeal with milk, banana slices and cinnamon"],
+      ["Snack","Cheese stick and cucumber"],
+      ["Lunch","Chicken wrap with veggies, plain yogurt cup"],
+      ["Snack","Plain popcorn, then water and floss"],
+      ["Dinner","Grilled shrimp, quinoa, roasted veggies, a piece of fruit"] ] },
+    { n: "Fri", m: [
+      ["Breakfast","Eggs Benedict-style eggs on toast, milk"],
+      ["Snack","Almonds and a cheese cube"],
+      ["Lunch","Homemade pizza with lots of cheese and veggies, cucumber salad"],
+      ["Snack","Greek yogurt with a few raspberries"],
+      ["Dinner","Steak, mashed cauliflower, green beans. Treat night: cake right after dinner, then water and cheese"] ] },
+    { n: "Sat", m: [
+      ["Breakfast","Avocado toast with poached egg"],
+      ["Snack","Veggie sticks and tzatziki"],
+      ["Lunch","Chicken noodle soup, grilled cheese bites"],
+      ["Snack","Edamame and water"],
+      ["Dinner","Grilled fish tacos with cabbage slaw, watermelon for dessert"] ] },
+    { n: "Sun", m: [
+      ["Breakfast","Pancakes made with yogurt, fresh berries, milk. Brush 30 min later"],
+      ["Snack","Cheese board: cheddar, gouda, cucumber, nuts"],
+      ["Lunch","Roast chicken sandwich, salad, apple"],
+      ["Snack","Boiled egg and carrot sticks"],
+      ["Dinner","Salmon with rice and broccoli, then a small scoop of gelato"] ] }
+  ];
+
+  const NATIVE = window.AndroidBridge || null; // set by the Android app's WebView
+  const MENU_URLS = [
+    "https://raw.githubusercontent.com/paulpolkaisorn-source/Claude-Code-Blud/refs/heads/claude/vibrant-fermat-1c2b11/daily/menu.json",
+    "https://raw.githubusercontent.com/paulpolkaisorn-source/Claude-Code-Blud/refs/heads/main/daily/menu.json"
+  ];
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, "0");
+  const keyFor = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const todayKey = () => keyFor(new Date());
+  const goalForAge = (a) => a <= 3 ? 4 : a <= 8 ? 5 : a <= 13 ? 7 : 8;
+
+  let state = { settings: { age: 10, goal: 7, remind: 45, sound: 1 }, days: {} };
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) state = normalize(JSON.parse(raw)); } catch (e) {}
+
+  function normalize(s) {
+    const out = { settings: { age: 10, goal: 7, remind: 45, sound: 1 }, days: {} };
+    if (s && typeof s === "object") {
+      if (s.settings) Object.assign(out.settings, s.settings);
+      if (s.days && typeof s.days === "object") out.days = s.days;
+    }
+    out.settings.goal = goalForAge(Number(out.settings.age) || 10);
+    return out;
+  }
+  function day(k = todayKey()) {
+    if (!state.days[k]) state.days[k] = { checks: {}, water: 0, acid: 0, lastDrink: 0 };
+    const d = state.days[k];
+    d.checks = d.checks || {}; d.water = d.water || 0; d.acid = d.acid || 0; d.lastDrink = d.lastDrink || 0;
+    return d;
+  }
+  function prune() {
+    const keys = Object.keys(state.days).sort();
+    while (keys.length > 90) delete state.days[keys.shift()];
+  }
+
+  /* ---------- saving: localStorage always, cloud (db) when available ---------- */
+  let dbRef = null, lastCloud = "", saveTimer = null, saving = Promise.resolve();
+  function save() {
+    prune();
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+    if (!dbRef) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const json = JSON.stringify(state);
+      if (json === lastCloud) return;
+      saving = saving.then(() => dbRef.set(JSON.parse(json)).then(() => { lastCloud = json; setSync("Synced to your account"); })
+        .catch(() => setSync("Saved on this device (sync paused)")));
+    }, 800);
+  }
+  function setSync(t) { $("sync").textContent = t; }
+
+  async function connectCloud() {
+    if (!window.claude || !window.claude.use) return;
+    try {
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      if (!db || !user) return;
+      const id = await user.id();
+      if (!id) return;
+      const ref = db.collection("data/users/" + id).doc("log");
+      const snap = await ref.get();
+      if (snap.exists) {
+        const remote = normalize(snap.data());
+        // merge: keep the larger counts per day so offline taps aren't lost
+        for (const [k, d] of Object.entries(state.days)) {
+          const r = remote.days[k];
+          if (!r) { remote.days[k] = d; continue; }
+          r.water = Math.max(r.water || 0, d.water || 0);
+          r.acid = Math.max(r.acid || 0, d.acid || 0);
+          r.lastDrink = Math.max(r.lastDrink || 0, d.lastDrink || 0);
+          r.checks = Object.assign({}, d.checks || {}, r.checks || {});
+        }
+        state = remote;
+        lastCloud = JSON.stringify(snap.data());
+      }
+      dbRef = ref;
+      setSync("Synced to your account");
+      db.doc("menus/latest").onSnapshot((s) => { if (s.exists) setMenu(s.data()); }, () => {});
+      save(); render();
+      ref.onSnapshot((s) => {
+        if (!s.exists) return;
+        const json = JSON.stringify(s.data());
+        if (json === lastCloud || json === JSON.stringify(state)) return;
+        lastCloud = json; state = normalize(s.data());
+        try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+        render();
+      }, () => {});
+    } catch (e) { /* stay local */ }
+  }
+
+  /* ---------- sound ---------- */
+  let audio = null;
+  function ding(times = 2) {
+    if (!Number(state.settings.sound)) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+      for (let i = 0; i < times; i++) {
+        const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + i * 0.22;
+        o.type = "sine"; o.frequency.value = i % 2 ? 1046 : 784;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+        o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 0.4);
+      }
+    } catch (e) {}
+  }
+  document.addEventListener("pointerdown", () => { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }, { once: true });
+
+  let toastT = null;
+  function toast(msg) { const el = $("toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2200); }
+
+  /* ---------- tabs ---------- */
+  const tabs = [...document.querySelectorAll("nav.tabs button")];
+  function show(view) {
+    tabs.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === view)));
+    document.querySelectorAll("section.view").forEach((s) => s.hidden = s.id !== "view-" + view);
+    try { localStorage.setItem(LS_KEY + "-tab", view); } catch (e) {}
+    window.scrollTo({ top: 0 });
+  }
+  tabs.forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
+  document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => show(b.dataset.goto)));
+
+  /* ---------- today ---------- */
+  const tick = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-ink)"/></svg>';
+  function buildChecks() {
+    $("checks").innerHTML = MISSIONS.map((m) =>
+      `<button class="check" id="chk-${m.id}" data-id="${m.id}" aria-pressed="false"${m.auto ? ' aria-disabled="true"' : ""}>
+        <span class="box">${tick}</span>
+        <span><span class="when">${m.w}</span><strong>${m.t}</strong><span class="sub">${m.s}</span></span>
+      </button>`).join("");
+    $("checks").addEventListener("click", (e) => {
+      const b = e.target.closest(".check"); if (!b) return;
+      const m = MISSIONS.find((x) => x.id === b.dataset.id);
+      if (m.auto) { show("water"); return; }
+      const d = day(); d.checks[m.id] = !d.checks[m.id];
+      if (d.checks[m.id]) ding(1);
+      save(); render();
+    });
+  }
+  function dayScore(d) {
+    if (!d) return 0;
+    let done = 0;
+    for (const m of MISSIONS) {
+      if (m.auto ? (d.water || 0) >= state.settings.goal : d.checks && d.checks[m.id]) done++;
+    }
+    return done / MISSIONS.length;
+  }
+  function renderToday() {
+    const d = day(), goal = state.settings.goal;
+    let done = 0;
+    for (const m of MISSIONS) {
+      const on = m.auto ? d.water >= goal : !!d.checks[m.id];
+      if (on) done++;
+      $("chk-" + m.id).setAttribute("aria-pressed", String(on));
+    }
+    $("checkCount").textContent = done + " / " + MISSIONS.length;
+    const pct = Math.round(done / MISSIONS.length * 100);
+    $("ringArc").setAttribute("stroke-dasharray", (264 * pct / 100).toFixed(1) + " 264");
+    $("ringText").textContent = pct + "%";
+    const now = new Date();
+    $("todayLabel").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+    const [title, msg] = pct === 100 ? ["Shield at full power", "Every mission done. Cavities can't touch you today."]
+      : pct >= 60 ? ["Shield almost full", "A few missions left. Don't skip the night brush."]
+      : pct >= 25 ? ["Shield charging", "Good start. Keep ticking things off."]
+      : ["Shield needs charging", "Start with water and your next brush."];
+    $("shieldTitle").textContent = title; $("shieldMsg").textContent = msg;
+
+    $("week").innerHTML = Array.from({ length: 7 }, (_, i) => {
+      const dt = new Date(now); dt.setDate(now.getDate() - (6 - i));
+      const k = keyFor(dt), s = dayScore(state.days[k]);
+      const lvl = s >= 0.99 ? 3 : s >= 0.6 ? 2 : s > 0 ? 1 : 0;
+      return `<div class="day"><div class="dot lvl${lvl}${i === 6 ? " today" : ""}" title="${Math.round(s * 100)}%">${Math.round(s * 100) || ""}</div>${dt.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</div>`;
+    }).join("");
+
+    $("acidNum").textContent = d.acid;
+    $("acidBar").style.width = Math.min(100, d.acid / 5 * 100) + "%";
+    $("acidMsg").textContent = d.acid === 0 ? "Clean mouth. Nice." : d.acid === 1 ? "One attack. Drink water now to wash it off."
+      : d.acid <= 3 ? "Your teeth are under fire. Next sweet thing goes with a meal." : "Too many attacks today. Water, cheese, and no more snacks till dinner.";
+  }
+  $("acidAdd").addEventListener("click", () => { const d = day(); d.acid++; save(); render(); toast("Drink some water to wash that acid off"); });
+  $("acidSub").addEventListener("click", () => { const d = day(); d.acid = Math.max(0, d.acid - 1); save(); render(); });
+
+  /* ---------- water ---------- */
+  function drink(n) {
+    const d = day(), before = d.water;
+    d.water = Math.max(0, Math.min(30, d.water + n));
+    if (n > 0) { d.lastDrink = Date.now(); nudged = false; $("nudge").hidden = true; try { NATIVE && NATIVE.drank(); } catch (e) {} }
+    save(); render();
+    if (n > 0 && before < state.settings.goal && d.water >= state.settings.goal) { ding(3); toast("Water goal smashed!"); }
+    else if (n > 0) toast("+1 glass. Your teeth say thanks");
+  }
+  $("drink").addEventListener("click", () => drink(1));
+  $("drinkQuick").addEventListener("click", () => drink(1));
+  $("nudgeDrink").addEventListener("click", () => drink(1));
+  $("undrink").addEventListener("click", () => drink(-1));
+  function renderWater() {
+    const d = day(), goal = state.settings.goal, n = Math.max(goal, d.water);
+    ["waterNum", "waterNum2"].forEach((id) => $(id).textContent = d.water);
+    ["waterGoal", "waterGoal2"].forEach((id) => $(id).textContent = goal);
+    $("waterMl").textContent = (d.water * 250) + " ml";
+    $("glasses").innerHTML = Array.from({ length: n }, (_, i) =>
+      `<svg class="glass" viewBox="0 0 34 44" aria-hidden="true"><path class="${i < d.water ? "fill" : "empty"}" d="M4 4h26l-3 36H7z"/><path class="rim" d="M4 4h26l-3 36H7z"/></svg>`).join("");
+    $("lastDrink").textContent = d.lastDrink ? "Last glass at " + new Date(d.lastDrink).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) + "." : "No water logged yet today.";
+    $("age").value = String(state.settings.age);
+    $("remind").value = String(state.settings.remind);
+    $("sound").value = String(state.settings.sound);
+  }
+  $("age").innerHTML = Array.from({ length: 16 }, (_, i) => i + 3).map((a) => `<option value="${a}">${a} years (${goalForAge(a)} glasses)</option>`).join("");
+  $("age").addEventListener("change", (e) => { state.settings.age = Number(e.target.value); state.settings.goal = goalForAge(state.settings.age); save(); render(); });
+  $("remind").addEventListener("change", (e) => { state.settings.remind = Number(e.target.value); save(); render(); syncNative(); });
+  function syncNative() { try { NATIVE && NATIVE.setReminder(Number(state.settings.remind)); } catch (e) {} }
+  $("sound").addEventListener("change", (e) => { state.settings.sound = Number(e.target.value); save(); });
+  $("testSound").addEventListener("click", () => { const s = state.settings.sound; state.settings.sound = 1; ding(3); state.settings.sound = s; });
+
+  let nudged = false, baseTitle = document.title, flash = null;
+  function checkReminder() {
+    const mins = Number(state.settings.remind);
+    if (!mins) { $("nudge").hidden = true; return; }
+    const h = new Date().getHours();
+    if (h < 7 || h >= 21) return; // no nagging at night
+    const d = day();
+    const since = d.lastDrink ? (Date.now() - d.lastDrink) / 60000 : (Date.now() - startedAt) / 60000;
+    if (since >= mins && d.water < state.settings.goal + 4) {
+      $("nudgeText").textContent = d.lastDrink ? `It's been ${Math.round(since)} minutes since your last glass. Water time!` : "Water time! Have your first glass of the day.";
+      $("nudge").hidden = false;
+      if (!nudged) {
+        nudged = true; if (!NATIVE) ding(3); // the Android app already rings a notification
+        clearInterval(flash); let on = false;
+        flash = setInterval(() => { document.title = (on = !on) ? "💧 Drink water!" : baseTitle; if (!nudged) { clearInterval(flash); document.title = baseTitle; } }, 1000);
+      }
+    }
+  }
+  const startedAt = Date.now();
+  setInterval(checkReminder, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkReminder(); });
+
+  /* ---------- food ---------- */
+  const TIER = { hero: "Hero", ok: "Sometimes", villain: "Hole maker" };
+  let foodFilter = "all";
+  function renderFoods() {
+    const q = $("foodSearch").value.trim().toLowerCase();
+    const list = FOODS.filter(([em, n, t, why, tip]) => (foodFilter === "all" || t === foodFilter) && (!q || (n + " " + why + " " + tip).toLowerCase().includes(q)));
+    $("foods").innerHTML = list.map(([em, n, t, why, tip]) =>
+      `<div class="food ${t}"><div class="head"><span class="em" aria-hidden="true">${em}</span><h4>${n}</h4><span class="pill">${TIER[t]}</span></div><p>${why}</p><p class="tip">${tip}</p></div>`).join("");
+    $("foodEmpty").hidden = list.length > 0;
+  }
+  $("foodSearch").addEventListener("input", renderFoods);
+  $("foodFilters").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    foodFilter = b.dataset.f;
+    [...$("foodFilters").children].forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    renderFoods();
+  });
+
+  /* ---------- meals ---------- */
+  let planIdx = (new Date().getDay() + 6) % 7;
+  function renderPlan() {
+    $("dayPick").innerHTML = PLANS.map((p, i) => `<button data-i="${i}" aria-pressed="${i === planIdx}">${p.n}</button>`).join("");
+    $("plan").innerHTML = PLANS[planIdx].m.map(([t, txt]) => `<div class="meal"><span class="t">${t}</span><span>${txt}</span></div>`).join("") +
+      `<p class="note">Water with every meal and snack. Brush after breakfast, after lunch and before bed.</p>`;
+  }
+  $("dayPick").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; planIdx = Number(b.dataset.i); renderPlan(); });
+
+  /* ---------- brush timer ---------- */
+  const TOTAL = 120, ZONES = ["Top left: outside, inside, tops", "Top right: outside, inside, tops", "Bottom right: outside, inside, tops", "Bottom left: outside, inside, tops"];
+  let left = TOTAL, running = false, timerId = null, lastZone = -1;
+  function paintTimer() {
+    $("clock").textContent = Math.floor(left / 60) + ":" + pad(left % 60);
+    const elapsed = TOTAL - left, z = Math.min(3, Math.floor(elapsed / 30));
+    for (let i = 0; i < 4; i++) {
+      const el = $("q" + i); el.classList.toggle("on", running && i === z); el.classList.toggle("done", (running || left === 0) && (i < z || left === 0));
+    }
+    if (running) $("zone").textContent = ZONES[z];
+    if (running && z !== lastZone) { if (lastZone !== -1) ding(1); lastZone = z; }
+  }
+  function brushDone() {
+    running = false; clearInterval(timerId); $("startBrush").textContent = "Start";
+    $("zone").textContent = "Done! Spit, don't rinse.";
+    const h = new Date().getHours(), d = day();
+    const id = h < 11 ? "brushAM" : h < 17 ? "brushNoon" : "brushPM";
+    d.checks[id] = true; save(); render(); ding(3);
+    toast(MISSIONS.find((m) => m.id === id).t + " ticked off");
+  }
+  $("startBrush").addEventListener("click", () => {
+    if (running) { running = false; clearInterval(timerId); $("startBrush").textContent = "Resume"; return; }
+    if (left === 0) left = TOTAL;
+    running = true; lastZone = -1; $("startBrush").textContent = "Pause"; paintTimer();
+    timerId = setInterval(() => { left--; paintTimer(); if (left <= 0) { left = 0; brushDone(); paintTimer(); } }, 1000);
+  });
+  $("resetBrush").addEventListener("click", () => {
+    running = false; clearInterval(timerId); left = TOTAL; lastZone = -1; $("startBrush").textContent = "Start";
+    $("zone").textContent = "Pea-size fluoride toothpaste, soft brush, little circles."; paintTimer();
+  });
+
+  /* ---------- daily message from Claude ---------- */
+  const MENU_KEY = LS_KEY + "-menu";
+  let menu = null, inboxIdx = 0;
+  try { const raw = localStorage.getItem(MENU_KEY); if (raw) menu = JSON.parse(raw); } catch (e) {}
+  function validMenu(j) { return j && typeof j === "object" && Array.isArray(j.days); }
+  function setMenu(j) {
+    if (!validMenu(j)) return;
+    if (menu && JSON.stringify(menu) === JSON.stringify(j)) return;
+    menu = j;
+    try { localStorage.setItem(MENU_KEY, JSON.stringify(j)); } catch (e) {}
+    renderInbox();
+  }
+  async function fetchMenu() {
+    for (const url of MENU_URLS) {
+      try {
+        const r = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) continue;
+        const j = await r.json();
+        if (validMenu(j)) { setMenu(j); return; }
+      } catch (e) { /* offline or blocked: keep the cached menu */ }
+    }
+  }
+  function renderInbox() {
+    const now = new Date(), tm = new Date(now); tm.setDate(now.getDate() + 1);
+    const keys = [keyFor(now), keyFor(tm)];
+    const days = validMenu(menu) ? menu.days : [];
+    const picked = keys.map((k) => days.find((d) => d && d.date === k));
+    const fromClaude = picked.some(Boolean);
+    const d = picked[inboxIdx];
+    let meals, tip;
+    if (d && Array.isArray(d.meals)) { meals = d.meals; tip = d.tip || ""; }
+    else { meals = PLANS[((inboxIdx ? tm : now).getDay() + 6) % 7].m; tip = ""; }
+    $("inboxNote").textContent = fromClaude
+      ? (menu.note || "Here's what to eat. Water with every meal!")
+      : "My daily message hasn't arrived yet, so here's a plan from the meal book.";
+    $("inboxWhen").textContent = fromClaude && menu.updated
+      ? "Sent " + new Date(menu.updated).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })
+      : "Your food plan for today and tomorrow";
+    $("inboxPlan").innerHTML = meals.map((m) => {
+      const t = Array.isArray(m) ? m[0] : m && m.t, txt = Array.isArray(m) ? m[1] : m && m.text;
+      return `<div class="meal"><span class="t">${esc(t)}</span><span>${esc(txt)}</span></div>`;
+    }).join("");
+    $("inboxTip").textContent = tip ? "Tooth tip: " + tip : "";
+    $("inboxTip").hidden = !tip;
+    [...$("inboxPick").children].forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.i) === inboxIdx)));
+  }
+  $("inboxPick").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; inboxIdx = Number(b.dataset.i); renderInbox(); });
+
+  /* ---------- Android app hooks ---------- */
+  function takeNativeDrinks() {
+    if (!NATIVE) return;
+    let n = 0; try { n = Number(NATIVE.takePendingDrinks()) || 0; } catch (e) {}
+    if (n > 0) {
+      const d = day(); d.water = Math.min(30, d.water + n); d.lastDrink = Date.now();
+      save(); render(); toast("+" + n + " glass" + (n > 1 ? "es" : "") + " from your notification");
+    }
+  }
+  window.csOnResume = () => { takeNativeDrinks(); fetchMenu(); renderInbox(); render(); };
+  if (NATIVE) $("remindNote").textContent = "Reminders come as phone notifications, even when the app is closed. Tap \"I drank\" on the notification to log a glass. They stay quiet from 9pm to 7am. Claude's menu notification arrives every morning around 7.";
+
+  /* ---------- boot ---------- */
+  function render() { renderToday(); renderWater(); }
+  buildChecks(); renderFoods(); renderPlan(); paintTimer(); render(); renderInbox();
+  syncNative(); takeNativeDrinks(); fetchMenu();
+  try { const t = localStorage.getItem(LS_KEY + "-tab"); if (t && $("view-" + t)) show(t); } catch (e) {}
+  // roll over to a new day at midnight without a reload
+  let shownDay = todayKey();
+  setInterval(() => { if (todayKey() !== shownDay) { shownDay = todayKey(); nudged = false; render(); renderInbox(); fetchMenu(); } }, 60000);
+  connectCloud();
+})();
+</script>
+</body></html>

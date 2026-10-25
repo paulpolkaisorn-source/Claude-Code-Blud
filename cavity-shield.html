@@ -151,6 +151,9 @@ input[type="search"] { font: inherit; width: 100%; padding: 10px 12px; border-ra
 .daypick { display: flex; gap: 6px; flex-wrap: wrap; }
 .daypick button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 6px 10px; font-weight: 800; font-size: .85rem; }
 .daypick button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.inbox { border-color: var(--accent); }
+.avatar { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; flex: none; }
+.bubble { background: var(--surface-2); border-radius: 4px 16px 16px 16px; padding: 12px 14px; font-weight: 600; }
 
 /* timer */
 .timer { display: grid; justify-items: center; gap: 14px; text-align: center; }
@@ -201,6 +204,22 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
 
   <!-- TODAY -->
   <section class="view" id="view-today" role="tabpanel" aria-labelledby="tab-today">
+    <div class="card inbox">
+      <div class="row spread">
+        <div class="row" style="gap:10px">
+          <span class="avatar" aria-hidden="true">C</span>
+          <div style="display:grid"><h3>Message from Claude</h3><span class="note" id="inboxWhen">Your food plan for today and tomorrow</span></div>
+        </div>
+        <div class="daypick" id="inboxPick">
+          <button data-i="0" aria-pressed="true">Today</button>
+          <button data-i="1" aria-pressed="false">Tomorrow</button>
+        </div>
+      </div>
+      <p class="bubble" id="inboxNote"></p>
+      <div class="plan" id="inboxPlan"></div>
+      <p class="note" id="inboxTip"></p>
+    </div>
+
     <div class="card">
       <div class="score">
         <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
@@ -288,7 +307,7 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
         </div>
       </div>
       <button class="btn ghost" id="testSound">Test the ding</button>
-      <p class="note">Reminders pop up while this page is open (the tab can be in the background). For reminders when the page is closed, set repeating phone alarms at 8, 10, 12, 2, 4 and 6 o'clock too.</p>
+      <p class="note" id="remindNote">Reminders pop up while this page is open (the tab can be in the background). For reminders when the page is closed, set repeating phone alarms at 8, 10, 12, 2, 4 and 6 o'clock too.</p>
     </div>
 
     <div class="card">
@@ -517,6 +536,12 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
       ["Dinner","Salmon with rice and broccoli, then a small scoop of gelato"] ] }
   ];
 
+  const NATIVE = window.AndroidBridge || null; // set by the Android app's WebView
+  const MENU_URLS = [
+    "https://raw.githubusercontent.com/paulpolkaisorn-source/Claude-Code-Blud/refs/heads/claude/vibrant-fermat-1c2b11/daily/menu.json",
+    "https://raw.githubusercontent.com/paulpolkaisorn-source/Claude-Code-Blud/refs/heads/main/daily/menu.json"
+  ];
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const $ = (id) => document.getElementById(id);
   const pad = (n) => String(n).padStart(2, "0");
   const keyFor = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
@@ -587,6 +612,7 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
       }
       dbRef = ref;
       setSync("Synced to your account");
+      db.doc("menus/latest").onSnapshot((s) => { if (s.exists) setMenu(s.data()); }, () => {});
       save(); render();
       ref.onSnapshot((s) => {
         if (!s.exists) return;
@@ -694,7 +720,7 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
   function drink(n) {
     const d = day(), before = d.water;
     d.water = Math.max(0, Math.min(30, d.water + n));
-    if (n > 0) { d.lastDrink = Date.now(); nudged = false; $("nudge").hidden = true; }
+    if (n > 0) { d.lastDrink = Date.now(); nudged = false; $("nudge").hidden = true; try { NATIVE && NATIVE.drank(); } catch (e) {} }
     save(); render();
     if (n > 0 && before < state.settings.goal && d.water >= state.settings.goal) { ding(3); toast("Water goal smashed!"); }
     else if (n > 0) toast("+1 glass. Your teeth say thanks");
@@ -717,7 +743,8 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
   }
   $("age").innerHTML = Array.from({ length: 16 }, (_, i) => i + 3).map((a) => `<option value="${a}">${a} years (${goalForAge(a)} glasses)</option>`).join("");
   $("age").addEventListener("change", (e) => { state.settings.age = Number(e.target.value); state.settings.goal = goalForAge(state.settings.age); save(); render(); });
-  $("remind").addEventListener("change", (e) => { state.settings.remind = Number(e.target.value); save(); render(); });
+  $("remind").addEventListener("change", (e) => { state.settings.remind = Number(e.target.value); save(); render(); syncNative(); });
+  function syncNative() { try { NATIVE && NATIVE.setReminder(Number(state.settings.remind)); } catch (e) {} }
   $("sound").addEventListener("change", (e) => { state.settings.sound = Number(e.target.value); save(); });
   $("testSound").addEventListener("click", () => { const s = state.settings.sound; state.settings.sound = 1; ding(3); state.settings.sound = s; });
 
@@ -733,7 +760,7 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
       $("nudgeText").textContent = d.lastDrink ? `It's been ${Math.round(since)} minutes since your last glass. Water time!` : "Water time! Have your first glass of the day.";
       $("nudge").hidden = false;
       if (!nudged) {
-        nudged = true; ding(3);
+        nudged = true; if (!NATIVE) ding(3); // the Android app already rings a notification
         clearInterval(flash); let on = false;
         flash = setInterval(() => { document.title = (on = !on) ? "💧 Drink water!" : baseTitle; if (!nudged) { clearInterval(flash); document.title = baseTitle; } }, 1000);
       }
@@ -801,13 +828,74 @@ ul.clean { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
     $("zone").textContent = "Pea-size fluoride toothpaste, soft brush, little circles."; paintTimer();
   });
 
+  /* ---------- daily message from Claude ---------- */
+  const MENU_KEY = LS_KEY + "-menu";
+  let menu = null, inboxIdx = 0;
+  try { const raw = localStorage.getItem(MENU_KEY); if (raw) menu = JSON.parse(raw); } catch (e) {}
+  function validMenu(j) { return j && typeof j === "object" && Array.isArray(j.days); }
+  function setMenu(j) {
+    if (!validMenu(j)) return;
+    if (menu && JSON.stringify(menu) === JSON.stringify(j)) return;
+    menu = j;
+    try { localStorage.setItem(MENU_KEY, JSON.stringify(j)); } catch (e) {}
+    renderInbox();
+  }
+  async function fetchMenu() {
+    for (const url of MENU_URLS) {
+      try {
+        const r = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) continue;
+        const j = await r.json();
+        if (validMenu(j)) { setMenu(j); return; }
+      } catch (e) { /* offline or blocked: keep the cached menu */ }
+    }
+  }
+  function renderInbox() {
+    const now = new Date(), tm = new Date(now); tm.setDate(now.getDate() + 1);
+    const keys = [keyFor(now), keyFor(tm)];
+    const days = validMenu(menu) ? menu.days : [];
+    const picked = keys.map((k) => days.find((d) => d && d.date === k));
+    const fromClaude = picked.some(Boolean);
+    const d = picked[inboxIdx];
+    let meals, tip;
+    if (d && Array.isArray(d.meals)) { meals = d.meals; tip = d.tip || ""; }
+    else { meals = PLANS[((inboxIdx ? tm : now).getDay() + 6) % 7].m; tip = ""; }
+    $("inboxNote").textContent = fromClaude
+      ? (menu.note || "Here's what to eat. Water with every meal!")
+      : "My daily message hasn't arrived yet, so here's a plan from the meal book.";
+    $("inboxWhen").textContent = fromClaude && menu.updated
+      ? "Sent " + new Date(menu.updated).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })
+      : "Your food plan for today and tomorrow";
+    $("inboxPlan").innerHTML = meals.map((m) => {
+      const t = Array.isArray(m) ? m[0] : m && m.t, txt = Array.isArray(m) ? m[1] : m && m.text;
+      return `<div class="meal"><span class="t">${esc(t)}</span><span>${esc(txt)}</span></div>`;
+    }).join("");
+    $("inboxTip").textContent = tip ? "Tooth tip: " + tip : "";
+    $("inboxTip").hidden = !tip;
+    [...$("inboxPick").children].forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.i) === inboxIdx)));
+  }
+  $("inboxPick").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; inboxIdx = Number(b.dataset.i); renderInbox(); });
+
+  /* ---------- Android app hooks ---------- */
+  function takeNativeDrinks() {
+    if (!NATIVE) return;
+    let n = 0; try { n = Number(NATIVE.takePendingDrinks()) || 0; } catch (e) {}
+    if (n > 0) {
+      const d = day(); d.water = Math.min(30, d.water + n); d.lastDrink = Date.now();
+      save(); render(); toast("+" + n + " glass" + (n > 1 ? "es" : "") + " from your notification");
+    }
+  }
+  window.csOnResume = () => { takeNativeDrinks(); fetchMenu(); renderInbox(); render(); };
+  if (NATIVE) $("remindNote").textContent = "Reminders come as phone notifications, even when the app is closed. Tap \"I drank\" on the notification to log a glass. They stay quiet from 9pm to 7am. Claude's menu notification arrives every morning around 7.";
+
   /* ---------- boot ---------- */
   function render() { renderToday(); renderWater(); }
-  buildChecks(); renderFoods(); renderPlan(); paintTimer(); render();
+  buildChecks(); renderFoods(); renderPlan(); paintTimer(); render(); renderInbox();
+  syncNative(); takeNativeDrinks(); fetchMenu();
   try { const t = localStorage.getItem(LS_KEY + "-tab"); if (t && $("view-" + t)) show(t); } catch (e) {}
   // roll over to a new day at midnight without a reload
   let shownDay = todayKey();
-  setInterval(() => { if (todayKey() !== shownDay) { shownDay = todayKey(); nudged = false; render(); } }, 60000);
+  setInterval(() => { if (todayKey() !== shownDay) { shownDay = todayKey(); nudged = false; render(); renderInbox(); fetchMenu(); } }, 60000);
   connectCloud();
 })();
 </script>

@@ -1,0 +1,28 @@
+{
+  "updated": "2026-10-25T22:00:00+07:00",
+  "note": "Yo twin! First message from me 🦷 Sunday is cheese-board day and Monday starts the week strong. Sweet stuff only at meal times, water after everything.",
+  "days": [
+    {
+      "date": "2026-10-25",
+      "meals": [
+        ["Breakfast", "Fluffy cheese omelette with spinach, whole grain toast, a glass of milk"],
+        ["Snack", "Cheese board: cheddar, gouda, cucumber slices, a few almonds"],
+        ["Lunch", "Grilled salmon rice bowl with edamame, avocado and cucumber. Orange slices for dessert"],
+        ["Snack", "Carrot and celery sticks with hummus, big glass of water"],
+        ["Dinner", "Roast chicken, roasted broccoli, mashed potato. Small scoop of vanilla ice cream right after, then water"]
+      ],
+      "tip": "Ice cream counts as one acid attack only if you eat it right after dinner. Don't save it for a 9pm snack."
+    },
+    {
+      "date": "2026-10-26",
+      "meals": [
+        ["Breakfast", "Plain Greek yogurt with blueberries, sliced banana and crushed almonds"],
+        ["Snack", "Hard-boiled egg and cherry tomatoes"],
+        ["Lunch", "Teriyaki-free chicken sushi rolls, miso soup, a few strawberries"],
+        ["Snack", "Salted edamame and a cheese stick"],
+        ["Dinner", "Beef and broccoli stir-fry with jasmine rice. Finish with a cube of cheese"]
+      ],
+      "tip": "Monday school bottle challenge: finish one full bottle before lunch and refill it."
+    }
+  ]
+}
