@@ -1,33 +1,7 @@
 {
-  "updated": "2026-10-27T06:39:00+07:00",
-  "note": "Tuesday check-in 🫡 Halloween is in 4 days, so the teeth are in training arc mode. Breakfast, water, brush, let's gooo 💧🦷",
+  "updated": "2026-10-28T06:39:00+07:00",
+  "note": "Midweek W 🏆 Halloween is Saturday (I said Friday before, my bad 💀), so you've got 3 more days of training. Water bottle full, let's go 💧",
   "days": [
-    {
-      "date": "2026-10-27",
-      "meals": [
-        [
-          "Breakfast",
-          "Japanese tamagoyaki (rolled omelette, no sugar), small bowl of rice, miso soup"
-        ],
-        [
-          "Snack",
-          "Carrot and cucumber sticks with tzatziki"
-        ],
-        [
-          "Lunch",
-          "Creamy mac and cheese with broccoli bits and grilled chicken strips"
-        ],
-        [
-          "Snack",
-          "Plain yogurt cup with a few raspberries stirred in"
-        ],
-        [
-          "Dinner",
-          "Pan-seared salmon with garlic butter, jasmine rice and sautéed bok choy. Two squares of dark chocolate right after"
-        ]
-      ],
-      "tip": "Chew your veggie sticks slowly. All that crunching makes extra spit, and spit is your teeth's free repair service."
-    },
     {
       "date": "2026-10-28",
       "meals": [
@@ -52,7 +26,7 @@
           "Homemade shrimp and veggie tempura with udon soup. Small scoop of matcha ice cream right after"
         ]
       ],
-      "tip": "Halloween prep: when you get candy Friday, pick chocolate over gummies and sour stuff, and eat it right after dinner."
+      "tip": "Halloween prep: when you get candy on Saturday, pick chocolate over gummies and sour stuff, and eat it right after dinner."
     },
     {
       "date": "2026-10-29",
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "Sticky sauces like gochujang and ketchup hug your teeth. Swish water after the meal to wash them off."
+    },
+    {
+      "date": "2026-10-30",
+      "meals": [
+        [
+          "Breakfast",
+          "Japanese breakfast set: grilled salmon, rice, miso soup and a soft-boiled egg"
+        ],
+        [
+          "Snack",
+          "Cheese cubes with snap peas"
+        ],
+        [
+          "Lunch",
+          "Chicken karaage with salmon onigiri, edamame and crunchy cabbage salad"
+        ],
+        [
+          "Snack",
+          "Plain Greek yogurt with a few blueberries"
+        ],
+        [
+          "Dinner",
+          "Sizzling chicken fajitas with peppers, melted cheese, guacamole and sour cream. A small slice of cheesecake right after"
+        ]
+      ],
+      "tip": "Halloween is tomorrow! Plan it now: candy goes in one bowl after dinner, then water, then brush. No candy grazing all evening."
     }
   ]
 }
