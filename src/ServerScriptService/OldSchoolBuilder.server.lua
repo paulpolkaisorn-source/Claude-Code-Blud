@@ -1,13 +1,14 @@
 --!strict
 --[[
 	OldSchoolBuilder
-	Builds "Old School": a realistic, abandoned one-floor school on a sealed, walled lot. The
-	brick building runs right up to the side and back lot walls, so the only open ground is the
-	big front yard, which holds an overgrown football pitch; the lot wall has no gate or gap.
+	Builds "Old School": a realistic, abandoned one-floor school that fills about three quarters
+	of a sealed, walled lot (200 x 141 studs). The brick building runs right up to the side and
+	back lot walls, so the only open ground is the front yard, with a small overgrown football
+	pitch; the lot wall has no gate or gap.
 
-	Inside: one long hallway with four classrooms, a science lab and a computer lab behind it;
-	the lobby, office, nurse's room, staff lounge, toilets and library in front of it; and a gym
-	at the east end. Walls have a painted or tiled lower half, baseboards and a chair rail;
+	Inside: two hallways; five classrooms between them; two more classrooms, a science lab and a
+	computer lab behind the back one; the lobby, office, nurse's room, staff lounge and toilets
+	at the front; and a gym and a small cafeteria at the east end. Walls have a painted or tiled lower half, baseboards and a chair rail;
 	windows have frames and sills (some smashed); doors have casings and hang open; ceilings
 	have tile grids with tiles missing, and the roof has caved in over Classroom C and the gym.
 
@@ -75,8 +76,8 @@ local SEED = 1987
 local MAX_WORKING_LIGHTS = 40 -- lights that still glow (each one is a PointLight)
 
 local M = Enum.Material
--- The lot is built from z = -17.5 to 182.5 and moved to sit centred on the origin at the end.
-local LOT_MIN_X, LOT_MAX_X, LOT_MIN_Z, LOT_MAX_Z = -130, 130, -17.5, 182.5
+-- The lot is built at x -130..70, z -56.5..84.5 and moved to sit centred on the origin at the end.
+local LOT_MIN_X, LOT_MAX_X, LOT_MIN_Z, LOT_MAX_Z = -130, 70, -56.5, 84.5
 local LOT_WALL = 1.5 -- thickness of the lot wall
 local BASE = 0.2 -- top of the building's concrete foundation
 local FLOOR = 0.3 -- top of the room floors; furniture stands here
@@ -86,16 +87,19 @@ local CEILING = 16 -- top of every wall, underside of the ceiling
 local BX0, BX1, BZ0, BZ1 = LOT_MIN_X + LOT_WALL, LOT_MAX_X - LOT_WALL, LOT_MIN_Z + LOT_WALL, 52
 -- Inside faces of its 2-stud brick walls.
 local IX0, IX1, IZ0, IZ1 = BX0 + 2, BX1 - 2, BZ0 + 2, BZ1 - 2
--- The wall between the classroom wing and the gym.
-local WING_X0, WING_X1 = 70, 72
+-- The wall between the classroom wing and the gym and cafeteria.
+local WING_X0, WING_X1 = 20, 22
 -- Bands from the back of the building to the front (z of inside faces).
-local BACK_Z0, BACK_Z1 = IZ0, 13
+local ROW2_Z0, ROW2_Z1 = IZ0, -26
+local MID_HALL_Z0, MID_HALL_Z1 = -25, -15
+local ROW1_Z0, ROW1_Z1 = -14, 13
 local HALL_Z0, HALL_Z1 = 14, 24
 local FRONT_Z0 = 25
+local DIVIDER_Z0, DIVIDER_Z1 = -27, -25 -- the wall between the cafeteria and the gym
 -- Where the roof has caved in: { x0, x1, z0, z1 } over Classroom C and over the gym.
-local HOLES: { { number } } = { { -56, -48, -6, 2 }, { 95, 103, 14, 24 } }
--- The football pitch in the front yard (inside its touchlines and goal lines).
-local PITCH_X0, PITCH_X1, PITCH_Z0, PITCH_Z1 = -40, 110, 75, 165
+local HOLES: { { number } } = { { -56, -48, -6, 2 }, { 40, 48, 14, 24 } }
+-- The small football pitch in the front yard (inside its touchlines and goal lines).
+local PITCH_X0, PITCH_X1, PITCH_Z0, PITCH_Z1 = -36, 36, 58.5, 80.5
 
 -- Weathered, realistic colours.
 local BRICK = Color3.fromRGB(128, 62, 45)
@@ -162,8 +166,6 @@ local CORK = Color3.fromRGB(150, 116, 76)
 local DUMPSTER = Color3.fromRGB(56, 78, 58)
 local TURF = Color3.fromRGB(98, 116, 60)
 local TURF_DARK = Color3.fromRGB(84, 102, 52)
-local BLEACHER = Color3.fromRGB(150, 152, 150)
-local FABRIC_GREEN = Color3.fromRGB(80, 96, 80)
 local FABRIC_BROWN = Color3.fromRGB(110, 84, 62)
 local CURTAIN = Color3.fromRGB(150, 162, 150)
 local YELLOW = Color3.fromRGB(206, 170, 40)
@@ -253,21 +255,26 @@ local NURSE = room("NurseRoom", -101, -83, FRONT_Z0, IZ1)
 local LOBBY = room("Lobby", -82, -44, FRONT_Z0, IZ1)
 local LOUNGE = room("StaffLounge", -43, -21, FRONT_Z0, IZ1)
 local BOYS = room("BoysToilet", -20, -4, FRONT_Z0, IZ1)
-local GIRLS = room("GirlsToilet", -3, 13, FRONT_Z0, IZ1)
-local LIBRARY = room("Library", 14, WING_X0, FRONT_Z0, IZ1)
-local FRONT_ROOMS: { Room } = { OFFICE, NURSE, LOBBY, LOUNGE, BOYS, GIRLS, LIBRARY }
+local GIRLS = room("GirlsToilet", -3, WING_X0, FRONT_Z0, IZ1)
+local FRONT_ROOMS: { Room } = { OFFICE, NURSE, LOBBY, LOUNGE, BOYS, GIRLS }
 
-local SCIENCE = room("ScienceLab", -6, 31, BACK_Z0, BACK_Z1)
-local COMPUTER = room("ComputerLab", 32, WING_X0, BACK_Z0, BACK_Z1)
-local BACK_ROOMS: { Room } = {
-	room("ClassroomA", IX0, -97, BACK_Z0, BACK_Z1),
-	room("ClassroomB", -96, -67, BACK_Z0, BACK_Z1),
-	room("ClassroomC", -66, -37, BACK_Z0, BACK_Z1),
-	room("ClassroomD", -36, -7, BACK_Z0, BACK_Z1),
+local ROW1_ROOMS: { Room } = {
+	room("ClassroomA", IX0, -97, ROW1_Z0, ROW1_Z1),
+	room("ClassroomB", -96, -67, ROW1_Z0, ROW1_Z1),
+	room("ClassroomC", -66, -37, ROW1_Z0, ROW1_Z1),
+	room("ClassroomD", -36, -7, ROW1_Z0, ROW1_Z1),
+	room("ClassroomE", -6, WING_X0, ROW1_Z0, ROW1_Z1),
+}
+local SCIENCE = room("ScienceLab", -96, -59, ROW2_Z0, ROW2_Z1)
+local COMPUTER = room("ComputerLab", -58, -21, ROW2_Z0, ROW2_Z1)
+local ROW2_ROOMS: { Room } = {
+	room("ClassroomF", IX0, -97, ROW2_Z0, ROW2_Z1),
 	SCIENCE,
 	COMPUTER,
+	room("ClassroomG", -20, WING_X0, ROW2_Z0, ROW2_Z1),
 }
-local GYM = room("Gym", WING_X1, IX1, IZ0, IZ1)
+local GYM = room("Gym", WING_X1, IX1, DIVIDER_Z1, IZ1)
+local CAFETERIA = room("Cafeteria", WING_X1, IX1, IZ0, DIVIDER_Z0)
 
 -- // STATE
 local randomState = SEED
@@ -1147,9 +1154,8 @@ local function buildShell(model: Instance): ()
 		end
 	end
 	table.insert(front, door(-68, -58, 11))
-	table.insert(front, door(86, 92, 8, 70, 1))
-	addWindows(front, WING_X1, 85, "high", 0.3)
-	addWindows(front, 93, gymMid - 4, "high", 0.3) -- the gap behind the hoop has no window
+	table.insert(front, door(WING_X1 + 4, WING_X1 + 10, 8, 70, 1))
+	addWindows(front, WING_X1 + 11, gymMid - 4, "high", 0.3) -- the gap behind the hoop has no window
 	addWindows(front, gymMid + 4, IX1, "high", 0.3)
 	wall(folder, "FrontWall", "X", BX0, BX1, IZ1, BZ1, front, BRICK, M.Brick, lined(-1))
 	-- Cast-iron radiators under the tall front windows.
@@ -1164,24 +1170,28 @@ local function buildShell(model: Instance): ()
 
 	-- Back and sides face the lot wall, so they only have high windows above it.
 	local back: { Opening } = {}
-	for _, r in BACK_ROOMS do
+	for _, r in ROW2_ROOMS do
 		addWindows(back, r.x0, r.x1, "high", 0.35)
 	end
-	addWindows(back, WING_X1, gymMid - 4, "high", 0.3)
-	addWindows(back, gymMid + 4, IX1, "high", 0.3)
+	addWindows(back, WING_X1, IX1, "high", 0.3)
 	wall(folder, "BackWall", "X", BX0, BX1, BZ0, IZ0, back, BRICK, M.Brick, lined(1))
 	local west: { Opening } = {}
-	for _, span in { { BACK_Z0, BACK_Z1 }, { HALL_Z0, HALL_Z1 }, { FRONT_Z0, IZ1 } } do
+	for _, span in { { ROW2_Z0, ROW2_Z1 }, { MID_HALL_Z0, MID_HALL_Z1 }, { ROW1_Z0, ROW1_Z1 }, { HALL_Z0, HALL_Z1 }, { FRONT_Z0, IZ1 } } do
 		addWindows(west, span[1], span[2], "high", 0.35)
 	end
 	wall(folder, "WestWall", "Z", IZ0, IZ1, BX0, IX0, west, BRICK, M.Brick, lined(1))
 	local east: { Opening } = {}
-	addWindows(east, IZ0, IZ1, "high", 0.3)
+	addWindows(east, IZ0, DIVIDER_Z0, "high", 0.3)
+	addWindows(east, DIVIDER_Z1, IZ1, "high", 0.3)
 	wall(folder, "EastWall", "Z", IZ0, IZ1, IX1, BX1, east, BRICK, M.Brick, lined(-1))
 
-	-- The wing wall between the classrooms and the gym, with the hallway's double doorway.
-	wall(folder, "WingWall", "Z", IZ0, IZ1, WING_X0, WING_X1, { door(HALL_Z0 + 1, HALL_Z1 - 1, 10) }, PLASTER, M.Plaster, {
-		paint(-1, CLASS_PAINT),
+	-- The wing wall: both hallways open into the gym through double doorways.
+	wall(folder, "WingWall", "Z", IZ0, IZ1, WING_X0, WING_X1, {
+		door(HALL_Z0 + 1, HALL_Z1 - 1, 10),
+		door(MID_HALL_Z0 + 1, MID_HALL_Z1 - 1, 10),
+	}, PLASTER, M.Plaster, { paint(-1, CLASS_PAINT), paint(1, GYM_PAINT) })
+	wall(folder, "GymDivider", "X", WING_X1, IX1, DIVIDER_Z0, DIVIDER_Z1, { door(WING_X1 + 3, WING_X1 + 9, 10) }, PLASTER, M.Plaster, {
+		paint(-1, GYM_PAINT),
 		paint(1, GYM_PAINT),
 	})
 
@@ -1191,8 +1201,6 @@ local function buildShell(model: Instance): ()
 		for _, r in rooms do
 			if r == LOBBY then
 				table.insert(list, { from = -76, to = -50, bottom = 0, top = 12 })
-			elseif r == LIBRARY then
-				table.insert(list, door(44, 50, 9, between(40, 85), toward))
 			else
 				local leaf: number? = if random() < 0.8 then between(40, 90) else nil
 				table.insert(list, door(r.x1 - 6, r.x1 - 2, 8, leaf, toward))
@@ -1200,11 +1208,16 @@ local function buildShell(model: Instance): ()
 		end
 		return list
 	end
-	local frontDoors = bandDoors(FRONT_ROOMS, -1)
-	local backDoors = bandDoors(BACK_ROOMS, 1)
-	wall(folder, "HallWallFront", "X", IX0, WING_X0, HALL_Z1, FRONT_Z0, frontDoors, PLASTER, M.Plaster, { corridor(-1), paint(1, ROOM_PAINT) })
-	wall(folder, "HallWallBack", "X", IX0, WING_X0, BACK_Z1, HALL_Z0, backDoors, PLASTER, M.Plaster, { paint(-1, CLASS_PAINT), corridor(1) })
-	hallOpenings.Low, hallOpenings.High = backDoors, frontDoors
+	local w1 = bandDoors(FRONT_ROOMS, -1)
+	local w2 = bandDoors(ROW1_ROOMS, 1)
+	local w3: { Opening } = {}
+	local w4 = bandDoors(ROW2_ROOMS, 1)
+	wall(folder, "HallWall1", "X", IX0, WING_X0, HALL_Z1, FRONT_Z0, w1, PLASTER, M.Plaster, { corridor(-1), paint(1, ROOM_PAINT) })
+	wall(folder, "HallWall2", "X", IX0, WING_X0, ROW1_Z1, HALL_Z0, w2, PLASTER, M.Plaster, { paint(-1, CLASS_PAINT), corridor(1) })
+	wall(folder, "HallWall3", "X", IX0, WING_X0, MID_HALL_Z1, ROW1_Z0, w3, PLASTER, M.Plaster, { corridor(-1), paint(1, CLASS_PAINT) })
+	wall(folder, "HallWall4", "X", IX0, WING_X0, ROW2_Z1, MID_HALL_Z0, w4, PLASTER, M.Plaster, { paint(-1, CLASS_PAINT), corridor(1) })
+	hallOpenings.FrontLow, hallOpenings.FrontHigh = w2, w1
+	hallOpenings.MidLow, hallOpenings.MidHigh = w4, w3
 
 	-- Walls between neighbouring rooms.
 	local function partitions(prefix: string, rooms: { Room }, z0: number, z1: number, color: Color3): ()
@@ -1214,7 +1227,8 @@ local function buildShell(model: Instance): ()
 		end
 	end
 	partitions("Front", FRONT_ROOMS, FRONT_Z0, IZ1, ROOM_PAINT)
-	partitions("Back", BACK_ROOMS, BACK_Z0, BACK_Z1, CLASS_PAINT)
+	partitions("Row1", ROW1_ROOMS, ROW1_Z0, ROW1_Z1, CLASS_PAINT)
+	partitions("Row2", ROW2_ROOMS, ROW2_Z0, ROW2_Z1, CLASS_PAINT)
 end
 
 --- Ceiling with its tile grid, roof deck, parapet and rooftop units. Kept in their own folder
@@ -1235,17 +1249,17 @@ local function buildRoof(model: Instance): ()
 	box(folder, "CopingBack", BX0, top + 1.5, BZ0, BX1, top + 1.7, BZ0 + 1, CONCRETE, M.Concrete)
 	box(folder, "CopingWest", BX0, top + 1.5, BZ0 + 1, BX0 + 1, top + 1.7, BZ1 - 1, CONCRETE, M.Concrete)
 	box(folder, "CopingEast", BX1 - 1, top + 1.5, BZ0 + 1, BX1, top + 1.7, BZ1 - 1, CONCRETE, M.Concrete)
-	for index, spot in { { -90, 0 }, { -20, 4 }, { 40, -6 }, { 50, 36 }, { 110, 0 } } do
+	for index, spot in { { -90, 0 }, { -20, 4 }, { -40, -40 }, { 40, 30 }, { 50, -40 } } do
 		local x, z = spot[1], spot[2]
 		box(folder, `AirUnit{index}`, x - 3, top, z - 3, x + 3, top + 2.4, z + 3, tint(RUST, 0.1), M.CorrodedMetal)
 		box(folder, `AirUnit{index}Fan`, x - 2, top + 2.4, z - 2, x + 2, top + 2.5, z + 2, BLACK, M.Metal)
 		box(folder, `AirUnit{index}Duct`, x + 3, top, z - 0.8, x + 6, top + 1.6, z + 0.8, METAL, M.Metal)
 	end
-	for index, spot in { { -110, 20 }, { -60, -8 }, { 0, -10 }, { 30, 10 }, { 84, -5 }, { 95, 40 } } do
+	for index, spot in { { -110, 20 }, { -60, -8 }, { 0, -10 }, { -30, -45 }, { 10, 30 }, { 45, 40 } } do
 		box(folder, `Vent{index}`, spot[1] - 0.6, top, spot[2] - 0.6, spot[1] + 0.6, top + 1.4, spot[2] + 0.6, METAL, M.Metal)
 	end
 	box(folder, "RoofHatch", -30, top, -6, -26, top + 0.6, -2, METAL, M.Metal)
-	for index, spot in { { -100, -10, 8, 6 }, { 20, 0, 10, 5 }, { 112, 30, 6, 9 } } do
+	for index, spot in { { -100, -10, 8, 6 }, { -20, -40, 10, 5 }, { 30, 0, 6, 9 } } do
 		local water = box(folder, `RoofPuddle{index}`, spot[1], top, spot[2], spot[1] + spot[3], top + 0.03, spot[2] + spot[4], WATER, M.Glass)
 		water.Transparency = 0.2
 		water.Reflectance = 0.2
@@ -1289,9 +1303,12 @@ local function buildRoof(model: Instance): ()
 			end
 		end
 	end
-	-- Exposed steel trusses over the gym.
+	-- Exposed steel trusses over the gym and cafeteria.
 	local trusses = 0
 	for z = IZ0 + 4, IZ1 - 4, 8 do
+		if z + 0.3 > DIVIDER_Z0 and z - 0.3 < DIVIDER_Z1 then
+			continue
+		end
 		local spans: { { number } } = { { WING_X1, IX1 } }
 		for _, hole in HOLES do
 			if z + 0.3 > hole[3] and z - 0.3 < hole[4] then
@@ -1331,7 +1348,7 @@ local function buildClassroom(sections: Instance, r: Room, description: string, 
 	trashCan(folder, "TrashCan", x0 + 4.5, cz + 10.5, random() < mess)
 
 	-- Student desks in rows of four, some knocked over.
-	local rows = math.floor((x1 - x0 - 11) / 4)
+	local rows = math.min(5, math.floor((x1 - x0 - 11) / 4))
 	for row = 1, rows do
 		for column = 1, 4 do
 			local x, z = x0 + 6 + row * 4, cz - 15 + column * 6
@@ -1350,7 +1367,7 @@ local function buildClassroom(sections: Instance, r: Room, description: string, 
 	for index = 1, 3 do
 		local px = x0 + (x1 - x0) * 0.25 * index
 		local w, h = between(2, 3.2), between(2.5, 3.5)
-		local f = frame(px, FLOOR + 6, z0 + 0.02, 0, 0, if index == 2 then between(-18, 18) else 0)
+		local f = frame(px, FLOOR + 6, z0 + 0.12, 0, 0, if index == 2 then between(-18, 18) else 0)
 		piece(folder, `Poster{index}`, f, -w / 2, 0, -0.02, w / 2, h, 0.02, pick(POSTER_COLORS), M.SmoothPlastic)
 	end
 	wallBoard(folder, "NoticeBoard", "X", x0 + 5, x0 + 13, FLOOR + 5, FLOOR + 8.5, z1, -1, CORK, M.Fabric, 5)
@@ -1416,8 +1433,8 @@ local function buildScienceLab(sections: Instance): ()
 		for column = 1, #line do
 			if string.sub(line, column, column) == "1" then
 				cells += 1
-				local x, y = r.x0 + 6 + column * 0.55, FLOOR + 10.5 - row * 0.6
-				box(folder, `Element{cells}`, x, y, r.z0, x + 0.48, y + 0.52, r.z0 + 0.04, groupColors[(column % #groupColors) + 1], M.SmoothPlastic)
+				local x, y = r.x0 + 6 + column * 0.55, FLOOR + 9.4 - row * 0.6
+				box(folder, `Element{cells}`, x, y, r.z0 + 0.1, x + 0.48, y + 0.52, r.z0 + 0.14, groupColors[(column % #groupColors) + 1], M.SmoothPlastic)
 			end
 		end
 	end
@@ -1490,58 +1507,6 @@ local function buildComputerLab(sections: Instance): ()
 	ceilingDamage(folder, r, 5)
 end
 
---- Library: rows of double-sided shelves (one toppled onto the next), reading tables, a desk.
-local function buildLibrary(sections: Instance): ()
-	local r = LIBRARY
-	local folder = newSection(sections, r.name, "The library: rows of bookshelves, one toppled against the next with books spilled everywhere, reading tables and the librarian's desk.")
-	box(folder, "Floor", r.x0, BASE, r.z0, r.x1, FLOOR, r.z1, CARPET, M.Carpet)
-	shelving(folder, "WallShelfWest", frame(r.x0, FLOOR, 46, 180), 16, 1.5, 9, WOOD_DARK, M.Wood, "books", 0.8)
-	shelving(folder, "WallShelfEast", frame(r.x1, FLOOR, 30, 0), 16, 1.5, 9, WOOD_DARK, M.Wood, "books", 0.8)
-	local length = 14
-	local function doubleShelf(name: string, f: Frame): ()
-		shelving(folder, `{name}A`, f, length, 1.4, 8, tint(WOOD_DARK, 0.05), M.Wood, "books", 0.5)
-		shelving(folder, `{name}B`, child(f, 0, 0, length, 180), length, 1.4, 8, tint(WOOD_DARK, 0.05), M.Wood, "books", 0.5)
-	end
-	for index, x in { 21, 28, 35, 58, 64 } do
-		if x == 28 then
-			-- Toppled toward +x, its top resting against the next row.
-			local base = frame(x + 1.5, FLOOR, 29, 0, 0, -28)
-			doubleShelf(`Shelf{index}`, child(base, -1.5, 0, 0, 0))
-		else
-			doubleShelf(`Shelf{index}`, frame(x, FLOOR, 29, 0))
-		end
-	end
-	for index = 1, 26 do
-		local f = frame(between(30.5, 33), FLOOR + 0.15, between(29, 43), between(0, 360), between(-10, 10), between(-80, 80))
-		piece(folder, `SpilledBook{index}`, f, -0.6, -0.15, -0.45, 0.6, 0.15, 0.45, pick(BOOK_COLORS), M.Fabric)
-	end
-	for index, z in { 36, 43 } do
-		local name = `ReadingTable{index}`
-		tableTop(folder, name, frame(47, FLOOR, z, 0), 3, 1.5, 2.6, tint(WOOD, 0.06), M.Wood)
-		for c, spot in { { -1.5, -2.3 }, { 1.5, -2.3 }, { -1.5, 2.3 }, { 1.5, 2.3 } } do
-			looseChair(folder, `{name}Chair{c}`, 47 + spot[1], z + spot[2], if spot[2] < 0 then -90 else 90, random() < 0.25)
-		end
-		box(folder, `{name}LampBase`, 46.6, FLOOR + 2.6, z - 0.4, 47.4, FLOOR + 2.8, z + 0.4, GOLD, M.Metal)
-		box(folder, `{name}LampShade`, 46.4, FLOOR + 3.6, z - 0.6, 47.6, FLOOR + 4.2, z + 0.6, FABRIC_GREEN, M.Glass)
-		beam(folder, `{name}LampStem`, Vector3.new(47, FLOOR + 2.8, z), Vector3.new(47, FLOOR + 3.6, z), 0.1, 0.1, GOLD, M.Metal)
-	end
-	box(folder, "DeskFront", 51, FLOOR, 27.5, 56.5, FLOOR + 3.4, 28, WOOD_DARK, M.Wood)
-	box(folder, "DeskTop", 51, FLOOR + 3.4, 27.5, 56.5, FLOOR + 3.6, 30.5, WOOD_DARK, M.Wood)
-	box(folder, "DeskSideA", 51, FLOOR, 28, 51.4, FLOOR + 3.4, 30.5, WOOD_DARK, M.Wood)
-	box(folder, "DeskSideB", 56.1, FLOOR, 28, 56.5, FLOOR + 3.4, 30.5, WOOD_DARK, M.Wood)
-	computer(folder, "DeskPC", frame(53.8, FLOOR + 3.6, 29.2, 90), false)
-	looseChair(folder, "DeskChair", 53.8, 32, -90, false)
-	box(folder, "CardCatalog", 38.5, FLOOR, 26, 41, FLOOR + 4.5, 28.5, WOOD, M.Wood)
-	for row = 1, 4 do
-		for column = 1, 3 do
-			box(folder, `CatalogDrawer{row}_{column}`, 38.6 + column * 0.75 - 0.6, FLOOR + row * 1.05 - 0.6, 28.5, 38.6 + column * 0.75, FLOOR + row * 1.05, 28.55, WOOD_DARK, M.Wood)
-		end
-	end
-	box(folder, "BookCart", 50, FLOOR + 0.5, 33, 53, FLOOR + 3, 34.5, METAL, M.Metal)
-	papers(folder, "Paper", 16, r.x0 + 3, r.z0 + 2, r.x1 - 3, r.z1 - 3)
-	roomLights(folder, r, 10, 0.12)
-	ceilingDamage(folder, r, 6)
-end
 
 --- Office: ransacked principal's desk, old computer, filing cabinets and a bookcase.
 local function buildOffice(sections: Instance): ()
@@ -1844,7 +1809,7 @@ local function buildGym(sections: Instance): ()
 		count += 1
 		box(folder, `CourtLine{count}`, x0, FLOOR, z0, x1, FLOOR + 0.02, z1, lineColor, M.SmoothPlastic)
 	end
-	local cx0, cx1, cz0, cz1 = cx - 14, cx + 14, r.z0 + 6, r.z1 - 6
+	local cx0, cx1, cz0, cz1 = cx - 11, cx + 11, r.z0 + 6, r.z1 - 6
 	line(cx0, cz0, cx0 + 0.3, cz1)
 	line(cx1 - 0.3, cz0, cx1, cz1)
 	line(cx0 + 0.3, cz0, cx1 - 0.3, cz0 + 0.3)
@@ -1876,13 +1841,13 @@ local function buildGym(sections: Instance): ()
 	piece(folder, "HoopFrontBoard", frame(cx, FLOOR + 11, r.z1 - 2.8, 0, 25, 12), -3, -4, 0, 3, 0, 0.3, WHITE, M.SmoothPlastic)
 	piece(folder, "HoopFrontRim", frame(cx - 2, FLOOR, r.z1 - 9, 30), -0.8, 0, -0.8, 0.8, 0.15, 0.8, RIM, M.Metal)
 	-- Bleachers along the east wall.
-	for tier = 1, 4 do
-		box(folder, `Bleacher{tier}`, r.x1 - 2 * (5 - tier), FLOOR + (tier - 1) * 1.2, mid - 19, r.x1, FLOOR + tier * 1.2, mid + 19, tint(WOOD, 0.04), M.WoodPlanks)
+	for tier = 1, 3 do
+		box(folder, `Bleacher{tier}`, r.x1 - 2 * (4 - tier), FLOOR + (tier - 1) * 1.2, mid - 19, r.x1, FLOOR + tier * 1.2, mid + 19, tint(WOOD, 0.04), M.WoodPlanks)
 	end
 	box(folder, "MatStackLow", r.x0 + 1, FLOOR, r.z1 - 10, r.x0 + 7, FLOOR + 0.8, r.z1 - 4, MAT_BLUE, M.Fabric)
 	box(folder, "MatStackHigh", r.x0 + 1, FLOOR + 0.8, r.z1 - 10, r.x0 + 7, FLOOR + 1.6, r.z1 - 4, MAT_RED, M.Fabric)
 	piece(folder, "MatLoose", frame(r.x0 + 12, FLOOR, r.z1 - 18, 22), -3, 0, -2.5, 3, 0.8, 2.5, MAT_BLUE, M.Fabric)
-	beam(folder, "ClimbingRope", Vector3.new(r.x0 + 8, CEILING - 1.4, IZ0 + 20), Vector3.new(r.x0 + 8.6, FLOOR + 1, IZ0 + 20.4), 0.3, 0.3, BEIGE, M.Fabric)
+	beam(folder, "ClimbingRope", Vector3.new(r.x0 + 8, CEILING - 1.4, -1), Vector3.new(r.x0 + 8.6, FLOOR + 1, -0.6), 0.3, 0.3, BEIGE, M.Fabric)
 	box(folder, "Scoreboard", r.x0, FLOOR + 11, HALL_Z0 + 1, r.x0 + 0.4, FLOOR + 14, HALL_Z1 - 1, BLACK, M.SmoothPlastic)
 	for index = 1, 4 do
 		local z = HALL_Z0 + 0.5 + index * 1.6
@@ -1898,8 +1863,58 @@ local function buildGym(sections: Instance): ()
 	puddle(folder, "Puddle", hx - 5, hz - 4, hx + 4, hz + 5)
 	beam(folder, "FallenTruss", Vector3.new(hx - 6, FLOOR + 0.7, hz + 1), Vector3.new(hx + 5, FLOOR + 4, hz - 3), 0.6, 1.4, METAL, M.Metal)
 	weeds(folder, "Moss", 10, hx - 4, hz - 4, hx + 4, hz + 4, FLOOR)
-	highBays(folder, { cx - 12, cx + 12 }, { IZ0 + 16, IZ0 + 40, IZ0 + 56 }, 0.25)
-	hangingLight(folder, "LooseLight", cx - 8, IZ0 + 48)
+	highBays(folder, { cx - 12, cx + 12 }, { r.z0 + 12, r.z0 + 36, r.z0 + 60 }, 0.25)
+	hangingLight(folder, "LooseLight", cx - 8, r.z0 + 50)
+end
+
+--- Cafeteria: a serving counter, four long tables with benches, vending machines and trash.
+local function buildCafeteria(sections: Instance): ()
+	local r = CAFETERIA
+	local folder = newSection(sections, r.name, "A small cafeteria behind the gym: a serving counter, long tables with benches, dead vending machines and trays left behind.")
+	box(folder, "Floor", r.x0, BASE, r.z0, r.x1, FLOOR, r.z1, tint(VINYL, 0.04), M.CeramicTiles)
+	local cx = (r.x0 + r.x1) / 2
+	local sx = r.x1 - 0.25
+	box(folder, "Counter", sx - 3.5, FLOOR, r.z0 + 3, sx, FLOOR + 3.4, r.z0 + 15, STEEL, M.Metal)
+	box(folder, "CounterTop", sx - 3.7, FLOOR + 3.4, r.z0 + 3, sx, FLOOR + 3.6, r.z0 + 15, STEEL, M.Metal)
+	local guard = box(folder, "SneezeGuard", sx - 1.7, FLOOR + 5, r.z0 + 3.5, sx - 1.6, FLOOR + 6.4, r.z0 + 14.5, GLASS, M.Glass)
+	guard.Transparency = 0.6
+	box(folder, "MenuBoard", sx - 0.15, FLOOR + 8, r.z0 + 4, sx, FLOOR + 11, r.z0 + 12, BLACK, M.Slate)
+	local count = 0
+	for _, x in { cx - 9, cx + 7 } do
+		for _, z in { r.z0 + 7, r.z0 + 18 } do
+			count += 1
+			local name = `Table{count}`
+			local f = frame(x, FLOOR, z, if random() < 0.25 then between(-10, 10) else 0)
+			piece(folder, `{name}Top`, f, -6, 2.5, -1.5, 6, 2.7, 1.5, tint(WOOD, 0.08), M.Wood)
+			for leg, lx in { -5, 5 } do
+				piece(folder, `{name}Leg{leg}`, f, lx - 0.3, 0, -1.2, lx + 0.3, 2.5, 1.2, METAL, M.Metal)
+			end
+			for bench, offset in { -2.8, 2.8 } do
+				if random() < 0.15 then
+					piece(folder, `{name}Bench{bench}`, frame(x, FLOOR + 0.4, z + offset * 1.25, between(-6, 6), 90), -5.5, -0.4, -0.4, 5.5, 0.4, 0.4, tint(WOOD, 0.08), M.Wood)
+				else
+					piece(folder, `{name}Bench{bench}Seat`, f, -5.5, 1.5, offset - 0.4, 5.5, 1.65, offset + 0.4, tint(WOOD, 0.08), M.Wood)
+					for leg, lx in { -4.5, 4.5 } do
+						piece(folder, `{name}Bench{bench}Leg{leg}`, f, lx - 0.2, 0, offset - 0.3, lx + 0.2, 1.5, offset + 0.3, METAL, M.Metal)
+					end
+				end
+			end
+			for tray = 1, 2 do
+				local tf = child(f, between(-4.5, 4.5), 2.7, between(-0.6, 0.6), between(-20, 20))
+				piece(folder, `{name}Tray{tray}`, tf, -0.8, 0, -0.6, 0.8, 0.08, 0.6, Color3.fromRGB(150, 120, 90), M.SmoothPlastic)
+			end
+		end
+	end
+	for index = 1, 2 do
+		local z = r.z0 + 2 + (index - 1) * 4
+		box(folder, `Vending{index}`, r.x0 + 0.25, FLOOR, z, r.x0 + 3.25, FLOOR + 7.5, z + 3.5, if index == 2 then Color3.fromRGB(40, 70, 130) else RED, M.Metal)
+		local glass = box(folder, `Vending{index}Glass`, r.x0 + 3.25, FLOOR + 2.5, z + 0.3, r.x0 + 3.3, FLOOR + 7, z + 2.4, GLASS, M.Glass)
+		glass.Transparency = if index == 2 then 1 else 0.4
+	end
+	shards(folder, "VendingGlass", r.x0 + 5, r.z0 + 8, 6)
+	trashCan(folder, "TrashCan", cx, r.z1 - 3, true)
+	papers(folder, "Napkin", 14, r.x0 + 5, r.z0 + 2, r.x1 - 5, r.z1 - 2)
+	highBays(folder, { cx - 10, cx + 10 }, { r.z0 + 9, r.z0 + 17 }, 0.2)
 end
 
 -- Outside ------------------------------------------------------------------------------------
@@ -1940,7 +1955,7 @@ local function buildLotWalls(model: Instance): ()
 		wallBox(folder, `Wall{segments}Cap`, axis, from, to, 6, 6.4, line - 1, line + 1, CONCRETE, M.Concrete)
 	end
 	local south, west, east = LOT_MAX_Z - half, LOT_MIN_X + half, LOT_MAX_X - half
-	local southX = { west, -104, -79, -54, -29, -4, 21, 46, 71, 96, east }
+	local southX = { west, -105, -80, -55, -30, -5, 20, 45, east }
 	for index, x in southX do
 		pillar(x, south)
 		local nextX = southX[index + 1]
@@ -1949,7 +1964,7 @@ local function buildLotWalls(model: Instance): ()
 		end
 	end
 	for _, x in { west, east } do
-		local zs = { BZ1, 78, 104, 130, 156, south }
+		local zs = { BZ1, 68, south }
 		for index, z in zs do
 			if index > 1 and index < #zs then
 				pillar(x, z)
@@ -1996,59 +2011,46 @@ local function buildEntrance(sections: Instance): ()
 	ivy(folder, "IvyMiddle", "X", BZ1, 1, -83, -76, 10, BASE)
 	ivy(folder, "IvyCenter", "X", BZ1, 1, 8, 13, 12, BASE)
 	ivy(folder, "IvyEast", "X", BZ1, 1, BX1 - 10, BX1 - 1, 14, BASE)
-	for index, spot in { { -118, 54 }, { -100, 54.5 }, { -86, 54 }, { -40, 54.5 }, { -20, 54 }, { 30, 54.5 }, { 60, 54 }, { 112, 54.5 } } do
+	for index, spot in { { -100, 54.5 }, { -86, 54 }, { -40, 54 }, { -20, 54 }, { 4, 54 }, { 60, 54 } } do
 		local size = between(2.5, 4)
 		piece(folder, `Bush{index}`, frame(spot[1], 0, spot[2], between(0, 40)), -size / 2, 0, -size / 2, size / 2, size * 0.8, size / 2, tint(LEAVES, 0.12), M.LeafyGrass)
 	end
 end
 
---- Front yard west of the walkway: the walkway itself, cracked asphalt with old games painted on
---- it, a basketball hoop, picnic tables, lamps, a dumpster and dead trees.
+--- Front yard beside the walkway: cracked asphalt with old games painted on it, a basketball
+--- hoop, a dumpster, a lamp and a dead tree.
 local function buildSchoolyard(sections: Instance): ()
-	local folder = newSection(sections, "Schoolyard", "The front yard beside the walkway: weedy asphalt with faded games, a dumpster, picnic tables and dead trees, sealed in by the lot wall.")
+	local folder = newSection(sections, "Schoolyard", "The narrow front yard: a cracked walkway, weedy asphalt with faded games, a dumpster and a dead tree, sealed in by the lot wall.")
 	box(folder, "Walkway", -68, 0, BZ1 + 5, -58, BASE, LOT_MAX_Z - 4, CONCRETE, M.Concrete)
-	for index = 1, 8 do
+	for index = 1, 3 do
 		crack(folder, `WalkCrack{index}`, between(-66, -60), between(60, LOT_MAX_Z - 8), BASE, between(3, 5))
 	end
-	weeds(folder, "WalkWeed", 14, -68, 58, -58, LOT_MAX_Z - 5, BASE)
-	local ax0, ax1, az0, az1 = -124, -76, 62, 110
+	weeds(folder, "WalkWeed", 6, -68, 58, -58, LOT_MAX_Z - 5, BASE)
+	local ax0, ax1, az0, az1 = -124, -76, 61, LOT_MAX_Z - 4
 	box(folder, "Asphalt", ax0, 0, az0, ax1, 0.15, az1, ASPHALT, M.Asphalt)
-	for index = 1, 12 do
-		crack(folder, `Crack{index}`, between(ax0 + 4, ax1 - 4), between(az0 + 4, az1 - 4), 0.15, between(5, 12))
+	for index = 1, 6 do
+		crack(folder, `Crack{index}`, between(ax0 + 4, ax1 - 4), between(az0 + 3, az1 - 3), 0.15, between(5, 10))
 	end
 	local paintColor = Color3.fromRGB(176, 172, 150)
-	for index, spot in { { -88, 70 }, { -88, 73.6 }, { -84.4, 73.6 }, { -88, 77.2 }, { -88, 80.8 }, { -84.4, 80.8 }, { -88, 84.4 } } do
+	for index, spot in { { -90, 64 }, { -90, 67.6 }, { -86.4, 67.6 }, { -90, 71.2 } } do
 		box(folder, `Hopscotch{index}`, spot[1], 0.15, spot[2], spot[1] + 3.4, 0.17, spot[2] + 3.4, paintColor, M.SmoothPlastic)
 	end
-	box(folder, "FourSquareA", -120, 0.15, 66, -104, 0.17, 66.3, paintColor, M.SmoothPlastic)
-	box(folder, "FourSquareB", -120, 0.15, 74, -104, 0.17, 74.3, paintColor, M.SmoothPlastic)
-	box(folder, "FourSquareC", -112.15, 0.15, 66, -111.85, 0.17, 82, paintColor, M.SmoothPlastic)
-	box(folder, "FourSquareD", -120, 0.15, 82, -104, 0.17, 82.3, paintColor, M.SmoothPlastic)
-	box(folder, "HoopPost", -100.3, 0, 107, -99.7, 12, 107.6, RUST, M.CorrodedMetal)
-	box(folder, "HoopBoard", -103, 9, 106.6, -97, 13, 106.9, WHITE, M.SmoothPlastic)
-	box(folder, "HoopRim", -100.8, 10, 105, -99.2, 10.15, 106.6, RIM, M.Metal)
-	weeds(folder, "Weed", 40, ax0, az0, ax1, az1, 0.15)
-	-- Dumpster and trash bags in the corner.
-	box(folder, "Dumpster", -124, 0, BZ1 + 2, -114, 5, BZ1 + 8, DUMPSTER, M.CorrodedMetal)
-	piece(folder, "DumpsterLid", frame(-119, 5, BZ1 + 2, 0, -40), -5, 0, 0, 5, 0.2, 6.2, DUMPSTER, M.CorrodedMetal)
-	for index = 1, 5 do
-		local f = frame(between(-113, -108), 0.9, between(BZ1 + 2, BZ1 + 9), between(0, 360), between(-15, 15))
+	box(folder, "FourSquareA", -120, 0.15, 63, -106, 0.17, 63.3, paintColor, M.SmoothPlastic)
+	box(folder, "FourSquareB", -120, 0.15, 70, -106, 0.17, 70.3, paintColor, M.SmoothPlastic)
+	box(folder, "FourSquareC", -113.15, 0.15, 63, -112.85, 0.17, 77, paintColor, M.SmoothPlastic)
+	box(folder, "FourSquareD", -120, 0.15, 77, -106, 0.17, 77.3, paintColor, M.SmoothPlastic)
+	box(folder, "HoopPost", -97.3, 0, 79.2, -96.7, 12, 79.8, RUST, M.CorrodedMetal)
+	box(folder, "HoopBoard", -100, 9, 78.8, -94, 13, 79.1, WHITE, M.SmoothPlastic)
+	box(folder, "HoopRim", -97.8, 10, 77.2, -96.2, 10.15, 78.8, RIM, M.Metal)
+	weeds(folder, "Weed", 16, ax0, az0, ax1, az1, 0.15)
+	box(folder, "Dumpster", -124, 0, BZ1 + 1, -114, 5, BZ1 + 7, DUMPSTER, M.CorrodedMetal)
+	piece(folder, "DumpsterLid", frame(-119, 5, BZ1 + 1, 0, -40), -5, 0, 0, 5, 0.2, 6.2, DUMPSTER, M.CorrodedMetal)
+	for index = 1, 3 do
+		local f = frame(between(-112, -107), 0.9, between(BZ1 + 2, BZ1 + 6), between(0, 360), between(-15, 15))
 		piece(folder, `TrashBag{index}`, f, -1, -0.9, -0.9, 1, 0.9, 0.9, BLACK, M.Plastic)
 	end
-	-- Lawn: picnic tables, benches, lamps, a bike rack and dead trees.
-	for index, spot in { { -100, 128 }, { -90, 146 } } do
-		local name = `PicnicTable{index}`
-		tableTop(folder, name, frame(spot[1], 0, spot[2], between(-10, 10)), 4, 1.6, 2.8, tint(WOOD, 0.1), M.WoodPlanks)
-		box(folder, `{name}BenchA`, spot[1] - 4, 1.5, spot[2] - 3.4, spot[1] + 4, 1.7, spot[2] - 2.4, tint(WOOD, 0.1), M.WoodPlanks)
-		box(folder, `{name}BenchB`, spot[1] - 4, 1.5, spot[2] + 2.4, spot[1] + 4, 1.7, spot[2] + 3.4, tint(WOOD, 0.1), M.WoodPlanks)
-		for leg, lx in { -3, 3 } do
-			box(folder, `{name}BenchLegA{leg}`, spot[1] + lx - 0.2, 0, spot[2] - 3.1, spot[1] + lx + 0.2, 1.5, spot[2] - 2.7, RUST, M.CorrodedMetal)
-			box(folder, `{name}BenchLegB{leg}`, spot[1] + lx - 0.2, 0, spot[2] + 2.7, spot[1] + lx + 0.2, 1.5, spot[2] + 3.1, RUST, M.CorrodedMetal)
-		end
-	end
-	parkBench(folder, "Bench1", -56, 0, 62)
-	parkBench(folder, "Bench2", -76, 0, 118)
-	for index, spot in { { -71, 70 }, { -55, 128 }, { -71, 168 } } do
+	parkBench(folder, "Bench", -56, 0, 77)
+	for index, spot in { { -71, 64 }, { -55, 72 } } do
 		local lx, lz = spot[1], spot[2]
 		box(folder, `Lamp{index}Pole`, lx - 0.25, 0, lz - 0.25, lx + 0.25, 13.4, lz + 0.25, METAL, M.Metal)
 		box(folder, `Lamp{index}Hood`, lx - 1, 13.4, lz - 1, lx + 1, 14, lz + 1, METAL, M.Metal)
@@ -2057,34 +2059,25 @@ local function buildSchoolyard(sections: Instance): ()
 			glow(bulb, LAMP_ON, 30, 1)
 		end
 	end
-	for index = 1, 5 do
-		local x = -30 + index * 1.6
-		box(folder, `BikeRack{index}`, x, 0, 58, x + 0.2, 2.4, 59.6, RUST, M.CorrodedMetal)
-	end
-	box(folder, "BikeRackRail", -28.6, 2.2, 58.7, -20.6, 2.4, 58.9, RUST, M.CorrodedMetal)
-	for index, spot in { { -112, 156 }, { -84, 168 }, { -108, 122 } } do
-		deadTree(folder, `Tree{index}`, spot[1], spot[2], between(15, 20))
-	end
-	weeds(folder, "LawnWeed", 36, -124, 112, -72, LOT_MAX_Z - 3, 0)
-	ivy(folder, "IvyLotWall", "X", LOT_MAX_Z - LOT_WALL, -1, -124, -96, 5, 0)
-	ivy(folder, "IvyLotWallEast", "X", LOT_MAX_Z - LOT_WALL, -1, 80, 104, 5, 0)
+	deadTree(folder, "Tree1", 55, 70, between(15, 18))
+	weeds(folder, "LawnWeed", 14, 42, 55, BX1 - 1, LOT_MAX_Z - 3, 0)
+	ivy(folder, "IvyLotWall", "X", LOT_MAX_Z - LOT_WALL, -1, -124, -104, 5, 0)
 end
 
---- Football pitch in the front yard: patchy striped turf, faded lines, rusty goals with torn nets,
---- corner flags, team benches under a shelter, a small stand and floodlights.
+--- A small football pitch in the front yard: patchy striped turf, faded lines, rusty goals with
+--- torn nets and corner flags.
 local function buildFootballField(sections: Instance): ()
-	local folder = newSection(sections, "FootballField", "An overgrown football pitch in the front yard: faded lines, rusty goals with torn nets, a fallen corner flag, team benches, a small stand and floodlights.")
+	local folder = newSection(sections, "FootballField", "A small, overgrown football pitch in the front yard: faded lines, rusty goals with torn nets and a fallen corner flag.")
 	local x0, x1, z0, z1 = PITCH_X0, PITCH_X1, PITCH_Z0, PITCH_Z1
 	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
 	local top = 0.05
-	-- Mowing stripes across the pitch, with bare dirt in the goalmouths and the centre.
-	local stripes = 10
-	local width = (x1 - x0 + 12) / stripes
+	local stripes = 6
+	local width = (x1 - x0 + 8) / stripes
 	for index = 0, stripes - 1 do
-		local a = x0 - 6 + index * width
-		box(folder, `Turf{index + 1}`, a, 0, z0 - 6, a + width, top, z1 + 6, tint(if index % 2 == 0 then TURF else TURF_DARK, 0.03), M.Grass)
+		local a = x0 - 4 + index * width
+		box(folder, `Turf{index + 1}`, a, 0, z0 - 2.5, a + width, top, z1 + 2, tint(if index % 2 == 0 then TURF else TURF_DARK, 0.03), M.Grass)
 	end
-	for index, spot in { { x0 + 5, cz, 6, 9 }, { x1 - 5, cz, 6, 9 }, { cx, cz, 5, 5 }, { cx - 30, z0 + 20, 4, 6 } } do
+	for index, spot in { { x0 + 2.5, cz, 2.5, 4 }, { x1 - 2.5, cz, 2.5, 4 }, { cx, cz, 2.5, 2.5 } } do
 		box(folder, `BarePatch{index}`, spot[1] - spot[3], top, spot[2] - spot[4], spot[1] + spot[3], top + 0.008, spot[2] + spot[4], tint(DIRT, 0.06), M.Ground)
 	end
 	-- Faded lines, worn away in places.
@@ -2117,50 +2110,34 @@ local function buildFootballField(sections: Instance): ()
 	line(cx, z0, cx, z1)
 	for _, gx in { x0, x1 } do
 		local dir = if gx == x0 then 1 else -1
-		for _, area in { { 24, 29 }, { 8, 13 } } do
-			local depth, half = area[1], area[2]
-			line(gx, cz - half, gx + dir * depth, cz - half)
-			line(gx, cz + half, gx + dir * depth, cz + half)
-			line(gx + dir * depth, cz - half, gx + dir * depth, cz + half)
-		end
-		local spot = gx + dir * 16
-		box(folder, `PenaltySpot{dir}`, spot - 0.4, y0, cz - 0.4, spot + 0.4, y1, cz + 0.4, lineColor, M.SmoothPlastic)
+		local depth, half = 10, 8
+		line(gx, cz - half, gx + dir * depth, cz - half)
+		line(gx, cz + half, gx + dir * depth, cz + half)
+		line(gx + dir * depth, cz - half, gx + dir * depth, cz + half)
+		local spot = gx + dir * 7
+		box(folder, `PenaltySpot{dir}`, spot - 0.35, y0, cz - 0.35, spot + 0.35, y1, cz + 0.35, lineColor, M.SmoothPlastic)
 	end
-	box(folder, "CentreSpot", cx - 0.4, y0, cz - 0.4, cx + 0.4, y1, cz + 0.4, lineColor, M.SmoothPlastic)
-	local segments = 28
+	box(folder, "CentreSpot", cx - 0.35, y0, cz - 0.35, cx + 0.35, y1, cz + 0.35, lineColor, M.SmoothPlastic)
+	local segments = 16
 	for index = 0, segments - 1 do
-		if random() > 0.12 then
-			local a0, a1 = index / segments * math.pi * 2, (index + 1) / segments * math.pi * 2
-			beam(folder, `CentreCircle{index + 1}`, Vector3.new(cx + math.cos(a0) * 13, y0 + 0.01, cz + math.sin(a0) * 13), Vector3.new(cx + math.cos(a1) * 13, y0 + 0.01, cz + math.sin(a1) * 13), 0.4, 0.02, lineColor, M.SmoothPlastic)
-		end
+		local a0, a1 = index / segments * math.pi * 2, (index + 1) / segments * math.pi * 2
+		beam(folder, `CentreCircle{index + 1}`, Vector3.new(cx + math.cos(a0) * 5, y0 + 0.01, cz + math.sin(a0) * 5), Vector3.new(cx + math.cos(a1) * 5, y0 + 0.01, cz + math.sin(a1) * 5), 0.35, 0.02, lineColor, M.SmoothPlastic)
 	end
-	weeds(folder, "Weed", 50, x0 - 4, z0 - 4, x1 + 4, z1 + 4, top)
+	weeds(folder, "Weed", 16, x0 - 2, z0 - 2, x1 + 2, z1 + 1.5, top)
 
 	-- Goals: posts and crossbar on the goal line, a frame and net behind (local -x).
 	local post = Color3.fromRGB(196, 194, 184)
 	local function goal(name: string, f: Frame, torn: boolean): ()
-		piece(folder, `{name}PostA`, f, -0.25, 0, -8.25, 0.25, 7, -7.75, post, M.Metal)
-		piece(folder, `{name}PostB`, f, -0.25, 0, 7.75, 0.25, 7, 8.25, post, M.Metal)
-		piece(folder, `{name}Crossbar`, f, -0.25, 7, -8.25, 0.25, 7.5, 8.25, post, M.Metal)
-		piece(folder, `{name}BackPostA`, f, -5.2, 0, -8.2, -4.8, 4, -7.8, RUST, M.CorrodedMetal)
-		piece(folder, `{name}BackPostB`, f, -5.2, 0, 7.8, -4.8, 4, 8.2, RUST, M.CorrodedMetal)
-		piece(folder, `{name}BackBar`, f, -5.2, 4, -8.2, -4.8, 4.3, 8.2, RUST, M.CorrodedMetal)
-		piece(folder, `{name}GroundBarA`, f, -4.8, 0, -8.2, -0.25, 0.25, -7.8, RUST, M.CorrodedMetal)
-		piece(folder, `{name}GroundBarB`, f, -4.8, 0, 7.8, -0.25, 0.25, 8.2, RUST, M.CorrodedMetal)
-		for side, z in { -8, 8 } do
-			beam(folder, `{name}Stay{side}`, pointIn(f, -0.25, 7.25, z), pointIn(f, -4.8, 4.15, z), 0.2, 0.2, RUST, M.CorrodedMetal)
+		piece(folder, `{name}PostA`, f, -0.2, 0, -5.2, 0.2, 6, -4.8, post, M.Metal)
+		piece(folder, `{name}PostB`, f, -0.2, 0, 4.8, 0.2, 6, 5.2, post, M.Metal)
+		piece(folder, `{name}Crossbar`, f, -0.2, 6, -5.2, 0.2, 6.4, 5.2, post, M.Metal)
+		piece(folder, `{name}BackBar`, f, -3.2, 0, -5.2, -2.8, 0.3, 5.2, RUST, M.CorrodedMetal)
+		for side, z in { -5, 5 } do
+			beam(folder, `{name}Stay{side}`, pointIn(f, -0.2, 6.2, z), pointIn(f, -3, 0.3, z), 0.2, 0.2, RUST, M.CorrodedMetal)
 		end
-		local function net(label: string, part: Part): ()
-			part.Name = `{name}{label}`
-			part.Transparency = 0.65
-			part.CastShadow = false
-		end
-		net("NetBack", piece(folder, "Net", f, -5.05, 0.25, -7.8, -4.95, if torn then 2.2 else 4, 7.8, WHITE, M.Fabric))
-		net("NetTop", beam(folder, "Net", pointIn(f, -0.3, 7.2, 0), pointIn(f, -4.95, 4.2, 0), 15.6, 0.05, WHITE, M.Fabric))
-		net("NetSideA", piece(folder, "Net", f, -4.8, 0.25, -8.05, -0.3, 4, -7.95, WHITE, M.Fabric))
-		if not torn then
-			net("NetSideB", piece(folder, "Net", f, -4.8, 0.25, 7.95, -0.3, 4, 8.05, WHITE, M.Fabric))
-		end
+		local back = beam(folder, `{name}Net`, pointIn(f, -0.25, 6.1, 0), pointIn(f, -3, 0.3, 0), 9.8, 0.05, WHITE, M.Fabric)
+		back.Transparency = if torn then 0.85 else 0.65
+		back.CastShadow = false
 	end
 	goal("WestGoal", frame(x0, top, cz, 0), false)
 	goal("EastGoal", frame(x1, top, cz, 180), true)
@@ -2169,45 +2146,10 @@ local function buildFootballField(sections: Instance): ()
 	for index, corner in { { x0, z0 }, { x1, z0 }, { x0, z1 }, { x1, z1 } } do
 		local base = Vector3.new(corner[1], top, corner[2])
 		if index == 4 then
-			beam(folder, `CornerFlag{index}Pole`, base + Vector3.new(-0.3, 0.06, -0.3), base + Vector3.new(-3.2, 0.06, -2.4), 0.12, 0.12, YELLOW, M.Plastic)
-			piece(folder, `CornerFlag{index}Flag`, frame(corner[1] - 3, top + 0.02, corner[2] - 2.2, 30), 0, 0, -0.5, 1.2, 0.03, 0.5, RED, M.Fabric)
+			beam(folder, `CornerFlag{index}Pole`, base + Vector3.new(-0.3, 0.06, -0.3), base + Vector3.new(-3.2, 0.06, -1.6), 0.12, 0.12, YELLOW, M.Plastic)
 		else
-			beam(folder, `CornerFlag{index}Pole`, base, base + Vector3.new(0, 4.5, 0), 0.12, 0.12, YELLOW, M.Plastic)
-			box(folder, `CornerFlag{index}Flag`, corner[1] + 0.06, top + 3.6, corner[2] - 0.03, corner[1] + 1.3, top + 4.4, corner[2] + 0.03, RED, M.Fabric)
-		end
-	end
-
-	-- Team benches under a rusty shelter on the near touchline.
-	for index, bx in { cx - 22, cx + 12 } do
-		local name = `TeamBench{index}`
-		box(folder, `{name}Seat`, bx, 1.5, z0 - 8.5, bx + 10, 1.7, z0 - 7, tint(WOOD, 0.08), M.WoodPlanks)
-		box(folder, `{name}Back`, bx, 1.7, z0 - 9, bx + 10, 3.5, z0 - 8.7, tint(WOOD, 0.08), M.WoodPlanks)
-		for leg, lx in { 0.5, 5, 9.5 } do
-			box(folder, `{name}Leg{leg}`, bx + lx - 0.15, 0, z0 - 8.3, bx + lx + 0.15, 1.5, z0 - 7.2, RUST, M.CorrodedMetal)
-		end
-		for post2, lx in { 0, 10 } do
-			box(folder, `{name}ShelterPost{post2}`, bx + lx - 0.2, 0, z0 - 9.8, bx + lx + 0.2, 6, z0 - 9.4, RUST, M.CorrodedMetal)
-		end
-		piece(folder, `{name}ShelterRoof`, frame(bx + 5, 6, z0 - 9.6, 0, -12), -5.4, 0, 0, 5.4, 0.15, 4, tint(RUST, 0.1), M.CorrodedMetal)
-	end
-
-	-- A small stand on the far side, against the lot wall.
-	local standZ1 = LOT_MAX_Z - LOT_WALL - 0.5
-	for tier = 1, 3 do
-		box(folder, `StandTier{tier}`, cx - 30, (tier - 1) * 1.2, standZ1 - (4 - tier) * 2.8, cx + 30, tier * 1.2, standZ1, tint(BLEACHER, 0.04), M.Metal)
-	end
-	box(folder, "StandRail", cx - 30, 3.6, standZ1 - 0.2, cx + 30, 6, standZ1, RUST, M.CorrodedMetal)
-
-	-- Floodlight towers at the corners; one still burns.
-	for index, spot in { { x0 - 5, z0 - 4 }, { x1 + 5, z0 - 4 }, { x0 - 5, z1 + 4 }, { x1 + 5, z1 + 4 } } do
-		local lx, lz = spot[1], spot[2]
-		box(folder, `Floodlight{index}Mast`, lx - 0.4, 0, lz - 0.4, lx + 0.4, 28, lz + 0.4, tint(METAL, 0.06), M.CorrodedMetal)
-		box(folder, `Floodlight{index}Head`, lx - 2.5, 28, lz - 0.5, lx + 2.5, 30.5, lz + 0.5, METAL, M.Metal)
-		local face = if lz < cz then lz + 0.5 else lz - 0.5
-		local lamp = box(folder, `Floodlight{index}Lamp`, lx - 2.2, 28.3, math.min(face, face + (if lz < cz then 0.05 else -0.05)), lx + 2.2, 30.2, math.max(face, face + (if lz < cz then 0.05 else -0.05)), if index == 3 then TUBE_ON else TUBE_OFF, M.SmoothPlastic)
-		if index == 3 and workingLights < MAX_WORKING_LIGHTS then
-			workingLights += 1
-			glow(lamp, TUBE_ON, 60, 1.2)
+			beam(folder, `CornerFlag{index}Pole`, base, base + Vector3.new(0, 4, 0), 0.12, 0.12, YELLOW, M.Plastic)
+			box(folder, `CornerFlag{index}Flag`, corner[1] + 0.06, top + 3.2, corner[2] - 0.03, corner[1] + 1.1, top + 3.9, corner[2] + 0.03, RED, M.Fabric)
 		end
 	end
 end
@@ -2218,7 +2160,7 @@ local function buildSpawn(model: Instance): ()
 	local spawn = Instance.new("SpawnLocation")
 	spawn.Name = "SpawnLocation"
 	spawn.Size = Vector3.new(6, 1, 6)
-	spawn.CFrame = CFrame.new(-63, BASE + 0.5, LOT_MAX_Z - 12)
+	spawn.CFrame = CFrame.new(-63, BASE + 0.5, LOT_MAX_Z - 8)
 	spawn.Neutral = true
 	style(spawn, CONCRETE_DARK, M.Concrete)
 	spawn.Parent = model
@@ -2345,17 +2287,16 @@ local function buildMap(): Model
 	buildLounge(sections)
 	buildToilet(sections, BOYS, true)
 	buildToilet(sections, GIRLS, false)
-	buildLibrary(sections)
-	buildHall(sections, "Hallway", "The main hallway, lined with rusty lockers, puddles from the leaking roof and one exit sign still glowing.", HALL_Z0, HALL_Z1, hallOpenings.Low, hallOpenings.High)
+	buildHall(sections, "FrontHallway", "The front hallway behind the lobby, lined with rusty lockers, puddles from the leaking roof and one exit sign still glowing.", HALL_Z0, HALL_Z1, hallOpenings.FrontLow, hallOpenings.FrontHigh)
 	local descriptions = {
 		"Classroom A: desks still in rows and the last lesson left on the chalkboard.",
 		"Classroom B: desks knocked over below a smashed window.",
 		"Classroom C: the roof has caved in, with rubble, moss and overturned desks below the hole.",
 		"Classroom D: scattered chairs, a bookshelf and torn posters.",
+		"Classroom E: the corner room by the gym, chairs piled over and papers everywhere.",
 	}
-	local messes = { 0.25, 0.6, 0.9, 0.5 }
-	for index = 1, 4 do
-		local r = BACK_ROOMS[index]
+	local messes = { 0.25, 0.6, 0.9, 0.5, 0.7 }
+	for index, r in ROW1_ROOMS do
 		local folder = buildClassroom(sections, r, descriptions[index], messes[index], index % 2 == 0)
 		if r.name == "ClassroomC" then
 			local hole = HOLES[1]
@@ -2366,9 +2307,13 @@ local function buildMap(): Model
 			hangingLight(folder, "LooseLight", hole[2] + 4, hz)
 		end
 	end
+	buildHall(sections, "BackHallway", "The back hallway between the classrooms and the labs, dim and cluttered with fallen ceiling tiles.", MID_HALL_Z0, MID_HALL_Z1, hallOpenings.MidLow, hallOpenings.MidHigh)
+	buildClassroom(sections, ROW2_ROOMS[1], "Classroom F: a quiet room under a thick layer of dust.", 0.35, true)
 	buildScienceLab(sections)
 	buildComputerLab(sections)
+	buildClassroom(sections, ROW2_ROOMS[4], "Classroom G: the big back classroom, its chairs scattered as if everyone ran out at once.", 0.75, false)
 	buildGym(sections)
+	buildCafeteria(sections)
 	if APPLY_LIGHTING then
 		buildLighting(model)
 	end
@@ -2380,7 +2325,7 @@ local function buildMap(): Model
 		end
 	end
 	-- Centre the lot on the origin.
-	local offset = Vector3.new(0, 0, -(LOT_MIN_Z + LOT_MAX_Z) / 2)
+	local offset = Vector3.new(-(LOT_MIN_X + LOT_MAX_X) / 2, 0, -(LOT_MIN_Z + LOT_MAX_Z) / 2)
 	for _, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			descendant.CFrame += offset
