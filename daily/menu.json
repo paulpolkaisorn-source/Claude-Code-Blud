@@ -1,33 +1,7 @@
 {
-  "updated": "2026-10-28T06:39:00+07:00",
-  "note": "Midweek W 🏆 Halloween is Saturday (I said Friday before, my bad 💀), so you've got 3 more days of training. Water bottle full, let's go 💧",
+  "updated": "2026-10-29T06:39:00+07:00",
+  "note": "Thursday energy ⚡ Two days till the Halloween boss fight 🎃 Saturday's plan is already in, check it out and drink that water today 💧",
   "days": [
-    {
-      "date": "2026-10-28",
-      "meals": [
-        [
-          "Breakfast",
-          "Avocado toast on whole grain bread with a poached egg and a glass of milk"
-        ],
-        [
-          "Snack",
-          "Cheese cubes and cashews"
-        ],
-        [
-          "Lunch",
-          "Thai pad kra pao with minced pork (ask for less sugar), fried egg on top, cucumber on the side"
-        ],
-        [
-          "Snack",
-          "Celery with no-sugar peanut butter, water"
-        ],
-        [
-          "Dinner",
-          "Homemade shrimp and veggie tempura with udon soup. Small scoop of matcha ice cream right after"
-        ]
-      ],
-      "tip": "Halloween prep: when you get candy on Saturday, pick chocolate over gummies and sour stuff, and eat it right after dinner."
-    },
     {
       "date": "2026-10-29",
       "meals": [
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "Halloween is tomorrow! Plan it now: candy goes in one bowl after dinner, then water, then brush. No candy grazing all evening."
+    },
+    {
+      "date": "2026-10-31",
+      "meals": [
+        [
+          "Breakfast",
+          "Spooky jack-o'-lantern omelette (cheese and spinach, with a pepper face) and a glass of milk"
+        ],
+        [
+          "Snack",
+          "Mummy cheese sticks wrapped in thin ham strips, cucumber 'eyeballs' with olive pupils"
+        ],
+        [
+          "Lunch",
+          "Thai green curry with chicken and Thai eggplant, jasmine rice, a boiled egg on the side"
+        ],
+        [
+          "Snack",
+          "Pumpkin seeds (plain, roasted) and cheese cubes, water"
+        ],
+        [
+          "Dinner",
+          "Grilled lamb chops, roasted pumpkin and buttered peas. Halloween candy time is RIGHT after this dinner: chocolate first, then water and a cheese cube"
+        ]
+      ],
+      "tip": "Halloween rule: candy only right after dinner, then water, then brush. Trade gummies and sour candy away for chocolate."
     }
   ]
 }
