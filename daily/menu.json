@@ -1,33 +1,7 @@
 {
-  "updated": "2026-10-29T06:39:00+07:00",
-  "note": "Thursday energy ⚡ Two days till the Halloween boss fight 🎃 Saturday's plan is already in, check it out and drink that water today 💧",
+  "updated": "2026-10-30T06:39:00+07:00",
+  "note": "It's FRIDAY twin 🥳 Tomorrow is the Halloween boss fight 🎃 and Sunday is recovery day. Plan's ready, just bring the water bottle 💧🦷",
   "days": [
-    {
-      "date": "2026-10-29",
-      "meals": [
-        [
-          "Breakfast",
-          "Cheesy scrambled eggs in a warm whole wheat tortilla with avocado, a glass of milk"
-        ],
-        [
-          "Snack",
-          "Turkey and cheese roll-ups with cucumber rounds"
-        ],
-        [
-          "Lunch",
-          "Korean bibimbap with beef, spinach, carrots, bean sprouts and a fried egg (go easy on the sweet gochujang)"
-        ],
-        [
-          "Snack",
-          "Plain Greek yogurt with a sprinkle of crushed walnuts"
-        ],
-        [
-          "Dinner",
-          "Wood-fired margherita pizza with extra mozzarella and a big rocket salad. Two strawberries and a cube of parmesan right after"
-        ]
-      ],
-      "tip": "Sticky sauces like gochujang and ketchup hug your teeth. Swish water after the meal to wash them off."
-    },
     {
       "date": "2026-10-30",
       "meals": [
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "Halloween rule: candy only right after dinner, then water, then brush. Trade gummies and sour candy away for chocolate."
+    },
+    {
+      "date": "2026-11-01",
+      "meals": [
+        [
+          "Breakfast",
+          "Post-Halloween reset: fluffy cottage cheese pancakes (no syrup, top with fresh strawberries), a glass of milk"
+        ],
+        [
+          "Snack",
+          "Crunchy apple slices with cheddar, then water"
+        ],
+        [
+          "Lunch",
+          "Vietnamese fresh spring rolls with shrimp, lettuce and herbs, peanut dipping sauce, chicken pho on the side"
+        ],
+        [
+          "Snack",
+          "Hard-boiled egg and carrot sticks"
+        ],
+        [
+          "Dinner",
+          "Slow-roasted beef brisket, mashed potatoes and roasted carrots. If any Halloween chocolate is left, one or two pieces right after dinner, then cheese and water"
+        ]
+      ],
+      "tip": "Leftover candy? Keep it in the kitchen, not your room. Out of sight means no sneaky snack attacks."
     }
   ]
 }
