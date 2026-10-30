@@ -1,33 +1,7 @@
 {
-  "updated": "2026-10-30T06:39:00+07:00",
-  "note": "It's FRIDAY twin 🥳 Tomorrow is the Halloween boss fight 🎃 and Sunday is recovery day. Plan's ready, just bring the water bottle 💧🦷",
+  "updated": "2026-10-31T06:39:00+07:00",
+  "note": "HAPPY HALLOWEEN 🎃👻 Today's the boss fight: candy only right after dinner, then water, then brush. You've trained all week, your teeth are ready 💪🦷",
   "days": [
-    {
-      "date": "2026-10-30",
-      "meals": [
-        [
-          "Breakfast",
-          "Japanese breakfast set: grilled salmon, rice, miso soup and a soft-boiled egg"
-        ],
-        [
-          "Snack",
-          "Cheese cubes with snap peas"
-        ],
-        [
-          "Lunch",
-          "Chicken karaage with salmon onigiri, edamame and crunchy cabbage salad"
-        ],
-        [
-          "Snack",
-          "Plain Greek yogurt with a few blueberries"
-        ],
-        [
-          "Dinner",
-          "Sizzling chicken fajitas with peppers, melted cheese, guacamole and sour cream. A small slice of cheesecake right after"
-        ]
-      ],
-      "tip": "Halloween is tomorrow! Plan it now: candy goes in one bowl after dinner, then water, then brush. No candy grazing all evening."
-    },
     {
       "date": "2026-10-31",
       "meals": [
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "Leftover candy? Keep it in the kitchen, not your room. Out of sight means no sneaky snack attacks."
+    },
+    {
+      "date": "2026-11-02",
+      "meals": [
+        [
+          "Breakfast",
+          "Congee (jok) with minced pork, ginger and a soft-boiled egg, a glass of milk"
+        ],
+        [
+          "Snack",
+          "Cheese stick and cherry tomatoes"
+        ],
+        [
+          "Lunch",
+          "Italian chicken parmesan with spaghetti and steamed broccoli"
+        ],
+        [
+          "Snack",
+          "Salted edamame and a handful of almonds, water"
+        ],
+        [
+          "Dinner",
+          "Thai grilled sea bass (pla pao) with herbs, sticky rice and stir-fried morning glory. A few slices of mango right after dinner"
+        ]
+      ],
+      "tip": "New month, new toothbrush check: if the bristles are bent out, ask for a new one. Every 3 months is the rule."
     }
   ]
 }
