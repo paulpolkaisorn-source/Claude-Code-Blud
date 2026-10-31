@@ -1,33 +1,7 @@
 {
-  "updated": "2026-10-31T06:39:00+07:00",
-  "note": "HAPPY HALLOWEEN 🎃👻 Today's the boss fight: candy only right after dinner, then water, then brush. You've trained all week, your teeth are ready 💪🦷",
+  "updated": "2026-11-01T06:39:00+07:00",
+  "note": "You survived Halloween 🎃✅ Today is recovery day: lots of water, no leftover candy between meals, and a good floss tonight. Welcome to November twin 🍂🦷",
   "days": [
-    {
-      "date": "2026-10-31",
-      "meals": [
-        [
-          "Breakfast",
-          "Spooky jack-o'-lantern omelette (cheese and spinach, with a pepper face) and a glass of milk"
-        ],
-        [
-          "Snack",
-          "Mummy cheese sticks wrapped in thin ham strips, cucumber 'eyeballs' with olive pupils"
-        ],
-        [
-          "Lunch",
-          "Thai green curry with chicken and Thai eggplant, jasmine rice, a boiled egg on the side"
-        ],
-        [
-          "Snack",
-          "Pumpkin seeds (plain, roasted) and cheese cubes, water"
-        ],
-        [
-          "Dinner",
-          "Grilled lamb chops, roasted pumpkin and buttered peas. Halloween candy time is RIGHT after this dinner: chocolate first, then water and a cheese cube"
-        ]
-      ],
-      "tip": "Halloween rule: candy only right after dinner, then water, then brush. Trade gummies and sour candy away for chocolate."
-    },
     {
       "date": "2026-11-01",
       "meals": [
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "New month, new toothbrush check: if the bristles are bent out, ask for a new one. Every 3 months is the rule."
+    },
+    {
+      "date": "2026-11-03",
+      "meals": [
+        [
+          "Breakfast",
+          "Smoked salmon and cream cheese on a toasted whole grain bagel, cucumber slices, a glass of milk"
+        ],
+        [
+          "Snack",
+          "Plain Greek yogurt with crushed pistachios"
+        ],
+        [
+          "Lunch",
+          "Japanese chicken katsu with shredded cabbage, rice and miso soup"
+        ],
+        [
+          "Snack",
+          "Celery and carrot sticks with hummus, water"
+        ],
+        [
+          "Dinner",
+          "Thai tom kha gai (coconut chicken soup) with jasmine rice and a fried egg. A small bowl of coconut ice cream right after"
+        ]
+      ],
+      "tip": "Floss before the night brush, not after. Flossing loosens the gunk, then brushing sweeps it away."
     }
   ]
 }
