@@ -1,33 +1,7 @@
 {
-  "updated": "2026-11-01T06:39:00+07:00",
-  "note": "You survived Halloween 🎃✅ Today is recovery day: lots of water, no leftover candy between meals, and a good floss tonight. Welcome to November twin 🍂🦷",
+  "updated": "2026-11-02T06:39:00+07:00",
+  "note": "Monday again 😤 New week, same undefeated teeth. Fill the bottle before school and keep that streak going 💧🦷",
   "days": [
-    {
-      "date": "2026-11-01",
-      "meals": [
-        [
-          "Breakfast",
-          "Post-Halloween reset: fluffy cottage cheese pancakes (no syrup, top with fresh strawberries), a glass of milk"
-        ],
-        [
-          "Snack",
-          "Cheddar cubes and crunchy snap peas, then water"
-        ],
-        [
-          "Lunch",
-          "Vietnamese fresh spring rolls with shrimp, lettuce and herbs, peanut dipping sauce, chicken pho on the side"
-        ],
-        [
-          "Snack",
-          "Hard-boiled egg and carrot sticks"
-        ],
-        [
-          "Dinner",
-          "Slow-roasted beef brisket, mashed potatoes and roasted carrots. If any Halloween chocolate is left, one or two pieces right after dinner, then cheese and water"
-        ]
-      ],
-      "tip": "Leftover candy? Keep it in the kitchen, not your room. Out of sight means no sneaky snack attacks."
-    },
     {
       "date": "2026-11-02",
       "meals": [
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "Floss before the night brush, not after. Flossing loosens the gunk, then brushing sweeps it away."
+    },
+    {
+      "date": "2026-11-04",
+      "meals": [
+        [
+          "Breakfast",
+          "Shakshuka (eggs baked in tomato and pepper sauce) with feta and warm pita, a glass of milk"
+        ],
+        [
+          "Snack",
+          "Cheese cubes and cucumber sticks"
+        ],
+        [
+          "Lunch",
+          "Greek chicken souvlaki in pita with tzatziki and a crunchy cucumber-tomato salad"
+        ],
+        [
+          "Snack",
+          "Hard-boiled egg and a handful of cashews, water"
+        ],
+        [
+          "Dinner",
+          "Japanese shabu-shabu with thin beef, tofu, napa cabbage and mushrooms, sesame dipping sauce and rice. A few pieces of watermelon right after"
+        ]
+      ],
+      "tip": "Tomato sauce is a bit acidic, so after shakshuka, rinse with water and wait 30 minutes before brushing."
     }
   ]
 }
