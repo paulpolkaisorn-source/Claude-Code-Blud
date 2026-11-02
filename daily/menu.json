@@ -1,33 +1,7 @@
 {
-  "updated": "2026-11-02T06:39:00+07:00",
-  "note": "Monday again 😤 New week, same undefeated teeth. Fill the bottle before school and keep that streak going 💧🦷",
+  "updated": "2026-11-03T06:39:00+07:00",
+  "note": "Tuesday check ✅ Quick question for future you: did you floss last night? If not, tonight's the night 🧵🦷 Water bottle up!",
   "days": [
-    {
-      "date": "2026-11-02",
-      "meals": [
-        [
-          "Breakfast",
-          "Congee (jok) with minced pork, ginger and a soft-boiled egg, a glass of milk"
-        ],
-        [
-          "Snack",
-          "Cheese stick and cherry tomatoes"
-        ],
-        [
-          "Lunch",
-          "Italian chicken parmesan with spaghetti and steamed broccoli"
-        ],
-        [
-          "Snack",
-          "Salted edamame and a handful of almonds, water"
-        ],
-        [
-          "Dinner",
-          "Thai grilled sea bass (pla pao) with herbs, sticky rice and stir-fried morning glory. A few slices of mango right after dinner"
-        ]
-      ],
-      "tip": "New month, new toothbrush check: if the bristles are bent out, ask for a new one. Every 3 months is the rule."
-    },
     {
       "date": "2026-11-03",
       "meals": [
@@ -79,6 +53,32 @@
         ]
       ],
       "tip": "Tomato sauce is a bit acidic, so after shakshuka, rinse with water and wait 30 minutes before brushing."
+    },
+    {
+      "date": "2026-11-05",
+      "meals": [
+        [
+          "Breakfast",
+          "Ham and cheese croissant with scrambled eggs, a glass of milk"
+        ],
+        [
+          "Snack",
+          "Cucumber and bell pepper sticks with tzatziki"
+        ],
+        [
+          "Lunch",
+          "Tuna poke bowl with rice, edamame, cucumber, avocado and seaweed (light on the sweet sauce)"
+        ],
+        [
+          "Snack",
+          "Plain Greek yogurt with crushed almonds, water"
+        ],
+        [
+          "Dinner",
+          "Mild Indian butter chicken with basmati rice, garlic naan and cucumber raita. A small piece of kulfi right after"
+        ]
+      ],
+      "tip": "Raita and yogurt are secret tooth heroes: the calcium helps rebuild enamel after a meal."
     }
   ]
 }
