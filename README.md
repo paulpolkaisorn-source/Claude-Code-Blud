@@ -36,7 +36,13 @@ The AI only builds the plan. The app then checks it before you see it:
 
 After each set, the rest timer asks how it felt. "Too easy" moves your next set up one dumbbell, but only if that jump is reasonable (no 2 → 4 kg on wrist curls). "Too hard" moves it down.
 
-The AI runs on the viewer's own Claude account, asks permission the first time, and only runs when you tap Build or Send.
+The AI runs on the viewer's own Claude account, asks permission the first time, and only runs when you tap Build or Send. It uses Claude's fast model, so a plan usually takes a few seconds.
+
+New exercises also have a body-weight-based starting limit (a 55 kg teen tops out near 3–4 kg for wrist curls). If your lightest dumbbell is above it, the app swaps in a water bottle or bodyweight instead.
+
+## Closing the app
+
+A web page can't run once it's closed, so instead everything is saved as you go: your coach options, the last plan built, the workout clock, the rest timer, and the chat. Reopen and you're exactly where you left off. A build or chat answer that was cut off by closing shows up as interrupted with a one-tap retry.
 
 ## Files
 

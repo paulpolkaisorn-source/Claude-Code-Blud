@@ -457,7 +457,7 @@ select.sel { border: 1.5px solid var(--line); border-radius: 10px; background: v
 .tl { display: grid; grid-template-columns: 54px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
 .tl:first-child { border-top: 0; }
 .tl .y { font: 800 1.15rem var(--font-display); color: var(--pad); font-variant-numeric: tabular-nums; }
-#rules { scroll-margin-top: 72px; }
+#rules, #plan { scroll-margin-top: 72px; }
 .rules { counter-reset: r; list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
 .rules li { counter-increment: r; display: grid; grid-template-columns: 38px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
 .rules li:first-child { border-top: 0; }
@@ -1078,9 +1078,11 @@ function availW() {
   list = [...new Set(list.filter((x) => x > 0))].sort((a, b) => a - b);
   return list.length ? list : null;
 }
-const snapDown = (x, av) => { let best = av[0]; for (const v of av) if (v <= x + 0.01) best = v; return best; };
+/* heaviest owned dumbbell at or under x; 0 when every dumbbell is heavier */
+const snapDown = (x, av) => { let best = 0; for (const v of av) if (v <= x + 0.01) best = v; return best; };
 const snapNear = (x, av) => av.reduce((b, v) => (Math.abs(v - x) < Math.abs(b - x) ? v : b), av[0]);
-const jumpOk = (id, from, to) => to - from <= Math.max(incFor(id) * 1.5, from * 0.3);
+/* a bottle or bodyweight (0) counts as about 1 kg when judging the next jump */
+const jumpOk = (id, from, to) => { const base = from > 0 ? from : (unitW() === 'kg' ? 1 : 2.2); return to - base <= Math.max(incFor(id) * 1.5, base * 0.3); };
 function stepUp(id, cur) {
   const av = availW();
   if (!av) return round1(cur + incFor(id));
@@ -1093,15 +1095,33 @@ function stepDown(id, cur) {
   const lower = av.filter((v) => v < cur - 0.01);
   return lower.length ? lower[lower.length - 1] : cur;
 }
-/* first-time starting weight: lightest for forearm work, light for the rest */
-function lightCap(id) {
+/* First-time weight ceilings as a share of body weight (45 kg assumed when unknown).
+   Forearm work stays tiny: a 55 kg teen tops out near 3-4 kg for wrist curls. */
+const START_CAP = {
+  'goblet-squat': 0.22, 'db-rdl': 0.18, 'split-squat': 0.1, 'db-row': 0.22, 'db-press': 0.1,
+  'hammer-curl': 0.11, 'wrist-curl': 0.07, 'rev-wrist-curl': 0.045, 'pronation': 0.07, 'rising': 0.07,
+  'farmer': 0.3, 'pinch': 0.1,
+};
+function startCapU(id) {
+  const kg = (START_CAP[id] || 0.1) * clamp(prof().bwKg || 45, 30, 90);
+  return unitW() === 'kg' ? kg : kg / KG_PER_LB;
+}
+/* first-time starting weight from the dumbbells owned; 0 = every dumbbell is too heavy to start */
+function startWeight(id) {
   const av = availW();
   if (!av) return null;
+  const ok = av.filter((v) => v <= startCapU(id) + 0.01);
+  if (!ok.length) return 0;
   const k = EX[id].rx;
-  if (k === 'forearm' || k === 'pinch') return av[0];
-  if (k === 'hold') return av[Math.floor((av.length - 1) / 2)];
-  return av[Math.min(1, av.length - 1)];
+  if (k === 'forearm' || k === 'pinch') return ok[0];
+  if (k === 'hold') return ok[Math.floor((ok.length - 1) / 2)];
+  return ok[Math.min(1, ok.length - 1)];
 }
+const BODY_ALT = new Set(['goblet-squat', 'db-rdl', 'split-squat']);
+const noWeightLabel = (id) => (BODY_ALT.has(id) ? 'Body' : 'Bottle');
+const noWeightTip = (id) => (BODY_ALT.has(id)
+  ? 'Your dumbbells are too heavy to start this one. Do it with no weight and enter 0. Nail the form first.'
+  : 'Your dumbbells are too heavy to start this one. Use a full water bottle (about 1 kg) instead and enter 0.');
 
 function lastSets(id, excludeKey) {
   const ws = doneWorkouts();
@@ -1121,7 +1141,8 @@ function suggestion(id, r, excludeKey) {
   if (!last) {
     let text = 'First time: nail the form before anything else.';
     if (W && av) {
-      const lw = lightCap(id);
+      const lw = startWeight(id);
+      if (!lw) return { text: noWeightTip(id), w: 0, up: false };
       return { text: `First time: start with your ${fmtW(lw)} dumbbell${e.rx === 'hold' ? 's' : ''}. Too easy? Tap "Too easy" after the set and the next one goes up.`, w: lw, up: false };
     }
     if (W) text = e.rx === 'forearm' ? 'First time: go very light. You should be able to do 25+ reps.' : (e.rx === 'hold' || e.rx === 'pinch') ? 'First time: pick a weight you can hold for 40+ seconds.' : 'First time: pick a weight you could lift about 20 times.';
@@ -1131,12 +1152,13 @@ function suggestion(id, r, excludeKey) {
   if (W && av && top > 0) top = snapNear(top, av);
   const vals = last.sets.map((s) => s[1]).filter((v) => v != null);
   const unitTxt = isTimed(id) ? 's' : '';
-  const lastTxt = `Last time: ${W ? fmtW(top) + ' × ' : ''}${vals.map((v) => v + unitTxt).join(', ')}`;
+  const lastTxt = `Last time: ${W ? (top > 0 ? fmtW(top) : 'no dumbbell') + ' × ' : ''}${vals.map((v) => v + unitTxt).join(', ')}`;
   const hitTop = last.sets.length >= r.s && vals.length > 0 && vals.every((v) => v >= r.hi);
   if (last.feel === 3) return { text: `${lastTxt}. That workout felt too hard, so keep it the same today.`, w: W ? top : null, up: false };
   if (hitTop) {
     if (W && av) {
       const up = av.find((v) => v > top + 0.01);
+      if (!top && (up == null || !jumpOk(id, 0, up))) return { text: `${lastTxt}. Top of the range, but your lightest dumbbell is still too big a jump. Keep the bottle and lower each rep over 3 seconds.`, w: 0, up: true };
       if (up == null) return { text: `${lastTxt}. That is your heaviest dumbbell, so lower every rep over 3 seconds to make it harder.`, w: top, up: true };
       if (!jumpOk(id, top, up)) return { text: `${lastTxt}. Your next dumbbell (${fmtW(up)}) is a big jump. Stay at ${fmtW(top)} and lower each rep over 3 seconds first.`, w: top, up: true };
       return { text: `${lastTxt}. You hit the top of the range. Grab the ${fmtW(up)} dumbbell today.`, w: up, up: true };
@@ -1223,13 +1245,15 @@ const S = {
   wake: null,
   confirmReset: false,
   ai: window.claude && typeof window.claude.use === 'function' ? 'checking' : 'off',
-  coach: { time: 30, focus: 'arm', energy: 2, sore: [], building: false, ctl: null, draft: null, err: null },
-  chat: [],
+  aiWhy: window.claude && typeof window.claude.use === 'function' ? null : 'standalone',
+  aiPerm: null,
+  coach: { building: false, ctl: null, t0: 0 },
+  live: null,
   chatBusy: false,
   chatCtl: null,
 };
 const VIEWS = ['today', 'train', 'coach', 'fuel', 'progress', 'lore'];
-let SAMPLE = null;
+let SAMPLE = null, PERMS = null, TIER = 'quick';
 
 /* =========================================================
    Small render helpers
@@ -1728,17 +1752,46 @@ function vProgress() {
 }
 
 /* ---------- coach: dumbbell trainer + AI ---------- */
+/* Everything the coach needs to survive closing the app lives in the
+   'coach' and 'chat' documents: options, the last built plan, a
+   build-in-progress marker, and the conversation. */
+const OPTS_DEFAULT = { time: 30, focus: 'arm', energy: 2, sore: [] };
+function coachDoc() { return Object.assign({ draft: null, err: null, building: null, at: null }, Store.docs.coach || {}); }
+function copts() {
+  const o = Object.assign({}, OPTS_DEFAULT, coachDoc().opts || {});
+  o.sore = Array.isArray(o.sore) ? o.sore.filter((a) => SORE.includes(a)) : [];
+  if (!FOCI[o.focus]) o.focus = 'arm';
+  if (![20, 30, 45].includes(o.time)) o.time = 30;
+  if (![1, 2, 3].includes(o.energy)) o.energy = 2;
+  return o;
+}
+function putCoach(patch) { Store.put('coach', Object.assign(clone(coachDoc()), patch)); }
+function setOpt(k, v) { const o = copts(); o[k] = v; putCoach({ opts: o }); }
+const chatMsgs = () => (Store.docs.chat && Array.isArray(Store.docs.chat.m) ? Store.docs.chat.m : []);
+function putChat(m) { Store.put('chat', { m: m.slice(-30) }); }
+const aiOpts = (o) => (TIER ? Object.assign({ modelTier: TIER }, o) : o);
+
 function aiErr(code) {
-  if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) {
-    S.ai = 'off'; S.aiDenied = true;
-    return 'The AI coach is turned off for this page, so the built-in coach takes over.';
+  if (code === 'not_granted') { S.ai = 'off'; S.aiWhy = 'denied'; return 'AI permission is turned off for this page, so the built-in coach takes over.'; }
+  if (['sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) {
+    S.ai = 'off'; S.aiWhy = code === 'sampling_disabled' ? 'disabled' : 'unavailable';
+    return 'The AI coach can\'t run in this app view, so the built-in coach takes over.';
   }
-  if (code === 'rate_limited') return 'Coach needs a breather. Try again in a minute.';
+  if (code === 'rate_limited') return 'Coach needs a breather (usage limit). Try again in a few minutes.';
   if (code === 'session_expired') return 'Sign in to Claude again to use the coach.';
   if (code === 'refused') return 'Coach can\'t help with that one. Try asking a different way.';
   if (code === 'invalid_json' || code === 'empty_completion') return 'Coach got mixed up. Try again.';
   if (code === 'prompt_too_large') return 'Too much to read at once. Clear the chat and try again.';
   return 'Couldn\'t reach the coach. Check your connection and try again.';
+}
+function parseJsonLoose(text) {
+  const t = String(text || '').trim();
+  try { return JSON.parse(t); } catch (e) { /* try the next shape */ }
+  const f = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (f) { try { return JSON.parse(f[1]); } catch (e) { /* next */ } }
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) { /* give up */ } }
+  return null;
 }
 
 function athleteSummary() {
@@ -1750,7 +1803,7 @@ function athleteSummary() {
   return [
     `Age ${p.age}. Units: ${unitW()}.${p.bwKg ? ` Body weight ${bwDisplay(p.bwKg)} ${unitW()}.` : ''}`,
     `Program: phase ${phaseFor(n)} of 3 (${PHASES[phaseFor(n) - 1].name}), ${n} workouts done, ${weekCount(mondayOf(t))} this week. Trained yesterday: ${yest.w && yest.w.done ? 'yes' : 'no'}. Trained today: ${today.w && today.w.done ? 'yes' : 'no'}.`,
-    `Dumbbells they own (pairs): ${av ? av.join(', ') + ' ' + unitW() : 'none entered yet'}.`,
+    `Dumbbells they own: ${av ? av.join(', ') + ' ' + unitW() : 'none entered yet'}.`,
     `Today so far: protein ${dayProtein(today)} of ${proteinGoal().goal} g, water ${today.wa || 0} of 8 glasses, sleep last night ${today.sl != null ? today.sl + ' h' : 'not logged'}.`,
   ].join('\n');
 }
@@ -1773,13 +1826,13 @@ function historyLines(count) {
 }
 function libraryLines() {
   const how = { wr: 'dumbbell weight + reps', r: 'bodyweight reps (weight 0)', ws: 'dumbbell weight + seconds held', s: 'bodyweight seconds held (weight 0)' };
-  return Object.entries(EX).map(([id, e]) => `${id} | ${e.name} | ${how[e.log]}${e.side ? ` | reps are per ${e.side}` : ''} | ${e.kind} | loads: ${AREAS[id].join(', ') || 'nothing in particular'}`).join('\n');
+  return Object.entries(EX).map(([id, e]) => `${id} | ${e.name} | ${how[e.log]}${e.side ? ` | reps are per ${e.side}` : ''} | ${e.kind} | loads: ${AREAS[id].join(', ') || 'nothing in particular'}${hasWeight(id) ? ` | first-time max ${round1(startCapU(id))} ${unitW()}` : ''}`).join('\n');
 }
 function maxSetsNow() { const n = doneWorkouts().length; const ph = phaseFor(n); return ph === 1 ? (n < 3 ? 1 : 2) : 3; }
 function exRange(minutes) { return minutes <= 20 ? [4, 5] : minutes <= 30 ? [6, 7] : [7, 8]; }
 
 function aiPlanPrompt() {
-  const C = S.coach;
+  const C = copts();
   const [mn, mx] = exRange(C.time);
   const av = availW();
   return `You are Coach Forge, the strength coach inside Forearm Forge, a training app for a ${prof().age}-year-old who wants to get strong for arm wrestling (big Devon Larratt fan). Build ONE dumbbell workout for today.
@@ -1789,12 +1842,12 @@ Hard rules, never break them:
 - Order: legs or full body first, then push and pull, then arms, then forearm and grip, core last.
 - sets: 1 to ${maxSetsNow()}.
 - Reps: weighted lifts 8-15, forearm and finger work 12-25, core reps 6-15. Timed holds are in seconds, 10-45.
-- weight: ONLY a number from AVAILABLE DUMBBELLS, or 0 for bodyweight exercises. Pick a weight they can do for every rep with 2-3 reps left. If HISTORY has the exercise, keep that weight, and go up one dumbbell only if they hit the top of the rep range and it did not feel too hard. For anything new, start light. Forearm and wrist work is always light.
+- weight: ONLY a number from AVAILABLE DUMBBELLS, or 0. Use 0 for bodyweight exercises, and also when even their lightest dumbbell is above that exercise's first-time max and HISTORY has no weight for it (the app swaps in a water bottle or bodyweight). If HISTORY has the exercise, keep that weight, and go up one dumbbell only if they hit the top of the rep range and it did not feel too hard. For anything new, stay at or under the first-time max.
 - Nothing max-effort, explosive or jerky, and no arm wrestling pulls.
 - Skip every exercise that loads a SORE area.
 - Energy: tired means fewer sets and lighter; fired up still means no max-outs.
 
-Reply with only JSON in exactly this shape:
+Reply with only JSON, no other text, in exactly this shape:
 {"title":"2-4 word workout name","intro":"1-2 short hype sentences for a 13-year-old about today's focus","exercises":[{"id":"goblet-squat","sets":2,"lo":10,"hi":12,"weight":6,"cue":"one short form cue"}],"closer":"one short sentence for after the workout"}
 
 ATHLETE
@@ -1808,23 +1861,28 @@ AVAILABLE DUMBBELLS (${unitW()}): ${av ? av.join(', ') : 'none'}
 HISTORY (newest first)
 ${historyLines(4)}
 
-LIBRARY (id | name | how it is logged | notes | type | loads)
+LIBRARY (id | name | how it is logged | notes | type | loads | first-time max)
 ${libraryLines()}`;
 }
 
 /* clamp whatever comes back from the model to the app's safe ranges */
 function capWeight(id, w, r) {
   const av = availW();
-  const sg = suggestion(id, r, todayKey());
   let x = Number.isFinite(w) ? w : (av ? av[av.length - 1] : 0);
-  if (av) x = snapDown(x, av);
-  const cap = sg.w != null ? sg.w : lightCap(id);
+  if (!(x > 0)) return 0;
+  const sg = suggestion(id, r, todayKey());
+  const cap = sg.w != null ? sg.w : startWeight(id);
+  if (av) {
+    x = snapDown(x, av);
+    // asked for less than anything owned: the lightest dumbbell is fine only if it is within the safety cap
+    if (!x && cap) x = av[0];
+  }
   if (cap != null) x = Math.min(x, cap);
   return Math.max(0, round1(x));
 }
 function validatePlan(raw) {
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.exercises)) return null;
-  const C = S.coach;
+  const C = copts();
   const maxS = maxSetsNow();
   const seen = new Set();
   const ex = [], rx = {}, cue = {}, w0 = {};
@@ -1842,8 +1900,11 @@ function validatePlan(raw) {
     let s = clamp(Math.round(+it.sets || 1), 1, maxS);
     if (C.energy === 1) s = Math.min(s, Math.max(1, maxS - 1));
     rx[id] = t ? { s, lo, hi, t: 1 } : { s, lo, hi };
-    if (hasWeight(id)) w0[id] = capWeight(id, Number(it.weight), rx[id]);
     cue[id] = String((it && it.cue) || '').trim().slice(0, 140);
+    if (hasWeight(id)) {
+      w0[id] = capWeight(id, Number(it.weight), rx[id]);
+      if (!w0[id]) cue[id] = noWeightTip(id);
+    }
     ex.push(id);
     if (ex.length >= 8) break;
   }
@@ -1856,7 +1917,7 @@ function validatePlan(raw) {
   };
 }
 function offlinePlan() {
-  const C = S.coach;
+  const C = copts();
   const n = doneWorkouts().length;
   const ph = phaseFor(n);
   const base = C.focus === 'full' ? DAYS[nextLetter()].ex : FOCUS_EX[C.focus];
@@ -1868,47 +1929,54 @@ function offlinePlan() {
     const r = rxFor(id, ph, n);
     if (C.energy === 1) r.s = Math.max(1, r.s - 1);
     rx[id] = r;
-    if (hasWeight(id)) w0[id] = capWeight(id, Infinity, r);
     cue[id] = EX[id].cues[0];
+    if (hasWeight(id)) { w0[id] = capWeight(id, Infinity, r); if (!w0[id]) cue[id] = noWeightTip(id); }
   }
   const mood = C.energy === 1 ? 'Low energy day, so fewer sets.' : C.energy === 3 ? 'Fired up is great. Still no max-outs.' : 'Smooth reps, clean form.';
   return { title: `${FOCI[C.focus].name} session`, intro: `Built from your dumbbells and your last workouts. ${mood}`, closer: '', ex, rx, cue, w0, src: 'coach' };
 }
 const soreBlockMsg = () => 'With those sore spots there isn\'t enough left to train safely today. Take a rest day, or pick a focus that skips them (Lower body if it is your arms).';
+function scrollToPlan() {
+  requestAnimationFrame(() => { const el = $('#plan'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+}
 
 async function buildWorkout() {
-  const C = S.coach;
-  if (C.building) return;
+  if (S.coach.building) return;
   if (!availW()) { toast('Add your dumbbells first.'); return; }
-  C.err = null;
+  S.coach.building = true;
+  S.coach.t0 = Date.now();
+  render(); scrollToPlan();
+  if (S.ai === 'checking') await AI_INIT;
   if (S.ai !== 'ready' || !SAMPLE) {
-    C.draft = offlinePlan();
-    if (!C.draft) C.err = soreBlockMsg();
-    render();
+    const p = offlinePlan();
+    S.coach.building = false;
+    putCoach({ draft: p, err: p ? null : soreBlockMsg(), building: null, at: Date.now() });
+    render(); scrollToPlan();
     return;
   }
-  C.building = true; C.draft = null;
-  render();
+  putCoach({ draft: null, err: null, building: Date.now() });
   const ctl = new AbortController();
-  C.ctl = ctl;
+  S.coach.ctl = ctl;
+  let draft = null, err = null;
   try {
-    const raw = await SAMPLE.json(aiPlanPrompt(), { signal: ctl.signal, cache: false });
-    const p = validatePlan(raw);
-    if (p) C.draft = p;
+    const res = await SAMPLE(aiPlanPrompt(), aiOpts({ signal: ctl.signal, cache: false }));
+    const p = validatePlan(parseJsonLoose(res && res.text));
+    if (p) draft = p;
     else {
-      C.draft = offlinePlan();
-      C.err = C.draft ? 'The AI plan did not fit your dumbbells or sore spots, so the built-in coach made this one.' : soreBlockMsg();
+      draft = offlinePlan();
+      err = draft ? 'The AI plan did not fit your dumbbells or sore spots, so the built-in coach made this one.' : soreBlockMsg();
     }
   } catch (e) {
-    const code = e && e.code;
+    const code = (e && e.code) || (e && e.name) || 'unknown';
     if (code !== 'cancelled') {
-      C.err = aiErr(code);
-      C.draft = offlinePlan();
-      if (C.draft) C.err += ' Here is a plan from the built-in coach.';
+      err = `${aiErr(code)} (code: ${code})`;
+      draft = offlinePlan();
+      if (draft) err += ' Here is a plan from the built-in coach.';
     }
   } finally {
-    C.building = false; C.ctl = null;
-    render();
+    S.coach.building = false; S.coach.ctl = null;
+    putCoach({ draft, err, building: null, at: Date.now() });
+    render(); scrollToPlan();
   }
 }
 
@@ -1924,23 +1992,13 @@ function startPlan(p) {
     d.w = { d: 'AI', n, ph: phaseFor(n), u: unitW(), st: Date.now(), sets, sk: {}, wu: false, done: false,
       ai: { title: p.title, intro: p.intro, closer: p.closer, ex: p.ex.slice(), rx: clone(p.rx), cue: clone(p.cue), src: p.src } };
   });
-  S.coach.draft = null;
+  putCoach({ draft: null, err: null });
   ensureAudio();
   go('train');
   window.scrollTo({ top: 0 });
 }
 
 /* ---- chat ---- */
-const CHAT_KEY = 'forearmForge.chat';
-function loadChat() {
-  try {
-    const a = JSON.parse(localStorage.getItem(CHAT_KEY) || '[]');
-    return Array.isArray(a) ? a.filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string' && m.text).slice(-30) : [];
-  } catch (e) { return []; }
-}
-function saveChat() {
-  try { localStorage.setItem(CHAT_KEY, JSON.stringify(S.chat.filter((m) => m.text).slice(-30).map((m) => ({ role: m.role, text: m.text })))); } catch (e) { /* storage blocked */ }
-}
 function coachRules() {
   const o = openSession();
   let sess = 'No workout in progress right now.';
@@ -1961,7 +2019,7 @@ Rules you always follow:
 - Pain: sharp pain, joint pain, numbness or swelling means stop that exercise and tell a parent, and see a doctor if it lasts. Never diagnose an injury.
 - Food: eat enough, protein at every meal (about ${proteinGoal().goal} g a day for them), no dieting or weight cutting. No supplements, creatine, pre-workout, fat burners, energy drinks or steroids.
 - Sleep 8-10 hours.
-- Only suggest weights they own: ${av ? av.join(', ') + ' ' + unitW() : 'they have not entered their dumbbells yet, so ask them to add them in the Coach tab'}.
+- Only suggest weights they own: ${av ? av.join(', ') + ' ' + unitW() : 'they have not entered their dumbbells yet, so ask them to add them in the Coach tab'}. If a dumbbell is too heavy for an exercise (wrist and forearm work especially), say so and suggest a water bottle or bodyweight instead.
 - If they ask about something unrelated to training, food, sleep or arm wrestling, answer briefly and steer back.
 
 WHAT THE APP KNOWS
@@ -1974,13 +2032,25 @@ Exercises in this app: ${Object.values(EX).map((e) => e.name).join(', ')}.
 The athlete's messages follow.`;
 }
 function fmtMsg(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
+const THINKING = '<span class="thinking"><span class="spin" aria-hidden="true"></span>Thinking…</span>';
 function chatLogHTML() {
-  if (!S.chat.length) return '<p class="chat-empty">Coach knows your dumbbells, your plan and your last workouts. Ask anything about form, weights, food or arm wrestling.</p>';
-  return S.chat.map((m, i) => `<div class="msg ${m.role}" id="msg-${i}">${m.role === 'assistant' ? '<span class="who">Coach</span>' : ''}<span class="mt">${m.pending && !m.text ? '<span class="thinking"><span class="spin" aria-hidden="true"></span>Thinking…</span>' : fmtMsg(m.text)}</span>${m.err ? `<span class="err">${esc(m.err)}</span>` : ''}</div>`).join('');
+  const ms = chatMsgs();
+  if (!ms.length) return '<p class="chat-empty">Coach knows your dumbbells, your plan and your last workouts. Ask anything about form, weights, food or arm wrestling.</p>';
+  return ms.map((m, i) => {
+    if (m.st === 'pending') {
+      const live = S.live && S.live.id === m.id;
+      const body = live
+        ? (S.live.text ? fmtMsg(S.live.text) : THINKING)
+        : `<span class="err">This answer got cut off when the app closed.</span> <button class="linkbtn" data-act="chat-retry" data-id="${esc(m.id)}">Ask again</button>`;
+      return `<div class="msg assistant" id="${live ? 'msg-live' : 'msg-' + i}"><span class="who">Coach</span><span class="mt">${body}</span></div>`;
+    }
+    return `<div class="msg ${m.role === 'user' ? 'user' : 'assistant'}" id="msg-${i}">${m.role === 'user' ? '' : '<span class="who">Coach</span>'}<span class="mt">${fmtMsg(m.text || '')}</span>${m.err ? `<span class="err">${esc(m.err)}</span>` : ''}</div>`;
+  }).join('');
 }
 function chatBlock() {
+  const ms = chatMsgs();
   return `<div class="chat-log" id="chat-log" aria-live="polite">${chatLogHTML()}</div>
-    ${S.chat.length ? '' : `<div class="sugg">${SUGG.map((q) => `<button class="chip" data-act="ask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
+    ${ms.length ? '' : `<div class="sugg">${SUGG.map((q) => `<button class="chip" data-act="ask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
     <form class="chat-form" data-form="chat" autocomplete="off"><input id="chat-in" name="q" maxlength="500" placeholder="Ask about form, weights, food…" aria-label="Message the coach"><button class="btn sm" type="submit" id="chat-send">${S.chatBusy ? 'Stop' : 'Send'}</button></form>
     <p class="small muted">The coach is AI and can get things wrong. If it ever disagrees with the 8 Gym Rules, the rules win.</p>`;
 }
@@ -1990,58 +2060,74 @@ function renderChat() {
   const b = $('#chat-send');
   if (b) b.textContent = S.chatBusy ? 'Stop' : 'Send';
   const sg = $('.sugg');
-  if (sg && S.chat.length) sg.remove();
+  if (sg && chatMsgs().length) sg.remove();
 }
-function paintMsg(i) {
-  const el = document.querySelector(`#msg-${i} .mt`);
-  if (el) el.innerHTML = fmtMsg(S.chat[i].text);
+function paintLive() {
+  const el = document.querySelector('#msg-live .mt');
+  if (el && S.live) el.innerHTML = S.live.text ? fmtMsg(S.live.text) : THINKING;
   const log = $('#chat-log');
   if (log) log.scrollTop = log.scrollHeight;
 }
 async function sendChat(q) {
-  if (S.ai !== 'ready' || !SAMPLE || S.chatBusy) return;
-  const history = S.chat.filter((m) => m.text && !m.err).slice(-12).map((m) => ({ role: m.role, content: m.text }));
+  if (S.chatBusy || !q) return;
+  if (S.ai === 'checking') await AI_INIT;
+  if (S.ai !== 'ready' || !SAMPLE) { toast('The AI coach is not available in this view.'); render(); return; }
+  const history = chatMsgs().filter((m) => m.text && m.st !== 'pending').slice(-12).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
   const turns = [{ role: 'user', content: coachRules() }, ...history, { role: 'user', content: q }];
-  S.chat.push({ role: 'user', text: q });
-  S.chat.push({ role: 'assistant', text: '', pending: true });
-  const msg = S.chat[S.chat.length - 1];
+  const id = 'a' + Date.now().toString(36);
+  putChat([...chatMsgs(), { role: 'user', text: q }, { role: 'assistant', text: '', st: 'pending', id }]);
   S.chatBusy = true;
+  S.live = { id, text: '' };
   renderChat();
   const ctl = new AbortController();
   S.chatCtl = ctl;
+  let text = '', err = null;
   try {
-    const res = await SAMPLE(turns, {
+    const res = await SAMPLE(turns, aiOpts({
       cache: false, signal: ctl.signal,
-      onText: ({ text }) => { msg.text = text; msg.pending = false; const i = S.chat.indexOf(msg); if (i >= 0) paintMsg(i); },
-    });
-    msg.text = res.text;
-    if (res.truncated) msg.err = 'Cut short. Ask for less at a time.';
+      onText: ({ text: t }) => { if (S.live && S.live.id === id) { S.live.text = t; paintLive(); } },
+    }));
+    text = res.text;
+    if (res.truncated) err = 'Cut short. Ask for less at a time.';
   } catch (e) {
-    const code = e && e.code;
-    msg.text = code === 'refused' ? '' : (e && e.text) || msg.text || '';
-    if (code !== 'cancelled') msg.err = aiErr(code);
-    if (!msg.text && !msg.err) { const i = S.chat.indexOf(msg); if (i >= 0) S.chat.splice(i, 1); }
+    const code = (e && e.code) || (e && e.name) || 'unknown';
+    text = code === 'refused' ? '' : (e && e.text) || (S.live && S.live.text) || '';
+    if (code !== 'cancelled') err = `${aiErr(code)} (code: ${code})`;
   } finally {
-    msg.pending = false;
-    S.chatBusy = false; S.chatCtl = null;
-    saveChat();
+    const ms = chatMsgs().slice();
+    const i = ms.findIndex((m) => m.id === id);
+    if (i >= 0) {
+      if (text || err) ms[i] = err ? { role: 'assistant', text, err } : { role: 'assistant', text };
+      else ms.splice(i, 1);
+      putChat(ms);
+    }
+    S.chatBusy = false; S.chatCtl = null; S.live = null;
     renderChat();
     if (S.ai === 'off') render();
   }
 }
 
+function aiStatus() {
+  if (S.ai === 'ready') return { chip: '<span class="chip steel">AI coach on</span>', note: S.aiPerm === 'prompt' ? 'The first time you build or ask, Claude asks if this page can use AI. Tap Allow.' : '' };
+  if (S.ai === 'checking') return { chip: '<span class="chip">Connecting AI…</span>', note: '' };
+  const notes = {
+    standalone: 'This copy of the app has no AI. Open your claude.ai link to use the AI coach. The built-in coach works here.',
+    denied: 'AI permission is turned off for this page. Turn it back on to use the AI coach.',
+    disabled: 'Claude AI is not available on this account right now, so the built-in coach builds your workouts.',
+    unavailable: 'This Claude app can\'t run the AI coach here yet. Open the same link in a web browser (Chrome or Safari) at claude.ai. The built-in coach works meanwhile.',
+  };
+  return { chip: '<span class="chip">Built-in coach</span>', note: notes[S.aiWhy] || notes.unavailable, perms: S.aiWhy === 'denied' };
+}
+
 function vCoach() {
-  const C = S.coach;
+  const C = copts();
   const u = unitW();
   const av = availW();
   const g = gearNow();
   const t = todayKey();
   const today = getDay(t), yest = getDay(addDays(t, -1));
   const open = openSession();
-  const aiChip = S.ai === 'ready' ? '<span class="chip steel">AI coach on</span>' : S.ai === 'checking' ? '<span class="chip">Connecting AI…</span>' : '<span class="chip">Built-in coach</span>';
-  const offNote = S.ai === 'off'
-    ? `<p class="small muted">${S.aiDenied ? 'AI is turned off for this page, so the built-in coach builds your workouts from your dumbbells and history.' : 'The AI coach runs in the claude.ai version of this app. Here, the built-in coach builds your workouts from your dumbbells and history.'}</p>`
-    : '';
+  const st = aiStatus();
 
   // dumbbell rack
   let gearBody;
@@ -2068,6 +2154,8 @@ function vCoach() {
         <button class="btn sm steel" type="submit">Add</button>
       </form>`;
   }
+  const heavy = av && ['wrist-curl', 'rev-wrist-curl', 'hammer-curl'].some((id) => av[0] > startCapU(id) + 0.01);
+  const heavyNote = heavy ? `<div class="note"><span class="t">Your lightest is ${av[0]} ${u}</span><p class="small">That is too heavy to start wrist and curl work safely, so the coach swaps in a water bottle for those. A light pair (${u === 'kg' ? '2–5 kg' : '5–10 lb'}) would unlock them.</p></div>` : '';
 
   // build card
   let build;
@@ -2080,6 +2168,7 @@ function vCoach() {
     else if (yest.w && yest.w.done) warn = '<div class="note"><span class="t">You trained yesterday</span><p class="small">Rule 2: never two days in a row. Today is better for rest, food and sleep.</p></div>';
     else if (weekCount(mondayOf(t)) >= 3) warn = '<div class="note"><span class="t">3 workouts this week already</span><p class="small">That is the max for your age. A 4th adds risk, not gains.</p></div>';
     const joint = C.sore.includes('elbow') || C.sore.includes('wrist');
+    const btnLabel = S.coach.building ? 'Building…' : coachDoc().draft ? 'Build a new workout' : 'Build my workout';
     build = `
       <div class="field"><span class="lab">Time</span><div class="seg" role="group" aria-label="Time">${[20, 30, 45].map((m) => `<button type="button" data-act="c-time" data-v="${m}" aria-pressed="${C.time === m}">${m} min</button>`).join('')}</div></div>
       <div class="field"><span class="lab">Focus</span><div class="toggles" role="group" aria-label="Focus">${Object.entries(FOCI).map(([k, f]) => `<button data-act="c-focus" data-v="${k}" aria-pressed="${C.focus === k}">${esc(f.name)}</button>`).join('')}</div></div>
@@ -2087,47 +2176,52 @@ function vCoach() {
       <div class="field"><span class="lab">Anything sore today?</span><div class="toggles" role="group" aria-label="Sore areas">${SORE.map((a) => `<button data-act="c-sore" data-v="${a}" aria-pressed="${C.sore.includes(a)}">${a[0].toUpperCase() + a.slice(1)}</button>`).join('')}</div></div>
       ${joint ? '<div class="note"><span class="t">Sore or hurting?</span><p class="small">Muscle soreness is normal, and the coach will skip exercises that load it. Pain inside the joint, especially the inner elbow, means rest that arm and tell a parent.</p></div>' : ''}
       ${warn}
-      ${canStart ? `<button class="btn block" data-act="build" ${av ? '' : 'disabled'}>${C.draft ? 'Build a new workout' : 'Build my workout'}</button>${av ? '' : '<p class="small muted">Add your dumbbells above first.</p>'}` : ''}`;
+      ${canStart ? `<button class="btn block" data-act="build" ${av && !S.coach.building ? '' : 'disabled'}>${btnLabel}</button>${av ? '' : '<p class="small muted">Add your dumbbells above first.</p>'}` : ''}`;
   }
 
   return `<section class="stack"><p class="eyebrow">Dumbbell trainer</p><h1 class="display">Coach Forge</h1></section>
   <section class="card">
-    <div class="row between"><p class="small" style="flex:1;min-width:200px">Put in your dumbbells, tell the coach how you feel, and it builds today's workout around the weights you own.</p>${aiChip}</div>
-    ${offNote}
+    <div class="row between"><p class="small" style="flex:1;min-width:200px">Put in your dumbbells, tell the coach how you feel, and it builds today's workout around the weights you own. Your plan, workout clock, rest timer and chat are saved, so you can close the app and pick up where you left off.</p>${st.chip}</div>
+    ${st.note ? `<p class="small muted">${esc(st.note)}</p>` : ''}
+    ${st.perms ? '<button class="btn ghost sm" data-act="ai-perms" style="align-self:flex-start">Turn AI back on</button>' : ''}
   </section>
   <section class="card">
     <div class="row between"><h2 class="sec">Your dumbbells</h2><div class="seg" role="group" aria-label="Dumbbell type"><button type="button" data-act="gearkind" data-k="fixed" aria-pressed="${g.kind !== 'adj'}">Pairs</button><button type="button" data-act="gearkind" data-k="adj" aria-pressed="${g.kind === 'adj'}">Adjustable</button></div></div>
     ${gearBody}
+    ${heavyNote}
   </section>
-  ${open ? '' : planCard()}
   <section class="card">
     <h2 class="sec">${S.ai === 'ready' ? 'Train with AI' : 'Build a workout'}</h2>
     ${build}
   </section>
+  ${open ? '' : planCard()}
   ${S.ai === 'ready'
-    ? `<section class="card"><div class="row between"><h2 class="sec">Ask Coach</h2>${S.chat.length ? '<button class="linkbtn" data-act="chat-clear">Clear chat</button>' : ''}</div>${chatBlock()}</section>`
-    : `<section class="card"><h2 class="sec">Ask Coach</h2><p class="small muted">Chatting with the coach needs the AI, which runs in the claude.ai version of this app.</p></section>`}`;
+    ? `<section class="card"><div class="row between"><h2 class="sec">Ask Coach</h2>${chatMsgs().length ? '<button class="linkbtn" data-act="chat-clear">Clear chat</button>' : ''}</div>${chatBlock()}</section>`
+    : `<section class="card"><h2 class="sec">Ask Coach</h2><p class="small muted">${S.ai === 'checking' ? 'Connecting to the AI…' : 'Chatting needs the AI coach, which is not available in this view.'}</p></section>`}`;
 }
 
 function planCard() {
-  const C = S.coach;
-  if (C.building) {
-    return `<section class="card" aria-live="polite">
-      <div class="thinking"><span class="spin" aria-hidden="true"></span><div><b>Coach is building your workout…</b><p class="small muted">Checking your dumbbells, your last workouts and how you feel. This can take up to a minute.</p></div></div>
+  if (S.coach.building) {
+    return `<section class="card" id="plan" aria-live="polite">
+      <div class="thinking"><span class="spin" aria-hidden="true"></span><div><b>Coach is building your workout… <span id="build-secs" class="num">0s</span></b><p class="small muted">Checking your dumbbells, your last workouts and how you feel. Usually a few seconds.</p></div></div>
       <button class="btn ghost" data-act="build-stop">Stop</button>
     </section>`;
   }
-  const err = C.err ? `<div class="note"><span class="t">Heads up</span><p class="small">${esc(C.err)}</p></div>` : '';
-  const p = C.draft;
-  if (!p) return err ? `<section class="card">${err}</section>` : '';
-  const rows = p.ex.map((id) => {
+  const cd = coachDoc();
+  let err = cd.err ? `<div class="note"><span class="t">Heads up</span><p class="small">${esc(cd.err)}</p></div>` : '';
+  if (cd.building && !cd.draft) err += '<div class="note"><span class="t">Build got interrupted</span><p class="small">The app closed before the coach finished. Tap Build again. It only takes a few seconds now.</p></div>';
+  const p = cd.draft;
+  if (!p || !Array.isArray(p.ex)) return err ? `<section class="card" id="plan">${err}</section>` : '';
+  const when = cd.at ? (keyOf(new Date(cd.at)) === todayKey() ? `today at ${new Date(cd.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : fmtDay(keyOf(new Date(cd.at)))) : '';
+  const rows = p.ex.filter((id) => EX[id]).map((id) => {
     const r = p.rx[id];
     const W = hasWeight(id);
-    return `<div class="plan-ex"><div><b>${esc(EX[id].name)}</b><div class="small muted num">${esc(rxText(id, r))}</div></div><div class="w num">${W ? esc(fmtW(p.w0[id])) : isTimed(id) ? 'Hold' : 'Body'}</div>${p.cue[id] ? `<p class="cue">${esc(p.cue[id])}</p>` : ''}</div>`;
+    const wl = W ? (p.w0[id] > 0 ? fmtW(p.w0[id]) : noWeightLabel(id)) : isTimed(id) ? 'Hold' : 'Body';
+    return `<div class="plan-ex"><div><b>${esc(EX[id].name)}</b><div class="small muted num">${esc(rxText(id, r))}</div></div><div class="w num">${esc(wl)}</div>${p.cue && p.cue[id] ? `<p class="cue">${esc(p.cue[id])}</p>` : ''}</div>`;
   }).join('');
   return `<section class="card" id="plan">
     ${err}
-    <div class="row between"><p class="eyebrow">${p.src === 'ai' ? 'Built by the AI coach' : 'Built by the built-in coach'}</p><span class="chip num">${p.ex.length} exercises · ~${p.ex.length * 4 + 5} min</span></div>
+    <div class="row between"><p class="eyebrow">${p.src === 'ai' ? 'Built by the AI coach' : 'Built by the built-in coach'}${when ? ' · ' + esc(when) : ''}</p><span class="chip num">${p.ex.length} exercises · ~${p.ex.length * 4 + 5} min</span></div>
     <h2 class="sec">${esc(p.title)}</h2>
     ${p.intro ? `<p class="small">${esc(p.intro)}</p>` : ''}
     <div class="list">${rows}</div>
@@ -2337,8 +2431,24 @@ function beep() {
     });
   } catch (e) { /* no sound available */ }
 }
-function startRest(sec, ex, i) {
-  S.rest = { end: Date.now() + sec * 1000, total: sec, ex, i };
+/* the rest timer is saved with the workout, so closing the app doesn't lose it */
+function beginRest(sec, ex, i) {
+  const end = Date.now() + sec * 1000;
+  updSession((w) => { w.rest = { end, total: sec, ex, i }; });
+  showRest(end, sec, ex, i);
+}
+function dropRestRecord() {
+  const o = openSession();
+  if (o && o.w.rest) updDay(o.k, (d) => { delete d.w.rest; });
+}
+function restoreRest() {
+  if (S.rest) return;
+  const o = openSession();
+  const r = o && o.w.rest;
+  if (r && r.end > Date.now() + 500) showRest(r.end, r.total, r.ex, r.i);
+}
+function showRest(end, sec, ex, i) {
+  S.rest = { end, total: sec, ex, i };
   const el = $('#restbar');
   el.innerHTML = `<div class="rest-in" role="timer" aria-live="off">
     <div class="rest-row"><div class="stack" style="gap:0"><span class="lbl">Rest</span><span class="time" id="rest-left">${sec}</span></div><div class="track"><i id="rest-fill" style="width:100%"></i></div><button data-act="rest-add">+15s</button><button data-act="rest-skip">Skip</button></div>
@@ -2355,6 +2465,7 @@ function tickRest() {
   if (ms <= 0) {
     S.rest = null; el.hidden = true;
     document.body.classList.remove('resting');
+    dropRestRecord();
     beep();
     try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch (e) { /* not allowed */ }
     toast('Rest over. Next set, lock in.');
@@ -2367,6 +2478,8 @@ function tickRest() {
   if (fill) fill.style.width = `${clamp((ms / (S.rest.total * 1000)) * 100, 0, 100)}%`;
 }
 function tickElapsed() {
+  const bs = $('#build-secs');
+  if (bs && S.coach.building) bs.textContent = `${Math.floor((Date.now() - S.coach.t0) / 1000)}s`;
   const el = $('#elapsed');
   if (!el) return;
   const o = openSession();
@@ -2402,6 +2515,7 @@ function render() {
   const p = prof();
   $('#meBtn').textContent = (p.name || '?').trim().charAt(0).toUpperCase() || '?';
   tickElapsed();
+  restoreRest();
   if (S.view === 'train' && openSession()) holdWake(true);
 }
 
@@ -2519,7 +2633,7 @@ const ACTIONS = {
       if (nxt && nxt[0] == null && hasWeight(id)) nxt[0] = row[0];
       started = true;
     });
-    if (started) { ensureAudio(); startRest(EX[id].rest, id, i); }
+    if (started) { ensureAudio(); beginRest(EX[id].rest, id, i); }
   },
   setfeel(el) {
     const v = Number(el.dataset.v);
@@ -2562,20 +2676,43 @@ const ACTIONS = {
     g.w.sort((a, b) => a - b);
     Store.put('gear', g);
   },
-  'c-time'(el) { S.coach.time = Number(el.dataset.v); },
-  'c-focus'(el) { S.coach.focus = FOCI[el.dataset.v] ? el.dataset.v : 'arm'; },
-  'c-energy'(el) { S.coach.energy = Number(el.dataset.v); },
+  'c-time'(el) { setOpt('time', Number(el.dataset.v)); },
+  'c-focus'(el) { setOpt('focus', FOCI[el.dataset.v] ? el.dataset.v : 'arm'); },
+  'c-energy'(el) { setOpt('energy', Number(el.dataset.v)); },
   'c-sore'(el) {
     const a = el.dataset.v;
-    const s = S.coach.sore;
+    const s = copts().sore;
     const i = s.indexOf(a);
     if (i >= 0) s.splice(i, 1); else if (SORE.includes(a)) s.push(a);
+    setOpt('sore', s);
   },
   build() { buildWorkout(); return false; },
   'build-stop'() { if (S.coach.ctl) S.coach.ctl.abort(); return false; },
-  'plan-start'() { if (S.coach.draft) startPlan(S.coach.draft); return false; },
+  'plan-start'() { const d = coachDoc().draft; if (d && Array.isArray(d.ex)) startPlan(d); return false; },
   ask(el) { sendChat(el.dataset.q || ''); return false; },
-  'chat-clear'() { if (S.chatCtl) S.chatCtl.abort(); S.chat = []; saveChat(); },
+  'chat-clear'() { if (S.chatCtl) S.chatCtl.abort(); putChat([]); },
+  'chat-retry'(el) {
+    const ms = chatMsgs().slice();
+    const i = ms.findIndex((m) => m.id === el.dataset.id);
+    if (i < 0) return false;
+    const q = i > 0 && ms[i - 1].role === 'user' ? ms[i - 1].text : null;
+    ms.splice(q ? i - 1 : i, q ? 2 : 1);
+    putChat(ms);
+    if (q) sendChat(q); else renderChat();
+    return false;
+  },
+  'ai-perms'() {
+    (async () => {
+      if (!PERMS) { toast('Open this page\'s menu, choose Permissions, and allow Claude.'); return; }
+      try { await PERMS.manage(); } catch (e) { toast('Open this page\'s menu, choose Permissions, and allow Claude.'); }
+      try {
+        S.aiPerm = await PERMS.state('sample');
+        if (SAMPLE && S.aiPerm !== 'denied' && S.aiPerm !== 'unavailable') { S.ai = 'ready'; S.aiWhy = null; }
+      } catch (e) { /* keep current state */ }
+      render();
+    })();
+    return false;
+  },
   'coach-chat'() {
     openSheet('Ask Coach', chatBlock(), 'AI');
     const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight;
@@ -2588,8 +2725,15 @@ const ACTIONS = {
   pain(el) { painSheet(el.dataset.ex); return false; },
   'skip-pain'(el) { const id = el.dataset.ex; updSession((w) => { w.sk = w.sk || {}; w.sk[id] = 'pain'; }); closeSheet(); toast('Skipped. Smart move. Tell a parent if it sticks around.'); },
   unskip(el) { const id = el.dataset.ex; updSession((w) => { if (w.sk) delete w.sk[id]; }); },
-  'rest-add'() { if (S.rest) { S.rest.end += 15000; S.rest.total += 15; tickRest(); } return false; },
-  'rest-skip'() { S.rest = null; tickRest(); return false; },
+  'rest-add'() {
+    if (!S.rest) return false;
+    S.rest.end += 15000; S.rest.total += 15;
+    const r = S.rest;
+    updSession((w) => { if (w.rest) { w.rest.end = r.end; w.rest.total = r.total; } });
+    tickRest();
+    return false;
+  },
+  'rest-skip'() { S.rest = null; tickRest(); dropRestRecord(); return false; },
   finish() {
     const o = openSession();
     if (!o) return false;
@@ -2610,7 +2754,7 @@ const ACTIONS = {
     const o = openSession();
     if (!o) return;
     const closer = o.w.ai && o.w.ai.closer;
-    updDay(o.k, (d) => { d.w.done = true; d.w.feel = v; d.w.end = Date.now(); });
+    updDay(o.k, (d) => { d.w.done = true; d.w.feel = v; d.w.end = Date.now(); delete d.w.rest; });
     S.rest = null; tickRest();
     holdWake(false);
     const n = doneWorkouts().length;
@@ -2809,18 +2953,30 @@ window.addEventListener('hashchange', route);
    ========================================================= */
 async function initAI() {
   const c = window.claude;
-  if (!c || typeof c.use !== 'function') { S.ai = 'off'; return; }
+  if (!c || typeof c.use !== 'function') { S.ai = 'off'; S.aiWhy = 'standalone'; return; }
   try { SAMPLE = await c.use('sample'); } catch (e) { SAMPLE = null; }
-  S.ai = SAMPLE ? 'ready' : 'off';
+  try { PERMS = await c.use('permissions'); } catch (e) { PERMS = null; }
+  if (typeof SAMPLE !== 'function') { SAMPLE = null; S.ai = 'off'; S.aiWhy = 'unavailable'; }
+  else {
+    S.ai = 'ready'; S.aiWhy = null;
+    // the fast model answers in a second or two; fall back to the default model where it isn't offered
+    try {
+      const lim = typeof SAMPLE.limits === 'function' ? await SAMPLE.limits() : null;
+      if (lim && Array.isArray(lim.modelTiers) && !lim.modelTiers.includes('quick')) TIER = null;
+    } catch (e) { /* keep the fast model */ }
+    if (PERMS) {
+      try { S.aiPerm = await PERMS.state('sample'); } catch (e) { S.aiPerm = null; }
+      if (S.aiPerm === 'denied') { S.ai = 'off'; S.aiWhy = 'denied'; }
+    }
+  }
   if (S.view === 'coach' || (S.view === 'train' && openSession())) render();
 }
 
 Store.docs = Store.readLocal(LOCAL_KEY) || {};
-S.chat = loadChat();
 setSync('device');
 route();
 initCloud();
-initAI();
+const AI_INIT = initAI();
 })();
 </script>
 
