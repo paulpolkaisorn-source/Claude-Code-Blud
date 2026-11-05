@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clawd 3D</title>
+<style>
+  :root { --ui: #f3e6dc; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 35%, #3a2c25 0%, #1b1714 75%);
+    color: var(--ui);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #c:active { cursor: grabbing; }
+  h1 { position: fixed; top: 14px; left: 16px; margin: 0; font-size: 15px; font-weight: 600; opacity: .8; pointer-events: none; }
+  #ui { position: fixed; left: 16px; bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    background: rgba(255,255,255,.08); color: var(--ui);
+    border: 1px solid rgba(255,255,255,.22); padding: 8px 12px;
+    border-radius: 8px; font: inherit; font-size: 14px; cursor: pointer;
+  }
+  button:hover { background: rgba(255,255,255,.16); }
+  button:focus-visible { outline: 2px solid #d77757; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<h1>Clawd · drag to orbit · scroll to zoom · click to jump</h1>
+<div id="ui">
+  <button id="btnBlink" type="button">Blink</button>
+  <button id="btnPlay" type="button">Pause animation</button>
+  <button id="btnReset" type="button">Reset view</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  if (typeof THREE === 'undefined') {
+    document.querySelector('h1').textContent = 'Could not load three.js (check your connection).';
+    return;
+  }
+
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  // ---------- renderer / scene / camera ----------
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.domElement.id = 'c';
+  document.body.prepend(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 300);
+
+  const TARGET = new THREE.Vector3(0, 4.2, 0);
+  const DEFAULT_VIEW = { yaw: 0.6, pitch: 0.25, dist: 34 };
+  const view = Object.assign({}, DEFAULT_VIEW);
+
+  function updateCamera() {
+    // On portrait screens, pull back so the whole character still fits horizontally.
+    const fit = camera.aspect < 1 ? 1 / camera.aspect : 1;
+    const d = view.dist * fit;
+    const cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+    camera.position.set(
+      TARGET.x + d * cp * Math.sin(view.yaw),
+      TARGET.y + d * sp,
+      TARGET.z + d * cp * Math.cos(view.yaw)
+    );
+    camera.lookAt(TARGET);
+  }
+
+  // ---------- lights & ground ----------
+  scene.add(new THREE.HemisphereLight(0xfff4ec, 0x3a2a22, 0.9));
+
+  const key = new THREE.DirectionalLight(0xffffff, 1.1);
+  key.position.set(12, 24, 18);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 100 });
+  key.shadow.bias = -0.0005;
+  scene.add(key);
+
+  const rim = new THREE.DirectionalLight(0xffb08a, 0.4);
+  rim.position.set(-15, 10, -12);
+  scene.add(rim);
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(400, 400),
+    new THREE.ShadowMaterial({ opacity: 0.35 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // ---------- Clawd ----------
+  // Built in voxel-style units: 1 unit = one "pixel" of the mascot.
+  const ORANGE = 0xd77757;
+  const bodyMat = new THREE.MeshStandardMaterial({ color: ORANGE, roughness: 0.5, metalness: 0.02 });
+  const eyeMat  = new THREE.MeshStandardMaterial({ color: 0x140c09, roughness: 0.35 });
+
+  const BODY_W = 11, BODY_H = 6, BODY_D = 6, LEG_H = 2.5;
+  const bodyY = LEG_H + BODY_H / 2;
+
+  const clawd = new THREE.Group();
+  scene.add(clawd);
+
+  function part(geo, mat, x, y, z) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
+
+  // Main block
+  clawd.add(part(new THREE.BoxGeometry(BODY_W, BODY_H, BODY_D), bodyMat, 0, bodyY, 0));
+
+  // Eyes (pivot at their centre so blinking squashes them in place)
+  const eyeGeo = new THREE.BoxGeometry(1, 2, 0.3);
+  const eyeY = bodyY + 0.6;
+  const eyeL = part(eyeGeo, eyeMat, -2.2, eyeY, BODY_D / 2 + 0.05);
+  const eyeR = part(eyeGeo, eyeMat,  2.2, eyeY, BODY_D / 2 + 0.05);
+  clawd.add(eyeL, eyeR);
+
+  // Four legs, tucked slightly into the body so there are no gaps
+  const legGeo = new THREE.BoxGeometry(1, LEG_H + 0.2, 1);
+  for (const x of [-4, -2, 2, 4]) {
+    clawd.add(part(legGeo, bodyMat, x, (LEG_H + 0.2) / 2, 0));
+  }
+
+  // Side arms, each on a shoulder pivot so they can wiggle
+  function makeArm(side) {
+    const pivot = new THREE.Group();
+    pivot.position.set(side * (BODY_W / 2), bodyY + 0.2, 0);
+    pivot.add(part(new THREE.BoxGeometry(1.5, 2, 2), bodyMat, side * 0.75, 0, 0));
+    clawd.add(pivot);
+    return pivot;
+  }
+  const armL = makeArm(-1);
+  const armR = makeArm(1);
+
+  // ---------- controls ----------
+  const el = renderer.domElement;
+  let dragging = false, moved = 0, lx = 0, ly = 0;
+
+  el.addEventListener('pointerdown', e => {
+    dragging = true; moved = 0; lx = e.clientX; ly = e.clientY;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly;
+    lx = e.clientX; ly = e.clientY;
+    moved += Math.abs(dx) + Math.abs(dy);
+    view.yaw -= dx * 0.008;
+    view.pitch = clamp(view.pitch + dy * 0.005, -0.3, 1.3);
+  });
+  const endDrag = () => {
+    if (dragging && moved < 5) jump();   // a tap, not a drag
+    dragging = false;
+  };
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', () => { dragging = false; });
+  el.addEventListener('wheel', e => {
+    e.preventDefault();
+    view.dist = clamp(view.dist * (1 + Math.sign(e.deltaY) * 0.08), 16, 70);
+  }, { passive: false });
+
+  // ---------- animation state ----------
+  let playing = true;
+  let t = 0;
+  let jumpY = 0, jumpV = 0;
+  let blinkTimer = 0;
+  let nextBlink = 2 + Math.random() * 3;
+  const BLINK_LEN = 0.14;
+  const GRAVITY = 40, JUMP_SPEED = 12;
+
+  function jump() {
+    if (jumpY === 0 && jumpV === 0) jumpV = JUMP_SPEED;
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (playing) t += dt;
+
+    // bob + jump
+    if (jumpY > 0 || jumpV !== 0) {
+      jumpV -= GRAVITY * dt;
+      jumpY += jumpV * dt;
+      if (jumpY <= 0) { jumpY = 0; jumpV = 0; }
+    }
+    const bob = playing ? Math.sin(t * 4) * 0.15 : 0;
+    clawd.position.y = bob + jumpY;
+
+    // arm wiggle
+    const wig = playing ? Math.sin(t * 6) * 0.25 : 0;
+    armL.rotation.z = wig;
+    armR.rotation.z = -wig;
+
+    // blinking
+    if (blinkTimer > 0) {
+      blinkTimer -= dt;
+    } else {
+      nextBlink -= dt;
+      if (nextBlink <= 0) {
+        blinkTimer = BLINK_LEN;
+        nextBlink = 2 + Math.random() * 3;
+      }
+    }
+    const sy = blinkTimer > 0 ? 0.1 : 1;
+    eyeL.scale.y = sy;
+    eyeR.scale.y = sy;
+
+    updateCamera();
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+
+  function resize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- buttons ----------
+  const btnBlink = document.getElementById('btnBlink');
+  const btnPlay  = document.getElementById('btnPlay');
+  const btnReset = document.getElementById('btnReset');
+  btnBlink.addEventListener('click', () => { blinkTimer = BLINK_LEN; });
+  btnPlay.addEventListener('click', () => {
+    playing = !playing;
+    btnPlay.textContent = playing ? 'Pause animation' : 'Play animation';
+  });
+  btnReset.addEventListener('click', () => Object.assign(view, DEFAULT_VIEW));
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
