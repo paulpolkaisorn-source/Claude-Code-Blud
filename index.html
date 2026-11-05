@@ -363,9 +363,13 @@ button.li:first-child { border-top: 0; }
 }
 .rest-in {
   max-width: 640px; margin: 0 auto 8px; background: var(--ink); color: var(--bg);
-  border-radius: 14px; padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 12px;
+  border-radius: 14px; padding: 10px 12px 12px 16px; display: flex; flex-direction: column; gap: 8px;
   box-shadow: 0 8px 24px var(--scrim);
 }
+.rest-row { display: flex; align-items: center; gap: 12px; }
+.rest-fb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 34px; }
+.rest-fb button { flex: 1; min-width: 0; }
+.rest-fb .msg { font: 600 0.95rem var(--font-cond); letter-spacing: 0.03em; }
 .rest-in .lbl { font: 700 0.8rem var(--font-cond); letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
 .rest-in .time { font: 900 1.9rem/1 var(--font-display); font-variant-numeric: tabular-nums; min-width: 3ch; }
 .rest-in .track { flex: 1; height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--bg) 25%, transparent); overflow: hidden; min-width: 30px; }
@@ -469,12 +473,51 @@ nav.tabs {
   padding-left: max(6px, env(safe-area-inset-left, 0px));
   padding-right: max(6px, env(safe-area-inset-right, 0px));
 }
-.tabs-in { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+.tabs-in { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); }
 .tab {
   display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 0 8px;
-  text-decoration: none; color: var(--muted); font: 700 0.72rem var(--font-cond); letter-spacing: 0.08em; text-transform: uppercase;
-  min-height: 58px; position: relative;
+  text-decoration: none; color: var(--muted); font: 700 0.68rem var(--font-cond); letter-spacing: 0.06em; text-transform: uppercase;
+  min-height: 58px; position: relative; min-width: 0;
 }
+
+/* ---------- coach ---------- */
+.rack { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 4px 0; }
+.db { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 700 0.8rem var(--font-cond); font-variant-numeric: tabular-nums; color: var(--muted); }
+.dbi { display: flex; align-items: center; height: 46px; }
+.dbi .p { display: block; width: 7px; border-radius: 2px; background: var(--steel); }
+.dbi .h { display: block; width: 16px; height: 4px; background: var(--muted); border-radius: 2px; }
+.db.top .p { background: var(--pad); }
+.field .seg button { flex: 1; }
+.ex-top .chip { white-space: nowrap; flex: none; }
+body.resting { padding-bottom: calc(240px + env(safe-area-inset-bottom, 0px)); }
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; }
+.toggles button {
+  min-width: 54px; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface);
+  font: 700 0.95rem var(--font-cond); letter-spacing: 0.03em; cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.toggles button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.toggles button:disabled { opacity: 0.45; cursor: default; }
+.plan-ex { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
+.plan-ex:first-child { border-top: 0; }
+.plan-ex > div { min-width: 0; }
+.plan-ex .w { font: 800 1.15rem var(--font-display); white-space: nowrap; }
+.plan-ex .cue { grid-column: 1 / -1; font-size: 0.875rem; color: var(--muted); }
+.thinking { display: flex; align-items: center; gap: 10px; }
+.spin { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--pad); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.chat-log { display: flex; flex-direction: column; gap: 10px; max-height: 440px; overflow-y: auto; padding: 2px; }
+.chat-empty { font-size: 0.9rem; color: var(--muted); }
+.msg { max-width: 88%; padding: 10px 12px; border-radius: 14px; line-height: 1.45; font-size: 0.95rem; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 4px; }
+.msg.user { align-self: flex-end; background: var(--ink); color: var(--bg); border-bottom-right-radius: 4px; }
+.msg.assistant { align-self: flex-start; background: var(--surface-2); border-bottom-left-radius: 4px; }
+.msg .who { font: 700 0.7rem var(--font-cond); letter-spacing: 0.1em; text-transform: uppercase; color: var(--pad); }
+.msg .err { color: var(--warn); font-size: 0.85rem; font-weight: 600; }
+.chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.chat-form input { border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; min-height: 44px; width: 100%; min-width: 0; }
+.sugg { display: flex; gap: 6px; flex-wrap: wrap; }
+.sugg .chip { text-align: left; }
+.coach-cue { font-size: 0.9rem; }
+.coach-cue b { font-family: var(--font-cond); letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.8rem; color: var(--steel); }
 .tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .tab[aria-current="page"] { color: var(--ink); }
 .tab[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--pad); }
@@ -541,6 +584,7 @@ nav.tabs {
   <div class="tabs-in">
     <a class="tab" href="#today" data-tab="today"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Today</a>
     <a class="tab" href="#train" data-tab="train"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M3 9v6M17.5 6.5v11M21 9v6M6.5 12h11"/></svg>Train</a>
+    <a class="tab" href="#coach" data-tab="coach"><svg viewBox="0 0 24 24"><path d="M4 4.5h16v11.5H10l-6 4z"/><path d="M12 7.5l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1z"/></svg>Coach</a>
     <a class="tab" href="#fuel" data-tab="fuel"><svg viewBox="0 0 24 24"><path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M8 8c0-1.5 1-2 1-3.5M12 8c0-1.5 1-2 1-3.5M16 8c0-1.5 1-2 1-3.5"/></svg>Fuel</a>
     <a class="tab" href="#progress" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-6M2 20h20"/></svg>Progress</a>
     <a class="tab" href="#lore" data-tab="lore"><svg viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/></svg>Lore</a>
@@ -789,6 +833,30 @@ const TIPS = [
 
 const HYPE = ['aura +', 'W', 'locked in', 'that was peak', 'lowkey goated', 'no cap', 'built different', 'sigma grind detected'];
 
+/* which joints each exercise loads (used to skip sore spots) */
+const AREAS = {
+  'goblet-squat': ['knee', 'back'], 'split-squat': ['knee'], 'db-rdl': ['back'],
+  'push-up': ['wrist', 'elbow', 'shoulder'], 'db-row': ['back', 'elbow'], 'db-press': ['shoulder', 'elbow'],
+  'hammer-curl': ['elbow', 'wrist'], 'wrist-curl': ['wrist', 'elbow'], 'rev-wrist-curl': ['wrist', 'elbow'],
+  'pronation': ['wrist', 'elbow'], 'rising': ['wrist', 'elbow'], 'farmer': ['wrist', 'back'], 'pinch': ['wrist'],
+  'fingers': [], 'plank': ['shoulder'], 'side-plank': ['shoulder'], 'dead-bug': [],
+};
+const SORE = ['wrist', 'elbow', 'shoulder', 'back', 'knee'];
+const FOCI = {
+  arm: { name: 'Arm wrestling', ai: 'arm wrestling: extra forearm, wrist, grip and pulling work, plus at least one leg or core exercise' },
+  full: { name: 'Full body', ai: 'full body: legs, push, pull, arms, forearms and core' },
+  upper: { name: 'Upper body', ai: 'upper body: push, pull, arms and forearms, plus core' },
+  lower: { name: 'Lower body', ai: 'lower body and core, so the arms get a break' },
+};
+const FOCUS_EX = {
+  arm: ['db-row', 'hammer-curl', 'wrist-curl', 'pronation', 'rising', 'rev-wrist-curl', 'farmer', 'pinch', 'fingers', 'plank'],
+  upper: ['push-up', 'db-row', 'db-press', 'hammer-curl', 'wrist-curl', 'rev-wrist-curl', 'fingers', 'plank'],
+  lower: ['goblet-squat', 'db-rdl', 'split-squat', 'farmer', 'dead-bug', 'side-plank', 'plank'],
+};
+const ENERGY = ['', 'Tired', 'OK', 'Fired up'];
+const PRESETS = { kg: [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15], lb: [2, 3, 5, 8, 10, 12, 15, 20, 25, 30] };
+const SUGG = ['Is my weight too light for curls?', 'How do I make my grip stronger?', 'What should I eat before training?', 'How did Devon get so strong?'];
+
 /* =========================================================
    Storage: account-backed when the viewer offers it,
    this-device storage otherwise
@@ -952,7 +1020,12 @@ function openSession() {
   for (let i = days.length - 1; i >= 0; i--) { const [k, d] = days[i]; if (d.w && !d.w.done) return { k, w: d.w }; }
   return null;
 }
-const nextLetter = () => LETTERS[doneWorkouts().length % 3];
+// A/B/C rotation counts only the regular plan days, so coach workouts don't shift it
+const nextLetter = () => LETTERS[doneWorkouts().filter((x) => !x.w.ai).length % 3];
+const sessName = (w) => (w.ai ? w.ai.title : DAYS[w.d].name);
+const sessEx = (w) => (w.ai ? w.ai.ex : DAYS[w.d].ex);
+const sessTag = (w) => (w.ai ? (w.ai.src === 'ai' ? 'AI' : 'Coach') : 'Day ' + w.d);
+function sessRx(w, id) { return w.ai && w.ai.rx && w.ai.rx[id] ? Object.assign({}, w.ai.rx[id]) : rxFor(id, w.ph, w.n); }
 function weekCount(mon) { const end = addDays(mon, 6); return doneWorkouts().filter((x) => x.k >= mon && x.k <= end).length; }
 
 const unitW = () => prof().unit;
@@ -988,6 +1061,48 @@ const incFor = (id) => {
   return unitW() === 'kg' ? (small ? 1 : 2) : (small ? 2.5 : 5);
 };
 
+/* dumbbells the athlete owns, in the current unit, lightest first */
+function gearNow() {
+  const g = Store.docs.gear || { kind: 'fixed', w: [], u: unitW() };
+  const from = g.u || 'kg', to = unitW();
+  const cv = (x) => (x == null ? null : round1(toUnit(x, from, to)));
+  return { kind: g.kind || 'fixed', w: (g.w || []).map(cv), min: cv(g.min), max: cv(g.max), step: cv(g.step), u: to };
+}
+function availW() {
+  if (!Store.docs.gear) return null;
+  const g = gearNow();
+  let list = [];
+  if (g.kind === 'adj') {
+    if (g.min != null && g.max != null && g.step > 0) for (let x = g.min; x <= g.max + 1e-6 && list.length < 120; x += g.step) list.push(round1(x));
+  } else list = g.w.slice();
+  list = [...new Set(list.filter((x) => x > 0))].sort((a, b) => a - b);
+  return list.length ? list : null;
+}
+const snapDown = (x, av) => { let best = av[0]; for (const v of av) if (v <= x + 0.01) best = v; return best; };
+const snapNear = (x, av) => av.reduce((b, v) => (Math.abs(v - x) < Math.abs(b - x) ? v : b), av[0]);
+const jumpOk = (id, from, to) => to - from <= Math.max(incFor(id) * 1.5, from * 0.3);
+function stepUp(id, cur) {
+  const av = availW();
+  if (!av) return round1(cur + incFor(id));
+  const up = av.find((v) => v > cur + 0.01);
+  return up != null && jumpOk(id, cur, up) ? up : null;
+}
+function stepDown(id, cur) {
+  const av = availW();
+  if (!av) return Math.max(0, round1(cur - incFor(id)));
+  const lower = av.filter((v) => v < cur - 0.01);
+  return lower.length ? lower[lower.length - 1] : cur;
+}
+/* first-time starting weight: lightest for forearm work, light for the rest */
+function lightCap(id) {
+  const av = availW();
+  if (!av) return null;
+  const k = EX[id].rx;
+  if (k === 'forearm' || k === 'pinch') return av[0];
+  if (k === 'hold') return av[Math.floor((av.length - 1) / 2)];
+  return av[Math.min(1, av.length - 1)];
+}
+
 function lastSets(id, excludeKey) {
   const ws = doneWorkouts();
   for (let i = ws.length - 1; i >= 0; i--) {
@@ -1002,18 +1117,30 @@ function suggestion(id, r, excludeKey) {
   const e = EX[id];
   const W = hasWeight(id);
   const last = lastSets(id, excludeKey);
+  const av = availW();
   if (!last) {
     let text = 'First time: nail the form before anything else.';
+    if (W && av) {
+      const lw = lightCap(id);
+      return { text: `First time: start with your ${fmtW(lw)} dumbbell${e.rx === 'hold' ? 's' : ''}. Too easy? Tap "Too easy" after the set and the next one goes up.`, w: lw, up: false };
+    }
     if (W) text = e.rx === 'forearm' ? 'First time: go very light. You should be able to do 25+ reps.' : (e.rx === 'hold' || e.rx === 'pinch') ? 'First time: pick a weight you can hold for 40+ seconds.' : 'First time: pick a weight you could lift about 20 times.';
     return { text, w: null, up: false };
   }
-  const top = round05(toUnit(Math.max(0, ...last.sets.map((s) => s[0] || 0)), last.u, unitW()));
+  let top = round05(toUnit(Math.max(0, ...last.sets.map((s) => s[0] || 0)), last.u, unitW()));
+  if (W && av && top > 0) top = snapNear(top, av);
   const vals = last.sets.map((s) => s[1]).filter((v) => v != null);
   const unitTxt = isTimed(id) ? 's' : '';
   const lastTxt = `Last time: ${W ? fmtW(top) + ' × ' : ''}${vals.map((v) => v + unitTxt).join(', ')}`;
   const hitTop = last.sets.length >= r.s && vals.length > 0 && vals.every((v) => v >= r.hi);
   if (last.feel === 3) return { text: `${lastTxt}. That workout felt too hard, so keep it the same today.`, w: W ? top : null, up: false };
   if (hitTop) {
+    if (W && av) {
+      const up = av.find((v) => v > top + 0.01);
+      if (up == null) return { text: `${lastTxt}. That is your heaviest dumbbell, so lower every rep over 3 seconds to make it harder.`, w: top, up: true };
+      if (!jumpOk(id, top, up)) return { text: `${lastTxt}. Your next dumbbell (${fmtW(up)}) is a big jump. Stay at ${fmtW(top)} and lower each rep over 3 seconds first.`, w: top, up: true };
+      return { text: `${lastTxt}. You hit the top of the range. Grab the ${fmtW(up)} dumbbell today.`, w: up, up: true };
+    }
     if (W) { const nw = round1(top + incFor(id)); return { text: `${lastTxt}. You hit the top of the range. Try ${fmtW(nw)} today.`, w: nw, up: true }; }
     return { text: `${lastTxt}. Top of the range. Make it harder: slower reps or a harder version.`, w: null, up: true };
   }
@@ -1030,6 +1157,7 @@ function questList() {
     { id: 'rules', name: 'Read the 8 Gym Rules', done: !!q.rules, act: 'goto-rules' },
     { id: 'corner', name: 'Show this plan to a parent, guardian or coach', done: !!q.corner, act: 'corner' },
     { id: 'lore', name: 'Read the Devon Files', done: !!q.lore, act: 'goto-lore' },
+    { id: 'gear', name: 'Add your dumbbells to the AI trainer', done: !!availW(), act: 'goto-coach' },
     { id: 'first', name: 'Finish your first workout', done: ws.length > 0, act: 'goto-train' },
     { id: 'fuel', name: 'Hit your protein goal once', done: allDays().some(([, d]) => dayProtein(d) >= g), act: 'goto-fuel' },
   ];
@@ -1094,8 +1222,14 @@ const S = {
   rest: null,
   wake: null,
   confirmReset: false,
+  ai: window.claude && typeof window.claude.use === 'function' ? 'checking' : 'off',
+  coach: { time: 30, focus: 'arm', energy: 2, sore: [], building: false, ctl: null, draft: null, err: null },
+  chat: [],
+  chatBusy: false,
+  chatCtl: null,
 };
-const VIEWS = ['today', 'train', 'fuel', 'progress', 'lore'];
+const VIEWS = ['today', 'train', 'coach', 'fuel', 'progress', 'lore'];
+let SAMPLE = null;
 
 /* =========================================================
    Small render helpers
@@ -1168,9 +1302,9 @@ function missionCard() {
   let rest = false, letter = next, tag = 'Day', eyebrow, title, body, actions;
 
   if (open) {
-    letter = open.w.d;
+    letter = open.w.ai ? (open.w.ai.src === 'ai' ? 'AI' : 'C') : open.w.d;
     eyebrow = 'Workout in progress';
-    title = DAYS[open.w.d].name;
+    title = sessName(open.w);
     body = `${doneSetCount(open.w)} ${doneSetCount(open.w) === 1 ? 'set' : 'sets'} logged so far. Finish strong.`;
     actions = `<button class="btn" data-act="goto-train">Resume workout</button>`;
   } else if (today.w && today.w.done) {
@@ -1195,7 +1329,7 @@ function missionCard() {
     eyebrow = `Training day · Phase ${phaseFor(n)}`;
     title = D.name;
     body = `${D.ex.length} exercises, about 35 minutes. Focus: ${D.focus}.`;
-    actions = `<button class="btn" data-act="start" data-day="${next}">Start Day ${next}</button><a class="btn ghost" href="#train">Preview</a>`;
+    actions = `<button class="btn" data-act="start" data-day="${next}">Start Day ${next}</button><a class="btn ghost" href="#coach">AI workout</a>`;
   } else {
     rest = true; letter = next;
     const ns = nextScheduled(t);
@@ -1347,6 +1481,12 @@ function vTrain() {
     <p class="small">${esc(P.blurb)}</p>
     <p class="small muted">Phase 1 is your first 12 workouts, Phase 2 the next 12, then Phase 3 keeps going.</p>
   </section>
+  <a class="card" href="#coach" style="text-decoration:none;color:inherit">
+    <div class="row between" style="flex-wrap:nowrap">
+      <div class="stack" style="gap:4px;min-width:0"><p class="eyebrow">Dumbbell trainer</p><h3 class="sub">Train with the AI coach</h3><p class="small muted">Enter your dumbbells and the coach builds today's workout around them.</p></div>
+      <span class="linkbtn" style="flex:none">Open →</span>
+    </div>
+  </a>
   <section class="card">
     <div class="row between"><h2 class="sec">Day ${letter}: ${esc(D.name)}</h2></div>
     <div class="daypick" role="group" aria-label="Preview a day">${LETTERS.map((L) => `<button class="chip" data-act="preview" data-day="${L}" aria-pressed="${L === letter}">Day ${L}${L === nextLetter() ? ' · next' : ''}</button>`).join('')}</div>
@@ -1372,13 +1512,14 @@ function vTrain() {
 }
 
 function sessionView({ k, w }) {
-  const D = DAYS[w.d];
   const isToday = k === todayKey();
-  const exCards = D.ex.map((id) => exCard(k, w, id)).join('');
+  const exCards = sessEx(w).map((id) => exCard(k, w, id)).join('');
+  const kind = w.ai ? (w.ai.src === 'ai' ? 'AI workout' : 'Coach workout') : `Day ${w.d}`;
   return `<section class="sess-head">
-    <p class="eyebrow">Day ${w.d} · Phase ${w.ph} · workout #${w.n + 1}${isToday ? '' : ' · started ' + esc(fmtDay(k))}</p>
-    <h1 class="display">${esc(D.name)}</h1>
-    <div class="row"><span class="chip num" aria-label="Time since start">⏱ <span id="elapsed">0:00</span></span><span class="chip num">${doneSetCount(w)} ${doneSetCount(w) === 1 ? 'set' : 'sets'} done</span></div>
+    <p class="eyebrow">${kind} · Phase ${w.ph} · workout #${w.n + 1}${isToday ? '' : ' · started ' + esc(fmtDay(k))}</p>
+    <h1 class="display">${esc(sessName(w))}</h1>
+    ${w.ai && w.ai.intro ? `<p class="small">${esc(w.ai.intro)}</p>` : ''}
+    <div class="row"><span class="chip num" aria-label="Time since start">⏱ <span id="elapsed">0:00</span></span><span class="chip num">${doneSetCount(w)} ${doneSetCount(w) === 1 ? 'set' : 'sets'} done</span>${S.ai === 'ready' ? '<button class="chip steel" data-act="coach-chat">Ask Coach</button>' : ''}</div>
   </section>
   <section class="card">
     <div class="row between">
@@ -1398,11 +1539,12 @@ function sessionView({ k, w }) {
 
 function exCard(k, w, id) {
   const e = EX[id];
-  const r = rxFor(id, w.ph, w.n);
+  const r = sessRx(w, id);
   const rows = (w.sets && w.sets[id]) || [];
   const skipped = w.sk && w.sk[id];
   const W = hasWeight(id);
   const sg = suggestion(id, r, k);
+  const cue = w.ai && w.ai.cue && w.ai.cue[id];
   const repLab = isTimed(id) ? 'sec' : 'reps';
   const ph = r.lo === r.hi ? `${r.lo}` : `${r.lo}–${r.hi}`;
   const allDone = rows.length > 0 && rows.every((x) => x[2]);
@@ -1419,7 +1561,7 @@ function exCard(k, w, id) {
     </div>
     ${skipped ? `<p class="hint">Skipped today${skipped === 'pain' ? ' because something hurt. Tell a parent if it is still there tomorrow.' : '.'}</p>
       <div class="ex-actions"><button class="linkbtn" data-act="unskip" data-ex="${id}">Undo skip</button></div>`
-    : `<p class="hint ${sg.up ? 'up' : ''}">${esc(sg.text)}</p>
+    : `${cue ? `<p class="coach-cue"><b>Coach</b> ${esc(cue)}</p>` : `<p class="hint ${sg.up ? 'up' : ''}">${esc(sg.text)}</p>`}
       <div class="sets">${setRows}</div>
       <div class="ex-actions"><button class="linkbtn" data-act="addset" data-ex="${id}">+ Add set</button><button class="linkbtn warn" data-act="pain" data-ex="${id}">Something hurts</button></div>`}
   </article>`;
@@ -1535,7 +1677,7 @@ function vProgress() {
   const mUnit = metric === 'bw' ? unitW() : lenUnit();
   const todayCk = getDay(t).ck || {};
 
-  const recent = ws.slice(-6).reverse().map(({ k, w }) => `<div class="li"><span class="kind">Day ${w.d}</span><span class="grow">${esc(DAYS[w.d].name)}<br><span class="small muted">${esc(fmtDay(k))} · ${doneSetCount(w)} ${doneSetCount(w) === 1 ? 'set' : 'sets'}</span></span><span class="small muted">${['', 'Easy', 'Just right', 'Too hard'][w.feel || 0] || ''}</span></div>`).join('');
+  const recent = ws.slice(-6).reverse().map(({ k, w }) => `<div class="li"><span class="kind">${esc(sessTag(w))}</span><span class="grow">${esc(sessName(w))}<br><span class="small muted">${esc(fmtDay(k))} · ${doneSetCount(w)} ${doneSetCount(w) === 1 ? 'set' : 'sets'}</span></span><span class="small muted">${['', 'Easy', 'Just right', 'Too hard'][w.feel || 0] || ''}</span></div>`).join('');
 
   return `<section class="stack"><p class="eyebrow">Progress</p><h1 class="display">Receipts</h1></section>
   <section class="card class-card">
@@ -1582,6 +1724,414 @@ function vProgress() {
   <section class="card">
     <h3 class="sub">How XP works</h3>
     <p class="small">Workout +100 · protein goal +30 · 8–10 h sleep +20 · check-in +25 · 8 glasses of water +10 · breakfast +5 · each quest +50.</p>
+  </section>`;
+}
+
+/* ---------- coach: dumbbell trainer + AI ---------- */
+function aiErr(code) {
+  if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) {
+    S.ai = 'off'; S.aiDenied = true;
+    return 'The AI coach is turned off for this page, so the built-in coach takes over.';
+  }
+  if (code === 'rate_limited') return 'Coach needs a breather. Try again in a minute.';
+  if (code === 'session_expired') return 'Sign in to Claude again to use the coach.';
+  if (code === 'refused') return 'Coach can\'t help with that one. Try asking a different way.';
+  if (code === 'invalid_json' || code === 'empty_completion') return 'Coach got mixed up. Try again.';
+  if (code === 'prompt_too_large') return 'Too much to read at once. Clear the chat and try again.';
+  return 'Couldn\'t reach the coach. Check your connection and try again.';
+}
+
+function athleteSummary() {
+  const p = prof();
+  const n = doneWorkouts().length;
+  const t = todayKey();
+  const today = getDay(t), yest = getDay(addDays(t, -1));
+  const av = availW();
+  return [
+    `Age ${p.age}. Units: ${unitW()}.${p.bwKg ? ` Body weight ${bwDisplay(p.bwKg)} ${unitW()}.` : ''}`,
+    `Program: phase ${phaseFor(n)} of 3 (${PHASES[phaseFor(n) - 1].name}), ${n} workouts done, ${weekCount(mondayOf(t))} this week. Trained yesterday: ${yest.w && yest.w.done ? 'yes' : 'no'}. Trained today: ${today.w && today.w.done ? 'yes' : 'no'}.`,
+    `Dumbbells they own (pairs): ${av ? av.join(', ') + ' ' + unitW() : 'none entered yet'}.`,
+    `Today so far: protein ${dayProtein(today)} of ${proteinGoal().goal} g, water ${today.wa || 0} of 8 glasses, sleep last night ${today.sl != null ? today.sl + ' h' : 'not logged'}.`,
+  ].join('\n');
+}
+const FB_WORD = ['', 'too easy', 'good', 'too hard'];
+function setsLine(w, id) {
+  const rows = (w.sets && w.sets[id] || []).filter((x) => x[2]);
+  if (!rows.length) return '';
+  const u = w.u || 'kg';
+  const fb = (w.fb && w.fb[id] || []).map((v) => FB_WORD[v]).filter(Boolean);
+  const ws = rows.map((x) => (hasWeight(id) ? `${round1(toUnit(x[0] || 0, u, unitW()))}${unitW()}x` : '') + x[1] + (isTimed(id) ? 's' : ''));
+  return `${id} ${ws.join(', ')}${fb.length ? ` (sets felt: ${fb.join(', ')})` : ''}`;
+}
+function historyLines(count) {
+  const out = doneWorkouts().slice(-count).reverse().map(({ k, w }) => {
+    const parts = sessEx(w).map((id) => setsLine(w, id)).filter(Boolean);
+    const sk = Object.keys(w.sk || {});
+    return `- ${fmtShort(k)}, ${sessName(w)}, felt ${['not rated', 'easy', 'just right', 'too hard'][w.feel || 0]}: ${parts.join('; ') || 'no sets logged'}${sk.length ? `; skipped because of pain: ${sk.join(', ')}` : ''}`;
+  });
+  return out.length ? out.join('\n') : '- none yet, this is their first workout';
+}
+function libraryLines() {
+  const how = { wr: 'dumbbell weight + reps', r: 'bodyweight reps (weight 0)', ws: 'dumbbell weight + seconds held', s: 'bodyweight seconds held (weight 0)' };
+  return Object.entries(EX).map(([id, e]) => `${id} | ${e.name} | ${how[e.log]}${e.side ? ` | reps are per ${e.side}` : ''} | ${e.kind} | loads: ${AREAS[id].join(', ') || 'nothing in particular'}`).join('\n');
+}
+function maxSetsNow() { const n = doneWorkouts().length; const ph = phaseFor(n); return ph === 1 ? (n < 3 ? 1 : 2) : 3; }
+function exRange(minutes) { return minutes <= 20 ? [4, 5] : minutes <= 30 ? [6, 7] : [7, 8]; }
+
+function aiPlanPrompt() {
+  const C = S.coach;
+  const [mn, mx] = exRange(C.time);
+  const av = availW();
+  return `You are Coach Forge, the strength coach inside Forearm Forge, a training app for a ${prof().age}-year-old who wants to get strong for arm wrestling (big Devon Larratt fan). Build ONE dumbbell workout for today.
+
+Hard rules, never break them:
+- Use only exercise ids from LIBRARY. ${mn}-${mx} exercises, no repeats.
+- Order: legs or full body first, then push and pull, then arms, then forearm and grip, core last.
+- sets: 1 to ${maxSetsNow()}.
+- Reps: weighted lifts 8-15, forearm and finger work 12-25, core reps 6-15. Timed holds are in seconds, 10-45.
+- weight: ONLY a number from AVAILABLE DUMBBELLS, or 0 for bodyweight exercises. Pick a weight they can do for every rep with 2-3 reps left. If HISTORY has the exercise, keep that weight, and go up one dumbbell only if they hit the top of the rep range and it did not feel too hard. For anything new, start light. Forearm and wrist work is always light.
+- Nothing max-effort, explosive or jerky, and no arm wrestling pulls.
+- Skip every exercise that loads a SORE area.
+- Energy: tired means fewer sets and lighter; fired up still means no max-outs.
+
+Reply with only JSON in exactly this shape:
+{"title":"2-4 word workout name","intro":"1-2 short hype sentences for a 13-year-old about today's focus","exercises":[{"id":"goblet-squat","sets":2,"lo":10,"hi":12,"weight":6,"cue":"one short form cue"}],"closer":"one short sentence for after the workout"}
+
+ATHLETE
+${athleteSummary()}
+
+TODAY
+Time: ${C.time} minutes. Focus: ${FOCI[C.focus].ai}. Energy: ${ENERGY[C.energy]}. SORE: ${C.sore.length ? C.sore.join(', ') : 'nothing'}.
+
+AVAILABLE DUMBBELLS (${unitW()}): ${av ? av.join(', ') : 'none'}
+
+HISTORY (newest first)
+${historyLines(4)}
+
+LIBRARY (id | name | how it is logged | notes | type | loads)
+${libraryLines()}`;
+}
+
+/* clamp whatever comes back from the model to the app's safe ranges */
+function capWeight(id, w, r) {
+  const av = availW();
+  const sg = suggestion(id, r, todayKey());
+  let x = Number.isFinite(w) ? w : (av ? av[av.length - 1] : 0);
+  if (av) x = snapDown(x, av);
+  const cap = sg.w != null ? sg.w : lightCap(id);
+  if (cap != null) x = Math.min(x, cap);
+  return Math.max(0, round1(x));
+}
+function validatePlan(raw) {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.exercises)) return null;
+  const C = S.coach;
+  const maxS = maxSetsNow();
+  const seen = new Set();
+  const ex = [], rx = {}, cue = {}, w0 = {};
+  for (const it of raw.exercises) {
+    const id = String((it && it.id) || '');
+    if (!EX[id] || seen.has(id)) continue;
+    if (AREAS[id].some((a) => C.sore.includes(a))) continue;
+    seen.add(id);
+    const t = isTimed(id) ? 1 : 0;
+    const k = EX[id].rx;
+    const b = t ? [10, 45] : (k === 'forearm' || k === 'fingers') ? [12, 25] : k === 'core' ? [6, 15] : [5, 15];
+    let lo = clamp(Math.round(+it.lo || b[0]), b[0], b[1]);
+    let hi = clamp(Math.round(+it.hi || lo), b[0], b[1]);
+    if (hi < lo) [lo, hi] = [hi, lo];
+    let s = clamp(Math.round(+it.sets || 1), 1, maxS);
+    if (C.energy === 1) s = Math.min(s, Math.max(1, maxS - 1));
+    rx[id] = t ? { s, lo, hi, t: 1 } : { s, lo, hi };
+    if (hasWeight(id)) w0[id] = capWeight(id, Number(it.weight), rx[id]);
+    cue[id] = String((it && it.cue) || '').trim().slice(0, 140);
+    ex.push(id);
+    if (ex.length >= 8) break;
+  }
+  if (ex.length < 3) return null;
+  return {
+    title: String(raw.title || 'AI Session').trim().slice(0, 32) || 'AI Session',
+    intro: String(raw.intro || '').trim().slice(0, 240),
+    closer: String(raw.closer || '').trim().slice(0, 160),
+    ex, rx, cue, w0, src: 'ai',
+  };
+}
+function offlinePlan() {
+  const C = S.coach;
+  const n = doneWorkouts().length;
+  const ph = phaseFor(n);
+  const base = C.focus === 'full' ? DAYS[nextLetter()].ex : FOCUS_EX[C.focus];
+  const count = exRange(C.time)[1];
+  const ex = base.filter((id) => !AREAS[id].some((a) => C.sore.includes(a))).slice(0, count);
+  if (ex.length < 3) return null;
+  const rx = {}, w0 = {}, cue = {};
+  for (const id of ex) {
+    const r = rxFor(id, ph, n);
+    if (C.energy === 1) r.s = Math.max(1, r.s - 1);
+    rx[id] = r;
+    if (hasWeight(id)) w0[id] = capWeight(id, Infinity, r);
+    cue[id] = EX[id].cues[0];
+  }
+  const mood = C.energy === 1 ? 'Low energy day, so fewer sets.' : C.energy === 3 ? 'Fired up is great. Still no max-outs.' : 'Smooth reps, clean form.';
+  return { title: `${FOCI[C.focus].name} session`, intro: `Built from your dumbbells and your last workouts. ${mood}`, closer: '', ex, rx, cue, w0, src: 'coach' };
+}
+const soreBlockMsg = () => 'With those sore spots there isn\'t enough left to train safely today. Take a rest day, or pick a focus that skips them (Lower body if it is your arms).';
+
+async function buildWorkout() {
+  const C = S.coach;
+  if (C.building) return;
+  if (!availW()) { toast('Add your dumbbells first.'); return; }
+  C.err = null;
+  if (S.ai !== 'ready' || !SAMPLE) {
+    C.draft = offlinePlan();
+    if (!C.draft) C.err = soreBlockMsg();
+    render();
+    return;
+  }
+  C.building = true; C.draft = null;
+  render();
+  const ctl = new AbortController();
+  C.ctl = ctl;
+  try {
+    const raw = await SAMPLE.json(aiPlanPrompt(), { signal: ctl.signal, cache: false });
+    const p = validatePlan(raw);
+    if (p) C.draft = p;
+    else {
+      C.draft = offlinePlan();
+      C.err = C.draft ? 'The AI plan did not fit your dumbbells or sore spots, so the built-in coach made this one.' : soreBlockMsg();
+    }
+  } catch (e) {
+    const code = e && e.code;
+    if (code !== 'cancelled') {
+      C.err = aiErr(code);
+      C.draft = offlinePlan();
+      if (C.draft) C.err += ' Here is a plan from the built-in coach.';
+    }
+  } finally {
+    C.building = false; C.ctl = null;
+    render();
+  }
+}
+
+function startPlan(p) {
+  const t = todayKey();
+  if (openSession()) { go('train'); return; }
+  const today = getDay(t);
+  if (today.w && today.w.done) { toast('Already trained today. Rest = growth.'); return; }
+  const n = doneWorkouts().length;
+  const sets = {};
+  for (const id of p.ex) sets[id] = Array.from({ length: p.rx[id].s }, () => [hasWeight(id) ? (p.w0[id] ?? null) : null, null, 0]);
+  updDay(t, (d) => {
+    d.w = { d: 'AI', n, ph: phaseFor(n), u: unitW(), st: Date.now(), sets, sk: {}, wu: false, done: false,
+      ai: { title: p.title, intro: p.intro, closer: p.closer, ex: p.ex.slice(), rx: clone(p.rx), cue: clone(p.cue), src: p.src } };
+  });
+  S.coach.draft = null;
+  ensureAudio();
+  go('train');
+  window.scrollTo({ top: 0 });
+}
+
+/* ---- chat ---- */
+const CHAT_KEY = 'forearmForge.chat';
+function loadChat() {
+  try {
+    const a = JSON.parse(localStorage.getItem(CHAT_KEY) || '[]');
+    return Array.isArray(a) ? a.filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string' && m.text).slice(-30) : [];
+  } catch (e) { return []; }
+}
+function saveChat() {
+  try { localStorage.setItem(CHAT_KEY, JSON.stringify(S.chat.filter((m) => m.text).slice(-30).map((m) => ({ role: m.role, text: m.text })))); } catch (e) { /* storage blocked */ }
+}
+function coachRules() {
+  const o = openSession();
+  let sess = 'No workout in progress right now.';
+  if (o) {
+    const lines = sessEx(o.w).map((id) => {
+      const r = sessRx(o.w, id);
+      const done = setsLine(o.w, id);
+      return `${EX[id].name} (target ${rxText(id, r)}): ${done ? done.replace(id + ' ', 'done ') : 'not started'}${o.w.sk && o.w.sk[id] ? ' [skipped because of pain]' : ''}`;
+    });
+    sess = `Workout in progress: ${sessName(o.w)}.\n${lines.join('\n')}`;
+  }
+  const av = availW();
+  return `You are Coach Forge, the friendly strength coach inside Forearm Forge, a training app for a ${prof().age}-year-old who is training toward arm wrestling and is a huge Devon Larratt fan. Talk like a cool older teammate: short answers (under 120 words unless they ask for more), casual, encouraging, a little meme humor is fine, never shame anyone about their body or strength. Plain text, no headings; short lists only when they help.
+
+Rules you always follow:
+- Teen-safe lifting: 2-3 workouts a week on non-consecutive days, end sets with 2-3 reps left, no max lifts or 1-rep-max tests, slow controlled reps, an adult around when lifting, especially for new exercises.
+- No all-out arm wrestling matches yet: the growth plate on the inside of the elbow is vulnerable at 13-16. Friendly pulls only: steady pressure, no jerky starts, eyes on the hand, shoulder in line with the hand.
+- Pain: sharp pain, joint pain, numbness or swelling means stop that exercise and tell a parent, and see a doctor if it lasts. Never diagnose an injury.
+- Food: eat enough, protein at every meal (about ${proteinGoal().goal} g a day for them), no dieting or weight cutting. No supplements, creatine, pre-workout, fat burners, energy drinks or steroids.
+- Sleep 8-10 hours.
+- Only suggest weights they own: ${av ? av.join(', ') + ' ' + unitW() : 'they have not entered their dumbbells yet, so ask them to add them in the Coach tab'}.
+- If they ask about something unrelated to training, food, sleep or arm wrestling, answer briefly and steer back.
+
+WHAT THE APP KNOWS
+${athleteSummary()}
+${sess}
+Recent workouts (newest first):
+${historyLines(3)}
+Exercises in this app: ${Object.values(EX).map((e) => e.name).join(', ')}.
+
+The athlete's messages follow.`;
+}
+function fmtMsg(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
+function chatLogHTML() {
+  if (!S.chat.length) return '<p class="chat-empty">Coach knows your dumbbells, your plan and your last workouts. Ask anything about form, weights, food or arm wrestling.</p>';
+  return S.chat.map((m, i) => `<div class="msg ${m.role}" id="msg-${i}">${m.role === 'assistant' ? '<span class="who">Coach</span>' : ''}<span class="mt">${m.pending && !m.text ? '<span class="thinking"><span class="spin" aria-hidden="true"></span>Thinking…</span>' : fmtMsg(m.text)}</span>${m.err ? `<span class="err">${esc(m.err)}</span>` : ''}</div>`).join('');
+}
+function chatBlock() {
+  return `<div class="chat-log" id="chat-log" aria-live="polite">${chatLogHTML()}</div>
+    ${S.chat.length ? '' : `<div class="sugg">${SUGG.map((q) => `<button class="chip" data-act="ask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
+    <form class="chat-form" data-form="chat" autocomplete="off"><input id="chat-in" name="q" maxlength="500" placeholder="Ask about form, weights, food…" aria-label="Message the coach"><button class="btn sm" type="submit" id="chat-send">${S.chatBusy ? 'Stop' : 'Send'}</button></form>
+    <p class="small muted">The coach is AI and can get things wrong. If it ever disagrees with the 8 Gym Rules, the rules win.</p>`;
+}
+function renderChat() {
+  const log = $('#chat-log');
+  if (log) { log.innerHTML = chatLogHTML(); log.scrollTop = log.scrollHeight; }
+  const b = $('#chat-send');
+  if (b) b.textContent = S.chatBusy ? 'Stop' : 'Send';
+  const sg = $('.sugg');
+  if (sg && S.chat.length) sg.remove();
+}
+function paintMsg(i) {
+  const el = document.querySelector(`#msg-${i} .mt`);
+  if (el) el.innerHTML = fmtMsg(S.chat[i].text);
+  const log = $('#chat-log');
+  if (log) log.scrollTop = log.scrollHeight;
+}
+async function sendChat(q) {
+  if (S.ai !== 'ready' || !SAMPLE || S.chatBusy) return;
+  const history = S.chat.filter((m) => m.text && !m.err).slice(-12).map((m) => ({ role: m.role, content: m.text }));
+  const turns = [{ role: 'user', content: coachRules() }, ...history, { role: 'user', content: q }];
+  S.chat.push({ role: 'user', text: q });
+  S.chat.push({ role: 'assistant', text: '', pending: true });
+  const msg = S.chat[S.chat.length - 1];
+  S.chatBusy = true;
+  renderChat();
+  const ctl = new AbortController();
+  S.chatCtl = ctl;
+  try {
+    const res = await SAMPLE(turns, {
+      cache: false, signal: ctl.signal,
+      onText: ({ text }) => { msg.text = text; msg.pending = false; const i = S.chat.indexOf(msg); if (i >= 0) paintMsg(i); },
+    });
+    msg.text = res.text;
+    if (res.truncated) msg.err = 'Cut short. Ask for less at a time.';
+  } catch (e) {
+    const code = e && e.code;
+    msg.text = code === 'refused' ? '' : (e && e.text) || msg.text || '';
+    if (code !== 'cancelled') msg.err = aiErr(code);
+    if (!msg.text && !msg.err) { const i = S.chat.indexOf(msg); if (i >= 0) S.chat.splice(i, 1); }
+  } finally {
+    msg.pending = false;
+    S.chatBusy = false; S.chatCtl = null;
+    saveChat();
+    renderChat();
+    if (S.ai === 'off') render();
+  }
+}
+
+function vCoach() {
+  const C = S.coach;
+  const u = unitW();
+  const av = availW();
+  const g = gearNow();
+  const t = todayKey();
+  const today = getDay(t), yest = getDay(addDays(t, -1));
+  const open = openSession();
+  const aiChip = S.ai === 'ready' ? '<span class="chip steel">AI coach on</span>' : S.ai === 'checking' ? '<span class="chip">Connecting AI…</span>' : '<span class="chip">Built-in coach</span>';
+  const offNote = S.ai === 'off'
+    ? `<p class="small muted">${S.aiDenied ? 'AI is turned off for this page, so the built-in coach builds your workouts from your dumbbells and history.' : 'The AI coach runs in the claude.ai version of this app. Here, the built-in coach builds your workouts from your dumbbells and history.'}</p>`
+    : '';
+
+  // dumbbell rack
+  let gearBody;
+  if (g.kind === 'adj') {
+    gearBody = `<form class="stack" data-form="gear-adj" autocomplete="off">
+      <div class="fields3">
+        <div class="field"><label for="ga-min">Lightest (${u})</label><input id="ga-min" name="min" inputmode="decimal" value="${g.min ?? ''}"></div>
+        <div class="field"><label for="ga-max">Heaviest (${u})</label><input id="ga-max" name="max" inputmode="decimal" value="${g.max ?? ''}"></div>
+        <div class="field"><label for="ga-step">Steps of (${u})</label><input id="ga-step" name="step" inputmode="decimal" value="${g.step ?? ''}"></div>
+      </div>
+      <button class="btn steel" type="submit">Save dumbbells</button>
+    </form>
+    ${av ? `<p class="small muted num">You can set: ${av.length > 12 ? `${av[0]}, ${av[1]}, ${av[2]} … ${av[av.length - 1]}` : av.join(', ')} ${u}</p>` : ''}`;
+  } else {
+    const all = [...new Set([...PRESETS[u], ...g.w])].sort((a, b) => a - b);
+    const max = av ? av[av.length - 1] : 1;
+    const rack = av
+      ? `<div class="rack" aria-label="Your dumbbells">${av.map((x, i) => { const h = 14 + Math.round(30 * (x / max)); return `<div class="db ${i === av.length - 1 ? 'top' : ''}"><div class="dbi"><i class="p" style="height:${h}px"></i><i class="h"></i><i class="p" style="height:${h}px"></i></div><span>${x}</span></div>`; }).join('')}</div>`
+      : '<p class="small muted">No dumbbells yet. Tap every weight you own.</p>';
+    gearBody = `${rack}
+      <div class="toggles" role="group" aria-label="Dumbbell weights you own">${all.map((x) => `<button data-act="gearw" data-w="${x}" aria-pressed="${g.w.some((v) => Math.abs(v - x) < 0.01)}">${x}</button>`).join('')}</div>
+      <form class="inline-form" data-form="gear-add" autocomplete="off" style="grid-template-columns:1fr auto">
+        <input id="gear-add" name="w" inputmode="decimal" placeholder="Other weight (${u})" aria-label="Add another dumbbell weight">
+        <button class="btn sm steel" type="submit">Add</button>
+      </form>`;
+  }
+
+  // build card
+  let build;
+  if (open) {
+    build = `<p class="small">You have a workout in progress: <b>${esc(sessName(open.w))}</b>.</p><a class="btn block" href="#train">Resume workout</a>`;
+  } else {
+    let warn = '';
+    let canStart = true;
+    if (today.w && today.w.done) { warn = '<div class="note"><span class="t">Already trained today</span><p class="small">One workout a day, max. You can still chat with the coach below.</p></div>'; canStart = false; }
+    else if (yest.w && yest.w.done) warn = '<div class="note"><span class="t">You trained yesterday</span><p class="small">Rule 2: never two days in a row. Today is better for rest, food and sleep.</p></div>';
+    else if (weekCount(mondayOf(t)) >= 3) warn = '<div class="note"><span class="t">3 workouts this week already</span><p class="small">That is the max for your age. A 4th adds risk, not gains.</p></div>';
+    const joint = C.sore.includes('elbow') || C.sore.includes('wrist');
+    build = `
+      <div class="field"><span class="lab">Time</span><div class="seg" role="group" aria-label="Time">${[20, 30, 45].map((m) => `<button type="button" data-act="c-time" data-v="${m}" aria-pressed="${C.time === m}">${m} min</button>`).join('')}</div></div>
+      <div class="field"><span class="lab">Focus</span><div class="toggles" role="group" aria-label="Focus">${Object.entries(FOCI).map(([k, f]) => `<button data-act="c-focus" data-v="${k}" aria-pressed="${C.focus === k}">${esc(f.name)}</button>`).join('')}</div></div>
+      <div class="field"><span class="lab">Energy</span><div class="seg" role="group" aria-label="Energy">${[1, 2, 3].map((v) => `<button type="button" data-act="c-energy" data-v="${v}" aria-pressed="${C.energy === v}">${ENERGY[v]}</button>`).join('')}</div></div>
+      <div class="field"><span class="lab">Anything sore today?</span><div class="toggles" role="group" aria-label="Sore areas">${SORE.map((a) => `<button data-act="c-sore" data-v="${a}" aria-pressed="${C.sore.includes(a)}">${a[0].toUpperCase() + a.slice(1)}</button>`).join('')}</div></div>
+      ${joint ? '<div class="note"><span class="t">Sore or hurting?</span><p class="small">Muscle soreness is normal, and the coach will skip exercises that load it. Pain inside the joint, especially the inner elbow, means rest that arm and tell a parent.</p></div>' : ''}
+      ${warn}
+      ${canStart ? `<button class="btn block" data-act="build" ${av ? '' : 'disabled'}>${C.draft ? 'Build a new workout' : 'Build my workout'}</button>${av ? '' : '<p class="small muted">Add your dumbbells above first.</p>'}` : ''}`;
+  }
+
+  return `<section class="stack"><p class="eyebrow">Dumbbell trainer</p><h1 class="display">Coach Forge</h1></section>
+  <section class="card">
+    <div class="row between"><p class="small" style="flex:1;min-width:200px">Put in your dumbbells, tell the coach how you feel, and it builds today's workout around the weights you own.</p>${aiChip}</div>
+    ${offNote}
+  </section>
+  <section class="card">
+    <div class="row between"><h2 class="sec">Your dumbbells</h2><div class="seg" role="group" aria-label="Dumbbell type"><button type="button" data-act="gearkind" data-k="fixed" aria-pressed="${g.kind !== 'adj'}">Pairs</button><button type="button" data-act="gearkind" data-k="adj" aria-pressed="${g.kind === 'adj'}">Adjustable</button></div></div>
+    ${gearBody}
+  </section>
+  ${open ? '' : planCard()}
+  <section class="card">
+    <h2 class="sec">${S.ai === 'ready' ? 'Train with AI' : 'Build a workout'}</h2>
+    ${build}
+  </section>
+  ${S.ai === 'ready'
+    ? `<section class="card"><div class="row between"><h2 class="sec">Ask Coach</h2>${S.chat.length ? '<button class="linkbtn" data-act="chat-clear">Clear chat</button>' : ''}</div>${chatBlock()}</section>`
+    : `<section class="card"><h2 class="sec">Ask Coach</h2><p class="small muted">Chatting with the coach needs the AI, which runs in the claude.ai version of this app.</p></section>`}`;
+}
+
+function planCard() {
+  const C = S.coach;
+  if (C.building) {
+    return `<section class="card" aria-live="polite">
+      <div class="thinking"><span class="spin" aria-hidden="true"></span><div><b>Coach is building your workout…</b><p class="small muted">Checking your dumbbells, your last workouts and how you feel. This can take up to a minute.</p></div></div>
+      <button class="btn ghost" data-act="build-stop">Stop</button>
+    </section>`;
+  }
+  const err = C.err ? `<div class="note"><span class="t">Heads up</span><p class="small">${esc(C.err)}</p></div>` : '';
+  const p = C.draft;
+  if (!p) return err ? `<section class="card">${err}</section>` : '';
+  const rows = p.ex.map((id) => {
+    const r = p.rx[id];
+    const W = hasWeight(id);
+    return `<div class="plan-ex"><div><b>${esc(EX[id].name)}</b><div class="small muted num">${esc(rxText(id, r))}</div></div><div class="w num">${W ? esc(fmtW(p.w0[id])) : isTimed(id) ? 'Hold' : 'Body'}</div>${p.cue[id] ? `<p class="cue">${esc(p.cue[id])}</p>` : ''}</div>`;
+  }).join('');
+  return `<section class="card" id="plan">
+    ${err}
+    <div class="row between"><p class="eyebrow">${p.src === 'ai' ? 'Built by the AI coach' : 'Built by the built-in coach'}</p><span class="chip num">${p.ex.length} exercises · ~${p.ex.length * 4 + 5} min</span></div>
+    <h2 class="sec">${esc(p.title)}</h2>
+    ${p.intro ? `<p class="small">${esc(p.intro)}</p>` : ''}
+    <div class="list">${rows}</div>
+    <button class="btn block" data-act="plan-start">Start this workout</button>
   </section>`;
 }
 
@@ -1787,19 +2337,24 @@ function beep() {
     });
   } catch (e) { /* no sound available */ }
 }
-function startRest(sec) {
-  S.rest = { end: Date.now() + sec * 1000, total: sec };
+function startRest(sec, ex, i) {
+  S.rest = { end: Date.now() + sec * 1000, total: sec, ex, i };
   const el = $('#restbar');
-  el.innerHTML = `<div class="rest-in" role="timer" aria-live="off"><div class="stack" style="gap:0"><span class="lbl">Rest</span><span class="time" id="rest-left">${sec}</span></div><div class="track"><i id="rest-fill" style="width:100%"></i></div><button data-act="rest-add">+15s</button><button data-act="rest-skip">Skip</button></div>`;
+  el.innerHTML = `<div class="rest-in" role="timer" aria-live="off">
+    <div class="rest-row"><div class="stack" style="gap:0"><span class="lbl">Rest</span><span class="time" id="rest-left">${sec}</span></div><div class="track"><i id="rest-fill" style="width:100%"></i></div><button data-act="rest-add">+15s</button><button data-act="rest-skip">Skip</button></div>
+    ${ex ? `<div class="rest-fb" id="rest-fb"><span class="lbl">That set was</span><button data-act="setfeel" data-v="1">Too easy</button><button data-act="setfeel" data-v="2">Good</button><button data-act="setfeel" data-v="3">Too hard</button></div>` : ''}
+  </div>`;
   el.hidden = false;
   tickRest();
 }
 function tickRest() {
   const el = $('#restbar');
+  document.body.classList.toggle('resting', !!S.rest);
   if (!S.rest) { el.hidden = true; return; }
   const ms = S.rest.end - Date.now();
   if (ms <= 0) {
     S.rest = null; el.hidden = true;
+    document.body.classList.remove('resting');
     beep();
     try { if (navigator.vibrate) navigator.vibrate([120, 80, 120]); } catch (e) { /* not allowed */ }
     toast('Rest over. Next set, lock in.');
@@ -1841,7 +2396,7 @@ async function holdWake(on) {
    ========================================================= */
 function render() {
   const main = $('#main');
-  const fn = { today: vToday, train: vTrain, fuel: vFuel, progress: vProgress, lore: vLore }[S.view] || vToday;
+  const fn = { today: vToday, train: vTrain, coach: vCoach, fuel: vFuel, progress: vProgress, lore: vLore }[S.view] || vToday;
   main.innerHTML = fn();
   document.querySelectorAll('.tab').forEach((a) => { if (a.dataset.tab === S.view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   const p = prof();
@@ -1949,7 +2504,7 @@ const ACTIONS = {
     const id = el.dataset.ex, i = Number(el.dataset.i);
     let started = false;
     updSession((w) => {
-      const r = rxFor(id, w.ph, w.n);
+      const r = sessRx(w, id);
       const row = w.sets[id][i];
       if (row[2]) { row[2] = 0; return; }
       // pick up any typed values that have not fired a change event yet
@@ -1964,7 +2519,67 @@ const ACTIONS = {
       if (nxt && nxt[0] == null && hasWeight(id)) nxt[0] = row[0];
       started = true;
     });
-    if (started) { ensureAudio(); startRest(EX[id].rest); }
+    if (started) { ensureAudio(); startRest(EX[id].rest, id, i); }
+  },
+  setfeel(el) {
+    const v = Number(el.dataset.v);
+    const R = S.rest;
+    if (!R || !R.ex) return false;
+    const id = R.ex, i = R.i;
+    let msg = '';
+    updSession((w) => {
+      w.fb = w.fb || {};
+      const fb = (w.fb[id] = w.fb[id] || []);
+      while (fb.length < i) fb.push(0);
+      fb[i] = v;
+      const rows = w.sets[id] || [];
+      const row = rows[i];
+      const nxt = rows.find((r, j) => j > i && !r[2]);
+      if (v === 2) { msg = 'Nice. Same again.'; return; }
+      if (!nxt) { msg = v === 1 ? 'Noted for next time. Last set of this one.' : 'Noted for next time. Good call stopping there.'; return; }
+      if (!hasWeight(id) || !row) { msg = v === 1 ? 'Next set: lower every rep over 3 seconds.' : 'Next set: stop 2 reps earlier. Form first.'; return; }
+      const cur = row[0] || 0;
+      if (v === 1) {
+        const up = stepUp(id, cur);
+        if (up == null) msg = 'Next dumbbell is too big a jump. Slow every rep down instead.';
+        else { nxt[0] = up; msg = `Next set: ${fmtW(up)}`; }
+      } else {
+        const dn = stepDown(id, cur);
+        nxt[0] = dn;
+        msg = dn < cur ? `Next set: ${fmtW(dn)}` : 'Lightest one already. Next set: fewer reps, clean form.';
+      }
+    });
+    const fbEl = $('#rest-fb');
+    if (fbEl) fbEl.innerHTML = `<span class="msg">${esc(msg)}</span>`;
+  },
+  'goto-coach'() { go('coach'); return false; },
+  gearkind(el) { const g = gearNow(); g.kind = el.dataset.k === 'adj' ? 'adj' : 'fixed'; Store.put('gear', g); },
+  gearw(el) {
+    const x = Number(el.dataset.w);
+    const g = gearNow();
+    const i = g.w.findIndex((v) => Math.abs(v - x) < 0.01);
+    if (i >= 0) g.w.splice(i, 1); else g.w.push(x);
+    g.w.sort((a, b) => a - b);
+    Store.put('gear', g);
+  },
+  'c-time'(el) { S.coach.time = Number(el.dataset.v); },
+  'c-focus'(el) { S.coach.focus = FOCI[el.dataset.v] ? el.dataset.v : 'arm'; },
+  'c-energy'(el) { S.coach.energy = Number(el.dataset.v); },
+  'c-sore'(el) {
+    const a = el.dataset.v;
+    const s = S.coach.sore;
+    const i = s.indexOf(a);
+    if (i >= 0) s.splice(i, 1); else if (SORE.includes(a)) s.push(a);
+  },
+  build() { buildWorkout(); return false; },
+  'build-stop'() { if (S.coach.ctl) S.coach.ctl.abort(); return false; },
+  'plan-start'() { if (S.coach.draft) startPlan(S.coach.draft); return false; },
+  ask(el) { sendChat(el.dataset.q || ''); return false; },
+  'chat-clear'() { if (S.chatCtl) S.chatCtl.abort(); S.chat = []; saveChat(); },
+  'coach-chat'() {
+    openSheet('Ask Coach', chatBlock(), 'AI');
+    const log = $('#chat-log'); if (log) log.scrollTop = log.scrollHeight;
+    return false;
   },
   addset(el) {
     const id = el.dataset.ex;
@@ -1994,6 +2609,7 @@ const ACTIONS = {
     const v = Number(el.dataset.v);
     const o = openSession();
     if (!o) return;
+    const closer = o.w.ai && o.w.ai.closer;
     updDay(o.k, (d) => { d.w.done = true; d.w.feel = v; d.w.end = Date.now(); });
     S.rest = null; tickRest();
     holdWake(false);
@@ -2002,6 +2618,7 @@ const ACTIONS = {
     const phaseUp = n === 12 || n === 24;
     openSheet(phaseUp ? `Phase ${phaseFor(n)} unlocked` : 'W workout', `
       <p>${phaseUp ? `Workout #${n} done. You graduated to <b>${esc(PHASES[phaseFor(n) - 1].name)}</b>. More sets start next session.` : `Workout #${n} done. Aura +100.`}</p>
+      ${closer ? `<p class="coach-cue"><b>Coach</b> ${esc(closer)}</p>` : ''}
       <p class="small muted">Next up: Day ${nextLetter()}, ${esc(nxt.name)}. Do the cool-down stretches, then eat something with protein in the next couple of hours.</p>
       <a class="btn" href="#fuel" data-act="close-go" data-to="fuel">Log your food</a>
       <button class="btn ghost" data-act="close-go" data-to="today">Back to Today</button>`, 'Finished');
@@ -2087,6 +2704,34 @@ const FORMS = {
     if (g == null || g < 0 || g > 150) { toast('Enter the protein grams (0–150).'); return; }
     updDay(f.dataset.k || todayKey(), (d) => { d.p = d.p || []; if (d.p.length < 60) d.p.push([name, Math.round(g)]); });
   },
+  chat(f) {
+    if (S.chatBusy) { if (S.chatCtl) S.chatCtl.abort(); return false; }
+    const inp = f.querySelector('input[name="q"]');
+    const q = ((inp && inp.value) || '').trim();
+    if (!q) return false;
+    inp.value = '';
+    sendChat(q.slice(0, 500));
+    return false;
+  },
+  'gear-add'(f) {
+    const x = num(new FormData(f).get('w'));
+    const maxW = unitW() === 'kg' ? 100 : 220;
+    if (x == null || x <= 0 || x > maxW) { toast(`Enter a weight between 0 and ${maxW} ${unitW()}.`); return false; }
+    const g = gearNow();
+    g.kind = 'fixed';
+    if (!g.w.some((v) => Math.abs(v - x) < 0.01)) g.w.push(round1(x));
+    g.w.sort((a, b) => a - b);
+    Store.put('gear', g);
+  },
+  'gear-adj'(f) {
+    const fd = new FormData(f);
+    const mn = num(fd.get('min')), mx = num(fd.get('max')), st = num(fd.get('step'));
+    if (mn == null || mx == null || st == null || mn <= 0 || mx <= mn || st <= 0) { toast('Lightest must be above 0, heaviest above lightest, and steps above 0.'); return false; }
+    if ((mx - mn) / st > 100) { toast('That is a lot of steps. Use a bigger step size.'); return false; }
+    const g = gearNow();
+    Object.assign(g, { kind: 'adj', min: round1(mn), max: round1(mx), step: round1(st) });
+    Store.put('gear', g);
+  },
   checkin(f) {
     const fd = new FormData(f);
     const bw = num(fd.get('bw')), h = num(fd.get('h')), fa = num(fd.get('fa'));
@@ -2147,8 +2792,8 @@ document.addEventListener('submit', (ev) => {
   ev.preventDefault();
   const fn = FORMS[f.dataset.form];
   if (!fn) return;
-  withXp(() => fn(f));
-  render();
+  const res = withXp(() => fn(f));
+  if (res !== false) render();
 });
 document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape' && $('#sheet-root').firstChild) closeSheet();
@@ -2162,10 +2807,20 @@ window.addEventListener('hashchange', route);
 /* =========================================================
    Boot
    ========================================================= */
+async function initAI() {
+  const c = window.claude;
+  if (!c || typeof c.use !== 'function') { S.ai = 'off'; return; }
+  try { SAMPLE = await c.use('sample'); } catch (e) { SAMPLE = null; }
+  S.ai = SAMPLE ? 'ready' : 'off';
+  if (S.view === 'coach' || (S.view === 'train' && openSession())) render();
+}
+
 Store.docs = Store.readLocal(LOCAL_KEY) || {};
+S.chat = loadChat();
 setSync('device');
 route();
 initCloud();
+initAI();
 })();
 </script>
 
