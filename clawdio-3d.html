@@ -73,7 +73,7 @@
   }
 
   /* toast, popups, flash */
-  #toast { position: fixed; z-index: 15; top: calc(var(--st) + 100px); left: 50%; transform: translateX(-50%);
+  #toast { position: fixed; z-index: 15; top: calc(var(--st) + 100px); left: 16px; right: 16px; margin: 0 auto; width: max-content;
     max-width: calc(100vw - 32px); box-sizing: border-box; padding: 6px 14px; border-radius: 999px;
     background: rgba(0,0,0,0.35); color: #fff; font-size: 20px; font-weight: 800; text-align: center;
     text-shadow: 0 2px 0 rgba(0,0,0,0.45); pointer-events: none; opacity: 0; white-space: normal; }
@@ -103,6 +103,10 @@
   .panel .foot { opacity: 0.7; font-size: 14px; }
   .panel .err { color: #ffb3a8; font-weight: 700; }
   .panel .err:empty { display: none; }
+  #btnReload { display: none; }
+  body.nogl #btnReload { display: inline-block; }
+  body.nogl #btnStart, body.nogl #ovTitle .hint, body.nogl #ovTitle .foot, body.nogl #hud, body.nogl .hudbtn,
+  body.nogl #joy, body.nogl #jump { display: none !important; }
   .panel .stats p { margin: 3px 0; }
   .panel .big { font-size: 18px; font-weight: 800; }
   .btn { min-height: 48px; padding: 0 24px; margin: 6px 4px; border: 0; border-radius: 12px; background: #d77757; color: #fff;
@@ -163,6 +167,7 @@
     <p class="foot">Press Enter or tap to start</p>
     <p class="foot only-portrait">Tip: landscape gives a wider view</p>
     <p class="err" id="errMsg"></p>
+    <button type="button" class="btn" id="btnReload">RELOAD</button>
   </div>
 </div>
 
@@ -393,14 +398,30 @@ var FLAG = { x0: 183.6, x1: 184.4, y0: -1, y1: 30, z0: -6, z1: 6 };
 function failStart() {
   var e = document.getElementById('errMsg');
   if (e) e.textContent = 'Could not start 3D (check your connection or browser).';
+  document.body.classList.add('nogl');
+  var rb = document.getElementById('btnReload');
+  if (rb) rb.addEventListener('click', function () { location.reload(); });
 }
 if (typeof THREE === 'undefined') { failStart(); return; }
 
 function isCoarse() { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); }
+// software GL (no GPU): MSAA there is slow and makes the driver log stall warnings
+function softGL() {
+  try {
+    var g = document.createElement('canvas').getContext('webgl');
+    if (!g) return false;
+    var r = String(g.getParameter(g.RENDERER) || '');
+    if (/^WebKit WebGL$/i.test(r)) {
+      var x = g.getExtension('WEBGL_debug_renderer_info');
+      if (x) r = String(g.getParameter(x.UNMASKED_RENDERER_WEBGL) || '');
+    }
+    return /swiftshader|llvmpipe|softpipe|software/i.test(r);
+  } catch (_) { return false; }
+}
 var COARSE = isCoarse();
 var renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ antialias: !COARSE, powerPreference: 'high-performance' });
+  renderer = new THREE.WebGLRenderer({ antialias: !COARSE && !softGL(), powerPreference: 'high-performance' });
 } catch (err) { failStart(); return; }
 renderer.domElement.id = 'c';
 document.body.insertBefore(renderer.domElement, document.body.firstChild);
@@ -753,6 +774,7 @@ var winAnim = { stage: 0, clock: 0, next: 0.2, hops: 0, vy: 0, air: false };
 function resetPlayer(x, y, z) {
   pl.x = x; pl.y = y; pl.z = z; pl.vx = 0; pl.vy = 0; pl.vz = 0;
   pl.grounded = false; pl.gs = null; pl.coyote = 0; pl.buffer = 0; pl.rising = false; pl.takeoff = 0;
+  jbK.pend = false; jbT.pend = false;
   pl.big = false; pl.hw = 0.5; pl.ht = 1.0; pl.coffeeT = 0; pl.wantBig = false; pl.hitstop = 0; pl.chain = 0;
   pl.prevFeet = y; pl.vyPre = 0; pl.skid = false;
   cos.squash = 0; cos.rotY = PI / 2;
@@ -822,9 +844,11 @@ function die(cause) {
   G.deadT = 0; G.deathCause = cause; G.deadHop = false;
   pl.vx = 0; pl.vz = 0;
   if (cause !== 'FELL!') pl.vy = 0;
+  pl.grounded = false; pl.gs = null;
   pl.hitstop = 0;
   warp.state = 0; warp.fade = 0; warp.sink = 0;
-  clearInputs();
+  dropJump(); // held keys and pointers stay owned, so a resting thumb drives again after respawn
+  deadCamLift(cause);
   showDead(cause);
   sfx('death');
   if (cause === 'OUCH!') shake(0.15, 0.15);
@@ -854,6 +878,7 @@ function updateDead(dt) {
 function doTeleport(x, y, z) {
   pl.x = x; pl.y = y; pl.z = z; pl.vx = 0; pl.vy = 0; pl.vz = 0;
   pl.grounded = false; pl.gs = null; pl.coyote = 0; pl.buffer = 0; pl.hitstop = 0; pl.rising = false;
+  jbK.pend = false; jbT.pend = false;
   pl.prevFeet = y;
   clearWarp();
   G.deadHop = false;
@@ -891,11 +916,22 @@ function readInput() {
     inp.x = 0; inp.y = 0; inp.has = false; inp.speed = 0;
   }
 }
-function jumpHeld() { return !!keys.Space || jumpPid !== null; }
-function pressJump() {
-  if (G.phase !== 'playing') return;
-  pl.buffer = BUFFER;
+// Jump sources (Space, JUMP button) keep press/release event times. simT is the real time
+// that the current substep stands for, so a short tap gives the same rise at any frame rate.
+var simT = 0;
+var jbK = { p: -1, r: -1, lag: 0, pend: false }, jbT = { p: -1, r: -1, lag: 0, pend: false };
+function evT(e) {
+  var n = performance.now(), t = e ? e.timeStamp : NaN;
+  return (t > n - 2000 && t <= n + 1) ? t : n;
 }
+function jbPress(b, t, req) { b.p = t; b.r = -1; b.lag = 0; b.pend = !!req && G.phase === 'playing'; }
+function jbRelease(b, t) { if (b.p >= 0 && b.r < 0) b.r = Math.max(t, b.p); }
+function jbTake(b) {
+  if (b.pend && b.p <= simT) { b.pend = false; b.lag = simT - b.p; pl.buffer = BUFFER; }
+}
+function jbHeld(b) { return b.p >= 0 && !b.pend && (b.r < 0 || simT < b.r + b.lag); }
+function jumpHeld() { return jbHeld(jbK) || jbHeld(jbT); }
+function dropJump() { pl.buffer = 0; jbK.pend = false; jbT.pend = false; }
 
 // ---------- collision helpers ----------
 function hitsSolid(s) {
@@ -1016,6 +1052,7 @@ function substep() {
   var oldC = MP.cx;
   setPlatform(G.tp);
   var pdx = MP.cx - oldC;
+  jbTake(jbK); jbTake(jbT);
   if (warp.state) warpStep(); else playerStep(pdx);
   enemyStep();
   if (G.phase !== 'playing') return;
@@ -1308,7 +1345,7 @@ function win() {
   G.phase = 'won'; G.winT = 0; G.clearShown = false;
   pl.x = 183.4; pl.vx = 0; pl.vy = 0; pl.vz = 0; pl.grounded = false;
   winAnim.stage = 0; winAnim.clock = 0; winAnim.next = 0.2; winAnim.hops = 0; winAnim.vy = 0; winAnim.air = false;
-  clearInputs();
+  dropJump();
   sfx('flag');
 }
 function updateWon(dt) {
@@ -1471,13 +1508,14 @@ window.addEventListener('keydown', function (e) {
   if (c === 'KeyP' || c === 'Escape') { if (!e.repeat) togglePause(); return; }
   if (c === 'Enter' || c === 'NumpadEnter') { if (!e.repeat) acceptRestart(); return; }
   if (c === 'Space') {
-    if (!e.repeat && !keys.Space) { keys.Space = true; pressJump(); }
+    if (!e.repeat && !keys.Space) { keys.Space = true; jbPress(jbK, evT(e), true); }
     return;
   }
   keys[c] = true;
 });
 window.addEventListener('keyup', function (e) {
   if (PREVENT[e.code]) e.preventDefault();
+  if (e.code === 'Space') jbRelease(jbK, evT(e));
   keys[e.code] = false;
 });
 
@@ -1508,7 +1546,10 @@ function joyMove(fx, fy) {
   if (d > 70) {
     var k = (d - 70) / d;
     joy.bx += dx * k; joy.by += dy * k;
-    dx = fx - joy.bx; dy = fy - joy.by; d = 70;
+    // the slid base keeps the same edge and safe-area margins as on activation
+    joy.bx = clamp(joy.bx, 60 + safe.l, window.innerWidth - 60 - safe.r);
+    joy.by = clamp(joy.by, 60 + safe.t, window.innerHeight - 60 - safe.b);
+    dx = fx - joy.bx; dy = fy - joy.by; d = Math.hypot(dx, dy);
   }
   var kd = Math.min(d, 55);
   joy.kx = d > 0 ? dx / d * kd : 0;
@@ -1535,6 +1576,7 @@ function releaseJoy() {
 }
 function clearInputs() {
   for (var k in keys) keys[k] = false;
+  jbK.p = -1; jbT.p = -1;
   if (joy.pid !== null) releaseJoy();
   if (jumpPid !== null) { jumpPid = null; el.jump.classList.remove('down'); }
   swipe.pid = null; mouse.pid = null;
@@ -1556,7 +1598,8 @@ document.addEventListener('pointerdown', function (e) {
     return;
   }
   enableTouchUI();
-  if (G.phase !== 'playing') return;
+  // a thumb placed during the death banner already owns its control at respawn
+  if (G.phase !== 'playing' && G.phase !== 'dead') return;
   if (el.jump.contains(e.target)) return;
   var w = window.innerWidth;
   if (e.clientX < w * 0.5 && e.clientY > 64 + safe.t && joy.pid === null) {
@@ -1584,7 +1627,7 @@ function endPointer(e) {
   if (id === joy.pid) releaseJoy();
   if (id === swipe.pid) swipe.pid = null;
   if (id === mouse.pid) mouse.pid = null;
-  if (id === jumpPid) { jumpPid = null; el.jump.classList.remove('down'); }
+  if (id === jumpPid) { jumpPid = null; jbRelease(jbT, evT(e)); el.jump.classList.remove('down'); }
 }
 window.addEventListener('pointerup', function (e) {
   if (e.pointerType !== 'mouse') unlockAudio(e);
@@ -1603,7 +1646,7 @@ el.jump.addEventListener('pointerdown', function (e) {
   jumpPid = e.pointerId;
   capture(el.jump, e.pointerId);
   el.jump.classList.add('down');
-  if (!keys.Space) pressJump();
+  jbPress(jbT, evT(e), !keys.Space);
 });
 el.jump.addEventListener('click', function (e) { e.preventDefault(); el.jump.blur(); });
 
@@ -1644,7 +1687,7 @@ document.addEventListener('visibilitychange', function () {
 
 // ---------- camera ----------
 var cam = { dist: 8.5, pitch: 0.38, land: true, anchorY: 0, look: 0, sx: 0, sy: 1, sz: 0,
-  cx: -8, cy: 4, cz: 0, lift: 0, shakeA: 0, shakeT: 0, shakeD: 1 };
+  cx: -8, cy: 4, cz: 0, lift: 0, deadLift: 0, shakeA: 0, shakeT: 0, shakeD: 1 };
 var tv = new THREE.Vector3();
 var WIN_YAW = -0.75; // course-clear view: in front of Clawdio, house door behind him
 function baseDist() { return cam.land ? (pl.big ? 10.0 : 8.5) : (pl.big ? 12.0 : 10.5); }
@@ -1666,6 +1709,33 @@ function requiredLift(cx, cy, cz) {
     }
   }
   return r;
+}
+// does the segment a->b (stopping just short of b) pass through a visible solid?
+var segA = 0, segB = 1;
+function slab(a, d, lo, hi) {
+  if (d > -1e-9 && d < 1e-9) return a > lo && a < hi;
+  var u = (lo - a) / d, v = (hi - a) / d;
+  if (u > v) { var w = u; u = v; v = w; }
+  if (u > segA) segA = u;
+  if (v < segB) segB = v;
+  return segA < segB;
+}
+function segBlocked(ax, ay, az, bx, by, bz) {
+  for (var i = 0; i < solids.length; i++) {
+    var s = solids[i];
+    if (!s.active || s.invisible) continue;
+    segA = 0; segB = 0.98;
+    if (slab(ax, bx - ax, s.x0, s.x1) && slab(ay, by - ay, s.y0, s.y1) && slab(az, bz - az, s.z0, s.z1)) return true;
+  }
+  return false;
+}
+// pit death: the frozen camera rises until it can see down into the pit
+function deadCamLift(cause) {
+  cam.deadLift = cam.lift;
+  if (cause !== 'FELL!') return;
+  var ty = Math.max(pl.y + 0.6, -3), r = 0;
+  while (r < 16 && segBlocked(cam.cx, cam.cy + cam.lift + r, cam.cz, pl.x, ty, pl.z)) r += 0.5;
+  if (r > 0) cam.deadLift = cam.lift + r + 1.5;
 }
 function applyCamera(dt) {
   var ox = 0, oy = 0, oz = 0;
@@ -1692,6 +1762,7 @@ function snapCamera() {
 function updateCamera(dt) {
   if (G.phase === 'paused') return;
   if (G.phase === 'dead') {
+    if (cam.deadLift > cam.lift) cam.lift += (cam.deadLift - cam.lift) * (1 - Math.exp(-6 * dt));
     applyCamera(dt);
     camera.lookAt(pl.x, Math.max(pl.y + 0.6, -3), pl.z);
     return;
@@ -1997,8 +2068,9 @@ function frame(now) {
     if (keys.KeyQ) camInput(-2.4 * dt);
     if (keys.KeyE) camInput(2.4 * dt);
     acc += dt;
-    var n = 0;
+    var n = 0, simBase = now - acc * 1000;
     while (acc >= H && n < 12) {
+      simT = simBase + (n + 1) * H * 1000;
       substep();
       acc -= H; n++;
       if (G.phase !== 'playing') { acc = 0; break; }
