@@ -3,8 +3,8 @@ For Mr. CLAWD
 
 ## Clawd Physics Playground
 
-A 3D physics sandbox game. You are Clawd: walk, jump, push crates, smash towers,
-ride moving platforms, bounce on trampolines and collect all 8 stars.
+A 3D physics sandbox game. You are Clawd: walk, jump, sprint, grab and throw things,
+drive a kart, blow stuff up, and collect all 22 stars across the playground.
 
 ### Play
 
@@ -23,23 +23,44 @@ It also works as-is on any static host (GitHub Pages, Vercel, Netlify).
 | Action | PC | Mobile |
 | --- | --- | --- |
 | Move | `W` `A` `S` `D` (or `↑` `↓`) | Left thumbstick (touch the lower-left of the screen) |
-| Jump | `Space` (hold to keep hopping) | `JUMP` button |
+| Jump / double jump | `Space` (press again in the air) | `JUMP` button |
+| Sprint | Hold `Q` | `RUN` toggle |
 | Turn camera | Drag with the mouse (left or right button), or `←` `→` | Drag anywhere else on the screen |
 | Zoom | Mouse wheel, or `I` / `O` | Pinch |
 | First person | Zoom all the way in | Pinch all the way in |
 | Mouse lock (shift lock) | `Shift` | – |
-| Spawn crate / ball | `F` / `G` | `Crate` / `Ball` buttons |
+| Grab / throw / ride kart | `E` | `GRAB` button (label changes with context) |
+| Spawn an item | `1`–`8`, or `F` for the selected one | Tap the hotbar |
+| Dance | `T` | Settings → Clawd → Dance |
 | Reset the world | `R` | `Reset` button |
+| Settings | `M` | `Settings` button |
 
-### What's in the world
+In the kart: `W`/`S` drive, `A`/`D` steer, `Space` hops, `Q` boosts, `E` gets out.
 
-- Crate pyramid, domino run and a ball pit to wreck
-- Seesaw with a counterweight, a spinning sweeper bar and a wrecking ball that drops when you walk up
-- Trampolines
-- A sky course: ramp → moving platform → lift → stepping pads → trampoline → top island
+### Things to play with
+
+- **Spawnable items:** crate, ball, plank, barrel, big ball, balloon, TNT, anvil.
+  Balloons tie themselves to whatever is nearby (or what you are holding) and lift it.
+  TNT has a 3 second fuse and sets off other TNT.
+- **Around the map:** crate pyramid, ball pit, dominoes, seesaw, spinner, wrecking ball, trampolines,
+  a block castle stuffed with TNT, Newton's cradle, launch pad to a floating island, soccer field with goals
+  and a score, carousel, swings, bowling lane, ice rink, pool with a slide tower (things float, Clawd swims),
+  wind fan, conveyor belt, and a sky course.
+- **Buddies:** four little Clawds wander near the spawn. You can pick them up.
+- **Checkpoints** on the high platforms move your respawn point.
+
+### Settings
+
+- **Graphics:** quality preset (Low / Medium / High / Ultra), resolution scale, shadow quality,
+  view distance, anti-aliasing, particles, clouds and flowers, time of day (day / sunset / night),
+  field of view, camera shake, FPS counter.
+- **Game:** gravity (moon / normal / heavy), slow motion, double jump, look sensitivity, invert look, sound.
+- **Clawd:** body colour and hats.
+
+Settings are saved in the browser's local storage.
 
 ### Files
 
-- `index.html` – page, HUD and touch controls
-- `game.js` – rendering, physics, character controller, camera, level
+- `index.html` – page, HUD, settings sheet and touch controls
+- `game.js` – rendering, physics, character controller, camera, level, settings
 - `vendor/` – [three.js](https://threejs.org) r170 and [cannon-es](https://github.com/pmndrs/cannon-es) 0.20 (both MIT)

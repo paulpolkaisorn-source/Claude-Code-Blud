@@ -6,7 +6,7 @@
 <title>Clawd Physics Playground</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-  /* Layout: full-screen 3D canvas, HUD pinned to the corners, touch controls along the bottom. */
+  /* Layout: full-screen 3D view, HUD pinned to the corners, hotbar and touch controls along the bottom, settings as a side sheet. */
   :root {
     --sky: #8fd3ff;
     --ink: #2a1a14;
@@ -15,8 +15,10 @@
     --clawd-deep: #b9573a;
     --gold: #ffc93c;
     --panel: rgba(42, 26, 20, 0.62);
+    --sheet: rgba(42, 26, 20, 0.9);
+    --line: rgba(255, 247, 239, 0.28);
     --font: "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif;
-    color-scheme: light;
+    color-scheme: dark;
   }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
@@ -26,48 +28,78 @@
     -webkit-tap-highlight-color: transparent; touch-action: none;
   }
   #wrap { position: fixed; inset: 0; overflow: hidden; }
-  #game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  #view, #pad { position: absolute; inset: 0; }
+  #view canvas { width: 100%; height: 100%; display: block; }
+  #pad { touch-action: none; outline: none; z-index: 1; }
 
   .hud { position: absolute; display: flex; gap: 8px; align-items: center; z-index: 5; }
-  #hud-left { top: calc(10px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); }
-  #hud-right { top: calc(10px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); flex-wrap: wrap; justify-content: flex-end; max-width: 62%; }
+  #hud-left { top: calc(10px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); flex-wrap: wrap; max-width: 55%; }
+  #hud-right { top: calc(10px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); }
   .chip {
     background: var(--panel); color: var(--paper); border-radius: 12px; padding: 8px 12px;
-    font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; backdrop-filter: blur(4px);
+    font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; backdrop-filter: blur(4px); white-space: nowrap;
   }
   .chip .star { color: var(--gold); }
+  .chip.small { font-size: 13px; padding: 6px 10px; }
+  button { font: inherit; color: inherit; }
   button.btn {
-    font: inherit; font-weight: 700; color: var(--paper); background: var(--panel);
-    border: 2px solid rgba(255, 247, 239, 0.35); border-radius: 12px; padding: 8px 12px; min-height: 40px;
+    font-weight: 700; color: var(--paper); background: var(--panel);
+    border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; min-height: 40px;
     cursor: pointer; backdrop-filter: blur(4px); touch-action: manipulation;
   }
   button.btn:hover { background: var(--clawd-deep); }
   button.btn:active { transform: translateY(1px); background: var(--clawd); }
-  button.btn:focus-visible, #jump:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-  button.btn kbd { opacity: 0.7; font: inherit; font-size: 11px; margin-left: 4px; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  kbd { opacity: 0.7; font: inherit; font-size: 11px; margin-left: 4px; }
+  body.touch kbd { display: none; }
 
-  #help {
-    position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-    background: var(--panel); border-radius: 12px; padding: 10px 14px; text-align: center; line-height: 1.6;
-    max-width: min(92%, 640px); z-index: 4; backdrop-filter: blur(4px); pointer-events: none;
-    transition: opacity 0.6s;
+  /* Hotbar */
+  #hotbar {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; gap: 6px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px);
   }
-  #help.faded { opacity: 0; }
-  #help b { color: var(--gold); }
-  #help .touch-only { display: none; }
-  body.touch #help .touch-only { display: inline; }
-  body.touch #help .key-only { display: none; }
-  body.touch #help { bottom: auto; top: calc(118px + env(safe-area-inset-top, 0px)); font-size: 12px; padding: 7px 10px; line-height: 1.45; max-width: 78%; }
-  @media (orientation: landscape) { body.touch #help { top: calc(60px + env(safe-area-inset-top, 0px)); max-width: 46%; } }
-  body.touch button.btn kbd { display: none; }
+  body.touch #hotbar {
+    bottom: auto; top: calc(60px + env(safe-area-inset-top, 0px)); overflow-x: auto; touch-action: pan-x;
+    scrollbar-width: none; padding-bottom: 2px;
+  }
+  .slot {
+    position: relative; flex: 0 0 auto; width: 58px; height: 54px; border-radius: 10px; cursor: pointer;
+    background: var(--panel); border: 2px solid var(--line); backdrop-filter: blur(4px);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding: 0 0 5px;
+    font-size: 11px; font-weight: 700; touch-action: manipulation;
+  }
+  .slot .swatch { width: 20px; height: 20px; border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.25); box-sizing: border-box; }
+  .slot .swatch.round { border-radius: 50%; }
+  .slot .num { position: absolute; top: 2px; left: 5px; font-size: 10px; opacity: 0.7; }
+  body.touch .slot .num { display: none; }
+  .slot.selected { border-color: var(--gold); }
+  .slot:active { background: var(--clawd); }
+
+  #hint {
+    position: absolute; left: 50%; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    background: var(--panel); border-radius: 12px; padding: 8px 14px; text-align: center; line-height: 1.5;
+    max-width: min(92%, 680px); z-index: 4; backdrop-filter: blur(4px); pointer-events: none; transition: opacity 0.6s;
+  }
+  #hint.faded { opacity: 0; }
+  #hint b { color: var(--gold); }
+  #hint .touch-only { display: none; }
+  body.touch #hint .touch-only { display: inline; }
+  body.touch #hint .key-only { display: none; }
+  body.touch #hint { bottom: auto; top: calc(126px + env(safe-area-inset-top, 0px)); font-size: 12px; padding: 6px 10px; max-width: 80%; }
 
   #toast {
-    position: absolute; left: 50%; top: 22%; transform: translate(-50%, -50%) scale(0.8);
+    position: absolute; left: 50%; top: 24%; transform: translate(-50%, -50%) scale(0.8);
     background: var(--clawd); color: var(--paper); font-size: 22px; font-weight: 800; text-align: center;
     padding: 12px 20px; border-radius: 16px; border: 3px solid var(--paper); opacity: 0;
     transition: opacity 0.25s, transform 0.25s; z-index: 6; pointer-events: none; max-width: 86%;
   }
   #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  #prompt {
+    position: absolute; left: 50%; top: 62%; transform: translateX(-50%); z-index: 4; pointer-events: none;
+    background: var(--panel); border-radius: 10px; padding: 6px 12px; font-weight: 700; backdrop-filter: blur(4px);
+  }
+  body.touch #prompt { display: none; }
+  #prompt b { color: var(--gold); }
 
   #crosshair {
     position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
@@ -79,14 +111,54 @@
   #stick-base { width: 120px; height: 120px; margin: -60px 0 0 -60px; background: rgba(255, 247, 239, 0.18); border: 3px solid rgba(255, 247, 239, 0.55); box-sizing: border-box; }
   #stick-knob { width: 56px; height: 56px; margin: -28px 0 0 -28px; background: rgba(255, 247, 239, 0.75); }
   #stick-base.resting { opacity: 0.45; }
-  #jump {
-    position: absolute; right: calc(22px + env(safe-area-inset-right, 0px)); bottom: calc(34px + env(safe-area-inset-bottom, 0px));
-    width: 92px; height: 92px; border-radius: 50%; border: 3px solid rgba(255, 247, 239, 0.7);
-    background: rgba(217, 119, 87, 0.7); color: var(--paper); font: inherit; font-weight: 800; font-size: 16px;
-    z-index: 5; touch-action: none; display: none;
+  .tbtn {
+    position: absolute; border-radius: 50%; border: 3px solid rgba(255, 247, 239, 0.7); background: rgba(42, 26, 20, 0.5);
+    color: var(--paper); font-weight: 800; z-index: 5; touch-action: none; display: none; padding: 0;
   }
-  #jump.down { background: var(--clawd-deep); transform: scale(0.94); }
-  body.touch #jump { display: block; }
+  body.touch .tbtn { display: block; }
+  .tbtn.down, .tbtn.on { background: var(--clawd-deep); }
+  .tbtn.down { transform: scale(0.94); }
+  #jump {
+    right: calc(22px + env(safe-area-inset-right, 0px)); bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+    width: 92px; height: 92px; font-size: 16px; background: rgba(217, 119, 87, 0.7);
+  }
+  #act { right: calc(122px + env(safe-area-inset-right, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); width: 68px; height: 68px; font-size: 12px; }
+  #run { right: calc(34px + env(safe-area-inset-right, 0px)); bottom: calc(138px + env(safe-area-inset-bottom, 0px)); width: 68px; height: 68px; font-size: 12px; }
+
+  /* Settings sheet */
+  #menu {
+    position: absolute; z-index: 10; top: 0; right: 0; bottom: 0; width: min(380px, 100%); box-sizing: border-box;
+    background: var(--sheet); backdrop-filter: blur(8px); display: flex; flex-direction: column;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) 16px;
+    border-left: 2px solid var(--line); -webkit-user-select: none; user-select: none;
+  }
+  .menu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .menu-head h2 { margin: 0; font-size: 20px; letter-spacing: 0.02em; }
+  .tabs { display: flex; gap: 6px; margin: 12px 0 4px; }
+  .tabs button {
+    flex: 1 1 0; min-width: 0; min-height: 36px; border-radius: 10px; border: 2px solid var(--line); background: transparent;
+    font-weight: 700; cursor: pointer; touch-action: manipulation; padding: 4px 2px;
+  }
+  .tabs button[aria-selected="true"] { background: var(--clawd); border-color: var(--paper); }
+  .panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; padding: 4px 2px 8px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); min-height: 34px; }
+  .row > span:first-child { flex: 1 1 auto; min-width: 0; }
+  .row small { display: block; opacity: 0.7; font-size: 11px; }
+  .row select, .row input[type="range"] { flex: 0 0 150px; width: 150px; max-width: 50%; }
+  .row select {
+    font: inherit; color: var(--paper); background: var(--ink); border: 2px solid var(--line); border-radius: 8px; padding: 5px 6px; min-height: 34px;
+  }
+  .row input[type="range"] { accent-color: var(--clawd); touch-action: pan-x; }
+  .row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--clawd); flex: 0 0 auto; }
+  .row .val { flex: 0 0 44px; text-align: right; font-variant-numeric: tabular-nums; opacity: 0.85; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .swatches button { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--line); cursor: pointer; padding: 0; }
+  .swatches button[aria-pressed="true"] { border-color: var(--paper); }
+  .panel .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0 0; }
+  .keys { width: 100%; border-collapse: collapse; }
+  .keys th, .keys td { text-align: left; padding: 7px 6px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-weight: 400; }
+  .keys th { font-weight: 700; white-space: nowrap; }
+  .keys b { color: var(--gold); }
 
   #error {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
@@ -94,35 +166,74 @@
   }
   @media (max-width: 520px) {
     .chip { font-size: 14px; padding: 7px 10px; }
-    button.btn { padding: 6px 9px; }
+    button.btn { padding: 6px 10px; }
+    .slot { width: 52px; height: 50px; }
   }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <canvas id="game" tabindex="0" aria-label="Clawd Physics Playground game view"></canvas>
+  <div id="view"></div>
+  <div id="pad" tabindex="0" aria-label="Clawd Physics Playground game view"></div>
 
   <div class="hud" id="hud-left">
-    <div class="chip" aria-live="polite"><span class="star">★</span> <span id="stars">0 / 8</span></div>
+    <div class="chip" aria-live="polite"><span class="star">★</span> <span id="stars">0 / 0</span></div>
+    <div class="chip small" id="goal-chip" hidden>Goals <span id="goals">0</span></div>
+    <div class="chip small" id="fps-chip" hidden><span id="fps">0</span> FPS</div>
   </div>
   <div class="hud" id="hud-right">
-    <button class="btn" id="btn-crate" type="button">Crate<kbd>F</kbd></button>
-    <button class="btn" id="btn-ball" type="button">Ball<kbd>G</kbd></button>
     <button class="btn" id="btn-reset" type="button">Reset<kbd>R</kbd></button>
-    <button class="btn" id="btn-sound" type="button" aria-pressed="true">Sound on</button>
+    <button class="btn" id="btn-menu" type="button" aria-haspopup="dialog" aria-expanded="false">Settings<kbd>M</kbd></button>
   </div>
 
-  <div id="help">
-    <span class="key-only"><b>WASD</b> move · <b>Space</b> jump · <b>drag mouse</b> or <b>←/→</b> turn camera · <b>wheel</b> zoom · <b>Shift</b> mouse lock</span>
-    <span class="touch-only"><b>Left thumb</b> move · <b>drag right side</b> to look · <b>pinch</b> to zoom · <b>Jump</b> button</span>
-    <br>Find all 8 stars. Push, smash and bounce on everything.
+  <div id="hotbar" role="toolbar" aria-label="Spawn items"></div>
+
+  <div id="hint">
+    <span class="key-only"><b>WASD</b> move · <b>Space</b> jump (twice for a double jump) · <b>Q</b> sprint · <b>E</b> grab, throw, ride · <b>1–8</b> spawn · <b>drag</b> to look</span>
+    <span class="touch-only"><b>Left thumb</b> move · <b>drag</b> to look · <b>pinch</b> to zoom · tap an item to spawn it</span>
   </div>
 
+  <div id="prompt" hidden></div>
   <div id="toast" role="status"></div>
   <div id="crosshair" hidden></div>
   <div id="stick-base" hidden></div>
   <div id="stick-knob" hidden></div>
-  <button id="jump" type="button" aria-label="Jump">JUMP</button>
+  <button class="tbtn" id="run" type="button" aria-pressed="false">RUN</button>
+  <button class="tbtn" id="act" type="button">GRAB</button>
+  <button class="tbtn" id="jump" type="button" aria-label="Jump">JUMP</button>
+
+  <div id="menu" role="dialog" aria-labelledby="menu-title" hidden>
+    <div class="menu-head">
+      <h2 id="menu-title">Settings</h2>
+      <button class="btn" id="menu-close" type="button">Close</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="graphics" aria-selected="true">Graphics</button>
+      <button type="button" role="tab" data-tab="game" aria-selected="false">Game</button>
+      <button type="button" role="tab" data-tab="clawd" aria-selected="false">Clawd</button>
+      <button type="button" role="tab" data-tab="controls" aria-selected="false">Controls</button>
+    </div>
+    <div class="panel" data-panel="graphics"></div>
+    <div class="panel" data-panel="game" hidden></div>
+    <div class="panel" data-panel="clawd" hidden></div>
+    <div class="panel" data-panel="controls" hidden>
+      <table class="keys">
+        <tr><th>Move</th><td><b>W A S D</b> or <b>↑ ↓</b> · left thumbstick</td></tr>
+        <tr><th>Jump</th><td><b>Space</b> · JUMP. Press again in the air for a double jump.</td></tr>
+        <tr><th>Sprint</th><td>Hold <b>Q</b> · RUN toggle</td></tr>
+        <tr><th>Look</th><td>Drag the mouse, or <b>← →</b> · drag the screen</td></tr>
+        <tr><th>Zoom</th><td>Mouse wheel, <b>I</b> / <b>O</b> · pinch. Zoom all the way in for first person.</td></tr>
+        <tr><th>Mouse lock</th><td><b>Shift</b></td></tr>
+        <tr><th>Grab / throw</th><td><b>E</b> · GRAB. Pick up crates, balls, buddies, TNT.</td></tr>
+        <tr><th>Kart</th><td><b>E</b> next to the kart to ride, <b>E</b> to hop off. W/S drive, A/D steer.</td></tr>
+        <tr><th>Spawn</th><td><b>1–8</b>, or <b>F</b> for the selected item · tap the hotbar</td></tr>
+        <tr><th>Dance</th><td><b>T</b></td></tr>
+        <tr><th>Reset</th><td><b>R</b> puts the whole world back</td></tr>
+        <tr><th>Settings</th><td><b>M</b></td></tr>
+      </table>
+    </div>
+  </div>
+
   <div id="error" hidden></div>
 </div>
 
