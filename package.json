@@ -1,0 +1,12 @@
+{
+  "name": "clawd-physics-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "build:standalone": "node tools/build-standalone.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

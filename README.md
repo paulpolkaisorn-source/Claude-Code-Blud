@@ -18,6 +18,10 @@ python3 -m http.server 8000
 
 It also works as-is on any static host (GitHub Pages, Vercel, Netlify).
 
+**No server?** Open `clawd-playground-standalone.html` instead. It is the whole game in one file
+(libraries included), so it runs by double-clicking it or sending it to someone.
+Rebuild it after changing the game with `npm install && npm run build:standalone`.
+
 ### Controls (Roblox-style)
 
 | Action | PC | Mobile |
@@ -33,6 +37,7 @@ It also works as-is on any static host (GitHub Pages, Vercel, Netlify).
 | Spawn an item | `1`–`8`, or `F` for the selected one | Tap the hotbar |
 | Dance | `T` | Settings → Clawd → Dance |
 | Reset the world | `R` | `Reset` button |
+| Full screen | `P` (`Esc` to leave) | `Full screen` button (not on iPhone Safari, which has no full screen mode for pages) |
 | Settings | `M` | `Settings` button |
 
 In the kart: `W`/`S` drive, `A`/`D` steer, `Space` hops, `Q` boosts, `E` gets out.
@@ -63,4 +68,6 @@ Settings are saved in the browser's local storage.
 
 - `index.html` – page, HUD, settings sheet and touch controls
 - `game.js` – rendering, physics, character controller, camera, level, settings
+- `clawd-playground-standalone.html` – generated single-file build
+- `tools/build-standalone.mjs` – builds the single-file version with esbuild
 - `vendor/` – [three.js](https://threejs.org) r170 and [cannon-es](https://github.com/pmndrs/cannon-es) 0.20 (both MIT)

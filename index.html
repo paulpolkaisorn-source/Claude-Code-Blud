@@ -166,7 +166,8 @@
   }
   @media (max-width: 520px) {
     .chip { font-size: 14px; padding: 7px 10px; }
-    button.btn { padding: 6px 10px; }
+    button.btn { padding: 6px 8px; font-size: 13px; }
+    .hud { gap: 6px; }
     .slot { width: 52px; height: 50px; }
   }
 </style>
@@ -183,6 +184,7 @@
   </div>
   <div class="hud" id="hud-right">
     <button class="btn" id="btn-reset" type="button">Reset<kbd>R</kbd></button>
+    <button class="btn" id="btn-fullscreen" type="button" aria-pressed="false">Full screen<kbd>P</kbd></button>
     <button class="btn" id="btn-menu" type="button" aria-haspopup="dialog" aria-expanded="false">Settings<kbd>M</kbd></button>
   </div>
 
@@ -229,6 +231,7 @@
         <tr><th>Spawn</th><td><b>1–8</b>, or <b>F</b> for the selected item · tap the hotbar</td></tr>
         <tr><th>Dance</th><td><b>T</b></td></tr>
         <tr><th>Reset</th><td><b>R</b> puts the whole world back</td></tr>
+        <tr><th>Full screen</th><td><b>P</b> · Full screen button. <b>Esc</b> leaves it.</td></tr>
         <tr><th>Settings</th><td><b>M</b></td></tr>
       </table>
     </div>

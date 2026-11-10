@@ -1288,6 +1288,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyF') spawnProp(ITEMS[selectedItem].id);
   else if (e.code === 'KeyR') resetWorld();
   else if (e.code === 'KeyM') toggleMenu();
+  else if (e.code === 'KeyP') toggleFullscreen();
   else if (e.code === 'KeyT') state.emote = 2.4;
   else if (/^Digit[1-8]$/.test(e.code)) { selectItem(+e.code.slice(5) - 1); spawnProp(ITEMS[selectedItem].id); }
 });
@@ -1457,6 +1458,32 @@ ITEMS.forEach((item, i) => {
 selectItem(0);
 
 $('btn-reset').addEventListener('click', (e) => { initAudio(); resetWorld(); e.currentTarget.blur(); });
+
+// Full screen (hidden where the browser cannot do it, e.g. iPhone Safari)
+const fsBtn = $('btn-fullscreen');
+const fsRoot = document.documentElement;
+const fsRequest = fsRoot.requestFullscreen || fsRoot.webkitRequestFullscreen;
+const fsExit = document.exitFullscreen || document.webkitExitFullscreen;
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+const fsSupported = !!(fsRequest && fsExit) && document.fullscreenEnabled !== false && document.webkitFullscreenEnabled !== false;
+function toggleFullscreen() {
+  if (!fsSupported) { toast('Full screen is not available in this browser', 1800); return; }
+  const fail = () => toast('Full screen is not available here', 1800);
+  try {
+    const p = fsElement() ? fsExit.call(document) : fsRequest.call(fsRoot);
+    if (p && p.catch) p.catch(fail);
+  } catch { fail(); }
+}
+function onFullscreenChange() {
+  const on = !!fsElement();
+  fsBtn.firstChild.textContent = on ? 'Exit full screen' : 'Full screen';
+  fsBtn.setAttribute('aria-pressed', String(on));
+  resize();
+}
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+fsBtn.hidden = !fsSupported;
+fsBtn.addEventListener('click', (e) => { initAudio(); toggleFullscreen(); e.currentTarget.blur(); });
 
 // ───────────────────────────── Settings menu ─────────────────────────────
 const TIMES = {
@@ -2169,7 +2196,7 @@ requestAnimationFrame(loop);
 // Small hook for automated playtests
 window.__clawd = {
   playerBody, state, input, cam, keys, stars, world, spawned, props, settings, kart, soccer, bowling, buddies, links, pp,
-  explode, spawnProp, doAction, resetWorld,
+  explode, spawnProp, doAction, resetWorld, toggleFullscreen,
   get held() { return held; },
   get renderer() { return renderer; },
   get starCount() { return starCount; },
