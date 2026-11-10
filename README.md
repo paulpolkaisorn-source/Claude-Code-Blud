@@ -3,8 +3,19 @@ For Mr. CLAWD
 
 ## Clawd Physics Playground
 
-A 3D physics sandbox game. You are Clawd: walk, jump, sprint, grab and throw things,
+A 3D physics sandbox and tag game. You are Clawd: walk, jump, sprint, grab and throw things,
 drive a kart, blow stuff up, and collect all 22 stars across the playground.
+
+### Clawd Tag
+
+Hot-potato tag against five bot Clawds. One Clawd is IT and carries a burning fuse; touching someone
+passes it on (no instant tag-backs). When the fuse runs out, whoever is IT is blown up and is out.
+A new round starts with a shorter fuse, and the last Clawd standing wins.
+
+- Sprinting uses stamina in tag (the yellow bar).
+- Hit a bot with a fast-moving prop to stun it for a moment.
+- A red marker floats over IT, and an arrow at the screen edge points to IT (or to the nearest runner when you are IT).
+- `G` or the Mode button switches between tag and free play.
 
 ### Play
 
@@ -34,9 +45,10 @@ Rebuild it after changing the game with `npm install && npm run build:standalone
 | First person | Zoom all the way in | Pinch all the way in |
 | Mouse lock (shift lock) | `Shift` | – |
 | Grab / throw / ride kart | `E` | `GRAB` button (label changes with context) |
-| Spawn an item | `1`–`8`, or `F` for the selected one | Tap the hotbar |
+| Spawn an item | `1`–`8`, or `F` for the selected one; hold a slot to keep spawning | Tap or hold the hotbar |
+| Game mode (tag / free play) | `G` | Mode button |
 | Dance | `T` | Settings → Clawd → Dance |
-| Reset the world | `R` | `Reset` button |
+| Reset the world (restarts the match in tag) | `R` | `Reset` button |
 | Full screen | `P` (`Esc` to leave) | `Full screen` button (not on iPhone Safari, which has no full screen mode for pages) |
 | Settings | `M` | `Settings` button |
 
@@ -44,14 +56,15 @@ In the kart: `W`/`S` drive, `A`/`D` steer, `Space` hops, `Q` boosts, `E` gets ou
 
 ### Things to play with
 
-- **Spawnable items:** crate, ball, plank, barrel, big ball, balloon, TNT, anvil.
+- **Spawnable items:** crate, ball, plank, barrel, big ball, balloon, TNT, anvil. Clawd tosses each one straight up
+  and it lands about a second and a half later.
   Balloons tie themselves to whatever is nearby (or what you are holding) and lift it.
   TNT has a 3 second fuse and sets off other TNT.
 - **Around the map:** crate pyramid, ball pit, dominoes, seesaw, spinner, wrecking ball, trampolines,
   a block castle stuffed with TNT, Newton's cradle, launch pad to a floating island, soccer field with goals
   and a score, carousel, swings, bowling lane, ice rink, pool with a slide tower (things float, Clawd swims),
   wind fan, conveyor belt, and a sky course.
-- **Buddies:** four little Clawds wander near the spawn. You can pick them up.
+- **Bots:** five Clawds wander near the spawn in free play (you can pick them up) and play tag against you.
 - **Checkpoints** on the high platforms move your respawn point.
 
 ### Settings

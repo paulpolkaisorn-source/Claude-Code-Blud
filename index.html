@@ -14,10 +14,12 @@
     --clawd: #d97757;
     --clawd-deep: #b9573a;
     --gold: #ffc93c;
-    --panel: rgba(42, 26, 20, 0.62);
-    --sheet: rgba(42, 26, 20, 0.9);
+    --danger: #e03131;
+    --panel: rgba(42, 26, 20, 0.66);
+    --sheet: rgba(42, 26, 20, 0.92);
     --line: rgba(255, 247, 239, 0.28);
     --font: "Trebuchet MS", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     color-scheme: dark;
   }
   [hidden] { display: none !important; }
@@ -31,27 +33,52 @@
   #view, #pad { position: absolute; inset: 0; }
   #view canvas { width: 100%; height: 100%; display: block; }
   #pad { touch-action: none; outline: none; z-index: 1; }
+  button { font: inherit; color: inherit; touch-action: none; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  kbd { opacity: 0.65; font: inherit; font-size: 11px; }
+  body.touch kbd { display: none; }
 
+  .ico { display: inline-flex; width: 20px; height: 20px; flex: 0 0 auto; transition: transform 0.25s var(--spring); }
+  .ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ico svg .fill { fill: currentColor; stroke: none; }
+
+  @keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(0.86); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  @keyframes ring { from { opacity: 0.7; transform: scale(0.6); } to { opacity: 0; transform: scale(1.5); } }
+  @keyframes spin { to { transform: rotate(-360deg); } }
+  @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.22) rotate(-3deg); } 100% { transform: scale(1); } }
+  @keyframes sheet-in { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes card-in { from { transform: translate(-50%, -46%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
+  @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } }
+  @keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 201, 60, 0.55); } 50% { box-shadow: 0 0 0 5px rgba(255, 201, 60, 0); } }
+
+  /* HUD */
   .hud { position: absolute; display: flex; gap: 8px; align-items: center; z-index: 5; }
-  #hud-left { top: calc(10px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); flex-wrap: wrap; max-width: 55%; }
+  #hud-left { top: calc(10px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); flex-wrap: wrap; max-width: 46%; }
   #hud-right { top: calc(10px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); }
   .chip {
+    display: inline-flex; align-items: center; gap: 6px;
     background: var(--panel); color: var(--paper); border-radius: 12px; padding: 8px 12px;
     font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; backdrop-filter: blur(4px); white-space: nowrap;
   }
-  .chip .star { color: var(--gold); }
+  .chip .ico { color: var(--gold); }
   .chip.small { font-size: 13px; padding: 6px 10px; }
-  button { font: inherit; color: inherit; }
-  button.btn {
+  .chip.bump { animation: bump 0.45s var(--spring); }
+
+  .btn {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     font-weight: 700; color: var(--paper); background: var(--panel);
-    border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; min-height: 40px;
-    cursor: pointer; backdrop-filter: blur(4px); touch-action: manipulation;
+    border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; min-height: 42px; min-width: 42px; box-sizing: border-box;
+    cursor: pointer; backdrop-filter: blur(4px);
+    transition: transform 0.14s var(--spring), background 0.15s, border-color 0.15s, box-shadow 0.15s;
   }
-  button.btn:hover { background: var(--clawd-deep); }
-  button.btn:active { transform: translateY(1px); background: var(--clawd); }
-  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-  kbd { opacity: 0.7; font: inherit; font-size: 11px; margin-left: 4px; }
-  body.touch kbd { display: none; }
+  .btn:hover { background: var(--clawd-deep); border-color: var(--paper); transform: translateY(-2px); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+  .btn:hover .ico { transform: scale(1.18) rotate(-8deg); }
+  .btn:active, .btn.down { transform: translateY(1px) scale(0.94); background: var(--clawd); box-shadow: none; }
+  .btn.pop { animation: pop 0.32s var(--spring); }
+  .btn.pop .ico { animation: spin 0.45s ease-out; }
+  .btn.primary { background: var(--clawd); border-color: var(--paper); }
+  .btn.primary:hover { background: var(--clawd-deep); }
+  .btn.danger { background: var(--danger); border-color: var(--paper); }
 
   /* Hotbar */
   #hotbar {
@@ -59,48 +86,66 @@
     bottom: calc(12px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 32px);
   }
   body.touch #hotbar {
-    bottom: auto; top: calc(60px + env(safe-area-inset-top, 0px)); overflow-x: auto; touch-action: pan-x;
-    scrollbar-width: none; padding-bottom: 2px;
+    bottom: auto; top: calc(62px + env(safe-area-inset-top, 0px)); width: calc(100% - 32px); max-width: 560px;
+    left: 50%;
   }
   .slot {
-    position: relative; flex: 0 0 auto; width: 58px; height: 54px; border-radius: 10px; cursor: pointer;
+    position: relative; flex: 0 0 auto; width: 60px; height: 58px; border-radius: 12px; cursor: pointer; box-sizing: border-box;
     background: var(--panel); border: 2px solid var(--line); backdrop-filter: blur(4px);
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; padding: 0 0 5px;
-    font-size: 11px; font-weight: 700; touch-action: manipulation;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 0 0 5px;
+    font-size: 11px; font-weight: 700;
+    transition: transform 0.14s var(--spring), background 0.15s, border-color 0.15s;
   }
-  .slot .swatch { width: 20px; height: 20px; border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.25); box-sizing: border-box; }
-  .slot .swatch.round { border-radius: 50%; }
+  .slot .ico { width: 26px; height: 26px; }
   .slot .num { position: absolute; top: 2px; left: 5px; font-size: 10px; opacity: 0.7; }
   body.touch .slot .num { display: none; }
-  .slot.selected { border-color: var(--gold); }
-  .slot:active { background: var(--clawd); }
-
-  #hint {
-    position: absolute; left: 50%; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-    background: var(--panel); border-radius: 12px; padding: 8px 14px; text-align: center; line-height: 1.5;
-    max-width: min(92%, 680px); z-index: 4; backdrop-filter: blur(4px); pointer-events: none; transition: opacity 0.6s;
+  body.touch .slot { flex: 1 1 0; width: auto; min-width: 0; }
+  .slot:hover { transform: translateY(-4px); border-color: var(--paper); }
+  .slot:hover .ico { transform: scale(1.15) rotate(-6deg); }
+  .slot.down { transform: scale(0.88); background: var(--clawd); }
+  .slot.selected { border-color: var(--gold); animation: glow 1.6s infinite; }
+  .slot.pop .ico { animation: pop 0.3s var(--spring); }
+  .slot::after {
+    content: ""; position: absolute; inset: -2px; border-radius: 12px; border: 2px solid var(--gold); opacity: 0; pointer-events: none;
   }
-  #hint.faded { opacity: 0; }
-  #hint b { color: var(--gold); }
-  #hint .touch-only { display: none; }
-  body.touch #hint .touch-only { display: inline; }
-  body.touch #hint .key-only { display: none; }
-  body.touch #hint { bottom: auto; top: calc(126px + env(safe-area-inset-top, 0px)); font-size: 12px; padding: 6px 10px; max-width: 80%; }
+  .slot.pop::after { animation: ring 0.4s ease-out; }
+
+  /* Tag HUD */
+  #tag-hud {
+    position: absolute; left: 50%; transform: translateX(-50%); z-index: 4; pointer-events: none;
+    top: calc(64px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 92%;
+  }
+  body.touch #tag-hud { top: calc(128px + env(safe-area-inset-top, 0px)); max-width: 92%; }
+  #banner {
+    display: inline-flex; align-items: center; gap: 8px; background: var(--panel); border: 2px solid var(--line); border-radius: 14px;
+    padding: 7px 14px; font-weight: 800; font-size: 16px; backdrop-filter: blur(4px); font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap;
+  }
+  #banner.it { background: var(--danger); border-color: var(--paper); }
+  #tag-hud.it { animation: pulse 0.7s infinite; }
+  #banner .fuse { background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 2px 8px; }
+  #stamina { width: 150px; height: 8px; border-radius: 6px; background: var(--panel); border: 2px solid var(--line); overflow: hidden; }
+  #stamina i { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; }
+  #it-arrow {
+    position: absolute; z-index: 4; width: 38px; height: 38px; margin: -19px 0 0 -19px; pointer-events: none; color: var(--danger);
+    filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4));
+  }
+  #it-arrow.chase { color: var(--gold); }
+  #it-arrow .ico { width: 100%; height: 100%; }
 
   #toast {
-    position: absolute; left: 50%; top: 24%; transform: translate(-50%, -50%) scale(0.8);
+    position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(0.7);
     background: var(--clawd); color: var(--paper); font-size: 22px; font-weight: 800; text-align: center;
     padding: 12px 20px; border-radius: 16px; border: 3px solid var(--paper); opacity: 0;
-    transition: opacity 0.25s, transform 0.25s; z-index: 6; pointer-events: none; max-width: 86%;
+    transition: opacity 0.2s, transform 0.3s var(--spring); z-index: 6; pointer-events: none; max-width: 86%;
   }
   #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  body.touch #toast { top: 42%; font-size: 19px; }
   #prompt {
     position: absolute; left: 50%; top: 62%; transform: translateX(-50%); z-index: 4; pointer-events: none;
     background: var(--panel); border-radius: 10px; padding: 6px 12px; font-weight: 700; backdrop-filter: blur(4px);
   }
   body.touch #prompt { display: none; }
   #prompt b { color: var(--gold); }
-
   #crosshair {
     position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%;
     background: var(--paper); border: 2px solid var(--ink); z-index: 4; pointer-events: none; box-sizing: border-box;
@@ -112,36 +157,69 @@
   #stick-knob { width: 56px; height: 56px; margin: -28px 0 0 -28px; background: rgba(255, 247, 239, 0.75); }
   #stick-base.resting { opacity: 0.45; }
   .tbtn {
-    position: absolute; border-radius: 50%; border: 3px solid rgba(255, 247, 239, 0.7); background: rgba(42, 26, 20, 0.5);
-    color: var(--paper); font-weight: 800; z-index: 5; touch-action: none; display: none; padding: 0;
+    position: absolute; border-radius: 50%; border: 3px solid rgba(255, 247, 239, 0.7); background: rgba(42, 26, 20, 0.55);
+    color: var(--paper); font-weight: 800; z-index: 5; display: none; padding: 0;
+    flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 10px; letter-spacing: 0.04em;
+    transition: transform 0.12s var(--spring), background 0.12s, opacity 0.2s;
   }
-  body.touch .tbtn { display: block; }
-  .tbtn.down, .tbtn.on { background: var(--clawd-deep); }
-  .tbtn.down { transform: scale(0.94); }
+  body.touch .tbtn { display: flex; }
+  .tbtn .ico { width: 26px; height: 26px; }
+  .tbtn.down { transform: scale(0.88); background: var(--clawd-deep); }
+  .tbtn.on { background: var(--clawd); border-color: var(--gold); }
+  .tbtn::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 3px solid var(--paper); opacity: 0; pointer-events: none; }
+  .tbtn.pop::after { animation: ring 0.35s ease-out; }
   #jump {
     right: calc(22px + env(safe-area-inset-right, 0px)); bottom: calc(34px + env(safe-area-inset-bottom, 0px));
-    width: 92px; height: 92px; font-size: 16px; background: rgba(217, 119, 87, 0.7);
+    width: 92px; height: 92px; font-size: 12px; background: rgba(217, 119, 87, 0.75);
   }
-  #act { right: calc(122px + env(safe-area-inset-right, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); width: 68px; height: 68px; font-size: 12px; }
-  #run { right: calc(34px + env(safe-area-inset-right, 0px)); bottom: calc(138px + env(safe-area-inset-bottom, 0px)); width: 68px; height: 68px; font-size: 12px; }
+  #jump .ico { width: 36px; height: 36px; }
+  #act { right: calc(122px + env(safe-area-inset-right, 0px)); bottom: calc(26px + env(safe-area-inset-bottom, 0px)); width: 70px; height: 70px; }
+  #run { right: calc(34px + env(safe-area-inset-right, 0px)); bottom: calc(138px + env(safe-area-inset-bottom, 0px)); width: 70px; height: 70px; }
+
+  /* Mode card */
+  #card {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 9; box-sizing: border-box;
+    width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow-y: auto; touch-action: pan-y;
+    background: var(--sheet); border: 3px solid var(--paper); border-radius: 20px; padding: 20px; backdrop-filter: blur(8px);
+    display: flex; flex-direction: column; gap: 12px; text-align: center;
+    animation: card-in 0.3s var(--spring);
+  }
+  #card h1 { margin: 0; font-size: 28px; letter-spacing: 0.01em; text-wrap: balance; }
+  #card p { margin: 0; line-height: 1.5; opacity: 0.92; }
+  #card .choices { display: flex; gap: 10px; flex-wrap: wrap; }
+  #card .choices .btn { flex: 1 1 150px; min-height: 52px; font-size: 16px; }
+  #card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; text-align: left; font-size: 13px; }
+  #card li { display: flex; gap: 8px; align-items: center; }
+  #card li .ico { color: var(--gold); }
+  #card .touch-only { display: none; }
+  body.touch #card .touch-only { display: flex; }
+  body.touch #card .key-only { display: none; }
 
   /* Settings sheet */
   #menu {
-    position: absolute; z-index: 10; top: 0; right: 0; bottom: 0; width: min(380px, 100%); box-sizing: border-box;
+    position: absolute; z-index: 10; top: 0; right: 0; bottom: 0; width: min(390px, 100%); box-sizing: border-box;
     background: var(--sheet); backdrop-filter: blur(8px); display: flex; flex-direction: column;
     padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) 16px;
-    border-left: 2px solid var(--line); -webkit-user-select: none; user-select: none;
+    border-left: 2px solid var(--line);
+    animation: sheet-in 0.22s ease-out;
   }
   .menu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .menu-head h2 { margin: 0; font-size: 20px; letter-spacing: 0.02em; }
   .tabs { display: flex; gap: 6px; margin: 12px 0 4px; }
   .tabs button {
-    flex: 1 1 0; min-width: 0; min-height: 36px; border-radius: 10px; border: 2px solid var(--line); background: transparent;
-    font-weight: 700; cursor: pointer; touch-action: manipulation; padding: 4px 2px;
+    flex: 1 1 0; min-width: 0; min-height: 52px; border-radius: 12px; border: 2px solid var(--line); background: transparent;
+    font-weight: 700; font-size: 12px; cursor: pointer; padding: 4px 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    transition: transform 0.14s var(--spring), background 0.15s, border-color 0.15s;
   }
+  .tabs button:hover { transform: translateY(-2px); border-color: var(--paper); }
+  .tabs button:hover .ico { transform: scale(1.15); }
+  .tabs button.down { transform: scale(0.93); }
   .tabs button[aria-selected="true"] { background: var(--clawd); border-color: var(--paper); }
+  .tabs button[aria-selected="true"] .ico { animation: pop 0.3s var(--spring); }
   .panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; padding: 4px 2px 8px; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); min-height: 34px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); min-height: 34px; transition: background 0.15s; }
+  .row:hover { background: rgba(255, 247, 239, 0.05); }
   .row > span:first-child { flex: 1 1 auto; min-width: 0; }
   .row small { display: block; opacity: 0.7; font-size: 11px; }
   .row select, .row input[type="range"] { flex: 0 0 150px; width: 150px; max-width: 50%; }
@@ -149,11 +227,14 @@
     font: inherit; color: var(--paper); background: var(--ink); border: 2px solid var(--line); border-radius: 8px; padding: 5px 6px; min-height: 34px;
   }
   .row input[type="range"] { accent-color: var(--clawd); touch-action: pan-x; }
-  .row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--clawd); flex: 0 0 auto; }
+  .row input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--clawd); flex: 0 0 auto; transition: transform 0.15s var(--spring); }
+  .row input[type="checkbox"]:active { transform: scale(0.8); }
   .row .val { flex: 0 0 44px; text-align: right; font-variant-numeric: tabular-nums; opacity: 0.85; }
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-  .swatches button { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--line); cursor: pointer; padding: 0; }
-  .swatches button[aria-pressed="true"] { border-color: var(--paper); }
+  .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--line); cursor: pointer; padding: 0; transition: transform 0.15s var(--spring), border-color 0.15s; }
+  .swatches button:hover { transform: scale(1.18); }
+  .swatches button.down { transform: scale(0.85); }
+  .swatches button[aria-pressed="true"] { border-color: var(--paper); transform: scale(1.12); }
   .panel .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0 0; }
   .keys { width: 100%; border-collapse: collapse; }
   .keys th, .keys td { text-align: left; padding: 7px 6px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-weight: 400; }
@@ -164,11 +245,17 @@
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
     padding: 24px; background: var(--ink); color: var(--paper); font-size: 16px; z-index: 20;
   }
-  @media (max-width: 520px) {
-    .chip { font-size: 14px; padding: 7px 10px; }
-    button.btn { padding: 6px 8px; font-size: 13px; }
+  @media (max-width: 760px) {
+    #hud-right .btn .label, #hud-right .btn kbd { display: none; }
+    #hud-right .btn { padding: 8px; }
     .hud { gap: 6px; }
-    .slot { width: 52px; height: 50px; }
+    .chip { font-size: 14px; padding: 7px 10px; }
+    body.touch .slot { height: 46px; justify-content: center; padding: 0; }
+    body.touch .slot .label { display: none; }
+    #banner { font-size: 14px; padding: 6px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
@@ -178,42 +265,58 @@
   <div id="pad" tabindex="0" aria-label="Clawd Physics Playground game view"></div>
 
   <div class="hud" id="hud-left">
-    <div class="chip" aria-live="polite"><span class="star">★</span> <span id="stars">0 / 0</span></div>
-    <div class="chip small" id="goal-chip" hidden>Goals <span id="goals">0</span></div>
+    <div class="chip" id="star-chip" aria-live="polite"><span class="ico" data-icon="star"></span><span id="stars">0 / 0</span></div>
+    <div class="chip small" id="goal-chip" hidden><span class="ico" data-icon="ball"></span><span id="goals">0</span></div>
     <div class="chip small" id="fps-chip" hidden><span id="fps">0</span> FPS</div>
   </div>
   <div class="hud" id="hud-right">
-    <button class="btn" id="btn-reset" type="button">Reset<kbd>R</kbd></button>
-    <button class="btn" id="btn-fullscreen" type="button" aria-pressed="false">Full screen<kbd>P</kbd></button>
-    <button class="btn" id="btn-menu" type="button" aria-haspopup="dialog" aria-expanded="false">Settings<kbd>M</kbd></button>
+    <button class="btn" id="btn-mode" type="button" aria-label="Game mode"><span class="ico" data-icon="flag"></span><span class="label">Mode</span><kbd>G</kbd></button>
+    <button class="btn" id="btn-reset" type="button" aria-label="Reset"><span class="ico" data-icon="reset"></span><span class="label">Reset</span><kbd>R</kbd></button>
+    <button class="btn" id="btn-fullscreen" type="button" aria-label="Full screen" aria-pressed="false"><span class="ico" data-icon="fullscreen"></span><span class="label">Full screen</span><kbd>P</kbd></button>
+    <button class="btn" id="btn-menu" type="button" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><span class="ico" data-icon="settings"></span><span class="label">Settings</span><kbd>M</kbd></button>
   </div>
 
   <div id="hotbar" role="toolbar" aria-label="Spawn items"></div>
 
-  <div id="hint">
-    <span class="key-only"><b>WASD</b> move · <b>Space</b> jump (twice for a double jump) · <b>Q</b> sprint · <b>E</b> grab, throw, ride · <b>1–8</b> spawn · <b>drag</b> to look</span>
-    <span class="touch-only"><b>Left thumb</b> move · <b>drag</b> to look · <b>pinch</b> to zoom · tap an item to spawn it</span>
+  <div id="tag-hud" hidden>
+    <div id="banner" role="status"><span class="ico" data-icon="bolt"></span><span id="banner-text"></span><span class="fuse" id="fuse">0:30</span></div>
+    <div id="stamina" aria-hidden="true"><i id="stamina-fill"></i></div>
   </div>
+  <div id="it-arrow" hidden><span class="ico" data-icon="pointer"></span></div>
 
   <div id="prompt" hidden></div>
   <div id="toast" role="status"></div>
   <div id="crosshair" hidden></div>
   <div id="stick-base" hidden></div>
   <div id="stick-knob" hidden></div>
-  <button class="tbtn" id="run" type="button" aria-pressed="false">RUN</button>
-  <button class="tbtn" id="act" type="button">GRAB</button>
-  <button class="tbtn" id="jump" type="button" aria-label="Jump">JUMP</button>
+  <button class="tbtn" id="run" type="button" aria-pressed="false"><span class="ico" data-icon="bolt"></span><span>RUN</span></button>
+  <button class="tbtn" id="act" type="button"><span class="ico" id="act-ico" data-icon="grab"></span><span id="act-label">GRAB</span></button>
+  <button class="tbtn" id="jump" type="button" aria-label="Jump"><span class="ico" data-icon="jump"></span><span>JUMP</span></button>
+
+  <div id="card" role="dialog" aria-labelledby="card-title">
+    <h1 id="card-title">Clawd Tag</h1>
+    <p id="card-text">Hot-potato tag against five bot Clawds. Whoever is IT when the fuse burns out gets blown up. Tag someone to pass it on. Last Clawd standing wins.</p>
+    <ul id="card-tips">
+      <li class="key-only"><span class="ico" data-icon="keyboard"></span><span><b>WASD</b> move · <b>Space</b> jump · hold <b>Q</b> to sprint · <b>drag</b> to look</span></li>
+      <li class="touch-only"><span class="ico" data-icon="grab"></span><span>Left thumb moves, drag to look, pinch to zoom</span></li>
+      <li><span class="ico" data-icon="crate"></span><span>Throw things at bots to stun them. Items you spawn get tossed straight up.</span></li>
+    </ul>
+    <div class="choices">
+      <button class="btn primary" id="btn-play-tag" type="button"><span class="ico" data-icon="flag"></span><span class="label">Play tag</span></button>
+      <button class="btn" id="btn-play-free" type="button"><span class="ico" data-icon="cube"></span><span class="label">Free play</span></button>
+    </div>
+  </div>
 
   <div id="menu" role="dialog" aria-labelledby="menu-title" hidden>
     <div class="menu-head">
       <h2 id="menu-title">Settings</h2>
-      <button class="btn" id="menu-close" type="button">Close</button>
+      <button class="btn" id="menu-close" type="button"><span class="ico" data-icon="close"></span><span class="label">Close</span></button>
     </div>
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" data-tab="graphics" aria-selected="true">Graphics</button>
-      <button type="button" role="tab" data-tab="game" aria-selected="false">Game</button>
-      <button type="button" role="tab" data-tab="clawd" aria-selected="false">Clawd</button>
-      <button type="button" role="tab" data-tab="controls" aria-selected="false">Controls</button>
+      <button type="button" role="tab" data-tab="graphics" aria-selected="true"><span class="ico" data-icon="monitor"></span>Graphics</button>
+      <button type="button" role="tab" data-tab="game" aria-selected="false"><span class="ico" data-icon="gamepad"></span>Game</button>
+      <button type="button" role="tab" data-tab="clawd" aria-selected="false"><span class="ico" data-icon="clawd"></span>Clawd</button>
+      <button type="button" role="tab" data-tab="controls" aria-selected="false"><span class="ico" data-icon="keyboard"></span>Controls</button>
     </div>
     <div class="panel" data-panel="graphics"></div>
     <div class="panel" data-panel="game" hidden></div>
@@ -222,15 +325,16 @@
       <table class="keys">
         <tr><th>Move</th><td><b>W A S D</b> or <b>↑ ↓</b> · left thumbstick</td></tr>
         <tr><th>Jump</th><td><b>Space</b> · JUMP. Press again in the air for a double jump.</td></tr>
-        <tr><th>Sprint</th><td>Hold <b>Q</b> · RUN toggle</td></tr>
+        <tr><th>Sprint</th><td>Hold <b>Q</b> · RUN toggle. In tag it uses stamina.</td></tr>
         <tr><th>Look</th><td>Drag the mouse, or <b>← →</b> · drag the screen</td></tr>
         <tr><th>Zoom</th><td>Mouse wheel, <b>I</b> / <b>O</b> · pinch. Zoom all the way in for first person.</td></tr>
         <tr><th>Mouse lock</th><td><b>Shift</b></td></tr>
-        <tr><th>Grab / throw</th><td><b>E</b> · GRAB. Pick up crates, balls, buddies, TNT.</td></tr>
+        <tr><th>Grab / throw</th><td><b>E</b> · GRAB. Pick up crates, balls, TNT (and bots in free play).</td></tr>
         <tr><th>Kart</th><td><b>E</b> next to the kart to ride, <b>E</b> to hop off. W/S drive, A/D steer.</td></tr>
-        <tr><th>Spawn</th><td><b>1–8</b>, or <b>F</b> for the selected item · tap the hotbar</td></tr>
+        <tr><th>Spawn</th><td><b>1–8</b>, or <b>F</b> for the selected item · tap the hotbar. Hold to keep spawning.</td></tr>
+        <tr><th>Game mode</th><td><b>G</b> opens the tag / free play chooser</td></tr>
         <tr><th>Dance</th><td><b>T</b></td></tr>
-        <tr><th>Reset</th><td><b>R</b> puts the whole world back</td></tr>
+        <tr><th>Reset</th><td><b>R</b> puts the world back (restarts the match in tag)</td></tr>
         <tr><th>Full screen</th><td><b>P</b> · Full screen button. <b>Esc</b> leaves it.</td></tr>
         <tr><th>Settings</th><td><b>M</b></td></tr>
       </table>

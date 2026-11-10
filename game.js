@@ -17,6 +17,87 @@ const isCoarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// ───────────────────────────── Icons and buttons ─────────────────────────────
+const ICONS = {
+  star: '<path class="fill" d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.6 6.1 20.7l1.2-6.6L2.5 9.5l6.6-.9z"/>',
+  reset: '<path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v5h5"/>',
+  fullscreen: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
+  'fullscreen-exit': '<path d="M9 4v5H4M15 4v5h5M20 15h-5v5M4 15h5v5"/>',
+  settings: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/>',
+  gamepad: '<rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4"/><circle class="fill" cx="15.5" cy="11.5" r="1.2"/><circle class="fill" cx="18" cy="14" r="1.2"/>',
+  clawd: '<rect x="5" y="6" width="14" height="9" rx="1"/><path d="M3 10h2M19 10h2M7.5 15v4M10.5 15v4M13.5 15v4M16.5 15v4"/><path d="M9.5 9v2.5M14.5 9v2.5"/>',
+  keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M8 14h8"/>',
+  jump: '<path d="M6 13l6-6 6 6M6 19l6-6 6 6"/>',
+  grab: '<path d="M8 12V6.5a1.5 1.5 0 0 1 3 0V11M11 10.5V5a1.5 1.5 0 0 1 3 0v5.5M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5a5 5 0 0 1-4.3-2.5L4.9 14a1.4 1.4 0 0 1 2.3-1.6L8 13.5"/>',
+  throw: '<path d="M4 19C5 11 10 6 19 6"/><path d="M14 3l5 3-3 5"/>',
+  ride: '<path d="M3 15l2-5h10l5 3v3H3z"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/>',
+  exit: '<path d="M10 4H5v16h5M14 8l4 4-4 4M9 12h9"/>',
+  bolt: '<path class="fill" d="M13.5 2L5 13.5h5.5L9.5 22 19 10h-5.5z"/>',
+  flag: '<path d="M5 21V4"/><path class="fill" d="M5 4h12l-2.5 4L17 12H5z"/>',
+  cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+  music: '<path d="M9 18V5l10-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+  home: '<path d="M3 11.5l9-8 9 8"/><path d="M6 10v10h12V10"/>',
+  pointer: '<path class="fill" d="M12 3l8 17-8-4.5L4 20z"/>',
+  crate: '<rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 4l16 16M20 4L4 20"/>',
+  ball: '<circle cx="12" cy="12" r="8.5"/><path d="M4.5 9c5 3 10 3 15 0M4.5 15c5-3 10-3 15 0"/>',
+  plank: '<rect x="2" y="8.5" width="20" height="7" rx="1"/><path d="M8 8.5v7M15 8.5v7"/>',
+  barrel: '<rect x="6" y="3" width="12" height="18" rx="4"/><path d="M6 9h12M6 15h12"/>',
+  bigball: '<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4"/>',
+  balloon: '<ellipse cx="12" cy="9" rx="6" ry="7"/><path d="M12 16v1.5M12 17.5c-2 1.5 2 2.5 0 4.5"/>',
+  tnt: '<rect x="4.5" y="9" width="15" height="11" rx="1.5"/><path d="M8.5 14.5h7M12 9V6.5c0-2 3-1.5 3.5-3.5"/>',
+  anvil: '<path d="M3 7h15v3c-3 0-4.5 2-4.5 4.5H17V18H6v-3.500h3.500C9.500 11 7 10 3 10z"/>',
+};
+const iconSvg = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+function setIcon(el, name) {
+  if (el.dataset.shown === name) return;
+  el.dataset.shown = name;
+  el.innerHTML = iconSvg(name);
+}
+for (const el of document.querySelectorAll('[data-icon]')) setIcon(el, el.dataset.icon);
+function makeIcon(name) {
+  const span = document.createElement('span');
+  span.className = 'ico';
+  setIcon(span, name);
+  return span;
+}
+function popAnim(el) {
+  el.classList.remove('pop');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('pop');
+}
+// tap(): a button press that works for every finger at once. Browsers only send `click` for the first
+// finger on the screen, so a thumb on the joystick used to block every other button.
+// when = 'down' fires the instant it is touched; 'up' fires on release (needed for full screen and sound).
+function tap(el, fn, when = 'up') {
+  const active = new Set();
+  let lastPointer = -1e9;
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    active.add(e.pointerId);
+    el.classList.add('down');
+    try { el.setPointerCapture(e.pointerId); } catch { /* ok */ }
+    if (when === 'down') { e.preventDefault(); lastPointer = performance.now(); popAnim(el); fn(e); }
+  });
+  const end = (e, fire) => {
+    if (!active.delete(e.pointerId)) return;
+    if (!active.size) el.classList.remove('down');
+    lastPointer = performance.now();
+    if (!fire || when !== 'up') return;
+    const r = el.getBoundingClientRect();
+    if (e.clientX < r.left - 10 || e.clientX > r.right + 10 || e.clientY < r.top - 10 || e.clientY > r.bottom + 10) return;
+    popAnim(el); fn(e);
+  };
+  el.addEventListener('pointerup', (e) => end(e, true));
+  el.addEventListener('pointercancel', (e) => end(e, false));
+  el.addEventListener('click', (e) => { // keyboard and assistive tech
+    if (performance.now() - lastPointer < 700) return;
+    popAnim(el); fn(e);
+  });
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
 // ───────────────────────────── Settings ─────────────────────────────
 const SETTINGS_KEY = 'clawd-playground-settings-v1';
 const PRESETS = {
@@ -56,8 +137,9 @@ const AIR_ACCEL = 45;
 const COYOTE = 0.12;
 const JUMP_BUFFER = 0.15;
 const SPAWN = new CANNON.Vec3(0, 2, 0);
+const BOT_IT_SPEED = 9.4, BOT_RUN_SPEED = 8.3;
 const G_STATIC = 1, G_PLAYER = 2, G_PROP = 4;
-const MAX_SPAWNED = 70;
+const MAX_SPAWNED = 120;
 const DYNAMIC = CANNON.Body.DYNAMIC, KINEMATIC = CANNON.Body.KINEMATIC, STATIC = CANNON.Body.STATIC;
 const SLEEPING = CANNON.Body.SLEEPING;
 
@@ -854,26 +936,30 @@ function applySkin() {
   for (const [name, h] of Object.entries(hats)) h.visible = settings.hat === name;
 }
 
-// Buddies: little Clawds that wander around the spawn
+// Bots: five Clawds that wander in free play and play tag against you
 const buddies = [];
 {
-  const homes = [[5, -4, 0x4d96ff], [-5, -3, 0x6bcb77], [-3, 9, 0xb983ff], [4, 11, 0xffd93d]];
-  for (const [x, z, color] of homes) {
+  const defs = [[5, -4, 0x4d96ff, 'Blue'], [-5, -3, 0x6bcb77, 'Green'], [-3, 9, 0xb983ff, 'Purple'], [4, 11, 0xffd93d, 'Yellow'], [-8, 3, 0xff6b9d, 'Pink']];
+  for (const [x, z, color, name] of defs) {
     const model = makeClawd(color);
-    model.group.scale.setScalar(0.6);
+    model.group.scale.setScalar(0.8);
     const holder = new THREE.Group();
     holder.add(model.group);
-    model.group.position.y = -0.48;
-    holder.position.set(x, 0.5, z);
+    model.group.position.y = -0.62;
+    holder.position.set(x, 0.65, z);
     const body = new CANNON.Body({
-      mass: 2, material: matPlayer, fixedRotation: true, allowSleep: false,
-      position: new CANNON.Vec3(x, 0.5, z), collisionFilterGroup: G_PROP, collisionFilterMask: -1,
+      mass: 3, material: matPlayer, fixedRotation: true, allowSleep: false,
+      position: new CANNON.Vec3(x, 0.65, z), collisionFilterGroup: G_PROP, collisionFilterMask: -1,
     });
-    body.addShape(new CANNON.Sphere(0.48));
+    body.addShape(new CANNON.Sphere(0.62));
     body.updateMassProperties();
     const entry = finishBody(body, holder, {});
     entry.buddy = true;
-    const b = { entry, body, model, grounded: false, timer: Math.random() * 3, tx: null, tz: 0, homeX: x, homeZ: z, facing: Math.random() * 6 };
+    const b = {
+      entry, body, model, name, isBot: true, alive: true, stun: 0,
+      grounded: false, water: false, timer: Math.random() * 3, tx: null, tz: 0, homeX: x, homeZ: z, facing: Math.random() * 6,
+      stuck: 0, sideT: 0, side: 1, jit: 0, jitT: 0,
+    };
     body.walker = b;
     buddies.push(b);
   }
@@ -952,6 +1038,9 @@ const sfx = {
   splash: () => noise(0.35, 2600, 0.18),
   goal: () => [659, 784, 1047].forEach((f, i) => beep(f, f, 0.2, 'square', 0.06, i * 0.1)),
   check: () => { beep(660, 660, 0.08, 'sine', 0.08); beep(990, 990, 0.14, 'sine', 0.08, 0.08); },
+  tag: () => { beep(740, 180, 0.2, 'sawtooth', 0.08); },
+  go: () => beep(660, 1320, 0.25, 'square', 0.07),
+  tick: () => beep(980, 980, 0.05, 'square', 0.05),
   win: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, f, 0.25, 'triangle', 0.09, i * 0.13)),
 };
 
@@ -963,7 +1052,7 @@ const state = {
   grounded: false, groundBody: null, coyote: 0, jumpCooldown: 0, airJumps: 1,
   carryX: 0, carryZ: 0, carryDecay: 1.5, lastVy: 0, facing: Math.PI,
   moveX: 0, moveZ: 0, moveMag: 0, inF: 0, inS: 0, sprint: false,
-  water: 0, wasWater: 0, inWind: false, riding: false, emote: 0, shake: 0,
+  water: 0, wasWater: 0, inWind: false, riding: false, emote: 0, shake: 0, throwT: 0, stamina: 100, winded: false,
   respawns: 0, jumps: 0,
 };
 const playerWalker = { hit: false, best: 0.5, ground: null };
@@ -973,12 +1062,8 @@ const pp = new THREE.Vector3(SPAWN.x, SPAWN.y, SPAWN.z); // where Clawd is, ridi
 let simTime = 0;
 let held = null;
 let selectedItem = 0;
-let hintTimer = null;
 
-function hideHintSoon() {
-  if (hintTimer) return;
-  hintTimer = setTimeout(() => $('hint').classList.add('faded'), 7000);
-}
+function hideHintSoon() {}
 function pressJump() { input.jumpPressedAt = simTime; }
 
 let toastTimer = null;
@@ -1057,14 +1142,14 @@ function removeSpawned(entry) {
 }
 
 const ITEMS = [
-  { id: 'crate', name: 'Crate', color: '#e9b872' },
-  { id: 'ball', name: 'Ball', color: '#4d96ff', round: true },
-  { id: 'plank', name: 'Plank', color: '#b98b5e' },
-  { id: 'barrel', name: 'Barrel', color: '#6bcb77', round: true },
-  { id: 'bigball', name: 'Big ball', color: '#ff9f45', round: true },
-  { id: 'balloon', name: 'Balloon', color: '#ff6b6b', round: true },
-  { id: 'tnt', name: 'TNT', color: '#e03131' },
-  { id: 'anvil', name: 'Anvil', color: '#374151' },
+  { id: 'crate', name: 'Crate', color: '#f0c98a' },
+  { id: 'ball', name: 'Ball', color: '#7db4ff' },
+  { id: 'plank', name: 'Plank', color: '#d9a878' },
+  { id: 'barrel', name: 'Barrel', color: '#8ddc97' },
+  { id: 'bigball', name: 'Big ball', color: '#ffb469' },
+  { id: 'balloon', name: 'Balloon', color: '#ff8f8f' },
+  { id: 'tnt', name: 'TNT', color: '#ff6b6b' },
+  { id: 'anvil', name: 'Anvil', color: '#c9d1d9' },
 ];
 
 function nearestEntry(x, y, z, maxDist, filter) {
@@ -1078,33 +1163,33 @@ function nearestEntry(x, y, z, maxDist, filter) {
   return best;
 }
 
+// Clawd tosses the item straight up (90°); it is back on the floor in about a second and a half.
 function spawnProp(kind) {
   const d = facingDir(aimV);
-  const rnd = () => (Math.random() - 0.5) * 0.4;
-  const pos = [pp.x + d.x * 3 + rnd(), pp.y + 3.5, pp.z + d.z * 3 + rnd()];
+  const g = -world.gravity.y;
+  const up = g * 0.72;
+  const at = (reach) => [pp.x + d.x * reach, pp.y + 1.3, pp.z + d.z * reach];
   let entry;
   if (kind === 'crate') {
     const s = 0.9 + Math.random() * 0.7;
-    entry = addBox({ size: [s, s, s], mass: s * s * s, color: pick(TOY_COLORS), pos, spawned: true });
-    entry.body.angularVelocity.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+    entry = addBox({ size: [s, s, s], mass: s * s * s, color: pick(TOY_COLORS), pos: at(1.3 + s * 0.6), spawned: true });
   } else if (kind === 'ball') {
     const r = 0.45 + Math.random() * 0.4;
-    entry = addBall({ r, mass: r * 2, material: matBouncy, color: pick(TOY_COLORS), pos, spawned: true });
+    entry = addBall({ r, mass: r * 2, material: matBouncy, color: pick(TOY_COLORS), pos: at(1.2 + r), spawned: true });
   } else if (kind === 'plank') {
-    entry = addBox({ size: [5, 0.3, 1.2], mass: 2.5, color: 0xb98b5e, pos, rot: [0, state.facing + Math.PI / 2, 0], spawned: true });
+    entry = addBox({ size: [5, 0.3, 1.2], mass: 2.5, color: 0xb98b5e, pos: at(1.9), rot: [0, state.facing + Math.PI / 2, 0], spawned: true });
   } else if (kind === 'barrel') {
-    entry = addCylinder({ r: 0.6, h: 1.4, mass: 1.5, color: pick([0x6bcb77, 0x4dd4c6, 0xff9f45]), pos, spawned: true });
+    entry = addCylinder({ r: 0.6, h: 1.4, mass: 1.5, color: pick([0x6bcb77, 0x4dd4c6, 0xff9f45]), pos: at(1.9), spawned: true });
   } else if (kind === 'bigball') {
-    pos[1] += 1;
-    entry = addBall({ r: 1.6, mass: 6, material: matBouncy, color: pick(TOY_COLORS), pos, spawned: true });
+    entry = addBall({ r: 1.6, mass: 6, material: matBouncy, color: pick(TOY_COLORS), pos: at(2.9), spawned: true });
   } else if (kind === 'anvil') {
-    entry = addBox({ size: [1.6, 1, 1], mass: 40, color: DARK, pos, spawned: true });
+    entry = addBox({ size: [1.6, 1, 1], mass: 40, color: DARK, pos: at(2.2), spawned: true });
   } else if (kind === 'tnt') {
-    entry = addTNT(pos, true);
+    entry = addTNT(at(2), true);
     entry.fuse = 3;
   } else if (kind === 'balloon') {
-    const bpos = [pp.x + d.x * 2, pp.y + 1.6, pp.z + d.z * 2];
-    const target = held || nearestEntry(bpos[0], bpos[1] - 1, bpos[2], 3.2, (e) => !e.balloon);
+    const bpos = at(2);
+    const target = held || nearestEntry(bpos[0], bpos[1] - 1, bpos[2], 3.2, (e) => !e.balloon && !(tag.active && e.buddy));
     entry = addBall({ r: 0.6, mass: 0.15, color: pick(TOY_COLORS), pos: bpos, spawned: true });
     entry.balloon = true;
     entry.grab = false;
@@ -1122,7 +1207,13 @@ function spawnProp(kind) {
     }
   }
   if (!entry) return;
-  if (kind !== 'balloon') entry.body.velocity.set(d.x * 3, 0, d.z * 3);
+  if (kind === 'balloon') entry.body.velocity.set(0, entry.body.lift && links.some((l) => l.a === entry) ? 0 : 7, 0);
+  else {
+    entry.body.velocity.set(0, up, 0);
+    entry.body.angularVelocity.set(Math.random() * 3 - 1.5, Math.random() * 3 - 1.5, Math.random() * 3 - 1.5);
+  }
+  state.throwT = 0.35;
+  clawd.squash = 0.22;
   spawned.push(entry);
   if (spawned.length > MAX_SPAWNED) removeSpawned(spawned[0]);
   sfx.spawn();
@@ -1179,7 +1270,7 @@ function detonate(entry) {
 // Grab / throw / ride
 function grabTarget() {
   const d = facingDir(aimV);
-  return nearestEntry(pp.x + d.x * 1.2, pp.y, pp.z + d.z * 1.2, 2.4, (e, b) => e.grab !== false && b.mass <= 12);
+  return nearestEntry(pp.x + d.x * 1.2, pp.y, pp.z + d.z * 1.2, 2.4, (e, b) => e.grab !== false && b.mass <= 12 && !(tag.active && e.buddy));
 }
 const kartNear = () => !state.riding && Math.hypot(kart.body.position.x - pp.x, kart.body.position.y - pp.y, kart.body.position.z - pp.z) < 2.9;
 
@@ -1233,7 +1324,7 @@ function doAction() {
   }
 }
 
-function resetWorld() {
+function resetWorld(quiet) {
   if (state.riding) exitKart();
   dropHeld();
   while (spawned.length) removeSpawned(spawned[spawned.length - 1]);
@@ -1249,9 +1340,10 @@ function resetWorld() {
   wrecker.body.type = KINEMATIC;
   wrecker.armed = true;
   bowling.done = false;
+  for (const b of buddies) { b.alive = true; b.stun = 0; b.tx = null; }
   spawnPoint.copy(SPAWN);
   respawn();
-  toast('World reset');
+  if (!quiet) toast('World reset');
 }
 
 function collectStar(s) {
@@ -1259,6 +1351,7 @@ function collectStar(s) {
   s.mesh.visible = false;
   starCount++;
   $('stars').textContent = `${starCount} / ${stars.length}`;
+  popBump($('star-chip'));
   burst(s.mesh.position, 14, 0xffc93c);
   if (starCount === stars.length) {
     sfx.win();
@@ -1270,12 +1363,194 @@ function collectStar(s) {
   }
 }
 
+// ───────────────────────────── Tag mode ─────────────────────────────
+// Hot-potato tag: whoever is IT when the fuse burns out is blown up; last Clawd standing wins.
+const playerP = { isPlayer: true, name: 'You', alive: true, stun: 0 };
+const tag = { active: false, phase: 'idle', it: null, fuse: 0, pause: 0, round: 0, immune: null, immuneT: 0, lastTick: 0, banner: '' };
+const tagPos = new THREE.Vector3(), tagPos2 = new THREE.Vector3(), tagScreen = new THREE.Vector3();
+const tagPlayers = [playerP, ...buddies];
+const aliveList = () => tagPlayers.filter((p) => p.alive);
+function posOf(p, out) {
+  if (p.isPlayer) return out.copy(pp);
+  const q = p.body.position;
+  return out.set(q.x, q.y, q.z);
+}
+const itMarker = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.95, 4), new THREE.MeshBasicMaterial({ color: 0xe03131 }));
+itMarker.rotation.x = Math.PI;
+itMarker.visible = false;
+scene.add(itMarker);
+function popBump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+
+const card = $('card');
+const CARD_TEXT = $('card-text').textContent;
+function showCard(title, text) {
+  $('card-title').textContent = title || 'Clawd Tag';
+  $('card-text').textContent = text || CARD_TEXT;
+  $('card-tips').hidden = !!title;
+  $('btn-play-tag').querySelector('.label').textContent = title ? 'Play again' : 'Play tag';
+  card.hidden = false;
+  card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+function hideCard() { card.hidden = true; }
+
+function startTag() {
+  hideCard();
+  resetWorld(true);
+  tag.active = true; tag.round = 0;
+  playerP.alive = true; playerP.stun = 0;
+  state.stamina = 100; state.winded = false;
+  buddies.forEach((b, i) => {
+    const a = ((i + 1) / (buddies.length + 1)) * Math.PI * 2;
+    b.entry.grab = false;
+    b.body.position.set(Math.sin(a) * 12, 0.7, Math.cos(a) * 12);
+    b.body.velocity.set(0, 0, 0);
+  });
+  nextRound();
+}
+function startFree() {
+  hideCard();
+  if (tag.active) { tag.active = false; resetWorld(true); }
+  tag.phase = 'idle'; tag.it = null;
+  for (const b of buddies) delete b.entry.grab;
+  toast('Free play', 1200);
+}
+function onReset() { if (tag.active) startTag(); else resetWorld(); }
+
+function nextRound() {
+  tag.round++;
+  tag.it = pick(aliveList());
+  tag.fuse = Math.max(16, 30 - (tag.round - 1) * 3);
+  tag.phase = 'countdown'; tag.pause = 3;
+  tag.immune = null; tag.immuneT = 0;
+  sfx.check();
+  toast(tag.it === playerP ? "You're IT!" : `${tag.it.name} is IT!`, 1500);
+}
+function passIt(to) {
+  const from = tag.it;
+  tag.it = to; tag.immune = from; tag.immuneT = 2.5;
+  to.stun = 1;
+  burst(posOf(to, tagPos2), 12, 0xe03131, 7);
+  sfx.tag();
+  if (to === playerP) { toast("Tagged! You're IT!", 1300); state.shake = Math.max(state.shake, 0.5); }
+  else if (from === playerP) toast(`You tagged ${to.name}!`, 1200);
+}
+function tagStep() {
+  if (!tag.active || tag.phase !== 'run') return;
+  if (tag.immuneT > 0) tag.immuneT -= FIXED;
+  const it = tag.it;
+  if (it.stun > 0) return;
+  posOf(it, tagPos);
+  for (const p of tagPlayers) {
+    if (p === it || !p.alive || (p === tag.immune && tag.immuneT > 0)) continue;
+    const reach = it.isPlayer || p.isPlayer ? 1.75 : 1.6;
+    if (tagPos.distanceToSquared(posOf(p, tagPos2)) < reach * reach) { passIt(p); break; }
+  }
+}
+const ordinal = (n) => `${n}${['th', 'st', 'nd', 'rd'][n % 10 < 4 && (n % 100 < 11 || n % 100 > 13) ? n % 10 : 0]}`;
+function endTag(win, place) {
+  tag.phase = 'over'; tag.it = null;
+  const total = tagPlayers.length;
+  if (win) { sfx.win(); for (let i = 0; i < 5; i++) setTimeout(() => burst(pp, 18, pick(TOY_COLORS), 9), i * 220); }
+  setTimeout(() => {
+    if (tag.phase !== 'over') return;
+    if (win) showCard('You win!', `Last Clawd standing out of ${total}. The bots never stood a chance.`);
+    else showCard('Boom!', `The fuse ran out while you were IT. You finished ${ordinal(place)} of ${total}.`);
+  }, 1400);
+}
+function eliminate(p) {
+  posOf(p, tagPos);
+  const place = aliveList().length;
+  p.alive = false;
+  explode(tagPos.x, tagPos.y, tagPos.z, 10, 26);
+  if (p.isPlayer) { endTag(false, place); return; }
+  const e = p.entry;
+  e.dead = true; e.mesh.visible = false;
+  p.body.position.set(0, -500, 0); p.body.velocity.set(0, 0, 0); p.body.sleep();
+  const left = aliveList().length;
+  if (left === 1) { endTag(true, 1); return; }
+  toast(`${p.name} went boom! ${left} left`, 1800);
+  tag.phase = 'between'; tag.pause = 2.5; tag.it = null;
+}
+function tagFrame(dt) {
+  if (playerP.stun > 0) playerP.stun -= dt;
+  if (!tag.active) return;
+  if (tag.phase === 'countdown') {
+    tag.pause -= dt;
+    if (tag.pause <= 0) { tag.phase = 'run'; sfx.go(); }
+  } else if (tag.phase === 'between') {
+    tag.pause -= dt;
+    if (tag.pause <= 0) nextRound();
+  } else if (tag.phase === 'run') {
+    tag.fuse -= dt;
+    const sec = Math.ceil(tag.fuse);
+    if (sec !== tag.lastTick) { tag.lastTick = sec; if (sec <= 5 && sec > 0) sfx.tick(); }
+    if (tag.fuse <= 0) eliminate(tag.it);
+  }
+}
+function tagHud(now) {
+  const hud = $('tag-hud'), arrow = $('it-arrow');
+  const show = tag.active && tag.phase !== 'over' && tag.phase !== 'idle';
+  hud.hidden = !show;
+  itMarker.visible = show && !!tag.it && !(tag.it === playerP && cam.dist < 0.5);
+  if (!show) { arrow.hidden = true; return; }
+  const it = tag.it, youIt = it === playerP, running = tag.phase === 'run';
+  let text;
+  if (!it) text = 'Next round…';
+  else if (!running) text = youIt ? `You're IT in ${Math.ceil(tag.pause)}` : `${it.name} is IT in ${Math.ceil(tag.pause)}`;
+  else text = youIt ? "YOU'RE IT!" : `${it.name} is IT. Run!`;
+  const fuse = Math.max(0, Math.ceil(tag.fuse));
+  const key = `${text}|${fuse}|${youIt}`;
+  if (key !== tag.banner) {
+    tag.banner = key;
+    $('banner-text').textContent = text;
+    $('fuse').textContent = `0:${String(fuse).padStart(2, '0')}`;
+    $('banner').classList.toggle('it', youIt);
+    hud.classList.toggle('it', youIt && running && fuse <= 8);
+  }
+  $('stamina-fill').style.transform = `scaleX(${(state.stamina / 100).toFixed(3)})`;
+  $('stamina-fill').style.background = state.winded ? '#e03131' : '';
+  if (!it) { arrow.hidden = true; return; }
+
+  posOf(it, tagPos);
+  const urgency = running ? clamp(1 - tag.fuse / 10, 0, 1) : 0;
+  itMarker.position.set(tagPos.x, tagPos.y + (it.isPlayer ? 2.1 : 1.8) + Math.sin(now * 0.006) * 0.15, tagPos.z);
+  itMarker.rotation.y = now * 0.004;
+  itMarker.scale.setScalar(1 + urgency * 0.5 * Math.abs(Math.sin(now * 0.012)));
+
+  // Edge arrow: points at IT (or at the nearest runner when you are IT)
+  let target = it;
+  if (youIt) {
+    target = null;
+    let best = 1e9;
+    for (const p of buddies) {
+      if (!p.alive) continue;
+      const d = pp.distanceToSquared(posOf(p, tagPos2));
+      if (d < best) { best = d; target = p; }
+    }
+  }
+  if (!target) { arrow.hidden = true; return; }
+  tagScreen.copy(posOf(target, tagPos2)); tagScreen.y += 1;
+  tagScreen.project(camera);
+  const behind = tagScreen.z > 1;
+  let x = tagScreen.x, y = tagScreen.y;
+  if (behind) { x = -x; y = -y; }
+  if (!behind && Math.abs(x) < 0.86 && Math.abs(y) < 0.8) { arrow.hidden = true; return; }
+  const ang = Math.atan2(y, x), w = view.clientWidth, h = view.clientHeight;
+  arrow.hidden = false;
+  arrow.classList.toggle('chase', youIt);
+  arrow.style.left = `${w / 2 + Math.cos(ang) * (w / 2 - 54)}px`;
+  arrow.style.top = `${h / 2 - Math.sin(ang) * (h / 2 - 110)}px`;
+  arrow.style.transform = `rotate(${90 - (ang * 180) / Math.PI}deg)`;
+}
+
 // ───────────────────────────── Input ─────────────────────────────
 const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
 window.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target;
-  const inForm = t instanceof HTMLButtonElement || t instanceof HTMLSelectElement || t instanceof HTMLInputElement;
+  const inForm = t instanceof HTMLSelectElement || t instanceof HTMLInputElement
+    || (t instanceof HTMLButtonElement && (e.code === 'Space' || e.code === 'Enter'));
   if (e.code === 'Escape' && !$('menu').hidden) { toggleMenu(false); return; }
   if (inForm && e.code !== 'KeyM') return; // let menu controls and buttons use the keyboard
   if (MOVE_KEYS.includes(e.code)) e.preventDefault();
@@ -1286,7 +1561,8 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') toggleShiftLock();
   else if (e.code === 'KeyE') doAction();
   else if (e.code === 'KeyF') spawnProp(ITEMS[selectedItem].id);
-  else if (e.code === 'KeyR') resetWorld();
+  else if (e.code === 'KeyR') onReset();
+  else if (e.code === 'KeyG') { if (card.hidden) showCard(); else hideCard(); }
   else if (e.code === 'KeyM') toggleMenu();
   else if (e.code === 'KeyP') toggleFullscreen();
   else if (e.code === 'KeyT') state.emote = 2.4;
@@ -1421,7 +1697,7 @@ function holdButton(btn, down, up) {
   btn.addEventListener('pointerdown', (e) => {
     e.preventDefault(); initAudio(); hideHintSoon();
     try { btn.setPointerCapture(e.pointerId); } catch { /* ok */ }
-    btn.classList.add('down'); down();
+    btn.classList.add('down'); popAnim(btn); down();
   });
   const end = () => { btn.classList.remove('down'); if (up) up(); };
   btn.addEventListener('pointerup', end);
@@ -1438,7 +1714,7 @@ holdButton(runBtn, () => {
 jumpBtn.addEventListener('keydown', (e) => { if (e.code === 'Enter' || e.code === 'Space') pressJump(); });
 actBtn.addEventListener('keydown', (e) => { if (e.code === 'Enter' || e.code === 'Space') doAction(); });
 
-// Hotbar
+// Hotbar: every tap spawns, any number of fingers, and holding a slot keeps spawning
 const hotbar = $('hotbar');
 function selectItem(i) {
   selectedItem = i;
@@ -1449,15 +1725,29 @@ ITEMS.forEach((item, i) => {
   b.type = 'button'; b.className = 'slot'; b.id = `slot-${item.id}`;
   b.setAttribute('aria-label', `Spawn ${item.name}`);
   const num = document.createElement('span'); num.className = 'num'; num.textContent = String(i + 1);
-  const sw = document.createElement('span'); sw.className = 'swatch' + (item.round ? ' round' : ''); sw.style.background = item.color;
-  const label = document.createElement('span'); label.textContent = item.name;
-  b.append(num, sw, label);
-  b.addEventListener('click', () => { initAudio(); hideHintSoon(); selectItem(i); spawnProp(item.id); b.blur(); });
+  const ico = makeIcon(item.id); ico.style.color = item.color;
+  const label = document.createElement('span'); label.className = 'label'; label.textContent = item.name;
+  b.append(num, ico, label);
+  const spawn = () => { initAudio(); selectItem(i); spawnProp(item.id); };
+  let repeat = null;
+  const stop = () => { clearTimeout(repeat); clearInterval(repeat); repeat = null; };
+  tap(b, () => {
+    spawn();
+    stop();
+    repeat = setTimeout(() => { repeat = setInterval(() => { popAnim(b); spawn(); }, 130); }, 380);
+  }, 'down');
+  b.addEventListener('pointerup', stop);
+  b.addEventListener('pointercancel', stop);
+  b.addEventListener('lostpointercapture', stop);
   hotbar.appendChild(b);
 });
 selectItem(0);
 
-$('btn-reset').addEventListener('click', (e) => { initAudio(); resetWorld(); e.currentTarget.blur(); });
+tap($('btn-reset'), () => { initAudio(); onReset(); });
+tap($('btn-mode'), () => { initAudio(); if (card.hidden) showCard(); else hideCard(); });
+tap($('btn-play-tag'), () => { initAudio(); startTag(); });
+tap($('btn-play-free'), () => { initAudio(); startFree(); });
+window.addEventListener('pointerup', initAudio);
 
 // Full screen (hidden where the browser cannot do it, e.g. iPhone Safari)
 const fsBtn = $('btn-fullscreen');
@@ -1476,14 +1766,16 @@ function toggleFullscreen() {
 }
 function onFullscreenChange() {
   const on = !!fsElement();
-  fsBtn.firstChild.textContent = on ? 'Exit full screen' : 'Full screen';
+  fsBtn.querySelector('.label').textContent = on ? 'Exit full screen' : 'Full screen';
+  fsBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+  setIcon(fsBtn.querySelector('.ico'), on ? 'fullscreen-exit' : 'fullscreen');
   fsBtn.setAttribute('aria-pressed', String(on));
   resize();
 }
 document.addEventListener('fullscreenchange', onFullscreenChange);
 document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 fsBtn.hidden = !fsSupported;
-fsBtn.addEventListener('click', (e) => { initAudio(); toggleFullscreen(); e.currentTarget.blur(); });
+tap(fsBtn, () => { initAudio(); toggleFullscreen(); });
 
 // ───────────────────────────── Settings menu ─────────────────────────────
 const TIMES = {
@@ -1599,15 +1891,17 @@ addRow('game', 'sound', 'Sound', 'check');
   const panel = document.querySelector('[data-panel="game"]');
   const actions = document.createElement('div');
   actions.className = 'actions';
-  const mk = (id, text, fn) => {
+  const mk = (id, text, icon, fn) => {
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'btn'; b.id = id; b.textContent = text;
-    b.addEventListener('click', () => { initAudio(); fn(); });
+    b.type = 'button'; b.className = 'btn'; b.id = id;
+    const label = document.createElement('span'); label.className = 'label'; label.textContent = text;
+    b.append(makeIcon(icon), label);
+    tap(b, () => { initAudio(); fn(); });
     actions.appendChild(b);
   };
-  mk('btn-respawn', 'Respawn', () => respawn());
-  mk('btn-reset2', 'Reset world', () => resetWorld());
-  mk('btn-defaults', 'Default settings', () => { Object.assign(settings, DEFAULTS); onSettingChanged(''); });
+  mk('btn-respawn', 'Respawn', 'home', () => respawn());
+  mk('btn-reset2', 'Reset world', 'reset', () => onReset());
+  mk('btn-defaults', 'Default settings', 'settings', () => { Object.assign(settings, DEFAULTS); onSettingChanged(''); });
   panel.appendChild(actions);
 }
 {
@@ -1621,7 +1915,7 @@ addRow('game', 'sound', 'Sound', 'check');
   for (const [hex, name] of colors) {
     const b = document.createElement('button');
     b.type = 'button'; b.style.background = hex; b.setAttribute('aria-label', name); b.dataset.color = hex;
-    b.addEventListener('click', () => { settings.color = hex; onSettingChanged('color'); });
+    tap(b, () => { settings.color = hex; onSettingChanged('color'); });
     sw.appendChild(b); btns.push(b);
   }
   controls.color = () => btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.color === settings.color)));
@@ -1634,8 +1928,10 @@ addRow('clawd', 'hat', 'Hat', 'select', [['none', 'None'], ['tophat', 'Top hat']
   const actions = document.createElement('div');
   actions.className = 'actions';
   const b = document.createElement('button');
-  b.type = 'button'; b.className = 'btn'; b.id = 'btn-dance'; b.textContent = 'Dance';
-  b.addEventListener('click', () => { state.emote = 2.4; });
+  b.type = 'button'; b.className = 'btn'; b.id = 'btn-dance';
+  const label = document.createElement('span'); label.className = 'label'; label.textContent = 'Dance';
+  b.append(makeIcon('music'), label);
+  tap(b, () => { state.emote = 2.4; });
   actions.appendChild(b);
   panel.appendChild(actions);
 }
@@ -1648,10 +1944,10 @@ function toggleMenu(force) {
   if (open) { if (document.pointerLockElement) document.exitPointerLock(); keys.clear(); }
   else pad.focus({ preventScroll: true });
 }
-$('btn-menu').addEventListener('click', (e) => { initAudio(); toggleMenu(); e.currentTarget.blur(); });
-$('menu-close').addEventListener('click', () => toggleMenu(false));
+tap($('btn-menu'), () => { initAudio(); toggleMenu(); });
+tap($('menu-close'), () => toggleMenu(false));
 for (const tab of document.querySelectorAll('.tabs button')) {
-  tab.addEventListener('click', () => {
+  tap(tab, () => {
     for (const t of document.querySelectorAll('.tabs button')) t.setAttribute('aria-selected', String(t === tab));
     for (const p of document.querySelectorAll('.panel')) p.hidden = p.dataset.panel !== tab.dataset.tab;
   });
@@ -1707,6 +2003,7 @@ world.addEventListener('preStep', () => {
 
   // Zones: wind column, water, balloon lift
   state.water = 0; state.inWind = false;
+  for (const b of buddies) b.water = false;
   for (const b of world.bodies) {
     if (b.type !== DYNAMIC) continue;
     const p = b.position;
@@ -1728,33 +2025,74 @@ world.addEventListener('preStep', () => {
         const k = 1 - 2.4 * FIXED * frac;
         if (b === playerBody) { b.velocity.y *= k; state.water = frac; }
         else { b.velocity.scale(k, b.velocity); b.angularVelocity.scale(k, b.angularVelocity); }
+        if (b.walker && b.walker.isBot && frac > 0.3) b.walker.water = true;
       }
     }
   }
 
-  // Buddies wander
+  // Bots: wander in free play; in tag the IT bot chases and the rest run away
+  const tagging = tag.active && tag.it && (tag.phase === 'run' || tag.phase === 'countdown');
   for (const b of buddies) {
-    const e = b.entry, body = b.body;
+    const e = b.entry, body = b.body, v = body.velocity, bp = body.position;
     if (e.dead || held === e) continue;
-    b.timer -= FIXED;
-    if (b.timer <= 0) {
-      b.timer = 2 + Math.random() * 4;
-      if (Math.random() < 0.3) b.tx = null;
-      else { b.tx = b.homeX + (Math.random() - 0.5) * 26; b.tz = b.homeZ + (Math.random() - 0.5) * 26; }
+    if (b.stun > 0) { b.stun -= FIXED; v.x *= 0.85; v.z *= 0.85; continue; }
+    let dx = 0, dz = 0, speed = 0, hop = false, wander = false;
+    if (tagging && tag.it === b) {
+      if (tag.phase === 'run') {
+        let bestD = 1e9, ty = 0;
+        for (const p of tagPlayers) {
+          if (p === b || !p.alive || (p === tag.immune && tag.immuneT > 0)) continue;
+          posOf(p, tagPos2);
+          const d = Math.hypot(tagPos2.x - bp.x, tagPos2.z - bp.z);
+          if (d < bestD) { bestD = d; dx = tagPos2.x - bp.x; dz = tagPos2.z - bp.z; ty = tagPos2.y; }
+        }
+        if (bestD < 1e9) { speed = BOT_IT_SPEED; if (ty - bp.y > 1.2 && bestD < 6) hop = true; }
+      }
+    } else if (tagging) {
+      posOf(tag.it, tagPos2);
+      const ax = bp.x - tagPos2.x, az = bp.z - tagPos2.z, d = Math.hypot(ax, az) || 1;
+      if (d < 30) {
+        speed = d < 16 ? BOT_RUN_SPEED : 5.5;
+        b.jitT -= FIXED;
+        if (b.jitT <= 0) { b.jitT = 0.6 + Math.random(); b.jit = (Math.random() - 0.5) * 1.4; }
+        const c = Math.cos(b.jit), s = Math.sin(b.jit);
+        dx = (ax * c - az * s) / d; dz = (ax * s + az * c) / d;
+        const r = Math.hypot(bp.x, bp.z);
+        if (r > 40) { const k = (r - 40) / 8; dx -= (bp.x / r) * k; dz -= (bp.z / r) * k; } // stay in the arena
+      } else wander = true;
+    } else wander = true;
+    if (wander) {
+      b.timer -= FIXED;
+      if (b.timer <= 0) {
+        b.timer = 2 + Math.random() * 4;
+        if (Math.random() < 0.3) b.tx = null;
+        else { b.tx = b.homeX + (Math.random() - 0.5) * 26; b.tz = b.homeZ + (Math.random() - 0.5) * 26; }
+      }
+      if (b.tx !== null) {
+        dx = b.tx - bp.x; dz = b.tz - bp.z;
+        if (Math.hypot(dx, dz) < 0.7) { b.tx = null; dx = dz = 0; } else speed = 3.2;
+      }
     }
-    if (!b.grounded) continue;
-    let dx = 0, dz = 0;
-    if (b.tx !== null) {
-      dx = b.tx - body.position.x; dz = b.tz - body.position.z;
-      const d = Math.hypot(dx, dz);
-      if (d < 0.7) { b.tx = null; dx = dz = 0; } else { dx /= d; dz /= d; }
+    const m = Math.hypot(dx, dz);
+    if (m > 0) { dx /= m; dz /= m; } else speed = 0;
+    if (b.sideT > 0) { // steer around whatever blocked us
+      b.sideT -= FIXED;
+      const c = Math.cos(b.side * 1.1), s = Math.sin(b.side * 1.1), ox = dx;
+      dx = ox * c - dz * s; dz = ox * s + dz * c;
     }
-    const v = body.velocity;
-    let ax = dx * 3.2 - v.x, az = dz * 3.2 - v.z;
-    const am = Math.hypot(ax, az), maxA = 30 * FIXED;
+    const onFloor = b.grounded || b.water;
+    let ax = dx * speed - v.x, az = dz * speed - v.z;
+    const am = Math.hypot(ax, az), maxA = (onFloor ? 60 : 14) * FIXED;
     if (am > maxA) { ax *= maxA / am; az *= maxA / am; }
     v.x += ax; v.z += az;
-    if (b.tx !== null && Math.random() < 0.006) { v.y = 8; b.model.squash = 0.3; }
+    if (!onFloor) continue;
+    if (speed > 4 && Math.hypot(v.x, v.z) < 1.5) {
+      b.stuck += FIXED;
+      if (b.stuck > 0.3) { hop = true; b.stuck = 0; b.sideT = 0.9; b.side = Math.random() < 0.5 ? -1 : 1; }
+    } else b.stuck = 0;
+    if (b.water && speed > 0 && Math.random() < 0.08) hop = true;
+    if (wander && speed > 0 && Math.random() < 0.006) hop = true;
+    if (hop) { v.y = b.water ? 10.5 : 9.5; b.model.squash = 0.3; }
   }
 
   // Held object follows a point in front of Clawd
@@ -1864,6 +2202,15 @@ world.addEventListener('postStep', () => {
 
   for (const c of world.contacts) {
     const bi = c.bi, bj = c.bj, ny = c.ni.y;
+    // A fast prop stuns the bot it hits
+    const botBody = bi.walker && bi.walker.isBot ? bi : (bj.walker && bj.walker.isBot ? bj : null);
+    if (botBody) {
+      const other = botBody === bi ? bj : bi, w = botBody.walker;
+      if (other.type === DYNAMIC && !other.walker && other.entry && other.entry !== held && w.stun <= 0) {
+        const rel = Math.hypot(other.velocity.x - botBody.velocity.x, other.velocity.y - botBody.velocity.y, other.velocity.z - botBody.velocity.z);
+        if (rel > 9) { w.stun = 1.6; w.model.squash = -0.35; burst(botBody.position, 8, 0xffd93d, 5); }
+      }
+    }
     if (bi.walker && -ny > 0.5) {
       if (bi === playerBody) { if (-ny > playerWalker.best) { playerWalker.best = -ny; playerWalker.hit = true; playerWalker.ground = bj; } }
       else if (bj !== playerBody) bi.walker.grounded = true;
@@ -1883,6 +2230,7 @@ world.addEventListener('postStep', () => {
       }
     }
   }
+  tagStep();
   if (state.riding) { state.grounded = false; state.groundBody = null; return; }
 
   let grounded = playerWalker.hit;
@@ -1941,6 +2289,7 @@ function ropeEnd(e, out) {
   return out.copy(e.local).applyMatrix4(e.mesh.matrixWorld);
 }
 const ACTION_LABEL = { grab: 'GRAB', throw: 'THROW', ride: 'RIDE', exit: 'EXIT' };
+const ACTION_ICON = { grab: 'grab', throw: 'throw', ride: 'ride', exit: 'exit' };
 const ACTION_PROMPT = { grab: 'grab', throw: 'throw', ride: 'ride the kart', exit: 'hop off' };
 
 function frame(dt, now) {
@@ -1951,6 +2300,17 @@ function frame(dt, now) {
 
   readMove();
   const simDt = dt * (settings.slowmo ? 0.35 : 1);
+  if (tag.active) { // sprinting costs stamina in tag
+    if (state.sprint && state.moveMag > 0.1 && !state.winded) {
+      state.stamina -= 34 * dt;
+      if (state.stamina <= 0) { state.stamina = 0; state.winded = true; }
+    } else {
+      state.stamina = Math.min(100, state.stamina + 20 * dt);
+      if (state.stamina > 30) state.winded = false;
+    }
+    if (state.winded) state.sprint = false;
+  }
+  if (playerP.stun > 0) { state.moveX = state.moveZ = state.moveMag = state.inF = state.inS = 0; input.jumpHeld = false; input.jumpPressedAt = -10; }
   world.step(FIXED, simDt, 5);
 
   // Out-of-world cleanup
@@ -1985,6 +2345,8 @@ function frame(dt, now) {
       if (e.fuse <= 0) detonate(e);
     }
   }
+
+  tagFrame(simDt);
 
   // Sync meshes
   for (const e of synced) {
@@ -2041,6 +2403,10 @@ function frame(dt, now) {
     clawd.arms.forEach((arm, i) => { arm.rotation.z = (i ? 1 : -1) * (0.9 + Math.sin(t * 18) * 0.4); });
     if (state.emote <= 0) clawd.bodyGroup.rotation.y = 0;
   }
+  if (state.throwT > 0) {
+    state.throwT -= dt;
+    clawd.arms.forEach((arm, i) => { arm.rotation.z = (i ? 1 : -1) * 1.3; });
+  }
   if (propeller) propeller.rotation.y += dt * (6 + Math.hypot(v.x, v.z) * 2);
 
   // Splash
@@ -2055,7 +2421,7 @@ function frame(dt, now) {
     const bv = b.body.velocity, sp = Math.hypot(bv.x, bv.z);
     if (sp > 0.6) b.facing = angleLerp(b.facing, Math.atan2(bv.x, bv.z), 1 - Math.exp(-10 * dt));
     b.model.group.rotation.y = b.facing;
-    animateClawd(b.model, dt, b.grounded && held !== b.entry, sp, bv.y, 3.2);
+    animateClawd(b.model, dt, (b.grounded || b.water) && held !== b.entry, sp, bv.y, 8);
   }
 
   // Soccer
@@ -2130,7 +2496,8 @@ function frame(dt, now) {
   const act = currentAction() || '';
   if (act !== lastAction) {
     lastAction = act;
-    actBtn.textContent = ACTION_LABEL[act] || 'GRAB';
+    $('act-label').textContent = ACTION_LABEL[act] || 'GRAB';
+    setIcon($('act-ico'), ACTION_ICON[act] || 'grab');
     actBtn.style.opacity = act ? '1' : '0.45';
     const prompt = $('prompt');
     prompt.hidden = !act;
@@ -2175,6 +2542,8 @@ function frame(dt, now) {
   sun.target.position.set(pp.x, 0, pp.z);
   sun.position.set(pp.x + sunOffset.x, sunOffset.y, pp.z + sunOffset.z);
   nightStars.position.copy(camera.position);
+  camera.updateMatrixWorld();
+  tagHud(now);
 
   renderer.render(scene, camera);
 
@@ -2196,7 +2565,7 @@ requestAnimationFrame(loop);
 // Small hook for automated playtests
 window.__clawd = {
   playerBody, state, input, cam, keys, stars, world, spawned, props, settings, kart, soccer, bowling, buddies, links, pp,
-  explode, spawnProp, doAction, resetWorld, toggleFullscreen,
+  explode, spawnProp, doAction, resetWorld, toggleFullscreen, startTag, startFree, tag, playerP, eliminate, passIt,
   get held() { return held; },
   get renderer() { return renderer; },
   get starCount() { return starCount; },
