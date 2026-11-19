@@ -10,7 +10,7 @@
     "stills": "node scripts/stills.mjs",
     "render": "remotion render Teaser out/gemini4neon_1920x1080.mp4 --codec=h264 --crf=18",
     "render:vertical": "remotion render TeaserVertical out/gemini4neon_1080x1920.mp4 --codec=h264 --crf=18",
-    "render:prores": "remotion render Teaser out/gemini4neon_master_4444.mov --codec=prores --prores-profile=4444",
+    "render:prores": "remotion render Teaser out/gemini4neon_master_4444.mov --codec=prores --prores-profile=4444 --pixel-format=yuv444p10le",
     "qa": "node scripts/qa.mjs",
     "typecheck": "tsc --noEmit"
   },

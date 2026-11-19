@@ -16,10 +16,13 @@ export const SFX_FILES: Record<SfxName, string> = {
 export const MUSIC = {
   file: "audio/track.mp3",
   bpm: 120,
-  volume: 0.75,
+  volume: 0.55,
   /** Music and hum stop with the final flicker. */
   endFrame: CUES.finalFlicker,
 };
+
+/** Global SFX trim: keeps music + SFX peaks under -1 dBFS (measured with ffmpeg ebur128). */
+export const SFX_GAIN = 0.75;
 
 export type SfxCue = {
   frame: number;

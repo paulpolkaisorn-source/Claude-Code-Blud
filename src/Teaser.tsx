@@ -13,7 +13,7 @@ import { S07_City } from "./scenes/S07_City";
 import { S08_Montage } from "./scenes/S08_Montage";
 import { S09_Implosion } from "./scenes/S09_Implosion";
 import { S10_EndCard } from "./scenes/S10_EndCard";
-import { MUSIC, SFX_CUES, SFX_FILES } from "./sfx";
+import { MUSIC, SFX_CUES, SFX_FILES, SFX_GAIN } from "./sfx";
 import { COLORS, EASE_IN_SCENE, EASE_OUT_SCENE, ramp } from "./theme";
 import { CUES, SCENES, TOTAL_FRAMES, type SceneDef } from "./timing";
 
@@ -93,7 +93,7 @@ const AudioLayer: React.FC = () => {
       {SFX_CUES.map((c, i) =>
         available.has(SFX_FILES[c.sfx]) ? (
           <Sequence key={i} from={c.frame} durationInFrames={Math.min(c.duration ?? 240, TOTAL_FRAMES - c.frame)} name={`sfx ${c.note}`}>
-            <Html5Audio src={staticFile(SFX_FILES[c.sfx])} volume={c.volume} loop={c.loop} />
+            <Html5Audio src={staticFile(SFX_FILES[c.sfx])} volume={c.volume * SFX_GAIN} loop={c.loop} />
           </Sequence>
         ) : null,
       )}

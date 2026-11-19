@@ -31,7 +31,7 @@ if (video) {
   console.log(`info  audio stream: ${audio || "none"}`);
 
   // ---- 2. black frames ----
-  const out = execFileSync("ffmpeg", ["-v", "error", "-i", video, "-vf", "signalstats,metadata=print:key=lavfi.signalstats.YMAX:file=-", "-f", "null", "-"], { maxBuffer: 64 * 1024 * 1024 }).toString();
+  const out = execFileSync("ffmpeg", ["-v", "error", "-i", video, "-vf", "format=yuv420p,signalstats,metadata=print:key=lavfi.signalstats.YMAX:file=-", "-f", "null", "-"], { maxBuffer: 64 * 1024 * 1024 }).toString();
   const ymax = [...out.matchAll(/lavfi\.signalstats\.YMAX=(\d+)/g)].map((m) => Number(m[1]));
   // Void black #05060A is ~Y 21 in limited range; "fully black" = nothing brighter than a faint grain speck.
   const THRESH = 40;
