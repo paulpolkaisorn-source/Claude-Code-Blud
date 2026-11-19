@@ -129,3 +129,14 @@ scripts/                stills, QA, font fetch, audio synthesis
   offline and every render uses identical font bytes.
 - **Frosted glass.** Panels are WebGL (body, edge light) plus a CSS-3D layer that mirrors the camera exactly;
   that layer carries the text and a `backdrop-filter` blur that frosts whatever the canvas shows behind it.
+
+## Known trade-offs (from the QA pass)
+
+- **Max 5 words on screen**: the end card necessarily exceeds it, since the required
+  fan-concept line alone is 6 words, shown with the `GEMINI 4 NEON` lockup and the availability line.
+  The `[FILL]` placeholder for availability is also 6 words; real copy should be shorter.
+- **Text on screen for at least 20 frames**: holds for every copy line and HUD label. The montage's
+  "HUD numbers counting" cut is 15 frames by design (one half-beat cut) and its digits change every frame.
+- **30 fps Studio preview on a strong GPU**: not measurable in the CPU-only build container. On CPU
+  (SwiftShader, 4 cores) a full 1800-frame pass renders in about 14 minutes.
+- **Loudness**: the placeholder mix measures about -17 LUFS integrated, -0.4 dBFS true peak.
