@@ -1,0 +1,36 @@
+{
+  "name": "gemini-4-neon-teaser",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unofficial fan-concept motion graphics teaser built with Remotion + React Three Fiber",
+  "scripts": {
+    "dev": "remotion studio",
+    "fonts": "node scripts/fetch-fonts.mjs",
+    "audio": "node scripts/gen-audio.mjs",
+    "stills": "node scripts/stills.mjs",
+    "render": "remotion render Teaser out/gemini4neon_1920x1080.mp4 --codec=h264 --crf=18",
+    "render:vertical": "remotion render TeaserVertical out/gemini4neon_1080x1920.mp4 --codec=h264 --crf=18",
+    "render:prores": "remotion render Teaser out/gemini4neon_master_4444.mov --codec=prores --prores-profile=4444",
+    "qa": "node scripts/qa.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "@react-three/postprocessing": "3.2.2",
+    "@remotion/cli": "4.0.545",
+    "@remotion/fonts": "4.0.545",
+    "@remotion/google-fonts": "4.0.545",
+    "@remotion/three": "4.0.545",
+    "postprocessing": "6.39.6",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.545",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/three": "0.180.0",
+    "typescript": "5.9.3"
+  }
+}
